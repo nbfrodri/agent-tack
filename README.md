@@ -7,8 +7,8 @@ My personal configuration for AI coding assistants (Claude Code, Codex): skills,
 ## Install on a new machine
 
 ```bash
-git clone https://github.com/nbfrodri/agent-config.git ~/agent-config
-~/agent-config/install.sh
+git clone https://github.com/nbfrodri/agent-config.git ~/Projects/agent-config
+~/Projects/agent-config/install.sh
 ```
 
 Then restart Claude Code and Codex. Re-run `./install.sh` at any time (after `git pull`, or after adding a skill): it's idempotent.
@@ -68,7 +68,7 @@ Skills and instructions guide the AI; hooks **enforce** the rules that matter, w
 | Other git hooks | git (global) | Pass through to each repository's own `.git/hooks/*` (client and server side, e.g. `post-receive` in local bare repos), so pre-commit, lefthook or custom hooks keep working. |
 | `session-context.sh` | Claude Code `SessionStart` | Tells Claude whether the project is enabled. |
 | `guard-bash.sh` | Claude Code `PreToolUse` | **Blocks** force-pushing main, `--no-verify`, `rm -rf` of `/`, `~` or `..`. **Asks first** for `reset --hard`, `clean -f`, discarding changes, deleting branches, force-pushing other branches, recursive deletes outside the project, and dropping/resetting databases. |
-| `format-file.sh` | Claude Code `PostToolUse` | In enabled projects, formats each edited file with the formatter the project already has configured (Biome, Prettier, Ruff, Black, Pint, gofmt, cargo fmt). Projects without one are left alone. |
+| `format-file.sh` | Claude Code `PostToolUse` | In enabled projects, formats each edited file with the formatter the project already has configured (Biome, Prettier, Ruff, Black, Pint, gofmt, rustfmt). Projects without one are left alone. |
 
 Git hooks apply to Claude, Codex, any other tool and your own commits. Notes:
 

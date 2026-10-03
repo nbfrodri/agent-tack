@@ -87,8 +87,10 @@ case "$file" in
     fi
     ;;
   *.rs)
-    if [ -f "$root/Cargo.toml" ] && command -v cargo >/dev/null 2>&1; then
-      run cargo fmt -- "$file"
+    # rustfmt on the file only: `cargo fmt` would reformat the whole crate
+    if [ -f "$root/Cargo.toml" ] && command -v rustfmt >/dev/null 2>&1; then
+      edition="$(sed -n 's/^[[:space:]]*edition[[:space:]]*=[[:space:]]*"\([0-9]*\)".*/\1/p' "$root/Cargo.toml" | head -n 1)"
+      run rustfmt --edition "${edition:-2021}" "$file"
     fi
     ;;
 esac
