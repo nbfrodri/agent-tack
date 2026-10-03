@@ -168,6 +168,21 @@ check "exits 0 with your own hooksPath" "run_install '$H'"
 check "your own hooksPath is not overridden" "[ \"\$(git_global '$H' --get core.hooksPath)\" = /my/own/hooks ]"
 check "and it tells you" "grep -q 'already set to /my/own/hooks' '$H.log'"
 
+echo "Paths with spaces"
+H="$WORK/home with space"
+check "exits 0 with spaces in HOME" "run_install '$H'"
+for dir in .agents/skills .claude/skills .codex/skills; do
+  check "all skills linked in ~/$dir with spaces in HOME" "[ \"\$(find '$H/$dir' -maxdepth 1 -type l | wc -l | tr -d ' ')\" = '$skill_count' ]"
+done
+check "nothing created next to HOME" "[ ! -e '$WORK/home' ]"
+SPACED="$WORK/repo copy"
+mkdir -p "$SPACED"
+(cd "$REPO" && tar cf - --exclude .git .) | (cd "$SPACED" && tar xf -)
+H="$WORK/spaced-repo-home"
+mkdir -p "$H"
+check "installer works from a repo path with spaces" "HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 '$SPACED/install.sh' --skip-plugins >'$H.log' 2>&1"
+check "hooks point at the spaced repo path" "grep -q \"$SPACED/hooks/claude/guard-bash.sh\" '$H/.claude/settings.json'"
+
 echo "Rejects unknown options"
 check "exits 2" "HOME='$WORK/opt' '$REPO/install.sh' --nope >/dev/null 2>&1; [ \$? -eq 2 ]"
 

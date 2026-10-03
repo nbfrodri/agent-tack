@@ -105,15 +105,14 @@ install_links() {
   link "$REPO/global/AGENTS.md" "$HOME/.codex/AGENTS.md"
 
   section "Skills"
-  local skill_dirs="$HOME/.agents/skills $HOME/.claude/skills $HOME/.codex/skills"
   local dir skill name
-  for dir in $skill_dirs; do
+  for dir in "$HOME/.agents/skills" "$HOME/.claude/skills" "$HOME/.codex/skills"; do
     prune "$dir"
   done
   for skill in "$REPO"/skills/*/; do
     [ -f "$skill/SKILL.md" ] || { warn "skipping $skill (no SKILL.md)"; continue; }
     name="$(basename "$skill")"
-    for dir in $skill_dirs; do
+    for dir in "$HOME/.agents/skills" "$HOME/.claude/skills" "$HOME/.codex/skills"; do
       link "${skill%/}" "$dir/$name"
     done
   done
