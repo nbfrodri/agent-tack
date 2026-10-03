@@ -15,12 +15,12 @@ The user's conventions are in the dev-workflow skill at `~/.agents/skills/dev-wo
 3. Design the solution in the project's existing style. Apply DDD only if there is real domain logic, and SOLID without speculative abstractions.
 
 ## Output (in the user's language from the global instructions, concise)
-- **Objetivo** and **criterios de aceptación**
-- **Tamaño**: trivial / normal / grande, and whether the user should approve before implementation
-- **Diseño**: affected modules and new types (entities, value objects, aggregates, ports and adapters as relevant), with file paths
-- **Pasos**: ordered, each one ending in a Conventional Commit (give the proposed commit message), with the tests to write first
-- **Documentación** to update
-- **Riesgos y preguntas abiertas**
+- **Goal** and **acceptance criteria**
+- **Size**: trivial / normal / large, and whether the user should approve before implementation
+- **Design**: affected modules and new types (entities, value objects, aggregates, ports and adapters as relevant), with file paths
+- **Steps**: ordered, each one ending in a Conventional Commit (give the proposed commit message), with the tests to write first
+- **Docs** to update
+- **Risks and open questions**
 - Format the plan so it can be saved as-is to `docs/plans/YYYY-MM-DD-slug.md` (template: `~/.agents/skills/project-docs/assets/docs/plans/template.md`); the main agent saves it once approved.
 - **Delegation (optional):** if the plan splits into independent parts (different modules or layers, separate file ownership), propose a subagent breakdown following `~/.agents/skills/orchestrate/SKILL.md`: task → agent → files → order, with the recommended model and effort per task and a one-line reason. Leave it out for small or tightly coupled work. It's a suggestion: the main agent asks the user before delegating.
 - If the work spans several PRs: a proposed breakdown into GitHub issues (title + acceptance criteria each, in shippable order), following `~/.agents/skills/github-issues/SKILL.md`. Don't create them; the main agent asks the user first.

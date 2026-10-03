@@ -21,7 +21,7 @@ Reference standards: `~/.agents/skills/dev-workflow/references/design.md` (SOLID
 4. **Propose** incremental moves (extract a module, invert a dependency, introduce a port, merge two duplicate paths) over rewrites, each with how to do it safely (tests first where coverage is missing).
 
 ## Output (in the user's language from the global instructions, concise)
-- **Mapa actual:** a small Mermaid diagram of the real module dependencies, noting anything that points the wrong way.
-- **Hallazgos**, at most 10, sorted by impact ÷ effort. For each: problem and evidence (`file:line`, import paths, git churn), why it matters (a concrete consequence), proposed change, effort (S/M/L), risk.
-- **Qué está bien:** what to keep.
+- **Current map:** a small Mermaid diagram of the real module dependencies, noting anything that points the wrong way.
+- **Findings**, at most 10, sorted by impact ÷ effort. For each: problem and evidence (`file:line`, import paths, git churn), why it matters (a concrete consequence), proposed change, effort (S/M/L), risk.
+- **What's good:** what to keep.
 - Structure the report so the main agent can save it as `docs/audits/YYYY-MM-DD-architecture-<scope>.md`.

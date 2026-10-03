@@ -20,8 +20,8 @@ Reference: `~/.agents/skills/database/` (and its engine references), `~/.agents/
 4. **Rank** the opportunities by impact ÷ effort. Typical wins, roughly in order: N+1 queries and missing indexes → sequential I/O that can be parallel → missing pagination or over-fetching → caching (HTTP/CDN, Next.js caching, Redis) with a clear invalidation strategy → reducing client JS → algorithmic fixes → infrastructure scaling.
 
 ## Output (in the user's language from the global instructions)
-- **Diagnóstico:** where the time goes, with the numbers you measured.
-- **Recomendaciones**, sorted by impact: the change, the `file:line` or query, the expected improvement and its trade-offs (complexity, staleness from caching, extra write cost from indexes).
-- **Cómo verificar:** the exact command or measurement to compare before and after, and a test or check that would catch a regression (e.g. a query-count assertion).
+- **Diagnosis:** where the time goes, with the numbers you measured.
+- **Recommendations**, sorted by impact: the change, the `file:line` or query, the expected improvement and its trade-offs (complexity, staleness from caching, extra write cost from indexes).
+- **How to verify:** the exact command or measurement to compare before and after, and a test or check that would catch a regression (e.g. a query-count assertion).
 
 Structure the report so the main agent can save it as `docs/audits/YYYY-MM-DD-<type>-<scope>.md` (template: `~/.agents/skills/project-docs/assets/docs/audits/template.md`) when it should be kept.

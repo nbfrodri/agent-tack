@@ -7,13 +7,13 @@
 # hook itself (the other hook names are symlinks to it).
 
 # Runs .git/hooks/<name> of the current repository, if there is one, with the given arguments.
-# Reads stdin from the file in AGENT_CONFIG_HOOK_STDIN_FILE when set (for hooks that consume
+# Reads stdin from the file in HARNESS_HOOK_STDIN_FILE when set (for hooks that consume
 # stdin first); the file is forwarded byte for byte so `while read` loops see every line.
 run_local_hook() {
   local name="$1" dir local_hook self
   shift
   # Guard against a local hook that points back at these global hooks
-  if [ -n "${AGENT_CONFIG_IN_LOCAL_HOOK:-}" ]; then
+  if [ -n "${HARNESS_IN_LOCAL_HOOK:-}" ]; then
     return 0
   fi
   dir="$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null \
@@ -23,10 +23,10 @@ run_local_hook() {
   self="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$name"
   [ "$local_hook" -ef "$self" ] && return 0
 
-  if [ -n "${AGENT_CONFIG_HOOK_STDIN_FILE:-}" ]; then
-    AGENT_CONFIG_IN_LOCAL_HOOK=1 "$local_hook" "$@" < "$AGENT_CONFIG_HOOK_STDIN_FILE"
+  if [ -n "${HARNESS_HOOK_STDIN_FILE:-}" ]; then
+    HARNESS_IN_LOCAL_HOOK=1 "$local_hook" "$@" < "$HARNESS_HOOK_STDIN_FILE"
   else
-    AGENT_CONFIG_IN_LOCAL_HOOK=1 "$local_hook" "$@"
+    HARNESS_IN_LOCAL_HOOK=1 "$local_hook" "$@"
   fi
 }
 

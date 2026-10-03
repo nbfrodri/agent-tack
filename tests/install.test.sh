@@ -4,7 +4,7 @@
 set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-WORK="$(mktemp -d "${TMPDIR:-/tmp}/agent-config-test.XXXXXX")"
+WORK="$(mktemp -d "${TMPDIR:-/tmp}/agent-harness-test.XXXXXX")"
 trap 'rm -rf "$WORK"' EXIT
 PASSED=0
 FAILED=0
@@ -27,13 +27,13 @@ git_global() {
   HOME="$1" XDG_CONFIG_HOME="$1/.config" GIT_CONFIG_NOSYSTEM=1 git config --global "${@:2}"
 }
 
-# Counts hook groups tagged #agent-config for an event
+# Counts hook groups tagged #harness for an event
 count_ours() {
   python3 -c '
 import json, sys
 d = json.load(open(sys.argv[1]))
-print(sum(1 for g in d.get("hooks", {}).get(sys.argv[2], []) if any("#agent-config" in h.get("command", "") for h in g.get("hooks", []))))
-' "$1" "$2" 2>/dev/null || jq --arg e "$2" '[.hooks[$e][]? | select(any(.hooks[]?; .command | contains("#agent-config")))] | length' "$1"
+print(sum(1 for g in d.get("hooks", {}).get(sys.argv[2], []) if any("#harness" in h.get("command", "") for h in g.get("hooks", []))))
+' "$1" "$2" 2>/dev/null || jq --arg e "$2" '[.hooks[$e][]? | select(any(.hooks[]?; .command | contains("#harness")))] | length' "$1"
 }
 
 # Reads a JSON value with python3 or jq.
@@ -60,8 +60,8 @@ for dir in .agents/skills .claude/skills .codex/skills; do
   check "all $skill_count skills linked in ~/$dir" "[ \"\$(find '$H/$dir' -maxdepth 1 -type l | wc -l | tr -d ' ')\" = '$skill_count' ]"
 done
 check "all $agent_count agents linked" "[ \"\$(find '$H/.claude/agents' -maxdepth 1 -type l | wc -l | tr -d ' ')\" = '$agent_count' ]"
-check "canonical ~/.agents/agent-config link to the repo" "[ \"\$(readlink '$H/.agents/agent-config')\" = '$REPO' ]"
-check "agent-config command linked into ~/.local/bin" "[ \"\$(readlink '$H/.local/bin/agent-config')\" = '$REPO/bin/agent-config' ]"
+check "canonical ~/.agents/harness link to the repo" "[ \"\$(readlink '$H/.agents/harness')\" = '$REPO' ]"
+check "harness command linked into ~/.local/bin" "[ \"\$(readlink '$H/.local/bin/harness')\" = '$REPO/bin/harness' ]"
 check "settings.json disables AI attribution" "[ \"\$(json_get '$H/.claude/settings.json' attribution.commit)\" = '\"\"' ]"
 
 check "fresh install creates no backups" "! find '$H' -name '*.bak-*' | grep -q ."
@@ -115,10 +115,10 @@ cat >"$H/.claude/settings.json" <<'JSON'
   "hooks": {
     "PreToolUse": [
       { "matcher": "Bash", "hooks": [{ "type": "command", "command": "echo my-own-hook" }] },
-      { "matcher": "Bash", "hooks": [{ "type": "command", "command": "bash '/old/path/hooks/claude/guard-bash.sh' #agent-config" }] }
+      { "matcher": "Bash", "hooks": [{ "type": "command", "command": "bash '/old/path/hooks/claude/guard-bash.sh' #harness" }] }
     ],
     "Stop": [
-      { "hooks": [{ "type": "command", "command": "bash '/old/path/hooks/claude/removed.sh' #agent-config" }] }
+      { "hooks": [{ "type": "command", "command": "bash '/old/path/hooks/claude/removed.sh' #harness" }] }
     ]
   }
 }
@@ -147,7 +147,7 @@ if command -v jq >/dev/null 2>&1; then
   mkdir -p "$H/.claude"
   cp "$WORK/hooks/.claude/settings.json" "$H/.claude/settings.json"
   # Re-add a stale tagged hook and a user hook to the copied (already merged) settings
-  jq '.hooks.PreToolUse += [{"matcher":"Bash","hooks":[{"type":"command","command":"bash /old/x.sh #agent-config"}]}] | .theme = "dark"' \
+  jq '.hooks.PreToolUse += [{"matcher":"Bash","hooks":[{"type":"command","command":"bash /old/x.sh #harness"}]}] | .theme = "dark"' \
     "$H/.claude/settings.json" >"$H/s.tmp" && mv "$H/s.tmp" "$H/.claude/settings.json"
   check "exits 0 without python3" "HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 PATH='$BIN' '$REPO/install.sh' --skip-plugins >'$H.log' 2>&1"
   check "jq merge keeps your keys" "[ \"\$(jq -r .theme '$H/.claude/settings.json')\" = dark ]"
@@ -157,6 +157,32 @@ if command -v jq >/dev/null 2>&1; then
 else
   echo "  - skipped (jq not installed)"
 fi
+
+echo "Migration from the old agent-config names"
+H="$WORK/migration"
+mkdir -p "$H/.claude" "$H/.local/bin" "$H/.agents"
+OLD="$WORK/old-checkout/agent-config"
+mkdir -p "$OLD/bin" "$OLD/git-hooks"
+touch "$OLD/bin/agent-config" "$OLD/git-hooks/_chain"
+ln -s "$OLD/bin/agent-config" "$H/.local/bin/agent-config"
+ln -s "$OLD" "$H/.agents/agent-config"
+cat >"$H/.claude/settings.json" <<JSON
+{
+  "hooks": {
+    "PreToolUse": [
+      { "matcher": "Bash", "hooks": [{ "type": "command", "command": "bash '$OLD/hooks/claude/guard-bash.sh' #agent-config" }] },
+      { "matcher": "Bash", "hooks": [{ "type": "command", "command": "echo my-own-hook" }] }
+    ]
+  }
+}
+JSON
+git_global "$H" core.hooksPath "$OLD/git-hooks"
+check "exits 0" "run_install '$H'"
+check "hooks tagged with the old name are replaced" "! grep -q '#agent-config' '$H/.claude/settings.json' && [ \"\$(count_ours '$H/.claude/settings.json' PreToolUse)\" = 1 ]"
+check "the user's own hooks survive the migration" "grep -q my-own-hook '$H/.claude/settings.json'"
+check "old agent-config command link removed" "[ ! -L '$H/.local/bin/agent-config' ]"
+check "old ~/.agents/agent-config link removed" "[ ! -L '$H/.agents/agent-config' ]"
+check "core.hooksPath moved from the old checkout" "[ \"\$(git_global '$H' --get core.hooksPath)\" = '$REPO/git-hooks' ]"
 
 echo "Global git hooks"
 H="$WORK/git"
@@ -176,10 +202,10 @@ check "a hooksPath into a moved (missing) agent-config is updated" "[ \"\$(git_g
 H="$WORK/git-other-checkout"
 OTHER="$WORK/other-checkout"
 mkdir -p "$OTHER/git-hooks" "$OTHER/bin" "$H"
-touch "$OTHER/git-hooks/_chain" "$OTHER/bin/agent-config"
+touch "$OTHER/git-hooks/_chain" "$OTHER/bin/harness"
 git_global "$H" core.hooksPath "$OTHER/git-hooks"
-check "exits 0 with another agent-config checkout" "run_install '$H'"
-check "a hooksPath into another agent-config checkout is updated" "[ \"\$(git_global '$H' --get core.hooksPath)\" = '$REPO/git-hooks' ]"
+check "exits 0 with another agent-harness checkout" "run_install '$H'"
+check "a hooksPath into another agent-harness checkout is updated" "[ \"\$(git_global '$H' --get core.hooksPath)\" = '$REPO/git-hooks' ]"
 
 echo "Paths with spaces"
 H="$WORK/home with space"

@@ -1,6 +1,6 @@
 ---
 name: new-project
-description: Bootstrap a new project: git, structure, tests ready for TDD, lint and format, CI, docs, issue templates, Dependabot, agent-config enabled. Use when starting or scaffolding a project or adding missing basics (crea un proyecto, empieza una app, inicializa un repo).
+description: Bootstrap a new project: git, structure, tests ready for TDD, lint and format, CI, docs, issue templates, Dependabot, harness enabled. Use when starting or scaffolding a project or adding missing basics (crea un proyecto, empieza una app, inicializa un repo).
 ---
 
 # New project
@@ -14,7 +14,7 @@ Follow `dev-workflow` → `references/conventions.md` (pnpm for JS/TS, uv for Py
 
 ## 2. Foundations checklist
 - `git init -b main`, plus a `.gitignore` for the language, editor and OS. Ignore `.env`.
-- Enable the workflow: `agent-config enable --shared` (commits a `.agent-config` marker so it travels with the repo). For a team repo where others don't use it, `agent-config enable` keeps it local instead.
+- Enable the workflow: `harness enable --shared` (commits a `.harness` marker so it travels with the repo). For a team repo where others don't use it, `harness enable` keeps it local instead.
 - `.editorconfig` copied from this skill's `assets/editorconfig`.
 - Folder structure:
   - with a real domain: `domain/`, `application/`, `infrastructure/`, `interfaces/` (see `dev-workflow` → `references/design.md`);

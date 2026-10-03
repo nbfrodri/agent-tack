@@ -1,8 +1,8 @@
-# agent-config
+# agent-harness
 
 **A portable, versioned harness for AI coding agents** (Claude Code, Codex): the instructions, skills, subagents, hooks, conventions and tooling that make an AI assistant work like a disciplined senior engineer, kept in one repo and installed on any machine with one command. Think of it as *dotfiles for AI agents*.
 
-[![CI](https://github.com/nbfrodri/agent-config/actions/workflows/ci.yml/badge.svg)](https://github.com/nbfrodri/agent-config/actions/workflows/ci.yml)
+[![CI](https://github.com/nbfrodri/agent-harness/actions/workflows/ci.yml/badge.svg)](https://github.com/nbfrodri/agent-harness/actions/workflows/ci.yml)
 
 ## At a glance
 
@@ -13,7 +13,7 @@
 | **18 skills** | *Process:* `dev-workflow`, `new-project`, `debugging`, `testing`, `git-history`, `release`, `github-issues`, `project-docs`, `improve`, `orchestrate`, `lessons`. *Stack:* `frontend` (React/Next.js), `api-design` (FastAPI, Django, Laravel, Node), `database` (PostgreSQL, MySQL, MongoDB), `auth`, `e2e-testing` (Playwright), `deployment` (Vercel, VPS + Docker, AWS), `observability`. |
 | **9 agents** | `planner`, `implementer`, `code-reviewer`, `test-writer`, `docs-writer`, `architecture-reviewer`, `security-auditor`, `performance-analyzer`, `ui-reviewer`. |
 | **Hooks (enforced)** | Git, for every tool and for you: Conventional Commits, AI attribution removed, `main` and release tags protected, per-repo hooks kept working. Claude Code: a command guard that blocks or asks before dangerous commands, auto-formatting with the project's formatter, and the project's status at session start. |
-| **Per-project switch** | `agent-config enable / disable / status`: the full workflow only where you want it; the safety net everywhere. |
+| **Per-project switch** | `harness enable / disable / status`: the full workflow only where you want it; the safety net everywhere. |
 | **Conventions** | Conventional Commits, squash-merged PRs, SemVer with annotated `vX.Y.Z` tags and release-please, English code without comment noise, pnpm / uv / Composer, formatter defaults. |
 | **Docs system** | `README` for humans, `AGENTS.md` for AIs, and `docs/` with a technical sheet, architecture, ADRs, plans, audits, continuous handoffs and an AI work log, with templates. |
 | **Project templates** | `.editorconfig`, issue forms, a PR template, Dependabot and release-please, ready for new projects. |
@@ -65,29 +65,29 @@ Skills and instructions guide the model; only the hooks guarantee. The command g
 1. **Check the requirements.** `git` and `bash` (macOS's bash 3.2 is fine); `python3` or `jq`; Claude Code and/or Codex. Optional but recommended: the GitHub CLI `gh`, logged in (`gh auth login`), for issues, PRs and releases.
 2. **Clone the repo** anywhere; `~/Projects` is the convention:
    ```bash
-   git clone https://github.com/nbfrodri/agent-config.git ~/Projects/agent-config
+   git clone https://github.com/nbfrodri/agent-harness.git ~/Projects/agent-harness
    ```
 3. **Run the installer:**
    ```bash
-   ~/Projects/agent-config/install.sh
+   ~/Projects/agent-harness/install.sh
    ```
    It ends with `done with N warning(s)`. Read any warning. If a step failed it says how to fix it, and re-running is always safe. Use `--skip-plugins` when offline.
-4. **Make sure `~/.local/bin` is in your `PATH`** (the installer warns if it isn't), so the `agent-config` command works.
+4. **Make sure `~/.local/bin` is in your `PATH`** (the installer warns if it isn't), so the `harness` command works.
 5. **Restart Claude Code and Codex** so they load the skills, agents, hooks and instructions.
 6. **Verify:**
    ```bash
-   agent-config status                  # inside any repo: prints enabled or disabled
-   git config --global core.hooksPath   # → ~/Projects/agent-config/git-hooks
+   harness status                  # inside any repo: prints enabled or disabled
+   git config --global core.hooksPath   # → ~/Projects/agent-harness/git-hooks
    ```
-   In Claude Code, `/agents` lists `planner`, `code-reviewer`… and `/hooks` shows the hooks tagged `#agent-config`.
+   In Claude Code, `/agents` lists `planner`, `code-reviewer`… and `/hooks` shows the hooks tagged `#harness`.
 
 ## How to use
 
 1. **Enable the workflow in a project.** It's off everywhere by default; only the safety net is always on (see [On/off per project](#onoff-per-project)).
    ```bash
    cd ~/Projects/my-app
-   agent-config enable            # only on this machine
-   agent-config enable --shared   # or: commit a .agent-config file so it's on for every clone
+   harness enable            # only on this machine
+   harness enable --shared   # or: commit a .harness file so it's on for every clone
    ```
    Projects created through the AI with "crea un proyecto…" are enabled automatically.
 2. **Start a new session** in that project and work as usual, in Spanish. Some examples:
@@ -101,10 +101,10 @@ Skills and instructions guide the model; only the hooks guarantee. The command g
    | "Haz una release" | Works out the SemVer version; with release-please, reviews and merges the release PR (after asking). |
    | "Haz un handoff" | Writes the state of the work to `docs/handoffs/` so any AI or person can continue. |
    | "No, así no: usa pnpm" | Fixes it and saves the rule (`lessons`) so it doesn't happen again. |
-3. **Disable it** where you don't want the ceremony: `agent-config disable`.
+3. **Disable it** where you don't want the ceremony: `harness disable`.
 4. **Keep it up to date** on each machine:
    ```bash
-   cd ~/Projects/agent-config && git pull && ./install.sh
+   cd ~/Projects/agent-harness && git pull && ./install.sh
    ```
 5. **Change the rules** by editing the files here (or by telling the AI, which uses `lessons`), then commit and push. Changes apply immediately on this machine through the symlinks; restart the tool for new skills or agents.
 
@@ -116,8 +116,8 @@ This repo is personal (private, with its owner's preferences), so another person
 2. **Create their own copy:** *Use this template* (or fork) on GitHub, so they can push their own changes and keep their rules versioned.
 3. **Clone their copy and install:**
    ```bash
-   git clone https://github.com/<their-user>/agent-config.git ~/Projects/agent-config
-   ~/Projects/agent-config/install.sh
+   git clone https://github.com/<their-user>/agent-harness.git ~/Projects/agent-harness
+   ~/Projects/agent-harness/install.sh
    ```
 4. **Adapt the personal bits:**
    | File | What to change |
@@ -126,8 +126,8 @@ This repo is personal (private, with its owner's preferences), so another person
    | `skills/dev-workflow/references/conventions.md` | Stack choices made for this owner: pnpm, kebab-case files, squash merge, release-please, comment policy… |
    | `plugins.txt` | Claude Code plugins to install. |
    | `claude/settings.json` | Claude Code settings and hooks merged into theirs (their own keys and hooks are kept). |
-   | `README.md`, `bin/agent-config` | The repo URL (badge, clone command, `.agent-config` marker text). |
-5. **Restart Claude Code and Codex, and enable it in a project:** `agent-config enable`.
+   | `README.md`, `bin/harness` | The repo URL (badge, clone command, `.harness` marker text). |
+5. **Restart Claude Code and Codex, and enable it in a project:** `harness enable`.
 6. **Keep it theirs:** they can pull improvements from the original with `git remote add upstream <original-url>` and `git pull upstream main`, then re-run `./install.sh`.
 
 Things that are already per-user and need no changes: the git identity (commits use their `git config user.name/email`), existing `~/.claude/settings.json` keys and hooks (merged, never overwritten), and any global `core.hooksPath` of their own (left alone).
@@ -160,11 +160,11 @@ Safety guarantees:
 The full workflow (plan, TDD, conventions, docs, handoffs, AI log, Conventional Commits, auto-format) is **opt-in per project**. Everywhere else the AI works normally and only the safety net stays on.
 
 ```bash
-agent-config enable            # this clone only (git config; nothing added to the repo)
-agent-config enable --shared   # commit a .agent-config file so it travels with the repo
-agent-config disable
-agent-config status            # enabled / disabled
-git config --global agentconfig.enabled true   # enable everywhere (a local `disable` still wins)
+harness enable            # this clone only (git config; nothing added to the repo)
+harness enable --shared   # commit a .harness file so it travels with the repo
+harness disable
+harness status            # enabled / disabled
+git config --global harness.enabled true   # enable everywhere (a local `disable` still wins)
 ```
 
 | | Enabled project | Any other repo |
@@ -174,7 +174,7 @@ git config --global agentconfig.enabled true   # enable everywhere (a local `dis
 | Conventional Commits enforced | ✔ | — |
 | Full workflow and auto-format | ✔ | — |
 
-Claude Code is told the status at session start (`SessionStart` hook); Codex checks `agent-config status` as its instructions say. `new-project` enables new projects automatically.
+Claude Code is told the status at session start (`SessionStart` hook); Codex checks `harness status` as its instructions say. `new-project` enables new projects automatically.
 
 ## Enforced rules (hooks)
 
@@ -183,7 +183,7 @@ Skills and instructions guide the AI; hooks **enforce** the rules that matter, w
 | Hook | Where | What it does |
 | --- | --- | --- |
 | `commit-msg` | git (global) | Removes AI attribution (`Co-Authored-By` of Claude, Codex, Copilot…, "Generated with…") everywhere, and in enabled projects rejects subjects that aren't Conventional Commits. Merge, revert and `fixup!`/`squash!` messages are accepted. |
-| `pre-push` | git (global) | Refuses force-pushes and deletions of `main`/`master` on any remote (override: `AGENT_CONFIG_ALLOW_FORCE_PUSH=1`). In enabled projects, only lets annotated `vX.Y.Z` tags through and never moves or deletes a published tag (override: `AGENT_CONFIG_ALLOW_TAG=1`). |
+| `pre-push` | git (global) | Refuses force-pushes and deletions of `main`/`master` on any remote (override: `HARNESS_ALLOW_FORCE_PUSH=1`). In enabled projects, only lets annotated `vX.Y.Z` tags through and never moves or deletes a published tag (override: `HARNESS_ALLOW_TAG=1`). |
 | Other git hooks | git (global) | Pass through to each repository's own `.git/hooks/*` (client and server side, e.g. `post-receive` in local bare repos), so pre-commit, lefthook or custom hooks keep working. |
 | `session-context.sh` | Claude Code `SessionStart` | Tells Claude whether the project is enabled. |
 | `guard-bash.sh` | Claude Code `PreToolUse` | **Blocks** force-pushing main, `--no-verify`, `rm -rf` of `/`, `~` or `..`. **Asks first** for `reset --hard`, `clean -f`, discarding changes, deleting branches, force-pushing other branches, recursive deletes outside the project, and dropping/resetting databases. |
@@ -191,15 +191,15 @@ Skills and instructions guide the AI; hooks **enforce** the rules that matter, w
 
 Git hooks apply to Claude, Codex, any other tool and your own commits. Notes:
 
-- In a repository with different commit conventions: `git config agentconfig.conventionalCommits false` (AI attribution is still removed).
+- In a repository with different commit conventions: `git config harness.conventionalCommits false` (AI attribution is still removed).
 - Repositories that set their own local `core.hooksPath` (e.g. Husky) use only their hooks; there, Claude's `attribution` setting still prevents its trailers.
-- Claude hooks are tagged `#agent-config` in `settings.json`; re-installing replaces only those.
+- Claude hooks are tagged `#harness` in `settings.json`; re-installing replaces only those.
 
 ## Structure
 
 ```
 global/AGENTS.md      # global instructions for every AI assistant
-bin/agent-config      # per-project switch, linked into ~/.local/bin
+bin/harness      # per-project switch, linked into ~/.local/bin
 skills/<name>/        # Agent Skills (SKILL.md + references/), used by Claude Code and Codex
 agents/<name>.md      # Claude Code subagents
 claude/settings.json  # Claude Code settings and hooks merged into ~/.claude/settings.json
@@ -293,7 +293,7 @@ Full details: `skills/dev-workflow/references/conventions.md`.
 ## Development
 
 ```bash
-shellcheck -x install.sh bin/agent-config tests/*.sh evals/run.sh git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push hooks/claude/*.sh
+shellcheck -x install.sh bin/harness tests/*.sh evals/run.sh git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push hooks/claude/*.sh
 tests/validate.sh                  # validate skills, agents, cross-references, README coverage, plugins.txt
 tests/validate.test.sh             # prove the validator catches each kind of error
 tests/install.test.sh              # test the installer in throwaway HOME directories

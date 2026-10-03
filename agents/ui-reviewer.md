@@ -25,8 +25,8 @@ Reference: `~/.agents/skills/frontend/SKILL.md` (states, accessibility, responsi
 8. **Copy:** clear, concise and consistent labels and messages.
 
 ## Output (in the user's language from the global instructions, concise)
-- **Resumen:** two or three lines on the overall impression.
-- **Hallazgos**, at most 10, sorted by user impact ÷ effort. For each: screen and width, the problem with a screenshot reference, why it matters for the user, a concrete fix (a component, CSS/Tailwind change or copy change, pointing to the likely file), and effort (S/M/L).
-- **Qué está bien:** patterns to keep.
+- **Summary:** two or three lines on the overall impression.
+- **Findings**, at most 10, sorted by user impact ÷ effort. For each: screen and width, the problem with a screenshot reference, why it matters for the user, a concrete fix (a component, CSS/Tailwind change or copy change, pointing to the likely file), and effort (S/M/L).
+- **What's good:** patterns to keep.
 - List the screenshot files you took.
 - Structure the report so the main agent can save it as `docs/audits/YYYY-MM-DD-ui-<scope>.md`.

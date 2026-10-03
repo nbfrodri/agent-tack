@@ -2,12 +2,12 @@
 # Global commit-msg hook:
 #   1. removes AI attribution (Co-Authored-By trailers of AI tools, "Generated with ..." lines),
 #      in every repository
-#   2. enforces Conventional Commits on the subject line, in projects where agent-config is
-#      enabled (`agent-config enable`)
+#   2. enforces Conventional Commits on the subject line, in projects where the harness is
+#      enabled (`harness enable`)
 #   3. runs the repository's own commit-msg hook, if any
 #
 # Opt out of the format check in an enabled repository that uses other conventions:
-#   git config agentconfig.conventionalCommits false
+#   git config harness.conventionalCommits false
 set -u
 
 HOOK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -44,8 +44,8 @@ fi
 rm -f "$tmp"
 
 # 2. Conventional Commits check on the subject (first non-comment, non-empty line)
-if "$HOOK_DIR/../bin/agent-config" status --quiet \
-  && [ "$(git config --bool agentconfig.conventionalCommits 2>/dev/null)" != "false" ]; then
+if "$HOOK_DIR/../bin/harness" status --quiet \
+  && [ "$(git config --bool harness.conventionalCommits 2>/dev/null)" != "false" ]; then
   subject="$(grep -vE '^[[:space:]]*(#|$)' "$msg_file" | head -n 1)"
   CC_PATTERN='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-zA-Z0-9._/-]+\))?!?: [^[:space:]].*'
   # Messages git or tools generate (merges, reverts, autosquash) are always accepted
@@ -66,7 +66,7 @@ Types:     feat fix docs style refactor perf test build ci chore revert
 Examples:  feat(auth): add password reset
            fix: handle empty cart on checkout
 
-(In a repository with other conventions: git config agentconfig.conventionalCommits false)
+(In a repository with other conventions: git config harness.conventionalCommits false)
 EOF
     exit 1
   elif [ "${#subject}" -gt 100 ]; then

@@ -12,7 +12,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash '__REPO__/hooks/claude/guard-bash.sh' #agent-config",
+            "command": "bash '__REPO__/hooks/claude/guard-bash.sh' #harness",
             "timeout": 10
           }
         ]
@@ -24,7 +24,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash '__REPO__/hooks/claude/format-file.sh' #agent-config",
+            "command": "bash '__REPO__/hooks/claude/format-file.sh' #harness",
             "timeout": 60,
             "statusMessage": "Formatting"
           }
@@ -36,7 +36,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash '__REPO__/hooks/claude/session-context.sh' #agent-config",
+            "command": "bash '__REPO__/hooks/claude/session-context.sh' #harness",
             "timeout": 10
           }
         ]

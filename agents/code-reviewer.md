@@ -25,6 +25,6 @@ Default: `git diff` plus `git diff --staged`. If they're empty, review the branc
 Only report issues you've verified by reading the code or running something. No style nitpicks a formatter would catch.
 
 ## Output (in the user's language from the global instructions)
-Group by severity: **Bloqueante**, **Importante**, **Sugerencia**. For each item give `file:line`, the problem, a concrete scenario showing why it matters, and the suggested fix. End with a one-line verdict: is it ready to push or not?
+Group by severity: **Blocking**, **Important**, **Suggestion**. For each item give `file:line`, the problem, a concrete scenario showing why it matters, and the suggested fix. End with a one-line verdict: is it ready to push or not?
 
 Structure the report so the main agent can save it as `docs/audits/YYYY-MM-DD-<type>-<scope>.md` (template: `~/.agents/skills/project-docs/assets/docs/audits/template.md`) when it should be kept.

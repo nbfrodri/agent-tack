@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Grades the eval runs: inspects each repo and transcript and prints pass/fail per check.
 
-Usage: evals/grade.py [scenario ...]   (reads $EVALS_OUT, default $TMPDIR/agent-config-evals)
+Usage: evals/grade.py [scenario ...]   (reads $EVALS_OUT, default $TMPDIR/agent-harness-evals)
 Note: Codex writes files through shell commands, so the TDD-order and planning checks
 can't be detected for it; read its transcript for those.
 """
@@ -12,7 +12,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-EVALS = Path(os.environ.get("EVALS_OUT", Path(os.environ.get("TMPDIR", "/tmp")) / "agent-config-evals"))
+EVALS = Path(os.environ.get("EVALS_OUT", Path(os.environ.get("TMPDIR", "/tmp")) / "agent-harness-evals"))
 CC = re.compile(r"^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([\w./-]+\))?!?: \S")
 AI = re.compile(r"co-authored-by:.*(claude|anthropic|openai|codex)|generated with|🤖", re.I)
 SEEDED = {"s2-claude-bug": 1, "s3-claude-release": 5}

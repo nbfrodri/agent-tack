@@ -13,7 +13,7 @@ set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 STAMP="$(date +%Y%m%d-%H%M%S)"
-WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/agent-config.XXXXXX")" || { echo "cannot create a temp dir" >&2; exit 1; }
+WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/agent-harness.XXXXXX")" || { echo "cannot create a temp dir" >&2; exit 1; }
 trap 'rm -rf "$WORKDIR"' EXIT
 SKIP_PLUGINS=0
 FAILURES=0
@@ -117,16 +117,25 @@ install_links() {
     done
   done
 
+  section "Old names (agent-config)"
+  # Links left by versions of this repo named agent-config
+  local old
+  for old in "$HOME/.local/bin/agent-config" "$HOME/.agents/agent-config"; do
+    if [ -L "$old" ]; then
+      rm -f "$old" && ok "removed old link $old"
+    fi
+  done
+
   section "Config repo link"
   # Canonical path skills and agents use to reach this repo, wherever it is cloned
-  link "$REPO" "$HOME/.agents/agent-config"
+  link "$REPO" "$HOME/.agents/harness"
 
   section "Command"
-  chmod +x "$REPO/bin/agent-config" 2>/dev/null
-  link "$REPO/bin/agent-config" "$HOME/.local/bin/agent-config"
+  chmod +x "$REPO/bin/harness" 2>/dev/null
+  link "$REPO/bin/harness" "$HOME/.local/bin/harness"
   case ":$PATH:" in
     *":$HOME/.local/bin:"*) ;;
-    *) warn "$HOME/.local/bin is not in PATH: add it to use 'agent-config enable|disable|status'" ;;
+    *) warn "$HOME/.local/bin is not in PATH: add it to use 'harness enable|disable|status'" ;;
   esac
 
   section "Subagents (Claude Code)"
@@ -140,7 +149,7 @@ install_links() {
 
 # Merges claude/settings.json into ~/.claude/settings.json:
 #   - objects are deep-merged and the repo's values win; your other keys are kept
-#   - hooks: entries tagged "#agent-config" are replaced by the repo's, your own hooks are kept
+#   - hooks: entries tagged "#harness" are replaced by the repo's, your own hooks are kept
 #   - __REPO__ in the repo file is replaced with this repo's path
 merge_settings() {
   section "Claude Code settings"
@@ -165,7 +174,8 @@ merge_settings() {
     python3 - "$base" "$rendered" > "$tmp" 2>/dev/null <<'PY'
 import json, sys
 
-TAG = "#agent-config"
+# Hooks this repo installs; "#agent-config" is the tag of older versions
+TAGS = ("#harness", "#agent-config")
 
 def merge(base, extra):
     for key, value in extra.items():
@@ -177,7 +187,7 @@ def merge(base, extra):
 
 def is_ours(group):
     return isinstance(group, dict) and any(
-        isinstance(h, dict) and TAG in str(h.get("command", "")) for h in group.get("hooks", [])
+        isinstance(h, dict) and any(t in str(h.get("command", "")) for t in TAGS) for h in group.get("hooks", [])
     )
 
 with open(sys.argv[1]) as f:
@@ -207,7 +217,7 @@ PY
     rc=$?
   elif has jq; then
     jq -s '
-      def ours: type == "object" and any(.hooks[]?; ((.command? // "") | tostring | contains("#agent-config")));
+      def ours: type == "object" and any(.hooks[]?; ((.command? // "") | tostring | (contains("#harness") or contains("#agent-config"))));
       .[0] as $d | .[1] as $s
       | ($d * ($s | del(.hooks))) as $m
       | (($d.hooks // {})
@@ -241,12 +251,13 @@ PY
   fi
 }
 
-# True when a hooksPath belongs to an agent-config checkout: another copy of this repo, or a
-# git-hooks/ folder that no longer exists because the repo was moved or deleted.
-is_agent_config_hooks() {
+# True when a hooksPath belongs to an agent-harness checkout (including older ones named
+# agent-config): another copy of this repo, or a git-hooks/ folder that no longer exists
+# because the repo was moved or deleted.
+is_harness_hooks() {
   local path="$1"
   if [ -d "$path" ]; then
-    [ -e "$path/_chain" ] && [ -e "$path/../bin/agent-config" ]
+    [ -e "$path/_chain" ] && { [ -e "$path/../bin/harness" ] || [ -e "$path/../bin/agent-config" ]; }
   else
     [ "$(basename "$path")" = "git-hooks" ]
   fi
@@ -265,7 +276,7 @@ install_git_hooks() {
   current="$(git config --global --get core.hooksPath 2>/dev/null || true)"
   if [ "$current" = "$target" ]; then
     ok "core.hooksPath already set to $target"
-  elif [ -z "$current" ] || is_agent_config_hooks "$current"; then
+  elif [ -z "$current" ] || is_harness_hooks "$current"; then
     if git config --global core.hooksPath "$target"; then
       ok "core.hooksPath set to $target${current:+ (was $current)}"
     else
@@ -386,7 +397,7 @@ install_plugins() {
 }
 
 main() {
-  printf '%sInstalling agent-config from %s%s\n' "$C_HEAD" "$REPO" "$C_OFF"
+  printf '%sInstalling agent-harness from %s%s\n' "$C_HEAD" "$REPO" "$C_OFF"
   install_links
   merge_settings
   install_git_hooks

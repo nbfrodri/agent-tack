@@ -3,7 +3,7 @@
 This repo is the user's AI configuration (skills, agents, hooks, installer). Human docs: `README.md`.
 
 ## Commands
-- Lint: `shellcheck -x install.sh bin/agent-config tests/*.sh evals/run.sh git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push hooks/claude/*.sh`
+- Lint: `shellcheck -x install.sh bin/harness tests/*.sh evals/run.sh git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push hooks/claude/*.sh`
 - Validate skills, agents and cross-references: `tests/validate.sh` (its own tests: `tests/validate.test.sh`)
 - Test installer and hooks: `tests/install.test.sh && tests/hooks.test.sh`
 - Apply locally: `./install.sh` (idempotent)

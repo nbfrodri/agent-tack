@@ -5,7 +5,7 @@
 set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-WORK="$(mktemp -d "${TMPDIR:-/tmp}/agent-config-hooks.XXXXXX")"
+WORK="$(mktemp -d "${TMPDIR:-/tmp}/agent-harness-hooks.XXXXXX")"
 trap 'rm -rf "$WORK"' EXIT
 PASSED=0
 FAILED=0
@@ -22,9 +22,9 @@ git config --global user.email "test@example.com"
 git config --global init.defaultBranch main
 git config --global core.hooksPath "$REPO/git-hooks"
 git config --global commit.gpgsign false
-# Test repos behave as agent-config-enabled projects unless a test disables them
-git config --global agentconfig.enabled true
-CLI="$REPO/bin/agent-config"
+# Test repos behave as harness-enabled projects unless a test disables them
+git config --global harness.enabled true
+CLI="$REPO/bin/harness"
 
 new_repo() {
   rm -rf "$1"
@@ -76,11 +76,11 @@ setup_commit "$(printf 'fix: w\n\nCo-authored-by: Copilot <175728472+Copilot@use
 check "Copilot and model-named Claude trailers removed" "! last_message | grep -qiE 'copilot|claude'"
 
 echo "commit-msg: per-repo opt-out"
-git -C "$R" config agentconfig.conventionalCommits false
+git -C "$R" config harness.conventionalCommits false
 check "free-form message allowed after opt-out" "commit 'Update stuff'"
 setup_commit "$(printf 'Update more\n\nCo-Authored-By: Claude <noreply@anthropic.com>\n')"
 check "AI attribution still removed after opt-out" "! last_message | grep -qi claude"
-git -C "$R" config --unset agentconfig.conventionalCommits
+git -C "$R" config --unset harness.conventionalCommits
 
 echo "Local repository hooks keep working (chaining)"
 cat > "$R/.git/hooks/pre-commit" <<EOF
@@ -118,7 +118,7 @@ git -C "$R" commit -q --amend --allow-empty -m "feat: second (amended)" >/dev/nu
 check "history was rewritten locally (test precondition)" "[ \"\$(git -C '$R' rev-parse HEAD)\" != '$before' ]"
 check "force push to main is refused" "! push --force origin main"
 check "force-with-lease to main is refused" "! push --force-with-lease origin main"
-check "override variable allows it" "AGENT_CONFIG_ALLOW_FORCE_PUSH=1 push --force origin main"
+check "override variable allows it" "HARNESS_ALLOW_FORCE_PUSH=1 push --force origin main"
 check "deleting main on the remote is refused" "! push origin :main"
 git -C "$R" switch -q -c feat/x
 setup_commit "feat: on branch"
@@ -143,10 +143,10 @@ check "deleting a published tag is refused" "! push origin :refs/tags/v1.0.0"
 git -C "$R" tag -d v1.0.0 >/dev/null
 git -C "$R" tag -a v1.0.0 -m "moved" HEAD~1
 check "moving a published tag is refused" "! push --force origin v1.0.0"
-check "override allows a deliberate tag change" "AGENT_CONFIG_ALLOW_TAG=1 push --force origin v1.0.0"
-git -C "$R" config agentconfig.enabled false
+check "override allows a deliberate tag change" "HARNESS_ALLOW_TAG=1 push --force origin v1.0.0"
+git -C "$R" config harness.enabled false
 check "projects not enabled can push any tag" "push origin release-1"
-git -C "$R" config --unset agentconfig.enabled
+git -C "$R" config --unset harness.enabled
 git -C "$R" switch -q feat/x
 
 echo "pre-push: local pre-push hook receives stdin"
@@ -339,10 +339,10 @@ check "no jq: allow still works" "[ \"\$(nojq_decision 'ls -la')\" = allow ]"
 check "no jq: reasons with quotes and backslashes stay valid JSON" "[ \"\$(nojq_decision 'rm -rf /etc/a\\\\ \"b\"')\" = ask ]"
 check "no jq: session-context still answers" "printf '{\"cwd\":\"%s\"}' '$R' | PATH='$NOJQ' bash '$REPO/hooks/claude/session-context.sh' | python3 -c 'import json,sys; json.load(sys.stdin)'"
 
-echo "Switch: agent-config enable/disable/status"
+echo "Switch: harness enable/disable/status"
 R="$WORK/switch"
 new_repo "$R"
-git config --global --unset agentconfig.enabled
+git config --global --unset harness.enabled
 status_of() { (cd "$R" && "$CLI" status); }
 check "disabled by default" "[ \"\$(status_of)\" = disabled ]"
 check "status exits 1 when disabled" "! (cd '$R' && '$CLI' status --quiet)"
@@ -351,17 +351,17 @@ setup_commit "$(printf 'wip\n\nCo-Authored-By: Claude <noreply@anthropic.com>\n'
 check "AI attribution still removed when disabled" "! last_message | grep -qi claude"
 (cd "$R" && "$CLI" enable >/dev/null)
 check "enable (local) turns it on" "[ \"\$(status_of)\" = enabled ]"
-check "local enable leaves the repo untouched" "[ ! -e '$R/.agent-config' ]"
+check "local enable leaves the repo untouched" "[ ! -e '$R/.harness' ]"
 check "Conventional Commits enforced once enabled" "! commit 'quick fix'"
 (cd "$R" && "$CLI" disable >/dev/null)
 check "disable turns it off" "[ \"\$(status_of)\" = disabled ]"
 (cd "$R" && "$CLI" enable --shared >/dev/null)
-check "enable --shared creates .agent-config" "[ -f '$R/.agent-config' ]"
-git -C "$R" config --unset agentconfig.enabled
-check "the .agent-config file alone enables it" "[ \"\$(status_of)\" = enabled ]"
+check "enable --shared creates .harness" "[ -f '$R/.harness' ]"
+git -C "$R" config --unset harness.enabled
+check "the .harness file alone enables it" "[ \"\$(status_of)\" = enabled ]"
 (cd "$R" && "$CLI" disable >/dev/null)
-check "disable removes the file" "[ ! -e '$R/.agent-config' ] && [ \"\$(status_of)\" = disabled ]"
-git config --global agentconfig.enabled true
+check "disable removes the file" "[ ! -e '$R/.harness' ] && [ \"\$(status_of)\" = disabled ]"
+git config --global harness.enabled true
 check "global true enables every repo" "[ \"\$(cd '$WORK/repo' && '$CLI' status)\" = enabled ]"
 check "a local false wins over global true" "[ \"\$(status_of)\" = disabled ]"
 check "outside a git repo: disabled" "[ \"\$(cd '$WORK' && '$CLI' status)\" = disabled ]"
@@ -392,10 +392,10 @@ echo '{}' > "$P/.prettierrc"
 format "$P/src/a.ts"
 check "prettier configured → file formatted" "grep -q formatted '$P/src/a.ts'"
 echo "const b=2" > "$P/src/b.ts"
-git -C "$P" config agentconfig.enabled false
+git -C "$P" config harness.enabled false
 format "$P/src/b.ts"
 check "project not enabled → its formatter binaries are never run" "! grep -q formatted '$P/src/b.ts'"
-git -C "$P" config --unset agentconfig.enabled
+git -C "$P" config --unset harness.enabled
 mkdir -p "$WORK/no-git"
 echo "const c=3" > "$WORK/no-git/c.ts"
 format "$WORK/no-git/c.ts"

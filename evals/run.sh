@@ -2,10 +2,10 @@
 # Runs a behaviour eval: a real `claude -p` / `codex exec` session in a throwaway repo,
 # with the installed skills, instructions and hooks. Uses real model tokens.
 # Usage: evals/run.sh <scenario>   (s1-claude-new | s2-claude-bug | s3-claude-release | s4-codex-new)
-# Results go to $EVALS_OUT (default: $TMPDIR/agent-config-evals); grade them with evals/grade.py.
+# Results go to $EVALS_OUT (default: $TMPDIR/agent-harness-evals); grade them with evals/grade.py.
 set -uo pipefail
 
-EVALS="${EVALS_OUT:-${TMPDIR:-/tmp}/agent-config-evals}"
+EVALS="${EVALS_OUT:-${TMPDIR:-/tmp}/agent-harness-evals}"
 name="${1:?scenario name required}"
 case "$name" in
   s1-claude-new | s2-claude-bug | s3-claude-release | s4-codex-new) ;;

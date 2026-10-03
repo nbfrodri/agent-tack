@@ -1,11 +1,11 @@
 ---
 name: dev-workflow
-description: The user's engineering workflow for projects with agent-config enabled: plan first, TDD, SOLID/DDD, code and git conventions (Conventional Commits, branches, PRs) and docs. Use whenever writing, changing or debugging code, committing or opening PRs in such projects (programa, implementa, arregla, haz commit).
+description: The user's engineering workflow for projects with harness enabled: plan first, TDD, SOLID/DDD, code and git conventions (Conventional Commits, branches, PRs) and docs. Use whenever writing, changing or debugging code, committing or opening PRs in such projects (programa, implementa, arregla, haz commit).
 ---
 
 # Dev Workflow
 
-Applies in projects where agent-config is enabled (`agent-config status`; Claude Code says so at session start). Elsewhere, work normally without this ceremony unless the user asks for it.
+Applies in projects where the harness is enabled (`harness status`; Claude Code says so at session start). Elsewhere, work normally without this ceremony unless the user asks for it.
 
 The goal: every request ends as a small change that is tested, documented and recorded in a clean git history anyone can follow later. It works the same with any assistant (Claude, Codex or another).
 
