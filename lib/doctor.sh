@@ -26,8 +26,19 @@ check_link() {
     ok "managed symlink: $dest"
   fi
 }
+check_stale_links() {
+  local dir="$1" entry target
+  for entry in "$dir"/*; do
+    [ -L "$entry" ] || continue
+    target="$(readlink "$entry")"
+    case "$target" in
+      "$REPO"/*) [ -e "$entry" ] || fail "stale managed symlink: $entry" ;;
+    esac
+  done
+}
 check_skills() {
   local dir="$1" source
+  check_stale_links "$dir"
   for source in "$REPO"/skills/*; do
     [ -f "$source/SKILL.md" ] || continue
     check_link "$source" "$dir/${source##*/}"
@@ -68,6 +79,7 @@ check_tools_and_links() {
     fi
     [ "$skills_dir" = - ] || check_skills "$(expand_home "$skills_dir")"
   done 3< "$REPO/targets.txt"
+  check_stale_links "$HOME/.claude/agents"
   for source in "$REPO"/agents/*.md; do
     [ -f "$source" ] || continue
     check_link "$source" "$HOME/.claude/agents/${source##*/}"
@@ -156,6 +168,53 @@ check_git_hooks() {
     check_hooks_path effective "$path"
   fi
 }
+check_ownership() {
+  local state="${XDG_STATE_HOME:-$HOME/.local/state}/agent-harness/ownership" field entry kind path target
+  if [ ! -e "$state" ] && [ ! -L "$state" ]; then
+    warn 'installation ownership is unrecorded (legacy install); uninstall restoration is not verified'
+    return
+  fi
+  if [ ! -d "$state" ] || [ -L "$state" ]; then fail 'installation ownership metadata is invalid'; return; fi
+  for field in version repo home; do
+    if [ ! -f "$state/$field" ] || [ ! -r "$state/$field" ] || [ -L "$state/$field" ]; then
+      fail 'installation ownership metadata is incomplete or unreadable'
+      return
+    fi
+  done
+  if [ "$(< "$state/version")" != 1 ]; then fail 'installation ownership version is unsupported'; return; fi
+  if [ "$(< "$state/repo")" != "$REPO" ] || [ "$(< "$state/home")" != "$HOME" ]; then
+    fail 'installation ownership belongs to another checkout or home'
+    return
+  fi
+  if has python3 && [ -f "$REPO/lib/ownership.py" ]; then
+    if ! python3 "$REPO/lib/ownership.py" validate "$state" "$HOME" >/dev/null 2>&1; then
+      fail 'installation ownership schema or permissions are invalid'
+      return
+    fi
+  else
+    warn 'complete ownership schema and permissions were not verified'
+  fi
+  for entry in "$state"/entries/*; do
+    [ -d "$entry" ] || continue
+    if [ ! -f "$entry/kind" ]; then fail 'installation ownership entry is incomplete'; continue; fi
+    kind="$(< "$entry/kind")"
+    case "$kind" in
+      link)
+        if [ ! -f "$entry/path" ] || [ ! -f "$entry/target" ]; then
+          fail 'installation ownership link entry is incomplete'
+          continue
+        fi
+        path="$(< "$entry/path")"; target="$(< "$entry/target")"
+        case "$path" in "$HOME"/*) ;; *) fail 'installation ownership destination is outside this home'; continue ;; esac
+        case "$target" in "$REPO"|"$REPO"/*) ;; *) fail 'installation ownership source is outside this checkout'; continue ;; esac
+        check_link "$target" "$path"
+        ;;
+      settings|git) ;;
+      *) fail 'installation ownership entry type is unsupported' ;;
+    esac
+  done
+  ok 'installation ownership metadata checked; restoration snapshots remain private'
+}
 check_project() {
   has git || return
   if ! git rev-parse --show-toplevel >/dev/null 2>&1; then
@@ -171,6 +230,7 @@ if [ ! -f "$REPO/targets.txt" ] || [ ! -f "$REPO/bin/harness" ]; then
   fail 'checkout is missing required harness files'
 else
   check_tools_and_links
+  check_ownership
   check_settings
   check_git_hooks
   check_project

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -uo pipefail
+umask 077
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/harness-doctor-test.XXXXXX")"
 trap 'rm -rf "$WORK"' EXIT
@@ -46,6 +47,10 @@ rm "$HOME/.claude/skills/testing"
 run_doctor
 check 'missing required skill is an error' [ "$RC" -eq 1 ]
 ln -s "$REPO/skills/testing" "$HOME/.claude/skills/testing"
+ln -s "$REPO/skills/removed-skill" "$HOME/.agents/skills/removed-skill"
+run_doctor
+check 'stale managed skill links are errors' [ "$RC" -eq 1 ]
+rm "$HOME/.agents/skills/removed-skill"
 run_doctor unexpected
 check 'unsupported arguments return 2' [ "$RC" -eq 2 ]
 printf '#!/bin/sh\nexit 13\n' > "$WORK/bin/gemini"
@@ -115,6 +120,29 @@ mv "$WORK/bin/git" "$WORK/git"
 run_doctor
 check 'missing essential Git is an error' [ "$RC" -eq 1 ]
 mv "$WORK/git" "$WORK/bin/git"
+STATE="$XDG_STATE_HOME/agent-harness/ownership"
+mkdir -p "$STATE/entries/1"
+printf '1\n' > "$STATE/version"
+printf '%s\n' "$REPO" > "$STATE/repo"
+printf '%s\n' "$HOME" > "$STATE/home"
+printf 'link\n' > "$STATE/entries/1/kind"
+printf '%s\n' "$HOME/.gemini/GEMINI.md" > "$STATE/entries/1/path"
+printf '%s\n' "$HOME/.gemini" > "$STATE/entries/1/parent"
+printf '%s\n' "$REPO/global/AGENTS.md" > "$STATE/entries/1/target"
+printf 'absent\n' > "$STATE/entries/1/before_kind"
+run_doctor
+check 'recorded optional target missing is an error even when CLI is absent' [ "$RC" -eq 1 ]
+ln -s "$REPO/global/AGENTS.md" "$HOME/.gemini/GEMINI.md"
+run_doctor
+check 'valid ownership metadata and recorded links are healthy' [ "$RC" -eq 0 ]
+printf '99\n' > "$STATE/version"
+run_doctor
+check 'unsupported ownership version is an error' [ "$RC" -eq 1 ]
+printf '1\n' > "$STATE/version"
+printf '%s\n' "$WORK/another-repo" > "$STATE/repo"
+run_doctor
+check 'ownership from another checkout is an error' [ "$RC" -eq 1 ]
+printf '%s\n' "$REPO" > "$STATE/repo"
 snapshot() {
   python3 - "$HOME" "$WORK/outside" <<'SNAPSHOT'
 import hashlib,os,sys
