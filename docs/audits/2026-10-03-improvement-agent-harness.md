@@ -1,10 +1,10 @@
 # Whole-project improvement audit
 
-Assessment for personal use, prioritising incremental fixes. Executable code reviewed at `f93cb50`; the requested documentation and English-content changes were added during this review. The ten verified findings have now been fixed locally on `fix/audit-hardening-and-session-context`; GitHub issues remain open pending publication and integration.
+Assessment for personal use, prioritising incremental fixes. Executable code reviewed at `f93cb50`; the requested documentation and English-content changes were added during this review. The ten verified findings have been fixed and published on [`fix/audit-hardening-and-session-context`](https://github.com/nbfrodri/agent-harness/tree/fix/audit-hardening-and-session-context). Issues #13–#24 are closed as completed at the owner's request, with fix commits and verification recorded in their comments. Integration into `main` is pending.
 
 ## Resolution tracking
 
-| Finding | GitHub issue | Local fix |
+| Finding | GitHub issue | Fix commit |
 | --- | --- | --- |
 | Local hook stages secrets after scanning | [#13](https://github.com/nbfrodri/agent-harness/issues/13) | `cc47d63` |
 | Quoted filenames bypass scanning | [#14](https://github.com/nbfrodri/agent-harness/issues/14) | `cc47d63` |

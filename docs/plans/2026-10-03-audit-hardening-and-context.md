@@ -31,8 +31,8 @@ Each block ends in a focused Conventional Commit with regression tests and relev
 
 ## Results
 
-All ten [audit findings](../audits/2026-10-03-improvement-agent-harness.md) are corrected on `fix/audit-hardening-and-session-context`. Startup context and automatic, deduplicated audit issue publication are documented and implemented in the appropriate commands, hooks and skills. Issues #13–#24 track this work and remain open until publication and integration.
+All ten [audit findings](../audits/2026-10-03-improvement-agent-harness.md) are corrected on `fix/audit-hardening-and-session-context`. Startup context and automatic, deduplicated audit issue publication are documented and implemented in the appropriate commands, hooks and skills. At the owner's request, the branch was pushed and issues #13–#24 were closed as completed, with fix commits and verification recorded in their comments. Integration into `main` is pending.
 
 Three subagents worked in isolated worktrees on secret scanning/trust, command parsing and evaluations. Independent integration review exposed failed-write metric evidence and a shared-marker failure that removed a local opt-out; both were reproduced with failing regression tests and corrected in `7f3f4a2` and `bf098e0`.
 
-Final local verification: ShellCheck, content/cross-reference validation and 426 automated checks passed (12 validator, 87 installer, 177 existing hooks, 34 CLI/context, 2 settings merge, 42 security, 56 guard and 16 offline eval checks). CI now runs the additional suites on Linux and macOS; remote CI and macOS were not run locally. No live model benchmark, push, PR or release was performed.
+Final local verification: ShellCheck, content/cross-reference validation and 426 automated checks passed (12 validator, 87 installer, 177 existing hooks, 34 CLI/context, 2 settings merge, 42 security, 56 guard and 16 offline eval checks). CI now runs the additional suites on Linux and macOS; remote CI and macOS were not run locally. No live model benchmark, PR or release was performed.
