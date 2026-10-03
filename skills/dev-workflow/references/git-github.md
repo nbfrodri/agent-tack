@@ -77,4 +77,4 @@ PRs pequeños y revisables; si crece mucho, divídelo. Usa `gh` para crear PRs (
 
 ## Versionado y releases
 
-SemVer: `fix` → patch, `feat` → minor, breaking → major. Si el proyecto tiene CHANGELOG, actualízalo siguiendo Keep a Changelog.
+SemVer: `fix` → patch, `feat` → minor, breaking → major. Si el proyecto tiene CHANGELOG, actualízalo siguiendo Keep a Changelog. Para hacer una release (versión, tag, GitHub Release, automatización), sigue la skill `release`.
