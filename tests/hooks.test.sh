@@ -82,6 +82,42 @@ setup_commit "$(printf 'Update more\n\nCo-Authored-By: Claude <noreply@anthropic
 check "AI attribution still removed after opt-out" "! last_message | grep -qi claude"
 git -C "$R" config --unset harness.conventionalCommits
 
+echo "pre-commit: secrets never get committed"
+S="$WORK/secrets"
+new_repo "$S"
+stage() { mkdir -p "$(dirname "$S/$1")" && printf '%s\n' "$2" > "$S/$1" && git -C "$S" add -f "$1"; }
+# --allow-empty: if staging failed, the commit succeeds and a "refused" check fails loudly
+try_commit() { git -C "$S" commit -q --allow-empty -m "chore: test" >/dev/null 2>&1; }
+reset_index() { git -C "$S" reset -q; git -C "$S" clean -qfdx; }
+stage .env "API_KEY=abc"
+check "a .env file is refused" "! try_commit"
+reset_index
+stage config/.env.production "DB=x"
+check "a nested .env.production is refused" "! try_commit"
+reset_index
+stage .env.example "API_KEY="
+check ".env.example is allowed" "try_commit"
+stage id_rsa "-----BEGIN OPENSSH PRIVATE KEY-----"
+check "a private key is refused" "! try_commit"
+reset_index
+stage settings.py "AWS_ACCESS_KEY_ID = 'AKIAIOSFODNN7EXAMPLE'"
+check "an AWS access key is refused" "! try_commit"
+reset_index
+stage deploy.sh "export GITHUB_TOKEN=ghp_0123456789abcdefghijklmnopqrstuvwxyzAB"
+check "a GitHub token is refused" "! try_commit"
+reset_index
+stage pay.ts "const key = 'sk_live_0123456789abcdefghijklmn'"
+check "a Stripe live key is refused" "! try_commit"
+reset_index
+stage notes.md "Set AWS_ACCESS_KEY_ID in your environment; never commit .env files."
+check "text that only mentions secrets is allowed" "try_commit"
+stage .env "API_KEY=abc"
+check "override allows a deliberate commit" "HARNESS_ALLOW_SECRETS=1 try_commit"
+git -C "$S" config harness.enabled false
+stage .env.local "X=1"
+check "also active in projects that aren't enabled" "! try_commit"
+reset_index
+
 echo "Local repository hooks keep working (chaining)"
 cat > "$R/.git/hooks/pre-commit" <<EOF
 #!/usr/bin/env bash

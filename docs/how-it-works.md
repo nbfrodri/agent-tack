@@ -35,6 +35,7 @@ Safety: existing files are moved to `<name>.bak-<timestamp>`, never overwritten;
 ## Enforced rules (hooks)
 | Hook | Where | What it does |
 | --- | --- | --- |
+| `pre-commit` | git (global) | Refuses `.env` files (not `.env.example`) and well-known credential formats (private keys, AWS, GitHub, Stripe, Slack, Google, Anthropic, OpenAI) in every repo, then runs the repo's own pre-commit. |
 | `commit-msg` | git (global) | Removes AI attribution everywhere; in enabled projects, rejects subjects that aren't Conventional Commits. |
 | `pre-push` | git (global) | Refuses force-pushes and deletions of `main`/`master`. In enabled projects, only annotated `vX.Y.Z` tags, never moved or deleted. |
 | Other git hooks | git (global) | Pass through to each repo's own `.git/hooks/*` (client and server side). |

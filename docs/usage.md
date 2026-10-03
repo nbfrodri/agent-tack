@@ -16,6 +16,7 @@ git config --global harness.enabled true   # every repo (a local disable still w
 | | Enabled project | Any other repo |
 | --- | --- | --- |
 | Command guard, protection of `main` and tags | ✔ | ✔ (tags: enabled only) |
+| No `.env` files or credentials committed | ✔ | ✔ |
 | AI attribution removed from commits | ✔ | ✔ |
 | Conventional Commits enforced | ✔ | — |
 | Full workflow and auto-format | ✔ | — |
@@ -43,6 +44,7 @@ Talk normally, in your language:
 | A repo with other commit conventions | `git config harness.conventionalCommits false` |
 | A deliberate force-push to `main` | `HARNESS_ALLOW_FORCE_PUSH=1 git push --force …` |
 | A deliberate tag change | `HARNESS_ALLOW_TAG=1 git push …` |
+| A false positive in the secrets check | `HARNESS_ALLOW_SECRETS=1 git commit …` |
 
 ## Updating
 ```bash

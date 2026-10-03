@@ -1,1 +1,70 @@
-_chain
+#!/usr/bin/env bash
+# Global pre-commit hook, active in every repository (a safety net, like the protection of main):
+#   1. refuses to commit .env files (except .env.example/.sample/.template/.dist) and lines that
+#      contain well-known credential formats (private keys, AWS, GitHub, Stripe, Slack, Google,
+#      Anthropic and OpenAI keys);
+#   2. runs the repository's own pre-commit hook, if any.
+# It reports the file and the kind of secret, never the secret itself.
+#
+# Deliberate one-off override:  HARNESS_ALLOW_SECRETS=1 git commit ...
+set -u
+
+HOOK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=SCRIPTDIR/_chain
+. "$HOOK_DIR/_chain"
+
+refuse() {
+  cat >&2 <<EOF
+pre-commit: refusing to commit secrets:
+$1
+Keep secrets in .env (git-ignored) or a secret manager, and document the variable in .env.example.
+To unstage: git restore --staged <file>. If the secret was ever pushed, rotate it.
+(Deliberate override: HARNESS_ALLOW_SECRETS=1 git commit ...)
+EOF
+  exit 1
+}
+
+if [ "${HARNESS_ALLOW_SECRETS:-}" != "1" ]; then
+  found=""
+
+  # .env files by name
+  while IFS= read -r path; do
+    [ -n "$path" ] || continue
+    case "$(basename "$path")" in
+      .env.example | .env.sample | .env.template | .env.dist) ;;
+      .env | .env.*) found="$found  $path: environment file
+" ;;
+    esac
+  done <<EOF
+$(git diff --cached --name-only --diff-filter=ACMR)
+EOF
+
+  # Credential formats in the added lines, as "file<TAB>line"
+  added="$(mktemp "${TMPDIR:-/tmp}/pre-commit.XXXXXX")" || exit 1
+  trap 'rm -f "$added"' EXIT
+  git diff --cached -U0 --no-color --diff-filter=ACMR \
+    | awk '/^\+\+\+ b\// { file = substr($0, 7); next } /^\+/ && file != "" { print file "\t" substr($0, 2) }' > "$added"
+
+  while IFS='|' read -r kind pattern; do
+    [ -n "$kind" ] || continue
+    while IFS= read -r path; do
+      [ -n "$path" ] && found="$found  $path: $kind
+"
+    done <<EOF
+$(grep -E -e "$pattern" "$added" | cut -f1 | sort -u)
+EOF
+  done <<'PATTERNS'
+private key|-----BEGIN ([A-Z]+ )?PRIVATE KEY-----
+AWS access key|AKIA[0-9A-Z]{16}
+GitHub token|gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{22,}
+Stripe live key|[sr]k_live_[0-9a-zA-Z]{24,}
+Slack token|xox[baprs]-[0-9A-Za-z-]{10,}
+Google API key|AIza[0-9A-Za-z_-]{35}
+Anthropic API key|sk-ant-[A-Za-z0-9_-]{20,}
+OpenAI API key|sk-proj-[A-Za-z0-9_-]{20,}
+PATTERNS
+
+  [ -z "$found" ] || refuse "$found"
+fi
+
+run_local_hook pre-commit "$@"

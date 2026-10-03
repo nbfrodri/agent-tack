@@ -14,7 +14,7 @@ Out of the box, AI assistants forget your conventions every session, skip tests,
 | **Process skills** | `new-project`, `debugging`, `testing`, `git-history`, `release`, `github-issues`, `project-docs`, `improve`, `orchestrate`, `auto-improve`, `lessons` |
 | **Stack skills** | `frontend`, `api-design`, `database`, `auth`, `e2e-testing`, `deployment`, `observability` |
 | **Agents** | `planner`, `implementer`, `code-reviewer`, `test-writer`, `docs-writer`, `evaluator`, `architecture-reviewer`, `security-auditor`, `performance-analyzer`, `ui-reviewer` |
-| **Enforced by hooks** | Conventional Commits, no AI attribution, protected `main` and tags, a guard against dangerous commands, auto-format |
+| **Enforced by hooks** | Conventional Commits, no AI attribution, no secrets or `.env` committed, protected `main` and tags, a guard against dangerous commands, auto-format |
 | **Tools** | Claude Code, Codex, Cursor, GitHub Copilot CLI, Gemini CLI, OpenCode, Crush |
 | **Quality** | ~260 tests on Linux and macOS; [measured results](docs/results.md) |
 
