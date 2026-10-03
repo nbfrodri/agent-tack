@@ -17,6 +17,7 @@ ROWS = [
     ("tests_pass", "Tests pass", "rate"),
     ("tests_count", "Tests", "mean"),
     ("test_written_before_code", "Test written before code", "rate"),
+    ("red_green_verified", "Failing test before fix and passing test after", "rate"),
     ("planned", "Wrote a plan", "rate"),
     ("worked_on_branch", "Worked on a branch", "rate"),
     ("readme", "README", "rate"),
@@ -53,13 +54,14 @@ def main():
     runs = defaultdict(lambda: defaultdict(list))
     for f in sorted(root.glob("*/*/metrics.json")):
         m = json.loads(f.read_text())
-        runs[m["scenario"]][m["condition"]].append(m)
+        runs[(m["scenario"], str(m.get("metrics_version", "legacy")), m.get("provider") or "unknown")][m["condition"]].append(m)
     if not runs:
         sys.exit(f"no metrics.json under {root}: run evals/grade.py first")
-    for scenario in sorted(runs):
-        by_condition = runs[scenario]
-        n = max(len(v) for v in by_condition.values())
-        print(f"### {scenario} ({n} runs per condition)\n")
+    for group in sorted(runs):
+        scenario, version, provider = group
+        by_condition = runs[group]
+        print(f"### {scenario} (baseline: {len(by_condition.get('baseline', []))} runs; harness: {len(by_condition.get('harness', []))} runs)\n")
+        print(f"Provider: {provider}; metrics version: {version}. Unknown measurements are excluded; rates show the number of observed runs.\n")
         print("| Metric | Baseline | Harness |")
         print("| --- | --- | --- |")
         for key, label, kind in ROWS:

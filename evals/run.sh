@@ -9,7 +9,7 @@
 #               without the global hooks (same repo and prompt)
 # Results go to $EVALS_OUT (default: $TMPDIR/agent-harness-evals)/<scenario>/<condition>-<rep>;
 # grade them with evals/grade.py and summarise them with evals/report.py.
-set -uo pipefail
+set -eEuo pipefail
 
 HARNESS_REPO="$(cd "$(dirname "$0")/.." && pwd)"
 EVALS="${EVALS_OUT:-${TMPDIR:-/tmp}/agent-harness-evals}"
@@ -33,12 +33,27 @@ out="$EVALS/$name/$condition-$rep"
 dir="$out/repo"
 rm -rf "$out"
 mkdir -p "$dir"
+exec 2> "$out/stderr.log"
+start=$(date +%s)
+isolated_home=""
+# shellcheck disable=SC2329 # Invoked by the EXIT trap.
+finish() {
+  status=$?
+  printf 'exit=%s seconds=%s\n' "$status" "$(( $(date +%s) - start ))" > "$out/run.txt"
+  if [ -n "$isolated_home" ]; then rm -rf "$isolated_home"; fi
+}
+trap finish EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+trap 'status=$?; echo "Scenario setup failed (exit=$status)" >> "$out/stderr.log"; exit "$status"' ERR
 
 if [ "$condition" = baseline ]; then
   # A git config without the harness hooks, keeping only the user's identity
+  eval_user=$(git config --global --get user.name 2>/dev/null || echo Eval)
+  eval_email=$(git config --global --get user.email 2>/dev/null || echo eval@example.com)
   export GIT_CONFIG_GLOBAL="$out/gitconfig"
-  git config --file "$GIT_CONFIG_GLOBAL" user.name "$(git config --global --get user.name 2>/dev/null || echo Eval)"
-  git config --file "$GIT_CONFIG_GLOBAL" user.email "$(git config --global --get user.email 2>/dev/null || echo eval@example.com)"
+  git config --file "$GIT_CONFIG_GLOBAL" user.name "$eval_user"
+  git config --file "$GIT_CONFIG_GLOBAL" user.email "$eval_email"
   git config --file "$GIT_CONFIG_GLOBAL" init.defaultBranch main
 fi
 
@@ -149,7 +164,20 @@ printf '%s\n' "$prompt" > "$out/prompt.txt"
 baseline_flags=()
 [ "$condition" = baseline ] && baseline_flags=(--setting-sources "project,local" --disable-slash-commands)
 
+if [ "$condition" = baseline ] && [ "$name" = codex-new-project ]; then
+  auth_source="${CODEX_HOME:-$HOME/.codex}/auth.json"
+  isolated_home=$(mktemp -d "${TMPDIR:-/tmp}/harness-eval-home.XXXXXX")
+  chmod 700 "$isolated_home"
+  mkdir -m 700 "$isolated_home/.codex" "$isolated_home/.config"
+  if [ -f "$auth_source" ]; then
+    (umask 077; cat "$auth_source" > "$isolated_home/.codex/auth.json")
+  fi
+  export HOME="$isolated_home" CODEX_HOME="$isolated_home/.codex" XDG_CONFIG_HOME="$isolated_home/.config"
+fi
+
 start=$(date +%s)
+trap - ERR
+set +e
 case "$name" in
   codex-new-project)
     codex exec --json -s workspace-write -c sandbox_workspace_write.network_access=true \
@@ -165,4 +193,5 @@ case "$name" in
       > "$out/transcript.jsonl" 2> "$out/stderr.log"
     ;;
 esac
-echo "exit=$? seconds=$(( $(date +%s) - start ))" > "$out/run.txt"
+status=$?
+exit "$status"
