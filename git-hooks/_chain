@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Global git hooks are installed with `core.hooksPath`, which makes git ignore each
+# repository's own .git/hooks. Every hook in this folder ends by calling run_local_hook
+# so that hooks installed per repository (pre-commit, lefthook, custom scripts) keep working.
+#
+# This file is both a library (sourced by commit-msg and pre-push) and the pass-through
+# hook itself (the other hook names are symlinks to it).
+
+# Runs .git/hooks/<name> of the current repository, if there is one, with the given arguments.
+# Reads stdin from AGENT_CONFIG_HOOK_STDIN when set (for hooks that consume stdin first).
+run_local_hook() {
+  local name="$1" dir local_hook self
+  shift
+  # Guard against a local hook that points back at these global hooks
+  if [ -n "${AGENT_CONFIG_IN_LOCAL_HOOK:-}" ]; then
+    return 0
+  fi
+  dir="$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null \
+    || git rev-parse --git-common-dir 2>/dev/null)" || return 0
+  local_hook="$dir/hooks/$name"
+  [ -f "$local_hook" ] && [ -x "$local_hook" ] || return 0
+  self="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$name"
+  [ "$local_hook" -ef "$self" ] && return 0
+
+  if [ -n "${AGENT_CONFIG_HOOK_STDIN+set}" ]; then
+    printf '%s' "$AGENT_CONFIG_HOOK_STDIN" | AGENT_CONFIG_IN_LOCAL_HOOK=1 "$local_hook" "$@"
+  else
+    AGENT_CONFIG_IN_LOCAL_HOOK=1 "$local_hook" "$@"
+  fi
+}
+
+# Executed directly (as a symlinked hook name): just pass through to the local hook.
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then
+  run_local_hook "$(basename "$0")" "$@"
+  exit $?
+fi

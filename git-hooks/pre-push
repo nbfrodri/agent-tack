@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# Global pre-push hook: refuses to rewrite or delete main/master on any remote
+# (force pushes, deletions), then runs the repository's own pre-push hook, if any.
+#
+# Deliberate one-off override:  AGENT_CONFIG_ALLOW_FORCE_PUSH=1 git push --force ...
+set -u
+
+HOOK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=SCRIPTDIR/_chain
+. "$HOOK_DIR/_chain"
+
+remote_name="${1:-remote}"
+input="$(cat)"
+
+is_zero() { case "$1" in *[!0]*) return 1 ;; *) return 0 ;; esac; }
+
+if [ "${AGENT_CONFIG_ALLOW_FORCE_PUSH:-}" != "1" ]; then
+  while read -r _local_ref local_sha remote_ref remote_sha; do
+    [ -n "${remote_ref:-}" ] || continue
+    case "$remote_ref" in
+      refs/heads/main|refs/heads/master) ;;
+      *) continue ;;
+    esac
+    branch="${remote_ref#refs/heads/}"
+
+    if is_zero "$local_sha"; then
+      echo "pre-push: refusing to delete '$branch' on $remote_name." >&2
+      exit 1
+    fi
+    # A new branch on the remote is fine
+    is_zero "$remote_sha" && continue
+
+    # The push must be a fast-forward: the remote tip must be an ancestor of what we push.
+    # If we don't even have the remote tip locally, the push would overwrite unknown commits.
+    if ! git cat-file -e "${remote_sha}^{commit}" 2>/dev/null \
+      || ! git merge-base --is-ancestor "$remote_sha" "$local_sha" 2>/dev/null; then
+      cat >&2 <<EOF
+pre-push: refusing to rewrite '$branch' on $remote_name (not a fast-forward).
+Rewriting the history of $branch can destroy other people's work.
+Use 'git revert' to undo published commits, or pull/rebase your local changes first.
+(Deliberate override: AGENT_CONFIG_ALLOW_FORCE_PUSH=1 git push ...)
+EOF
+      exit 1
+    fi
+  done <<EOF
+$input
+EOF
+fi
+
+AGENT_CONFIG_HOOK_STDIN="$input" run_local_hook pre-push "$@"

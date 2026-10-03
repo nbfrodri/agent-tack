@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# Global commit-msg hook:
+#   1. removes AI attribution (Co-Authored-By trailers of AI tools, "Generated with ..." lines)
+#   2. enforces Conventional Commits on the subject line
+#   3. runs the repository's own commit-msg hook, if any
+#
+# Opt out of the format check in a repository that uses other conventions:
+#   git config agentconfig.conventionalCommits false
+set -u
+
+HOOK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=SCRIPTDIR/_chain
+. "$HOOK_DIR/_chain"
+
+msg_file="$1"
+[ -f "$msg_file" ] || exit 0
+
+# 1. Strip AI attribution lines
+AI_PATTERN='^[[:space:]]*(co-authored-by:.*(claude|anthropic|openai|codex|chatgpt|gpt-|copilot|gemini|cursor|aider|devin|windsurf|noreply@anthropic\.com)|.*generated (with|by) .*(claude|codex|chatgpt|copilot|cursor|gemini)|🤖)'
+if grep -qiE "$AI_PATTERN" "$msg_file"; then
+  tmp="$(mktemp "${TMPDIR:-/tmp}/commit-msg.XXXXXX")" || exit 1
+  # Drop the matching lines, then trailing blank lines left behind
+  grep -viE "$AI_PATTERN" "$msg_file" \
+    | awk '{ lines[NR] = $0 } END { n = NR; while (n > 0 && lines[n] ~ /^[[:space:]]*$/) n--; for (i = 1; i <= n; i++) print lines[i] }' \
+    > "$tmp"
+  cat "$tmp" > "$msg_file"
+  rm -f "$tmp"
+  echo "commit-msg: removed AI attribution lines from the commit message" >&2
+fi
+
+# 2. Conventional Commits check on the subject (first non-comment, non-empty line)
+if [ "$(git config --bool agentconfig.conventionalCommits 2>/dev/null)" != "false" ]; then
+  subject="$(grep -vE '^[[:space:]]*(#|$)' "$msg_file" | head -n 1)"
+  CC_PATTERN='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-zA-Z0-9._/-]+\))?!?: [^[:space:]].*'
+  # Messages git or tools generate (merges, reverts, autosquash) are always accepted
+  GENERATED_PATTERN='^(Merge |Revert "|fixup! |squash! |amend! |Initial commit$)'
+
+  if [ -z "$subject" ]; then
+    : # empty message: git aborts the commit itself
+  elif printf '%s' "$subject" | grep -qE "$GENERATED_PATTERN"; then
+    :
+  elif ! printf '%s' "$subject" | grep -qE "$CC_PATTERN"; then
+    cat >&2 <<EOF
+commit-msg: the subject line does not follow Conventional Commits:
+
+    $subject
+
+Expected:  <type>(<optional scope>): <description>
+Types:     feat fix docs style refactor perf test build ci chore revert
+Examples:  feat(auth): add password reset
+           fix: handle empty cart on checkout
+
+(In a repository with other conventions: git config agentconfig.conventionalCommits false)
+EOF
+    exit 1
+  elif [ "${#subject}" -gt 100 ]; then
+    echo "commit-msg: the subject line is ${#subject} characters; keep it under 72 (max 100)." >&2
+    exit 1
+  fi
+fi
+
+# 3. The repository's own commit-msg hook
+run_local_hook commit-msg "$@"
