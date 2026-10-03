@@ -7,6 +7,13 @@ set -uo pipefail
 
 EVALS="${EVALS_OUT:-${TMPDIR:-/tmp}/agent-config-evals}"
 name="${1:?scenario name required}"
+case "$name" in
+  s1-claude-new | s2-claude-bug | s3-claude-release | s4-codex-new) ;;
+  *)
+    echo "unknown scenario '$name' (s1-claude-new | s2-claude-bug | s3-claude-release | s4-codex-new)" >&2
+    exit 2
+    ;;
+esac
 dir="$EVALS/$name/repo"
 out="$EVALS/$name"
 rm -rf "$out"
