@@ -2,10 +2,15 @@
 
 Day-to-day use: switching the harness on and off, what to ask, and keeping it up to date.
 
+## CLI help
+
+Run `harness help`, `harness --help` or `harness -h` for command syntax, options, exit codes and examples. Help also works outside a Git repository. Running `harness` without a command displays project status.
+
 ## On/off per project
 The full workflow (plan, TDD, conventions, docs, handoffs, AI log, Conventional Commits, auto-format) is opt-in per project. Everywhere else the AI works normally and only the safety net stays on.
 
 ```bash
+harness help              # CLI reference; aliases: --help and -h
 harness status            # workflow activation and local formatter trust
 harness status --quiet    # no output; exit 0 when enabled, 1 when disabled
 harness enable            # this clone only (git config; nothing added to the repo)

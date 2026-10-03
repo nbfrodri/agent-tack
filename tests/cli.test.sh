@@ -56,6 +56,18 @@ git config --local --unset harness.enabled
 git config --local --unset harness.trusted
 cd "$WORK" || exit 1
 check "outside a repository status is disabled and untrusted" expect_status 1 disabled untrusted status
+check "help works outside a Git repository" expect_exit 0 "$CLI" help
+check "help shows CLI invocation syntax" contains 'Usage: harness [command] [options]'
+check "help documents the default command" contains 'Default command: status'
+check "help lists both global help flags" contains '-h, --help'
+cp "$WORK/output" "$WORK/help-output"
+check "long help flag succeeds outside Git" expect_exit 0 "$CLI" --help
+check "long help flag matches the help command" cmp -s "$WORK/output" "$WORK/help-output"
+check "short help flag succeeds outside Git" expect_exit 0 "$CLI" -h
+check "short help flag matches the help command" cmp -s "$WORK/output" "$WORK/help-output"
+check "help rejects unsupported arguments" expect_exit 2 "$CLI" help unexpected
+check "unknown command fails with a usage error" expect_exit 2 "$CLI" unknown-command
+check "unknown command includes CLI invocation syntax" contains 'Usage: harness [command] [options]'
 cd "$WORK/project" || exit 1
 
 : > .git/config.lock
