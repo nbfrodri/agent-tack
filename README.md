@@ -36,17 +36,39 @@ Safety guarantees:
 - `./install.sh --skip-plugins` skips the plugin step, e.g. when offline.
 - Works on Linux and macOS (including macOS's bash 3.2). CI tests both on every push.
 
+## On/off per project
+
+The full workflow (plan, TDD, conventions, docs, handoffs, AI log, Conventional Commits, auto-format) is **opt-in per project**. Everywhere else the AI works normally and only the safety net stays on.
+
+```bash
+agent-config enable            # this clone only (git config; nothing added to the repo)
+agent-config enable --shared   # commit a .agent-config file so it travels with the repo
+agent-config disable
+agent-config status            # enabled / disabled
+git config --global agentconfig.enabled true   # enable everywhere (a local `disable` still wins)
+```
+
+| | Enabled project | Any other repo |
+| --- | --- | --- |
+| Command guard, protection of `main` | ✔ | ✔ |
+| AI attribution removed from commits | ✔ | ✔ |
+| Conventional Commits enforced | ✔ | — |
+| Full workflow and auto-format | ✔ | — |
+
+Claude Code is told the status at session start (`SessionStart` hook); Codex checks `agent-config status` as its instructions say. `new-project` enables new projects automatically.
+
 ## Enforced rules (hooks)
 
 Skills and instructions guide the AI; hooks **enforce** the rules that matter, whatever the AI (or you) does.
 
 | Hook | Where | What it does |
 | --- | --- | --- |
-| `commit-msg` | git (global) | Removes AI attribution (`Co-Authored-By` of Claude, Codex, Copilot…, "Generated with…") and rejects subjects that aren't Conventional Commits. Merge, revert and `fixup!`/`squash!` messages are accepted. |
+| `commit-msg` | git (global) | Removes AI attribution (`Co-Authored-By` of Claude, Codex, Copilot…, "Generated with…") everywhere, and in enabled projects rejects subjects that aren't Conventional Commits. Merge, revert and `fixup!`/`squash!` messages are accepted. |
 | `pre-push` | git (global) | Refuses force-pushes and deletions of `main`/`master` on any remote. One-off override: `AGENT_CONFIG_ALLOW_FORCE_PUSH=1 git push …` |
 | Other git hooks | git (global) | Pass through to each repository's own `.git/hooks/*` (client and server side, e.g. `post-receive` in local bare repos), so pre-commit, lefthook or custom hooks keep working. |
+| `session-context.sh` | Claude Code `SessionStart` | Tells Claude whether the project is enabled. |
 | `guard-bash.sh` | Claude Code `PreToolUse` | **Blocks** force-pushing main, `--no-verify`, `rm -rf` of `/`, `~` or `..`. **Asks first** for `reset --hard`, `clean -f`, discarding changes, deleting branches, force-pushing other branches, recursive deletes outside the project, and dropping/resetting databases. |
-| `format-file.sh` | Claude Code `PostToolUse` | Formats each edited file with the formatter the project already has configured (Biome, Prettier, Ruff, Black, Pint, gofmt, cargo fmt). Projects without one are left alone. |
+| `format-file.sh` | Claude Code `PostToolUse` | In enabled projects, formats each edited file with the formatter the project already has configured (Biome, Prettier, Ruff, Black, Pint, gofmt, cargo fmt). Projects without one are left alone. |
 
 Git hooks apply to Claude, Codex, any other tool and your own commits. Notes:
 
@@ -58,6 +80,7 @@ Git hooks apply to Claude, Codex, any other tool and your own commits. Notes:
 
 ```
 global/AGENTS.md      # global instructions for every AI assistant
+bin/agent-config      # per-project switch, linked into ~/.local/bin
 skills/<name>/        # Agent Skills (SKILL.md + references/), used by Claude Code and Codex
 agents/<name>.md      # Claude Code subagents
 claude/settings.json  # Claude Code settings and hooks merged into ~/.claude/settings.json
@@ -150,7 +173,7 @@ Full details: `skills/dev-workflow/references/conventions.md`.
 ## Development
 
 ```bash
-shellcheck -x install.sh tests/*.sh evals/run.sh git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push hooks/claude/*.sh
+shellcheck -x install.sh bin/agent-config tests/*.sh evals/run.sh git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push hooks/claude/*.sh
 tests/validate.sh                  # validate skills, agents and plugins.txt
 tests/install.test.sh              # test the installer in throwaway HOME directories
 tests/hooks.test.sh                # test git and Claude Code hooks in throwaway repositories

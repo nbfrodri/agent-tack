@@ -60,6 +60,7 @@ for dir in .agents/skills .claude/skills .codex/skills; do
   check "all $skill_count skills linked in ~/$dir" "[ \"\$(find '$H/$dir' -maxdepth 1 -type l | wc -l | tr -d ' ')\" = '$skill_count' ]"
 done
 check "all $agent_count agents linked" "[ \"\$(find '$H/.claude/agents' -maxdepth 1 -type l | wc -l | tr -d ' ')\" = '$agent_count' ]"
+check "agent-config command linked into ~/.local/bin" "[ \"\$(readlink '$H/.local/bin/agent-config')\" = '$REPO/bin/agent-config' ]"
 check "settings.json disables AI attribution" "[ \"\$(json_get '$H/.claude/settings.json' attribution.commit)\" = '\"\"' ]"
 
 check "fresh install creates no backups" "! find '$H' -name '*.bak-*' | grep -q ."
@@ -130,6 +131,7 @@ check "outdated tagged hooks are replaced" "! grep -q /old/path '$S'"
 check "events left empty are removed" "! grep -q '\"Stop\"' '$S'"
 check "exactly one guard hook" "[ \"\$(count_ours '$S' PreToolUse)\" = 1 ]"
 check "exactly one format hook" "[ \"\$(count_ours '$S' PostToolUse)\" = 1 ]"
+check "exactly one session-start hook" "[ \"\$(count_ours '$S' SessionStart)\" = 1 ]"
 run_install "$H"
 check "no duplicates after re-running" "[ \"\$(count_ours '$S' PreToolUse)\" = 1 ] && [ \"\$(count_ours '$S' PostToolUse)\" = 1 ]"
 

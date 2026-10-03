@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Claude Code PostToolUse hook for Write/Edit/MultiEdit.
-# Formats the edited file with the formatter the project already uses, and only when the
-# project has it configured, so repositories without a formatter never get noisy diffs.
+# Formats the edited file with the formatter the project already uses, only in projects where
+# agent-config is enabled (they are trusted, so their local formatter binaries may run) and only
+# when the project has the formatter configured, so other repositories never get noisy diffs.
 # Never blocks: always exits 0.
 set -u
 
@@ -19,8 +20,10 @@ print((d.get("tool_input") or {}).get("file_path") or (d.get("tool_response") or
 fi
 [ -n "$file" ] && [ -f "$file" ] || exit 0
 
+cli="$(cd "$(dirname "$0")/../../bin" && pwd)/agent-config"
 dir="$(cd "$(dirname "$file")" && pwd)" || exit 0
-root="$(git -C "$dir" rev-parse --show-toplevel 2>/dev/null)" || root="$dir"
+root="$(git -C "$dir" rev-parse --show-toplevel 2>/dev/null)" || exit 0
+(cd "$root" && "$cli" status --quiet) || exit 0
 
 has_file() {
   local f

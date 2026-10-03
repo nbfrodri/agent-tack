@@ -30,6 +30,17 @@
           }
         ]
       }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '__REPO__/hooks/claude/session-context.sh' #agent-config",
+            "timeout": 10
+          }
+        ]
+      }
     ]
   }
 }

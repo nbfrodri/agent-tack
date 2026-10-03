@@ -118,6 +118,14 @@ install_links() {
     done
   done
 
+  section "Command"
+  chmod +x "$REPO/bin/agent-config" 2>/dev/null
+  link "$REPO/bin/agent-config" "$HOME/.local/bin/agent-config"
+  case ":$PATH:" in
+    *":$HOME/.local/bin:"*) ;;
+    *) warn "$HOME/.local/bin is not in PATH: add it to use 'agent-config enable|disable|status'" ;;
+  esac
+
   section "Subagents (Claude Code)"
   prune "$HOME/.claude/agents"
   local agent

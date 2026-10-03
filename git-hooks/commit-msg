@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 # Global commit-msg hook:
-#   1. removes AI attribution (Co-Authored-By trailers of AI tools, "Generated with ..." lines)
-#   2. enforces Conventional Commits on the subject line
+#   1. removes AI attribution (Co-Authored-By trailers of AI tools, "Generated with ..." lines),
+#      in every repository
+#   2. enforces Conventional Commits on the subject line, in projects where agent-config is
+#      enabled (`agent-config enable`)
 #   3. runs the repository's own commit-msg hook, if any
 #
-# Opt out of the format check in a repository that uses other conventions:
+# Opt out of the format check in an enabled repository that uses other conventions:
 #   git config agentconfig.conventionalCommits false
 set -u
 
@@ -29,7 +31,8 @@ if grep -qiE "$AI_PATTERN" "$msg_file"; then
 fi
 
 # 2. Conventional Commits check on the subject (first non-comment, non-empty line)
-if [ "$(git config --bool agentconfig.conventionalCommits 2>/dev/null)" != "false" ]; then
+if "$HOOK_DIR/../bin/agent-config" status --quiet \
+  && [ "$(git config --bool agentconfig.conventionalCommits 2>/dev/null)" != "false" ]; then
   subject="$(grep -vE '^[[:space:]]*(#|$)' "$msg_file" | head -n 1)"
   CC_PATTERN='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-zA-Z0-9._/-]+\))?!?: [^[:space:]].*'
   # Messages git or tools generate (merges, reverts, autosquash) are always accepted

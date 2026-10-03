@@ -22,6 +22,9 @@ git config --global user.email "test@example.com"
 git config --global init.defaultBranch main
 git config --global core.hooksPath "$REPO/git-hooks"
 git config --global commit.gpgsign false
+# Test repos behave as agent-config-enabled projects unless a test disables them
+git config --global agentconfig.enabled true
+CLI="$REPO/bin/agent-config"
 
 new_repo() {
   rm -rf "$1"
@@ -218,6 +221,41 @@ expect ask "git push --force-with-lease"
 expect ask "git push --force"
 check "invalid JSON input is allowed (fails open)" "[ -z \"\$(printf 'not json' | bash '$GUARD')\" ]"
 
+echo "Switch: agent-config enable/disable/status"
+R="$WORK/switch"
+new_repo "$R"
+git config --global --unset agentconfig.enabled
+status_of() { (cd "$R" && "$CLI" status); }
+check "disabled by default" "[ \"\$(status_of)\" = disabled ]"
+check "status exits 1 when disabled" "! (cd '$R' && '$CLI' status --quiet)"
+check "free-form commits allowed when disabled" "commit 'quick fix'"
+commit "$(printf 'wip\n\nCo-Authored-By: Claude <noreply@anthropic.com>\n')"
+check "AI attribution still removed when disabled" "! last_message | grep -qi claude"
+(cd "$R" && "$CLI" enable >/dev/null)
+check "enable (local) turns it on" "[ \"\$(status_of)\" = enabled ]"
+check "local enable leaves the repo untouched" "[ ! -e '$R/.agent-config' ]"
+check "Conventional Commits enforced once enabled" "! commit 'quick fix'"
+(cd "$R" && "$CLI" disable >/dev/null)
+check "disable turns it off" "[ \"\$(status_of)\" = disabled ]"
+(cd "$R" && "$CLI" enable --shared >/dev/null)
+check "enable --shared creates .agent-config" "[ -f '$R/.agent-config' ]"
+git -C "$R" config --unset agentconfig.enabled
+check "the .agent-config file alone enables it" "[ \"\$(status_of)\" = enabled ]"
+(cd "$R" && "$CLI" disable >/dev/null)
+check "disable removes the file" "[ ! -e '$R/.agent-config' ] && [ \"\$(status_of)\" = disabled ]"
+git config --global agentconfig.enabled true
+check "global true enables every repo" "[ \"\$(cd '$WORK/repo' && '$CLI' status)\" = enabled ]"
+check "a local false wins over global true" "[ \"\$(status_of)\" = disabled ]"
+check "outside a git repo: disabled" "[ \"\$(cd '$WORK' && '$CLI' status)\" = disabled ]"
+check "unknown command exits 2" "(cd '$R' && '$CLI' nope >/dev/null 2>&1); [ \$? -eq 2 ]"
+
+echo "Claude hook: session-context"
+SESSION="$REPO/hooks/claude/session-context.sh"
+session() { printf '{"cwd":"%s"}' "$1" | bash "$SESSION"; }
+check "enabled project: says ENABLED" "session '$WORK/repo' | grep -q 'ENABLED for this project'"
+check "disabled project: says NOT enabled" "session '$R' | grep -q 'NOT enabled'"
+check "output is valid JSON for SessionStart" "session '$R' | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d[\"hookSpecificOutput\"][\"hookEventName\"]==\"SessionStart\"'"
+
 echo "Claude hook: format-file"
 FORMAT="$REPO/hooks/claude/format-file.sh"
 P="$WORK/project"
@@ -235,6 +273,15 @@ check "no formatter config → file untouched" "! grep -q formatted '$P/src/a.ts
 echo '{}' > "$P/.prettierrc"
 format "$P/src/a.ts"
 check "prettier configured → file formatted" "grep -q formatted '$P/src/a.ts'"
+echo "const b=2" > "$P/src/b.ts"
+git -C "$P" config agentconfig.enabled false
+format "$P/src/b.ts"
+check "project not enabled → its formatter binaries are never run" "! grep -q formatted '$P/src/b.ts'"
+git -C "$P" config --unset agentconfig.enabled
+mkdir -p "$WORK/no-git"
+echo "const c=3" > "$WORK/no-git/c.ts"
+format "$WORK/no-git/c.ts"
+check "file outside any git repo → untouched" "! grep -q formatted '$WORK/no-git/c.ts'"
 echo "x = 1" > "$P/src/a.py"
 format "$P/src/a.py"
 check "python file without ruff/black config untouched" "[ \"\$(cat '$P/src/a.py')\" = 'x = 1' ]"

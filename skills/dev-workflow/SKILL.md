@@ -1,9 +1,11 @@
 ---
 name: dev-workflow
-description: Flujo de trabajo de ingeniería del usuario para cualquier tarea de software - planificar antes de actuar, TDD, SOLID, DDD, commits con Conventional Commits, ramas y PRs en GitHub, y mantener README/documentación al día. Úsala SIEMPRE que la petición implique escribir, modificar, refactorizar, diseñar o depurar código, crear un proyecto, hacer commits, ramas, push, PRs, releases o tocar documentación, aunque el usuario no mencione la skill ni "buenas prácticas". También cuando pida un plan, una arquitectura o revisar código.
+description: Flujo de trabajo de ingeniería del usuario para cualquier tarea de software - planificar antes de actuar, TDD, SOLID, DDD, commits con Conventional Commits, ramas y PRs en GitHub, y mantener README/documentación al día. En proyectos con agent-config activado (`agent-config status` → enabled), úsala SIEMPRE que la petición implique escribir, modificar, refactorizar, diseñar o depurar código, crear un proyecto, hacer commits, ramas, push, PRs, releases o tocar documentación, aunque el usuario no mencione la skill ni "buenas prácticas". También cuando pida un plan, una arquitectura o revisar código.
 ---
 
 # Dev Workflow
+
+Se aplica en proyectos con agent-config activado (`agent-config status`; Claude Code lo indica al iniciar la sesión). En los demás, trabaja de forma normal sin esta ceremonia, salvo que el usuario lo pida.
 
 Este es el modo de trabajar que el usuario quiere en todos sus proyectos, con cualquier IA (Claude, Codex u otra). El objetivo es que cada petición termine en un cambio pequeño, probado, documentado y con un historial de git limpio que cualquiera pueda entender después.
 
