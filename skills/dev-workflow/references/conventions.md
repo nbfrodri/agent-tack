@@ -47,9 +47,23 @@ Formatting is never discussed or done by hand: the formatter runs on save, in th
 - **Errors.** Throw or raise domain-specific errors with context; catch only where you can handle or translate them (usually at the boundary).
 
 ### Comments and docs in code
-- **Docstrings / JSDoc on the public API only**, when the purpose or behaviour isn't obvious from the name and types: exported functions, classes and modules of libraries and shared code. Describe what it does, its non-obvious parameters, return value, errors raised, and an example if it helps.
-- **Inline comments explain why**: a business rule, a workaround (with a link to the issue), a non-obvious performance or security reason. Never restate what the code says.
-- `TODO` only with an issue reference: `// TODO(#123): …`.
+**Default: no comments.** Well-named functions, variables and types make most comments unnecessary, and AI-written code tends to over-comment. Before writing a comment, try to make it unnecessary: rename, extract a well-named function, or introduce a named constant or type.
+
+Write a comment only when the code cannot say it:
+- **why** something non-obvious is done: a business rule, a constraint, a workaround with a link to its issue, a security or performance reason;
+- a warning about a non-obvious consequence ("order matters: X must run before Y because…");
+- `TODO(#123): …`, always with an issue reference.
+
+Never write:
+- comments that restate the code (`// increment counter`, `# loop over items`, `// return the result`);
+- step-by-step narration or section banners inside a function (`// 1. validate input`, `# --- helpers ---`); if a function has "parts", they should be separate functions;
+- comments about the change itself or the conversation (`// added`, `// fixed bug`, `// new implementation`, `// as requested`, `// updated to use X`); that belongs in the commit message;
+- commented-out code;
+- docstrings that repeat the signature (`"""Gets the user. Args: user_id: the user id. Returns: the user."""`).
+
+**Docstrings / JSDoc** go only on the public API (exported functions, classes and modules of libraries and shared code) when the purpose, behaviour or errors aren't obvious from the name and types. Keep them to one or two lines plus whatever is non-obvious.
+
+When editing existing code, don't add comments to explain your change, and remove comments that your change made wrong.
 
 ## TypeScript / JavaScript (React, Next.js, Node)
 | Topic | Convention |
