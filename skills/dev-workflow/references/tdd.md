@@ -1,32 +1,32 @@
 # Test-Driven Development
 
-## El ciclo
-1. **Rojo:** escribe un test pequeño que describa el siguiente comportamiento. Ejecútalo y confirma que falla *por la razón esperada* (no por un import roto).
-2. **Verde:** escribe el código mínimo para que pase. Nada de funcionalidad especulativa.
-3. **Refactor:** con los tests en verde, elimina duplicación y mejora nombres y estructura. Los tests siguen en verde tras cada paso.
+## The cycle
+1. **Red:** write a small test describing the next behaviour. Run it and confirm it fails *for the expected reason* (not a broken import).
+2. **Green:** write the minimal code that makes it pass. No speculative functionality.
+3. **Refactor:** with the tests green, remove duplication and improve names and structure. Tests stay green after every step.
 
-Repite en pasos pequeños: un comportamiento por ciclo, no toda la batería de tests de golpe. Empieza por el caso más simple y ve añadiendo casos límite. Los ciclos cortos hacen que cada fallo apunte a un único cambio.
+Repeat in small steps: one behaviour per cycle, not the whole test suite at once. Start with the simplest case and add edge cases as you go. Short cycles mean every failure points at a single change.
 
-En un módulo nuevo, el primer rojo suele ser un `ImportError`, que no prueba nada del comportamiento. Crea primero la interfaz mínima (firmas que lanzan `NotImplementedError` o devuelven un valor vacío) para que el test falle en la aserción.
+In a new module, the first red is usually an `ImportError`, which proves nothing about behaviour. Create the minimal interface first (signatures that raise `NotImplementedError` or return an empty value) so the test fails on the assertion.
 
 ## Bugs
-Antes de arreglar un bug, escribe un test que lo reproduzca y falle. Así el arreglo queda demostrado y protegido contra regresiones.
+Before fixing a bug, write a test that reproduces it and fails. The fix is then demonstrated and protected against regressions.
 
-## Buenos tests
-- Nombre que describe el comportamiento: `rejects_order_when_stock_is_insufficient`.
-- Estructura Arrange / Act / Assert (o Given / When / Then).
-- Prueban comportamiento observable, no detalles de implementación.
-- Rápidos, deterministas e independientes entre sí; nada de depender del orden, la hora real o la red.
-- Una razón para fallar por test.
+## Good tests
+- A name that describes the behaviour: `rejects_order_when_stock_is_insufficient`.
+- Arrange / Act / Assert (or Given / When / Then).
+- They test observable behaviour, not implementation details.
+- Fast, deterministic and independent: no reliance on order, the real clock or the network.
+- One reason to fail per test.
 
-## Pirámide
-- **Unitarios** (la mayoría): dominio y lógica pura, sin I/O.
-- **Integración:** repositorios, adaptadores, base de datos real o de test.
-- **End-to-end** (pocos): los flujos críticos.
+## Pyramid
+- **Unit** (most): domain and pure logic, no I/O.
+- **Integration:** repositories, adapters, a real or test database.
+- **End-to-end** (few): the critical flows.
 
-Usa dobles de test (fakes, stubs, mocks) solo en los bordes (red, BD, reloj, servicios externos), no para aislar cada clase del dominio.
+Use test doubles (fakes, stubs, mocks) only at the boundaries (network, DB, clock, external services), not to isolate every domain class.
 
-## Pragmatismo
-- Lógica de negocio, cálculos, validaciones, parsing: TDD estricto.
-- UI, glue code, configuración, scripts de un solo uso, spikes exploratorios: basta con verificación razonable (un test de humo o ejecución manual documentada). Si el spike se queda, añade tests antes de darlo por terminado.
-- Si el proyecto no tiene tests, prepara el framework de test estándar del ecosistema (pytest, vitest/jest, go test, cargo test…) como primer paso, en su propio commit.
+## Pragmatism
+- Business logic, calculations, validation, parsing: strict TDD.
+- UI, glue code, configuration, one-off scripts, exploratory spikes: reasonable verification is enough (a smoke test, or a documented manual run). If a spike stays, add tests before calling it done.
+- If the project has no tests, set up the ecosystem's standard test framework (pytest, vitest/jest, go test, cargo test…) as the first step, in its own commit.

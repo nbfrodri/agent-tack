@@ -1,46 +1,46 @@
-# Diseño: SOLID, DDD y otras prácticas
+# Design: SOLID, DDD and other practices
 
 ## SOLID
-- **S – Single Responsibility:** cada módulo/clase tiene una sola razón para cambiar. Si describirla necesita "y", probablemente son dos.
-- **O – Open/Closed:** extiende el comportamiento añadiendo código (nuevas implementaciones, estrategias) en vez de modificar lo que ya funciona, cuando se espera variación real.
-- **L – Liskov Substitution:** una implementación debe poder sustituir a su abstracción sin sorpresas (sin lanzar "not supported", sin endurecer precondiciones).
-- **I – Interface Segregation:** interfaces pequeñas y específicas del cliente, mejor que una grande.
-- **D – Dependency Inversion:** el dominio depende de abstracciones (puertos); la infraestructura las implementa. Inyecta dependencias por constructor.
+- **S – Single Responsibility:** each module or class has one reason to change. If describing it needs "and", it's probably two.
+- **O – Open/Closed:** extend behaviour by adding code (new implementations, strategies) rather than modifying what works, when real variation is expected.
+- **L – Liskov Substitution:** an implementation must replace its abstraction without surprises (no "not supported" errors, no stricter preconditions).
+- **I – Interface Segregation:** small, client-specific interfaces rather than one big one.
+- **D – Dependency Inversion:** the domain depends on abstractions (ports); infrastructure implements them. Inject dependencies through constructors.
 
-No crees abstracciones especulativas: aplica O y D cuando haya al menos dos implementaciones o un borde de I/O claro. YAGNI y KISS también son buenas prácticas.
+Don't create speculative abstractions: apply O and D when there are at least two implementations or a clear I/O boundary. YAGNI and KISS are good practices too.
 
 ## DDD
-Úsalo cuando haya un dominio de negocio con reglas reales (pedidos, pagos, reservas, inventario…). Para CRUDs simples, utilidades o scripts, basta con una buena separación de capas.
+Use it when there's a business domain with real rules (orders, payments, bookings, inventory…). For simple CRUD, utilities or scripts, good layer separation is enough.
 
-**Estratégico**
-- **Lenguaje ubicuo:** usa en el código los mismos términos que el negocio. Si un concepto no tiene nombre claro, pregúntalo.
-- **Bounded contexts:** separa modelos que significan cosas distintas en contextos distintos (p. ej. `Customer` en facturación vs. en soporte). Comunícalos por interfaces o eventos, no compartiendo entidades.
+**Strategic**
+- **Ubiquitous language:** use the business's own terms in the code. If a concept has no clear name, ask.
+- **Bounded contexts:** keep models that mean different things in different contexts (e.g. `Customer` in billing vs. in support). Connect them through interfaces or events, not shared entities.
 
-**Táctico**
-- **Entidades:** identidad propia y ciclo de vida.
-- **Value Objects:** inmutables, definidos por sus valores, con validación en el constructor (`Email`, `Money`, `Quantity`). Prefiérelos a primitivos.
-- **Agregados:** grupo de objetos con una raíz que protege las invariantes. Se modifica solo a través de la raíz; una transacción = un agregado. Mantenlos pequeños.
-- **Repositorios:** interfaz en el dominio, implementación en infraestructura; uno por agregado.
-- **Servicios de dominio:** lógica que no pertenece a una sola entidad.
-- **Eventos de dominio:** hechos pasados (`OrderPlaced`) para desacoplar efectos secundarios.
-- **Servicios de aplicación / casos de uso:** orquestan; no contienen reglas de negocio.
+**Tactical**
+- **Entities:** have their own identity and lifecycle.
+- **Value objects:** immutable, defined by their values, validated in the constructor (`Email`, `Money`, `Quantity`). Prefer them to primitives.
+- **Aggregates:** a cluster of objects with a root that protects the invariants. Change it only through the root; one transaction = one aggregate. Keep them small.
+- **Repositories:** interface in the domain, implementation in infrastructure; one per aggregate.
+- **Domain services:** logic that doesn't belong to a single entity.
+- **Domain events:** past facts (`OrderPlaced`) to decouple side effects.
+- **Application services / use cases:** orchestrate; they hold no business rules.
 
-Evita el modelo anémico: las reglas viven en las entidades y value objects, no en servicios que manipulan getters/setters.
+Avoid the anaemic model: rules live in entities and value objects, not in services that shuffle getters and setters.
 
-## Arquitectura por capas (hexagonal / clean)
+## Layered architecture (hexagonal / clean)
 ```
 src/
-  domain/          # entidades, VOs, agregados, eventos, puertos (interfaces). Sin dependencias de frameworks.
-  application/     # casos de uso; orquestan dominio y puertos.
-  infrastructure/  # BD, HTTP clients, colas: implementan los puertos.
-  interfaces/      # controladores, CLI, UI: adaptan la entrada a casos de uso.
+  domain/          # entities, VOs, aggregates, events, ports (interfaces). No framework dependencies.
+  application/     # use cases; orchestrate the domain and ports.
+  infrastructure/  # DB, HTTP clients, queues: implement the ports.
+  interfaces/      # controllers, CLI, UI: adapt input to use cases.
 ```
-Las dependencias apuntan hacia dentro: `interfaces → application → domain`, e `infrastructure → domain`. El dominio nunca importa infraestructura. Adapta los nombres de carpetas a las convenciones del lenguaje/framework y del proyecto.
+Dependencies point inwards: `interfaces → application → domain`, and `infrastructure → domain`. The domain never imports infrastructure. Adapt folder names to the language's, framework's and project's conventions.
 
-## Otras prácticas
-- **DRY** con criterio: duplica antes que acoplar cosas que solo se parecen por casualidad.
-- **Composición antes que herencia.**
-- **Fail fast:** valida en los bordes y en los constructores de VOs.
-- **Inmutabilidad** por defecto cuando el lenguaje lo facilite.
-- **Ley de Demeter:** no encadenes `a.b().c().d()` a través de objetos ajenos.
-- **Código limpio:** sin código muerto, sin comentarios que repiten el código; los comentarios explican el *porqué*.
+## Other practices
+- **DRY** with judgement: duplicate rather than couple things that only look alike by accident.
+- **Composition over inheritance.**
+- **Fail fast:** validate at the boundaries and in value-object constructors.
+- **Immutability** by default where the language makes it easy.
+- **Law of Demeter:** don't chain `a.b().c().d()` through other objects.
+- **Clean code:** no dead code; comments as in `conventions.md`.

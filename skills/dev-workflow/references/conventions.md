@@ -6,12 +6,12 @@ Defaults for every project. **A project's existing conventions win**: follow its
 
 | Topic | Convention |
 | --- | --- |
-| Commit messages | [Conventional Commits 1.0](https://www.conventionalcommits.org): `type(scope): description`, English, imperative, ≤ 72 chars. Enforced by the global `commit-msg` hook. Details in `git-github.md`. |
+| Commit messages | [Conventional Commits 1.0](https://www.conventionalcommits.org): `type(scope): description`, English, imperative, ≤ 72 chars. Enforced in enabled projects by the `commit-msg` hook (which only rejects over 100). Details in `git-github.md`. |
 | Branches | `type/short-description`, or `type/123-short-description` when there's an issue. Short-lived. |
 | Merging PRs | **Squash merge.** Each PR becomes one commit on `main` whose message is the PR title plus its description. So the **PR title must be a valid Conventional Commit**: it's what lands in history and what the changelog and the version bump are computed from. |
 | Commits inside a PR branch | Still Conventional Commits (the hook enforces it), but they're squashed on merge, so `fixup!` commits and small steps are fine there. |
 | After merge | The branch is deleted automatically. |
-| Attribution | No AI attribution anywhere. |
+| Attribution | No AI attribution anywhere (see `git-github.md`). |
 
 Repository settings to match (new repos, or existing ones with the user's permission):
 ```bash

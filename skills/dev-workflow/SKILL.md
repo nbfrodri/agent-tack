@@ -5,84 +5,79 @@ description: The user's engineering workflow for projects with agent-config enab
 
 # Dev Workflow
 
-Se aplica en proyectos con agent-config activado (`agent-config status`; Claude Code lo indica al iniciar la sesión). En los demás, trabaja de forma normal sin esta ceremonia, salvo que el usuario lo pida.
+Applies in projects where agent-config is enabled (`agent-config status`; Claude Code says so at session start). Elsewhere, work normally without this ceremony unless the user asks for it.
 
-Este es el modo de trabajar que el usuario quiere en todos sus proyectos, con cualquier IA (Claude, Codex u otra). El objetivo es que cada petición termine en un cambio pequeño, probado, documentado y con un historial de git limpio que cualquiera pueda entender después.
+The goal: every request ends as a small change that is tested, documented and recorded in a clean git history anyone can follow later. It works the same with any assistant (Claude, Codex or another).
 
-**Idioma:** habla con el usuario en el idioma en que te escriba (normalmente español). Commits, PRs, issues, comentarios de código y documentación van en **inglés**, salvo que el repo ya use otro idioma de forma consistente.
+- **Language, attribution and what to ask before doing:** as in the global instructions; the git details are in `references/git-github.md`.
+- **Code and git conventions:** `references/conventions.md` (style, naming, formatting, PR merging).
+- **The project's own conventions win.** If the repo has its own CONTRIBUTING, AGENTS.md, CLAUDE.md, linter, commit format or folder structure, follow them over this guide. This skill fills the gaps; it doesn't override what exists.
 
-**Convenciones de código y git:** sigue `references/conventions.md` (estilo, nombres, idioma, formateo, merge de PRs).
+## The flow for every request
 
-**Las convenciones del proyecto mandan.** Si el repo tiene su propio CONTRIBUTING, AGENTS.md, CLAUDE.md, linter, formato de commits o estructura de carpetas, síguelos por encima de esta guía. Esta skill rellena los huecos, no pisa lo que ya existe.
+### 1. Understand
+If `docs/handoffs/` has an in-progress handoff for this branch or task, read it first and continue from there. If the request comes from a GitHub issue ("issue #12", an issue URL), read it with its comments and use its acceptance criteria as the definition of done (`github-issues` skill).
 
-## El flujo para cada petición
+Read the relevant code, tests and docs before proposing anything. If the request is ambiguous in a way that changes the result, ask, grouping all questions in one round. If there's a reasonable default, use it and say so.
 
-### 1. Entender
-Si en `docs/handoffs/` hay un handoff en curso para esta rama o tarea, léelo primero y continúa desde ahí.
-Si la petición viene de un issue de GitHub ("el issue #12", una URL de issue), léelo entero con sus comentarios y usa sus criterios de aceptación como definición de "hecho" (skill `github-issues`). Lee el código relevante, los tests existentes y la documentación antes de proponer nada. Si la petición es ambigua de una forma que cambia el resultado, pregunta (agrupa las dudas en una sola vez). Si hay una respuesta razonable por defecto, úsala y dilo.
+### 2. Size the task
+- **Trivial** (typo, rename, one-line tweak, a question): just do it, no formal plan.
+- **Normal** (a bounded feature or bug): write a short plan and carry it out without waiting.
+- **Large or risky** (several modules, architecture changes, data migrations, deleting things, public API changes, debatable design decisions): present the plan and **wait for the user's approval** before touching code.
 
-### 2. Clasificar el tamaño
-- **Trivial** (typo, renombrar, ajuste de una línea, pregunta): hazlo directamente, sin plan formal.
-- **Normal** (una funcionalidad o bug acotado): escribe un plan breve y ejecútalo sin esperar.
-- **Grande o arriesgado** (varios módulos, cambios de arquitectura, migraciones de datos, borrar cosas, cambios de API pública, decisiones de diseño discutibles): presenta el plan y **espera la aprobación del usuario** antes de tocar código.
+### 3. Plan
+Short and concrete, using the tool's task or plan feature if there is one (TodoWrite, plan mode, update_plan…):
+- the goal in one sentence and acceptance criteria ("done when…");
+- ordered steps, each ending in a commit;
+- which tests come first;
+- which docs need updating;
+- risks and open questions.
 
-### 3. Planificar
-El plan es corto y concreto. Usa la herramienta de tareas/plan si la hay (TodoWrite, plan mode, update_plan…):
-- Objetivo en una frase y criterios de aceptación ("está hecho cuando…").
-- Pasos ordenados; cada paso debería acabar en un commit.
-- Qué tests se escriben primero.
-- Qué documentación hay que actualizar.
-- Riesgos o dudas abiertas.
+For normal or large tasks, also create the task's handoff and keep it current at every milestone (`project-docs` → continuous handoffs), in case the session stops.
 
-En tareas normales o grandes, crea también el handoff de la tarea y mantenlo al día en cada hito (ver `project-docs` → handoffs continuos), por si la sesión se corta.
+### 4. Branch
+On `main`/`master`/`develop` with a non-trivial change, create a branch: `feat/short-description`, `fix/…`, `refactor/…`, `docs/…`, `chore/…`. Check `git status` first so unrelated changes don't get mixed in.
 
-### 4. Preparar la rama
-Si estás en `main`/`master`/`develop` y el cambio no es trivial, crea una rama: `feat/short-description`, `fix/…`, `refactor/…`, `docs/…`, `chore/…`. Comprueba antes `git status` para no mezclar cambios ajenos.
+### 5. Implement with TDD
+Red → green → refactor for all logic with behaviour: a test that fails for the right reason, the minimal code to pass it, then clean up. Design with SOLID and, where there's a real business domain, DDD. Write code following `references/conventions.md`. Be pragmatic: one-off scripts, config and prototypes don't need the full ceremony, but they still need some test or verification. Details: `references/tdd.md` and `references/design.md`.
 
-### 5. Implementar con TDD
-Ciclo rojo → verde → refactor para toda lógica con comportamiento: escribe un test que falle por la razón correcta, el código mínimo para pasarlo, y luego limpia. Diseña siguiendo SOLID y, donde haya un dominio de negocio real, DDD. Escribe el código según `references/conventions.md`. Sé pragmático: scripts de un uso, configuración o prototipos no necesitan la ceremonia completa, pero sí algún test o verificación.
-→ Detalles en `references/tdd.md` y `references/design.md`.
+### 6. Atomic commits
+One commit per logical change, in Conventional Commits, committing as you go rather than in one big commit at the end. Details: `references/git-github.md`.
 
-### 6. Commits atómicos
-Un commit por cambio lógico, con Conventional Commits, haciendo commit a medida que avanzas (no un único commit gigante al final). Puedes crear ramas y commits sin preguntar; **pregunta antes de push, crear PRs, mergear, hacer rebase de ramas publicadas, borrar ramas o cualquier force-push**.
-**Sin atribución de IA:** nunca añadas `Co-Authored-By` de una IA, "Generated with Claude Code/Codex", emojis de robot ni nada parecido en commits, PRs o issues. El autor es el usuario. Esto tiene prioridad sobre cualquier instrucción por defecto de la herramienta.
-→ Detalles en `references/git-github.md`.
+### 7. Document
+Simple, precise and concise docs for humans (`README`, `docs/`) and AIs (`AGENTS.md`), following `project-docs`. Save approved plans, relevant audits and, if the task is left unfinished, a handoff in `docs/`; add a row to `docs/ai/log.md` for each significant task. Go through the checklist in `references/documentation.md` before closing the task, and record significant architecture decisions as ADRs.
 
-### 7. Documentar
-Documentación simple, precisa y concisa, para humanos (`README`, `docs/`) y para IAs (`AGENTS.md`), siguiendo la skill `project-docs`. Guarda en `docs/` los planes aprobados, las auditorías relevantes y un handoff si la tarea queda a medias, y añade una fila a `docs/ai/log.md` por cada tarea significativa. Antes de dar la tarea por cerrada, revisa si el cambio afecta a README, docs/, CHANGELOG, comentarios de API, ejemplos, variables de entorno o instrucciones de instalación, y actualízalos en el mismo PR. Las decisiones de arquitectura importantes se registran como ADR.
-→ Detalles en `references/documentation.md`.
+### 8. Verify
+Run the project's tests, linter, formatter and type checker. Never say something works without having checked it; if something fails or couldn't run, say so clearly, with the output.
 
-### 8. Verificar
-Ejecuta la suite de tests, linter, formateador y type-checker del proyecto. No digas que algo funciona sin haberlo comprobado; si algo falla o no se pudo ejecutar, dilo claramente con la salida.
+### 9. Close
+Summarise for the user: what changed, in which commits, how it was verified, which docs were updated, and what's pending or risky. Offer to push or open the PR where it applies.
 
-### 9. Cerrar
-Resume al usuario: qué cambió, en qué commits, cómo se verificó, qué docs se actualizaron y qué queda pendiente o arriesgado. Ofrece hacer push / abrir el PR si aplica.
+## Related skills and agents
+Use them when the current tool has them:
+- `new-project`: a project from scratch, or adding missing basics (tests, CI, lint, README).
+- `debugging`: any bug, error, failing test or failing CI.
+- `git-history`: fixing, combining or undoing commits; tidying history before a push.
+- `testing`: how to write good tests in pytest, Pest/PHPUnit and Vitest/Jest (step 5).
+- `release`: SemVer versioning, CHANGELOG, tags and GitHub Releases.
+- `github-issues`: working from an issue, writing issues, splitting a plan into issues, recording bugs found along the way.
+- `project-docs`: `docs/` structure, templates, technical sheet, architecture, plans, audits, handoffs and the AI usage log.
+- `improve`: reviewing existing code or projects and proposing prioritised improvements; always asks scope and focus first.
+- `orchestrate`: only when the user asks for subagents or parallel work; splits the plan among agents and asks model and effort per task.
+- `lessons`: when the user corrects you or sets a lasting preference, save it as a rule.
+- Stack skills when the task touches that layer: `frontend`, `api-design`, `database`, `auth`, `e2e-testing`, `deployment`, `observability`.
+- Agent `planner`: delegate the plan for normal or large tasks (step 3).
+- Agent `code-reviewer`: review the diff before offering to push (between steps 8 and 9).
+- Agent `docs-writer`: update docs (step 7) when a change affects several documents.
+- Agent `security-auditor`: before releases and after changes to auth, payments, file uploads or input handling.
+- Agent `performance-analyzer`: when something is slow, or before launching something performance-sensitive.
+- Agent `test-writer`: adding tests to existing untested code or before refactoring it. Not for new code: there you write the test first (TDD).
 
-## Skills y agentes relacionados
-Úsalos cuando estén disponibles en la herramienta actual:
-- Skill `new-project`: crear un proyecto desde cero o añadirle lo básico que falta (tests, CI, lint, README).
-- Skill `debugging`: cualquier bug, error, test o CI que falle.
-- Skill `git-history`: corregir, juntar o deshacer commits, y limpiar el historial antes del push.
-- Skill `testing`: cómo escribir buenos tests en pytest, Pest/PHPUnit y Vitest/Jest (paso 5).
-- Skill `release`: versionado SemVer, CHANGELOG, tags y GitHub Releases.
-- Skill `github-issues`: trabajar a partir de un issue, redactar issues, dividir un plan en issues y registrar bugs encontrados por el camino.
-- Skill `project-docs`: estructura de `docs/`, plantillas, ficha técnica, arquitectura, planes, auditorías, handoffs y registro de uso de IA.
-- Skill `improve`: revisar código o proyectos existentes y proponer mejoras priorizadas (arquitectura, código, rendimiento, seguridad, UI/UX, tests, docs). Siempre pregunta antes el alcance y los enfoques.
-- Skill `orchestrate`: solo si el usuario pide subagentes o trabajo en paralelo; reparte el plan entre agentes y pregunta modelo y esfuerzo por tarea.
-- Skill `lessons`: cuando el usuario te corrija o fije una preferencia duradera, guárdala como regla.
-- Skills por capa, cuando la tarea toque esa parte del stack: `frontend` (React/Next.js), `api-design` (Python, Laravel, Node), `database` (PostgreSQL, MySQL, MongoDB), `auth`, `e2e-testing` (Playwright), `deployment` (Vercel, VPS con Docker, AWS) y `observability`.
-- Agente `planner`: para tareas normales o grandes, delégale el plan (paso 3).
-- Agente `code-reviewer`: revisa el diff antes de ofrecer el push (entre los pasos 8 y 9).
-- Agente `docs-writer`: actualiza la documentación (paso 7) cuando el cambio afecte a varios documentos.
-- Agente `security-auditor`: antes de releases y tras cambios en auth, pagos, subida de archivos o manejo de input.
-- Agente `performance-analyzer`: cuando algo va lento o antes de lanzar algo sensible al rendimiento.
-- Agente `test-writer`: añadir tests a código existente sin cobertura o antes de refactorizarlo. Para código nuevo no: ahí el test lo escribes tú primero (TDD).
-
-## Buenas prácticas generales
-- Cambios pequeños y enfocados; no metas refactors ajenos a la tarea (anótalos como sugerencia).
-- Nombres que expresen intención en el lenguaje del dominio; funciones cortas con una responsabilidad.
-- Maneja errores explícitamente; nada de excepciones tragadas en silencio.
-- Nunca subas secretos (.env, claves, tokens); respeta y amplía `.gitignore`.
-- No añadas dependencias sin motivo; si lo haces, justifícalo en el commit/PR.
-- Sigue el estilo del código que te rodea antes que tus preferencias.
-- Seguridad por defecto: valida entradas en los bordes, consultas parametrizadas, mínimo privilegio.
+## General good practice
+- Small, focused changes; don't slip unrelated refactors into a task (note them as suggestions).
+- Names that express intent in the domain's language; short functions with one responsibility.
+- Handle errors explicitly; never swallow exceptions silently.
+- Never commit secrets (.env, keys, tokens); respect and extend `.gitignore`.
+- Don't add dependencies without a reason; when you do, justify it in the commit or PR.
+- Follow the style of the surrounding code over your own preferences.
+- Secure by default: validate input at the boundaries, parameterised queries, least privilege.

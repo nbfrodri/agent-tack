@@ -1,21 +1,17 @@
-# Documentación
+# Documentation checklist
 
-La documentación se actualiza en el mismo cambio que el código que la afecta; documentación desfasada es peor que ninguna. Estructura, plantillas, documentación para IA y para humanos, planes, auditorías y handoffs: skill `project-docs`.
+Docs are updated in the same change as the code that affects them; outdated docs are worse than none. Structure, templates, docs for humans and AIs, plans, audits and handoffs: `project-docs` skill.
 
-## Checklist al cerrar una tarea
-- ¿Cambió cómo se instala, configura o ejecuta? → `README.md`, `docs/development.md` y `AGENTS.md` (comandos).
-- ¿Nuevas variables de entorno o configuración? → `.env.example` (sin valores reales) y `docs/development.md`.
-- ¿Cambió una API pública, CLI o endpoint? → `docs/api.md` o la referencia generada, y ejemplos.
-- ¿Cambio visible para usuarios? → `CHANGELOG.md` (si existe).
-- ¿Cambió la arquitectura (componentes, flujos, dependencias externas)? → `docs/architecture.md` y `docs/overview.md`.
-- ¿Decisión de arquitectura relevante o difícil de revertir? → ADR en `docs/adr/`.
-- ¿Nuevo concepto de dominio? → `docs/glossary.md`.
-- ¿Había un plan? → actualiza su estado en `docs/plans/`.
-- ¿Tarea significativa hecha con IA? → una fila en `docs/ai/log.md`.
-- ¿Se queda a medias? → handoff en `docs/handoffs/`.
+## Before closing a task
+- Did installing, configuring or running change? → `README.md`, `docs/development.md` and `AGENTS.md` (commands).
+- New environment variables or config? → `.env.example` (no real values) and `docs/development.md`.
+- Did a public API, CLI or endpoint change? → `docs/api.md` or the generated reference, and examples.
+- A user-visible change? → `CHANGELOG.md` (if it exists; Keep a Changelog format, see `release`).
+- Did the architecture change (components, flows, external dependencies)? → `docs/architecture.md` and `docs/overview.md`.
+- A significant or hard-to-reverse architecture decision? → an ADR in `docs/adr/`.
+- A new domain concept? → `docs/glossary.md`.
+- Was there a plan? → update its status in `docs/plans/`.
+- A significant AI-assisted task? → a row in `docs/ai/log.md`.
+- Left unfinished? → a handoff in `docs/handoffs/`.
 
-## CHANGELOG
-Formato Keep a Changelog: sección `## [Unreleased]` con `Added / Changed / Fixed / Removed / Security` (ver skill `release`).
-
-## Comentarios y docstrings en el código
-Ver `conventions.md`: por defecto sin comentarios; solo el porqué no obvio y docstrings en la API pública.
+Comments and docstrings in code: see `conventions.md` (no comments by default; only the non-obvious why, and docstrings on the public API).

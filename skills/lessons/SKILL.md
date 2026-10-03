@@ -29,7 +29,7 @@ CONFIG_REPO="$(cd ~/.agents/agent-config && pwd -P)"   # canonical link created 
 - **Search first.** Grep the target file (and related skills) for an existing rule on the topic. Update or replace it instead of appending a second, contradictory one.
 - **One short rule, with the reason.** For example: "Use `pnpm`, not `npm`: the monorepo's lockfile and workspaces depend on it." The reason lets future readers apply it sensibly to cases the rule didn't foresee.
 - **Generalise, don't overfit.** Capture the principle behind the correction, not the literal case. Example: "use `Decimal` for money in every language", not "use Decimal in cart.py".
-- **Match the file's language and style.** Skills are written in English or Spanish as they already are; keep tables and lists consistent.
+- **Match the file's language and style.** Skills and docs are in English (descriptions keep Spanish trigger phrases); keep tables and lists consistent.
 - **Keep global instructions short.** `global/AGENTS.md` loads in every session; if it grows past ~40 lines, move detail into the relevant skill and leave a one-line pointer.
 - If the lesson contradicts something the user said before, point out the conflict and ask which wins.
 

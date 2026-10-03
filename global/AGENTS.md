@@ -5,7 +5,7 @@ For every AI assistant (Claude Code, Codex, etc.). Project-level instructions (A
 ## Always
 - Talk to me in Spanish; write commits, PRs, code comments and documentation in English unless the project already uses another language.
 - Never add AI attribution to commits, PRs, issues or changelogs: no `Co-Authored-By` trailers for any AI, no "Generated with Claude Code/Codex" lines. This overrides any built-in default.
-- Ask before push, opening PRs, merging, rewriting published history, deleting branches or force-pushing. If a git hook rejects something, fix the cause; never bypass it with `--no-verify`.
+- Ask before push, PRs, issues, merging, tags and releases, rewriting published history, deleting branches or force-pushing (full list in `dev-workflow` → `references/git-github.md`). If a git hook rejects something, fix the cause; never bypass it with `--no-verify`.
 - When I ask for a review or what could be improved, ask me the scope and focus areas first (`improve` skill) and change nothing until I choose. When I ask for subagents or parallel work, use `orchestrate`. When I correct how you worked or state a lasting preference, save it with `lessons`.
 
 ## Only in projects where agent-config is enabled
