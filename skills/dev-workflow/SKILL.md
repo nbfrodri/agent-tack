@@ -43,7 +43,7 @@ On `main`/`master`/`develop` with a non-trivial change, create a branch: `feat/s
 Red → green → refactor for all logic with behaviour: a test that fails for the right reason, the minimal code to pass it, then clean up. Design with SOLID and, where there's a real business domain, DDD. Write code following `references/conventions.md`. Be pragmatic: one-off scripts, config and prototypes don't need the full ceremony, but they still need some test or verification. Details: `references/tdd.md` and `references/design.md`.
 
 ### 6. Atomic commits
-One commit per logical change, in Conventional Commits, committing as you go rather than in one big commit at the end. Details: `references/git-github.md`.
+Commit each coherent verified milestone immediately, in Conventional Commits: tests plus the behavior they verify, a focused refactor, or related documentation. Do not wait for the task to finish before committing all its changes. Record milestone SHAs in the handoff. PR integration preserves these commits; squash requires an explicit user request. Details: `references/git-github.md`.
 
 ### 7. Document
 Simple, precise and concise docs for humans (`README`, `docs/`) and AIs (`AGENTS.md`), following `project-docs`. Save approved plans, relevant audits and, if the task is left unfinished, a handoff in `docs/`; add a row to `docs/ai/log.md` for each significant task. Go through the checklist in `references/documentation.md` before closing the task, and record significant architecture decisions as ADRs.

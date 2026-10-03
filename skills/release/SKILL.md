@@ -5,7 +5,7 @@ description: Versioning and releases: SemVer from Conventional Commits, CHANGELO
 
 # Releases and versioning
 
-A release is a promise to the people who use your code: the version says how risky the upgrade is, and the changelog says what changed. Both come straight from the commit history, which is why commits follow Conventional Commits and PRs are squash-merged with Conventional Commit titles.
+A release is a promise to the people who use your code: the version says how risky the upgrade is, and the changelog says what changed. Both come straight from the commit history, which is why each milestone commit and PR title follows Conventional Commits and integration preserves the commits.
 
 **The convention** (versioning, tag format, method, changelog) is defined in `dev-workflow` → `references/conventions.md` → "Releases and tags". In short: SemVer, annotated `vX.Y.Z` tags, **release-please by default**, `CHANGELOG.md` plus the GitHub Release.
 
