@@ -1,6 +1,27 @@
 # Whole-project improvement audit
 
-Assessment for personal use, prioritising incremental fixes. Executable code reviewed at `f93cb50`; the requested documentation and English-content changes were added during this review. Findings below remain open.
+Assessment for personal use, prioritising incremental fixes. Executable code reviewed at `f93cb50`; the requested documentation and English-content changes were added during this review. The ten verified findings have now been fixed locally on `fix/audit-hardening-and-session-context`; GitHub issues remain open pending publication and integration.
+
+## Resolution tracking
+
+| Finding | GitHub issue | Local fix |
+| --- | --- | --- |
+| Local hook stages secrets after scanning | [#13](https://github.com/nbfrodri/agent-harness/issues/13) | `cc47d63` |
+| Quoted filenames bypass scanning | [#14](https://github.com/nbfrodri/agent-harness/issues/14) | `cc47d63` |
+| Shared activation implies formatter trust | [#15](https://github.com/nbfrodri/agent-harness/issues/15) | `3ca51fa`, `538563c` |
+| Executable shell syntax bypasses checks | [#16](https://github.com/nbfrodri/agent-harness/issues/16) | `69b6ec6` |
+| Validator errors reported as success | [#17](https://github.com/nbfrodri/agent-harness/issues/17) | `cd65e89` |
+| Mixed groups lose user hooks | [#18](https://github.com/nbfrodri/agent-harness/issues/18) | `cd65e89` |
+| Activation failures reported as success | [#19](https://github.com/nbfrodri/agent-harness/issues/19) | `3ca51fa`, `bf098e0` |
+| Eval runner hides failures | [#20](https://github.com/nbfrodri/agent-harness/issues/20) | `699423d` |
+| Eval ordering metrics give false positives | [#21](https://github.com/nbfrodri/agent-harness/issues/21) | `699423d`, `7f3f4a2` |
+| Guard exceeds its analysis time budget | [#22](https://github.com/nbfrodri/agent-harness/issues/22) | `69b6ec6` |
+
+Requested additions: [#23](https://github.com/nbfrodri/agent-harness/issues/23) startup context (`3ca51fa`); [#24](https://github.com/nbfrodri/agent-harness/issues/24) automatic audit issues (`31d6226`).
+
+The scorecard below records the initial assessment, rather than a new post-fix score. The implementation plan is [complete](../plans/2026-10-03-audit-hardening-and-context.md). On integration, 10,014-character guard input took 0.127 s and 50,014 took 0.196 s; 70,014 characters returned `ask` in 0.057 s. Times are local observations, not guaranteed cross-platform thresholds.
+
+Final local checks passed: ShellCheck, content validation and 426 automated checks (12 validator, 87 installer, 177 existing hooks, 34 CLI/context, 2 settings, 42 security, 56 guard and 16 offline eval checks). Integration review also verified that failed shared activation preserves a local opt-out and unsuccessful tool writes cannot prove test-first ordering. Remote CI, macOS and a live model benchmark remain unverified.
 
 ## Scorecard
 
@@ -115,11 +136,11 @@ Effort: S = a small focused change; M = several related paths and regression cas
 - Temporary HOME and git environments, local hook integration, migration tests and platform CI.
 - Measured behaviour evaluations with explicit sample-size limits; improve the measurement rather than discarding the approach.
 
-## Useful additions after the fixes
+## Additional proposals and implemented additions
 
-1. **`harness doctor` (M):** report tool availability, installed link targets, settings validity, effective hooksPath, activation source and formatter trust. Current `bin/harness` only supports enable, disable and status; installer warnings are not available as a later health check.
+1. **`harness doctor` (M), proposed:** report tool availability, installed link targets, settings validity, effective hooksPath, activation source and formatter trust. Installer warnings are not available as a later health check.
 2. **`install.sh --dry-run` (M):** preview link replacements, settings changes and plugin operations before installation. The current installer immediately mutates the user's configuration.
-3. **Offline eval regression suite (M):** test setup failures, transcript adapters, metric ordering and reporting using stub CLIs and fixture transcripts. Existing CI does not run eval behaviour tests.
-4. **Optional startup context summary (M):** build a short summary from `AGENTS.md`, `docs/architecture.md` and an active handoff. The current Claude `SessionStart` hook only supplies activation status. Prefer references to these existing sources over a second full context document, and make the extra startup content optional to control token cost.
+3. **Offline eval regression suite (M), implemented:** setup failures, transcript adapters, metric ordering and reporting are covered by 16 checks using stub CLIs and fixtures, now included in CI.
+4. **Optional startup context summary (M), implemented:** `harness context` supplies bounded excerpts from `AGENTS.md`, `docs/architecture.md` and an active handoff. Claude SessionStart loads them automatically; other tools are instructed to run the command. `git config harness.context false` disables the additional context.
 
 A safe uninstall or rollback command is a later option: it needs ownership metadata so it removes only harness-managed files and preserves user changes. Prefer these operational features over adding more generic skills until the verified safety gaps are closed.

@@ -10,6 +10,7 @@ What the harness changes in practice, measured on real sessions: the same tasks 
   - Same tool, model and permissions in both.
 - **Runs:** 2 repetitions per scenario and condition (12 sessions, 2026-10-03), graded automatically by `evals/grade.py` from each repo and transcript.
 - **Prompt language:** the published runs used Spanish prompts. The runner now uses English prompts; rerun both conditions before comparing new measurements with these results.
+- **Metric version:** these tables use the original grading heuristics. Version 2 fixes implementation-order false positives and distinguishes file order from evidence of a failing test followed by a passing test. Historical tables remain unchanged; rerun both conditions with the new grader before drawing updated conclusions.
 - **Reproduce:** `evals/run.sh <scenario> <harness|baseline> <rep>`, then `evals/grade.py` and `evals/report.py` (see [development](development.md)).
 
 ## Key results

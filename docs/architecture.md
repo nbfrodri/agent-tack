@@ -30,14 +30,16 @@ flowchart LR
 | `agents/` | Role-specific instructions for planning, implementation and review | Skills; loaded as subagents by Claude Code |
 | `targets.txt`, `plugins.txt` | Declare supported tools and Claude plugins | Read by the installer |
 | `install.sh` | Orchestrate installation and migration | Data files, settings merge, git and Claude CLI |
-| `lib/settings-merge.py`, `.jq` | Merge settings and replace harness-tagged hook groups | Python standard library or jq |
+| `lib/settings-merge.py`, `.jq` | Merge settings and replace harness-tagged commands while preserving user commands and group metadata | Python standard library or jq |
 | `bin/harness` | Manage activation and local formatter trust; provide bounded startup context | Git repository root and configuration; `lib/project-context.sh` |
 | `git-hooks/` | Check staged secrets, commit messages and pushed refs; delegate local hooks | `bin/harness`, git and `_chain` |
-| `hooks/claude/` | Supply session context, assess Bash commands and format edited files | `bin/harness`; the guard also sources `lib/shell-parse.sh` |
+| `hooks/claude/` | Supply session context, assess Bash commands and format edited files | `bin/harness`; the guard sources `lib/shell-parse.sh`, which uses its Python parser when available |
 | `tests/`, `.github/workflows/ci.yml` | Validate content and exercise installation and hooks in temporary environments | Bash, git, Python, jq and ShellCheck |
 | `evals/` | Run agent scenarios, grade artifacts and transcripts, and aggregate results | Claude or Codex CLI; grading also runs `uv run pytest` |
 
 The installer does not implement hook policy. Git hooks share only their local-hook delegation library; Claude's shell parser tokenizes commands and its guard decides what to deny or ask about.
+
+The shell parser uses Python's standard library for bounded lexical analysis and communicates with Bash through NUL-delimited records. A conservative Bash fallback handles short commands when Python is unavailable. Unsupported executable constructs and exceeded limits request review rather than being silently skipped.
 
 ## Project activation and sessions
 
@@ -63,7 +65,7 @@ Global `core.hooksPath` points to this checkout's `git-hooks/`. A repository wit
 
 | Entry point | Current execution order |
 | --- | --- |
-| `pre-commit` | Inspect staged paths and added lines for secrets, then invoke the local pre-commit hook |
+| `pre-commit` | Run the local hook, then inspect exact staged paths and added lines in the final index for secrets; inspection errors block the commit |
 | `commit-msg` | Remove attribution, validate the subject when enabled, then invoke the local commit-msg hook |
 | `pre-push` | Buffer stdin, check protected refs and enabled tag conventions, then forward the original stdin to the local pre-push hook |
 | Other hook names | Symlink to `_chain`, which delegates to the matching local hook |

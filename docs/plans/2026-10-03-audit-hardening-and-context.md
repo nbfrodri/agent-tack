@@ -1,6 +1,6 @@
 # Audit hardening and automatic project context
 
-- Status: approved
+- Status: complete
 - Goal: fix the ten verified audit findings and provide bounded, current project context at session start.
 - Approval: the owner requested implementation of automatic context and execution of the audit fixes, with commits as work progresses.
 
@@ -28,3 +28,11 @@ Each block ends in a focused Conventional Commit with regression tests and relev
 ## Scope and risks
 
 `harness doctor`, installer dry-run and uninstall remain separate proposals. Parsing changes must not silently skip long or unsupported commands; trust migration must not run untrusted project code. Revised eval metrics need a new benchmark before historical results are compared.
+
+## Results
+
+All ten [audit findings](../audits/2026-10-03-improvement-agent-harness.md) are corrected on `fix/audit-hardening-and-session-context`. Startup context and automatic, deduplicated audit issue publication are documented and implemented in the appropriate commands, hooks and skills. Issues #13–#24 track this work and remain open until publication and integration.
+
+Three subagents worked in isolated worktrees on secret scanning/trust, command parsing and evaluations. Independent integration review exposed failed-write metric evidence and a shared-marker failure that removed a local opt-out; both were reproduced with failing regression tests and corrected in `7f3f4a2` and `bf098e0`.
+
+Final local verification: ShellCheck, content/cross-reference validation and 426 automated checks passed (12 validator, 87 installer, 177 existing hooks, 34 CLI/context, 2 settings merge, 42 security, 56 guard and 16 offline eval checks). CI now runs the additional suites on Linux and macOS; remote CI and macOS were not run locally. No live model benchmark, push, PR or release was performed.

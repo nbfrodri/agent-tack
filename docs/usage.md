@@ -57,6 +57,8 @@ Talk normally, in your language:
 | A deliberate tag change | `HARNESS_ALLOW_TAG=1 git push …` |
 | A false positive in the secrets check | `HARNESS_ALLOW_SECRETS=1 git commit …` |
 
+Secret scanning runs after the local pre-commit hook and keeps the added-line policy. Renamed files are treated as new content, so moving a file containing an old credential can also be refused. Git inspection errors block the commit rather than silently accepting it.
+
 ## Updating
 ```bash
 cd /path/to/your/agent-harness && git pull && ./install.sh

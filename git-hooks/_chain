@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Global git hooks are installed with `core.hooksPath`, which makes git ignore each
-# repository's own .git/hooks. Every hook in this folder ends by calling run_local_hook
+# repository's own .git/hooks. Every hook in this folder calls run_local_hook
 # so that hooks installed per repository (pre-commit, lefthook, custom scripts) keep working.
 #
 # This file is both a library (sourced by commit-msg and pre-push) and the pass-through

@@ -37,12 +37,12 @@ Safety: existing files are moved to `<name>.bak-<timestamp>`, never overwritten;
 ## Enforced rules (hooks)
 | Hook | Where | What it does |
 | --- | --- | --- |
-| `pre-commit` | git (global) | Refuses `.env` files (not `.env.example`) and well-known credential formats (private keys, AWS, GitHub, Stripe, Slack, Google, Anthropic, OpenAI) in every repo, then runs the repo's own pre-commit. |
+| `pre-commit` | git (global) | Runs the repo's local pre-commit, then refuses `.env` files (not `.env.example`) and well-known credential formats in the final staged changes. Handles exact filenames and blocks commits when inspection fails. |
 | `commit-msg` | git (global) | Removes AI attribution everywhere; in enabled projects, rejects subjects that aren't Conventional Commits. |
 | `pre-push` | git (global) | Refuses force-pushes and deletions of `main`/`master`. In enabled projects, only annotated `vX.Y.Z` tags, never moved or deleted. |
 | Other git hooks | git (global) | Pass through to each repo's own `.git/hooks/*` (client and server side). |
 | `session-context.sh` | Claude Code `SessionStart` | Supplies activation status and bounded project instructions, architecture and active handoff through `harness context`. |
-| `guard-bash.sh` | Claude Code `PreToolUse` | Parses commands like a shell. Blocks force-pushing main, `--no-verify`, hook-path overrides and `rm -rf` of `/`, `~` or `..`; asks before discarding work, deleting branches, force-pushing other branches or wiping databases. |
+| `guard-bash.sh` | Claude Code `PreToolUse` | Performs bounded shell analysis. Blocks recognised catastrophic commands and hook bypasses; asks before destructive operations, unsupported executable constructs or exceeded parsing limits. |
 | `format-file.sh` | Claude Code `PostToolUse` | In enabled, locally trusted projects, formats each edited file with the project's own formatter. |
 
 Repos with their own local `core.hooksPath` (e.g. Husky) use only their hooks; there, Claude's `attribution` setting still prevents its trailers.
@@ -54,7 +54,7 @@ skills/<name>/        # Agent Skills (SKILL.md + references/ + assets/)
 agents/<name>.md      # Claude Code subagents
 targets.txt           # supported AI tools and their paths
 claude/settings.json  # Claude Code settings and hooks
-hooks/claude/         # Claude Code hook scripts (lib/shell-parse.sh: the command parser)
+hooks/claude/         # Claude hooks (lib/shell-parse.py plus .sh bridge/fallback: parsing)
 git-hooks/            # global git hooks
 bin/harness           # per-project switch
 plugins.txt           # Claude Code plugins
@@ -62,3 +62,5 @@ install.sh            # installer (lib/: settings merge in Python and jq)
 tests/  evals/        # automated tests and behaviour evals
 docs/                 # this documentation, audits and AI log
 ```
+
+The guard's Python parser supports commands up to 65,536 characters, with limits on tokens, substitutions, policy checks and nesting. The Bash-only fallback accepts short inputs up to 1,024 characters and asks for review of uncertain syntax. These checks supplement normal tool permissions; they do not execute or fully interpret arbitrary shell programs.

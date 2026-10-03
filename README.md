@@ -16,7 +16,7 @@ Out of the box, AI assistants forget your conventions every session, skip tests,
 | **Agents** | `planner`, `implementer`, `code-reviewer`, `test-writer`, `docs-writer`, `evaluator`, `architecture-reviewer`, `security-auditor`, `performance-analyzer`, `ui-reviewer` |
 | **Enforced by hooks** | Conventional Commits, no AI attribution, no secrets or `.env` committed, protected `main` and tags, a guard against dangerous commands, auto-format |
 | **Tools** | Claude Code, Codex, Cursor, GitHub Copilot CLI, Gemini CLI, OpenCode, Crush |
-| **Quality** | ~260 tests on Linux and macOS; [measured results](docs/results.md) |
+| **Quality** | 426 automated checks; CI targets Linux and macOS; [measured results](docs/results.md) |
 
 Details: [architecture](docs/architecture.md) · [components](docs/components.md) · [how it works](docs/how-it-works.md) · [conventions](docs/conventions.md).
 
