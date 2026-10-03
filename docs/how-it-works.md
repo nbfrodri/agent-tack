@@ -2,6 +2,8 @@
 
 What the installer sets up, which tools it supports, and which rules are enforced by hooks.
 
+Internal component responsibilities and execution flows: [architecture](architecture.md).
+
 ## Supported tools
 Paths come from each tool's documentation and live in `targets.txt` (add a line to support another tool).
 

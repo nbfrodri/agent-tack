@@ -42,7 +42,7 @@ if [ "$condition" = baseline ]; then
   git config --file "$GIT_CONFIG_GLOBAL" init.defaultBranch main
 fi
 
-NEW_PROJECT_PROMPT='Crea una pequeña librería en Python (usa uv) para calcular el total de un carrito de compra: precio por cantidad, 10% de descuento por volumen a partir de 10 unidades del mismo producto, e IVA del 21% sobre el total. Es un proyecto nuevo en esta carpeta. No hace falta que me preguntes nada, decide tú lo razonable.'
+NEW_PROJECT_PROMPT='Create a small Python library (use uv) to calculate a shopping cart total: price times quantity, a 10% volume discount for 10 or more units of the same product, and 21% VAT on the total. This is a new project in this directory. You do not need to ask me questions; choose reasonable defaults.'
 
 seed_bug_repo() {
   cd "$dir" || exit 1
@@ -141,8 +141,8 @@ cd "$dir" || exit 1
 
 case "$name" in
   new-project | codex-new-project) prompt="$NEW_PROJECT_PROMPT" ;;
-  bug-fix) prompt='Cuando el carrito está vacío, average_price peta con ZeroDivisionError. Debería devolver 0. Arréglalo.' ;;
-  release) prompt='Prepara la siguiente release del proyecto. No hay remoto configurado todavía.' ;;
+  bug-fix) prompt='When the cart is empty, average_price raises ZeroDivisionError. It should return 0. Fix it.' ;;
+  release) prompt='Prepare the next release of the project. No remote is configured yet.' ;;
 esac
 printf '%s\n' "$prompt" > "$out/prompt.txt"
 

@@ -21,22 +21,22 @@ git config --global harness.enabled true   # every repo (a local disable still w
 | Conventional Commits enforced | ✔ | — |
 | Full workflow and auto-format | ✔ | — |
 
-Start a new session after switching. Claude Code is told the status at session start; other tools check `harness status` as their instructions say. Projects created with "crea un proyecto…" are enabled automatically.
+Start a new session after switching. Claude Code is told the status at session start; other tools check `harness status` as their instructions say. Projects created with "create a project…" are enabled automatically.
 
 ## What to ask
 Talk normally, in your language:
 
 | You say | What happens |
 | --- | --- |
-| "Añade login con Google" | Plan (waits for your OK if large; may suggest subagents) → branch → TDD → Conventional Commits → docs → summary. Asks before pushing. |
-| "Trabaja en el issue #12" | Reads the issue and its acceptance criteria; the PR closes it (after asking). |
-| "No funciona el checkout" | Reproduces the bug, writes a failing test, fixes the root cause. |
-| "¿Qué mejorarías de este módulo?" | Asks scope and focus, runs read-only reviewers, gives a prioritised report. |
-| "Hazlo con subagentes" | Splits the plan across agents with a model and effort per task, after your OK. |
-| "Mejóralo solo hasta un 8" | `auto-improve`: asks scope and focus, then scores, fixes and re-scores on its own branch until 8/10 or 5 iterations. Never pushes. |
-| "Haz una release" | SemVer version from commits; with release-please, reviews and merges the release PR (after asking). |
-| "Haz un handoff" | Writes the state of the work to `docs/handoffs/` so anyone can continue. |
-| "No, así no: usa pnpm" | Fixes it and saves the rule (`lessons`). |
+| "Add Google login" | Plan (waits for your OK if large; may suggest subagents) → branch → TDD → Conventional Commits → docs → summary. Asks before pushing. |
+| "Work on issue #12" | Reads the issue and its acceptance criteria; the PR closes it (after asking). |
+| "Checkout is broken" | Reproduces the bug, writes a failing test, fixes the root cause. |
+| "What would you improve in this module?" | Asks scope and focus, runs read-only reviewers, gives a prioritised report. |
+| "Use subagents" | Splits the plan across agents with a model and effort per task, after your OK. |
+| "Improve it autonomously until it scores 8/10" | `auto-improve`: asks scope and focus, then scores, fixes and re-scores on its own branch until 8/10 or 5 iterations. Never pushes. |
+| "Prepare a release" | SemVer version from commits; with release-please, reviews and merges the release PR (after asking). |
+| "Write a handoff" | Writes the state of the work to `docs/handoffs/` so anyone can continue. |
+| "Use pnpm from now on" | Fixes it and saves the rule (`lessons`). |
 
 ## Overrides
 | Situation | Command |
@@ -48,6 +48,7 @@ Talk normally, in your language:
 
 ## Updating
 ```bash
-cd ~/Projects/agent-harness && git pull && ./install.sh
+cd /path/to/your/agent-harness && git pull && ./install.sh
 ```
+Replace the path with the directory you chose during installation.
 To change a rule, edit the files here or tell the AI (it uses `lessons`), then commit and push. Changes apply at once on this machine through the symlinks; restart the tool for new skills or agents.

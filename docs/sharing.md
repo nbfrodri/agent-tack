@@ -2,6 +2,8 @@
 
 The repo holds its owner's preferences, so another person runs their own copy.
 
+You can customize every part of your copy to fit your own workflow; see [customization](customization.md) for the file map and how changes are applied.
+
 1. **Get access:** the owner invites them as a collaborator, or makes the repo public or a template.
 2. **Create their copy:** *Use this template* or fork, so their rules stay versioned in their own repo.
 3. **Install:**
@@ -9,6 +11,7 @@ The repo holds its owner's preferences, so another person runs their own copy.
    git clone https://github.com/<their-user>/agent-harness.git ~/Projects/agent-harness
    ~/Projects/agent-harness/install.sh
    ```
+   The directory is your choice; replace the example path in both commands. Keep the checkout there because installed files link to it, or re-run `install.sh` after moving it.
 4. **Adapt the personal bits:**
    | File | What to change |
    | --- | --- |

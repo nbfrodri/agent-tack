@@ -1,6 +1,7 @@
 # AGENTS.md
 
 This repo is the user's AI configuration (skills, agents, hooks, installer). Human docs: `README.md`.
+Architecture and execution flows: `docs/architecture.md`; keep it current when components, dependencies or flows change.
 
 ## Commands
 - Lint: `shellcheck -x install.sh bin/harness tests/*.sh evals/run.sh git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push git-hooks/pre-commit hooks/claude/*.sh hooks/claude/lib/*.sh`
@@ -9,6 +10,7 @@ This repo is the user's AI configuration (skills, agents, hooks, installer). Hum
 - Apply locally: `./install.sh` (idempotent)
 
 ## Rules for this repo
+- Keep all repository content in English, including documentation, examples, skill trigger phrases and eval prompts, so it stays consistent for readers. Conversation language follows the global instructions.
 - Shell scripts must run on bash 3.2 (macOS): no associative arrays, `mapfile`, `${var,,}` or `sed -i`.
 - Tests never touch the real HOME or git config: use a temp HOME plus `XDG_CONFIG_HOME` and `GIT_CONFIG_NOSYSTEM=1`.
 - A skill's `name` must match its folder. Descriptions say what it does and when to use it, within the budget `tests/validate.sh` enforces (they load in every session).
