@@ -67,7 +67,13 @@ Before committing: review `git diff --staged` so no secrets, generated files or 
 
 ## Pull requests
 
-PRs are integrated with a **merge commit**, preserving the verified milestone commits in `main`. Do not squash unless the user explicitly asks. Every branch commit and the PR title follow Conventional Commits (see `conventions.md`). If repository settings only allow squash, explain the constraint and obtain permission before changing settings or using another integration method. Body:
+Before requesting integration approval, inspect the branch commits and recommend a method with a short reason:
+- **Merge commit** when the commits are coherent, verified milestones worth retaining individually.
+- **Squash** when the branch represents one change and its history contains temporary fixes, repeated corrections or work in progress that would obscure that change.
+
+In the existing integration confirmation, offer both available methods and let the user choose. Preserve commits by default; squash requires the user's explicit choice. If the user already specified a method for this integration, follow it without asking again. Do not add a separate approval step or rewrite published commits to prepare the choice. Explain repository constraints when a method is unavailable; changing repository settings requires permission.
+
+Every branch commit and the PR title follow Conventional Commits (see `conventions.md`). When squashing, the resulting commit must also follow Conventional Commits and describe the complete change. Body:
 ```markdown
 ## Summary
 What changes and why (1-3 sentences).

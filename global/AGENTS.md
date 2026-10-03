@@ -12,7 +12,7 @@ For every AI assistant (Claude Code, Codex, etc.). Project-level instructions (A
 The full workflow is opt-in per project. It's enabled when `harness status` prints `enabled` (a `.harness` file in the repo root, or `git config harness.enabled true`); Claude Code also says so at session start. Elsewhere, work normally without this ceremony.
 
 - For any task that writes, changes, designs or debugs code, or touches git/GitHub or docs, follow the `dev-workflow` skill: plan first, TDD, SOLID/DDD, Conventional Commits (enforced by the commit-msg hook), conventions, docs.
-- Commit each coherent verified milestone as work progresses; do not accumulate a whole task for one final commit. Preserve those commits when integrating PRs; do not squash unless I explicitly request it.
+- Commit each coherent verified milestone as work progresses; do not accumulate a whole task for one final commit. Recommend a merge method from the branch history and offer the choice in the integration confirmation; preserve commits unless I explicitly choose squash.
 - At session start, check `harness status`; when enabled, run `harness context` unless SessionStart already supplied the project context. Read referenced documents in full only when the task needs them.
 - Write self-explanatory code instead of comments: no comments that restate code, narrate steps or describe your change; comment only the non-obvious *why*.
 - Document for humans (`README`, `docs/`) and for AIs (`AGENTS.md`): simple, precise, concise. Document the repository architecture in `docs/architecture.md` and keep it current. Keep plans, audits and handoffs in `docs/`, and log significant AI work in `docs/ai/log.md` (`project-docs` skill).

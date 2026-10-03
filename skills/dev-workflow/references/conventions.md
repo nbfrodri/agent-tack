@@ -8,14 +8,14 @@ Defaults for every project. **A project's existing conventions win**: follow its
 | --- | --- |
 | Commit messages | [Conventional Commits 1.0](https://www.conventionalcommits.org): `type(scope): description`, English, imperative, ≤ 72 chars. Enforced in enabled projects by the `commit-msg` hook (which only rejects over 100). Details in `git-github.md`. |
 | Branches | `type/short-description`, or `type/123-short-description` when there's an issue. Short-lived. |
-| Merging PRs | **Merge commit.** Preserve the verified commits from the branch in `main`; squash only when explicitly requested by the user. The PR title and every commit follow Conventional Commits. |
+| Merging PRs | Recommend merge commit for coherent verified milestones, or squash for one change with temporary intermediate commits. Offer available methods in the integration confirmation; preserve commits unless the user explicitly chooses squash. The PR title and every commit follow Conventional Commits. |
 | Commits inside a PR branch | Commit coherent verified milestones while working. A passing test and its implementation usually share a commit. Resolve temporary fixup commits before publication, without rewriting published history unless authorised. |
 | After merge | Delete branches only when authorised by the user. |
 | Attribution | No AI attribution anywhere (see `git-github.md`). |
 
 Repository settings to match (new repos, or existing ones with the user's permission):
 ```bash
-gh repo edit --enable-merge-commit --enable-squash-merge=false \
+gh repo edit --enable-merge-commit --enable-squash-merge \
   --enable-rebase-merge=false --delete-branch-on-merge=false
 ```
 
