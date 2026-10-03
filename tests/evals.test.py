@@ -180,6 +180,8 @@ class Runner(unittest.TestCase):
         self.assertEqual(metadata['cli_version'], 'fixture-cli')
         self.assertEqual(metadata['metrics_version'], 2)
         self.assertEqual(metadata['permission_mode'], 'acceptEdits')
+        self.assertIn('Bash(uv *)', metadata['allowed_tools'])
+        self.assertIn('Agent', metadata['allowed_tools'])
         self.assertEqual(metadata['condition'], 'baseline')
         self.assertEqual(metadata['provider'], 'claude')
         self.assertEqual(len(metadata['harness_revision']), 40)

@@ -33,11 +33,12 @@ if __name__ == '__main__':
     if sys.argv[1] == 'finish':
         finalize(directory)
     else:
-        scenario, condition, rep, provider, model, version, revision = sys.argv[3:]
+        scenario, condition, rep, provider, model, version, revision = sys.argv[3:10]
         metadata = dict(scenario=scenario, condition=condition, repetition=int(rep), provider=provider,
                         requested_model=model or None, resolved_model=None, cli_version=version,
                         harness_revision=revision, metrics_version=2,
                         prompt_sha256=hashlib.sha256((directory / 'prompt.txt').read_bytes()).hexdigest(),
+                        allowed_tools=sys.argv[10:] if provider == 'claude' else None,
                         permission_mode='workspace-write' if provider == 'codex' else 'acceptEdits',
                         configuration_sources='project,local' if condition == 'baseline' and provider == 'claude' else None)
         (directory / 'metadata.json').write_text(json.dumps(metadata, indent=2) + '\n')

@@ -162,12 +162,15 @@ case "$name" in
 esac
 printf '%s\n' "$prompt" > "$out/prompt.txt"
 
+allowed_tools=("Bash(git *)" "Bash(uv *)" "Bash(python3 *)" "Bash(ls *)" "Bash(cat *)"
+  "Bash(mkdir *)" "Bash(pytest *)" "Bash(harness *)" "Bash(find *)" "Bash(grep *)" "Bash(head *)" "Bash(sed -n *)"
+  Read Write Edit Glob Grep Skill Agent TodoWrite)
 provider=claude
 [ "$name" = codex-new-project ] && provider=codex
 cli_version=$("$provider" --version 2>/dev/null || true)
 harness_revision=$(git -C "$HARNESS_REPO" rev-parse HEAD)
 python3 "$HARNESS_REPO/evals/metadata.py" start "$out" "$name" "$condition" "$rep" "$provider" \
-  "${EVALS_MODEL:-}" "$cli_version" "$harness_revision"
+  "${EVALS_MODEL:-}" "$cli_version" "$harness_revision" "${allowed_tools[@]}"
 model_flags=()
 [ -z "${EVALS_MODEL:-}" ] || model_flags=(--model "$EVALS_MODEL")
 
@@ -197,9 +200,7 @@ case "$name" in
     claude -p "$prompt" "${model_flags[@]+"${model_flags[@]}"}" --output-format stream-json --verbose \
       "${baseline_flags[@]+"${baseline_flags[@]}"}" \
       --permission-mode acceptEdits \
-      --allowedTools "Bash(git *)" "Bash(uv *)" "Bash(python3 *)" "Bash(ls *)" "Bash(cat *)" \
-        "Bash(mkdir *)" "Bash(pytest *)" "Bash(harness *)" "Bash(find *)" "Bash(grep *)" "Bash(head *)" "Bash(sed -n *)" \
-        Read Write Edit Glob Grep Skill Agent TodoWrite \
+      --allowedTools "${allowed_tools[@]}" \
       > "$out/transcript.jsonl" 2> "$out/stderr.log"
     ;;
 esac
