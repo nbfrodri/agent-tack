@@ -24,6 +24,13 @@ expect_exit() {
   [ "$actual" -eq "$expected" ]
 }
 contains() { grep -qF -- "$1" "$WORK/output"; }
+expect_status() {
+  local expected_exit="$1" workflow="$2" trust="$3" expected
+  shift 3
+  expect_exit "$expected_exit" "$CLI" "$@" || return 1
+  expected="$(printf '%s\nformatter trust: %s' "$workflow" "$trust")"
+  [ "$(cat "$WORK/output")" = "$expected" ]
+}
 excludes_completed() { ! grep -qF 'Do not include completed work' "$WORK/output"; }
 bounded_context() { [ "$(wc -c < "$WORK/output")" -le 7000 ]; }
 session() {
@@ -32,6 +39,24 @@ session() {
 session_has_instructions() {
   python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); assert "Project \"instructions\"\\path" in d["hookSpecificOutput"]["additionalContext"]' "$WORK/output"
 }
+
+check "status shows disabled and untrusted independently" expect_status 1 disabled untrusted status
+check "default command shows combined status" expect_status 1 disabled untrusted
+check "disabled quiet status keeps its activation exit code" expect_exit 1 "$CLI" status --quiet
+check "disabled quiet status emits no output" test ! -s "$WORK/output"
+git config --local harness.enabled true
+check "status shows enabled without formatter trust" expect_status 0 enabled untrusted status
+check "enabled quiet status keeps its activation exit code" expect_exit 0 "$CLI" status --quiet
+check "enabled quiet status emits no output" test ! -s "$WORK/output"
+git config --local harness.trusted true
+check "status shows enabled and locally trusted" expect_status 0 enabled trusted status
+git config --local harness.enabled false
+check "disabled workflow can retain local formatter trust" expect_status 1 disabled trusted status
+git config --local --unset harness.enabled
+git config --local --unset harness.trusted
+cd "$WORK" || exit 1
+check "outside a repository status is disabled and untrusted" expect_status 1 disabled untrusted status
+cd "$WORK/project" || exit 1
 
 : > .git/config.lock
 check "enable reports config write failure" expect_exit 1 "$CLI" enable
@@ -51,8 +76,11 @@ check "shared enable succeeds" expect_exit 0 "$CLI" enable --shared
 check "shared marker grants no execution trust" expect_exit 1 "$CLI" trusted --quiet
 git config --global harness.trusted true
 check "global trust grants no execution trust" expect_exit 1 "$CLI" trusted --quiet
+check "status ignores global formatter trust" expect_status 0 enabled untrusted status
 check "local trust can be granted" expect_exit 0 "$CLI" trust
 check "trusted status succeeds" expect_exit 0 "$CLI" trusted --quiet
+check "standalone trusted query keeps its output and exit code" expect_exit 0 "$CLI" trusted
+check "standalone trusted query prints trusted" test "$(cat "$WORK/output")" = trusted
 check "trust can be revoked" expect_exit 0 "$CLI" trust --revoke
 check "revoked trust refuses execution" expect_exit 1 "$CLI" trusted --quiet
 

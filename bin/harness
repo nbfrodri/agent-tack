@@ -4,11 +4,12 @@
 #   harness enable           enable for this clone only (stored in .git/config, invisible to others)
 #   harness enable --shared  enable through a committed .harness file (travels with the repo)
 #   harness disable          disable (removes both markers)
-#   harness status           print whether it is enabled; exit 0 if enabled, 1 if not
+#   harness status           show activation and formatter trust; exit 0 if enabled, 1 if not
 #   harness status --quiet   same, without output (used by hooks)
 #   harness trust            allow project formatter execution in this clone
 #   harness trust --revoke   revoke that local permission
-#   harness trusted --quiet  report local formatter trust (exit 0 if trusted)
+#   harness trusted          report local formatter trust (exit 0 if trusted)
+#   harness trusted --quiet  same, without output (used by formatter hooks)
 #   harness context          print bounded project instructions, architecture and handoff
 #
 # Outside enabled projects only the safety net stays active: the command guard, the protection
@@ -49,6 +50,10 @@ is_enabled() {
   [ -f "$root/.harness" ]
 }
 
+is_trusted() {
+  [ "$(git config --local --bool --get harness.trusted 2>/dev/null)" = true ]
+}
+
 cmd="${1:-status}"
 [ $# -gt 0 ] && shift
 
@@ -81,11 +86,16 @@ case "$cmd" in
   status)
     allowed_option=--quiet; check_args "$@"
     if is_enabled; then
-      [ "${1:-}" = "--quiet" ] || echo "enabled"
-      exit 0
+      workflow_state=enabled; workflow_exit=0
+    else
+      workflow_state=disabled; workflow_exit=1
     fi
-    [ "${1:-}" = "--quiet" ] || echo "disabled"
-    exit 1
+    if [ "${1:-}" != --quiet ]; then
+      printf '%s\n' "$workflow_state"
+      if is_trusted; then echo 'formatter trust: trusted'
+      else echo 'formatter trust: untrusted'; fi
+    fi
+    exit "$workflow_exit"
     ;;
   trust)
     allowed_option=--revoke; check_args "$@"
@@ -100,7 +110,7 @@ case "$cmd" in
     ;;
   trusted)
     allowed_option=--quiet; check_args "$@"
-    if [ "$(git config --local --bool --get harness.trusted 2>/dev/null)" = true ]; then
+    if is_trusted; then
       [ "${1:-}" = --quiet ] || echo trusted
       exit 0
     fi
