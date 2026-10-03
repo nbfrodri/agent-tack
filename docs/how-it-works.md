@@ -52,11 +52,11 @@ skills/<name>/        # Agent Skills (SKILL.md + references/ + assets/)
 agents/<name>.md      # Claude Code subagents
 targets.txt           # supported AI tools and their paths
 claude/settings.json  # Claude Code settings and hooks
-hooks/claude/         # Claude Code hook scripts
+hooks/claude/         # Claude Code hook scripts (lib/shell-parse.sh: the command parser)
 git-hooks/            # global git hooks
 bin/harness           # per-project switch
 plugins.txt           # Claude Code plugins
-install.sh            # installer
+install.sh            # installer (lib/: settings merge in Python and jq)
 tests/  evals/        # automated tests and behaviour evals
 docs/                 # this documentation, audits and AI log
 ```
