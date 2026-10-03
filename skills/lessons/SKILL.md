@@ -22,7 +22,7 @@ When unsure, apply the fix, then ask in one line: "¿Lo guardo como regla para e
 
 The user's config repo is where the skills live:
 ```bash
-CONFIG_REPO="$(dirname "$(dirname "$(readlink -f ~/.agents/skills/lessons)")")"   # usually ~/agent-config
+CONFIG_REPO="$(cd ~/.agents/agent-config && pwd -P)"   # canonical link created by install.sh
 ```
 
 ## 3. Write it well

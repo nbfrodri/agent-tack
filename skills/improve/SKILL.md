@@ -32,7 +32,7 @@ Even when the request seems clear, ask both questions before reviewing anything,
 Also ask, if it isn't obvious, about context that changes priorities: is it a prototype or production? Is a big refactor acceptable, or only incremental changes?
 
 ## 2. Run the reviewers
-- Give each reviewer the agreed scope, the focus and the project context, and tell it to **only report, not edit**. Where subagents aren't available (e.g. in Codex), do each review yourself, one focus at a time, following the corresponding agent definition in the config repo's `agents/` folder (`$(dirname "$(dirname "$(readlink -f ~/.agents/skills/improve)")")/agents/`).
+- Give each reviewer the agreed scope, the focus and the project context, and tell it to **only report, not edit**. Where subagents aren't available (e.g. in Codex), do each review yourself, one focus at a time, following the corresponding agent definition in `~/.agents/agent-config/agents/`.
 - Independent reviewers can run in parallel.
 - For UI reviews, make sure the app is running locally (or ask for a URL) before starting the `ui-reviewer`.
 

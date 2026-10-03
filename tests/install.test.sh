@@ -60,6 +60,7 @@ for dir in .agents/skills .claude/skills .codex/skills; do
   check "all $skill_count skills linked in ~/$dir" "[ \"\$(find '$H/$dir' -maxdepth 1 -type l | wc -l | tr -d ' ')\" = '$skill_count' ]"
 done
 check "all $agent_count agents linked" "[ \"\$(find '$H/.claude/agents' -maxdepth 1 -type l | wc -l | tr -d ' ')\" = '$agent_count' ]"
+check "canonical ~/.agents/agent-config link to the repo" "[ \"\$(readlink '$H/.agents/agent-config')\" = '$REPO' ]"
 check "agent-config command linked into ~/.local/bin" "[ \"\$(readlink '$H/.local/bin/agent-config')\" = '$REPO/bin/agent-config' ]"
 check "settings.json disables AI attribution" "[ \"\$(json_get '$H/.claude/settings.json' attribution.commit)\" = '\"\"' ]"
 

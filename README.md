@@ -174,7 +174,8 @@ Full details: `skills/dev-workflow/references/conventions.md`.
 
 ```bash
 shellcheck -x install.sh bin/agent-config tests/*.sh evals/run.sh git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push hooks/claude/*.sh
-tests/validate.sh                  # validate skills, agents and plugins.txt
+tests/validate.sh                  # validate skills, agents, cross-references, README coverage, plugins.txt
+tests/validate.test.sh             # prove the validator catches each kind of error
 tests/install.test.sh              # test the installer in throwaway HOME directories
 tests/hooks.test.sh                # test git and Claude Code hooks in throwaway repositories
 ```

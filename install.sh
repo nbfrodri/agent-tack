@@ -117,6 +117,10 @@ install_links() {
     done
   done
 
+  section "Config repo link"
+  # Canonical path skills and agents use to reach this repo, wherever it is cloned
+  link "$REPO" "$HOME/.agents/agent-config"
+
   section "Command"
   chmod +x "$REPO/bin/agent-config" 2>/dev/null
   link "$REPO/bin/agent-config" "$HOME/.local/bin/agent-config"

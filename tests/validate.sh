@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Validates skills and agents: frontmatter present, name matches, description within limits,
-# and every referenced file under references/ exists.
-# Usage: tests/validate.sh
+# Validates the repo's content: skill and agent frontmatter, description budget, cross-references
+# between skills, agents and docs, README coverage, plugins.txt and git-hooks/.
+# Usage: tests/validate.sh [repo dir]   (defaults to this repo)
 set -uo pipefail
 
-REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO="$(cd "${1:-$(dirname "${BASH_SOURCE[0]}")/..}" && pwd)"
 ERRORS=0
 err() { printf '  ✘ %s\n' "$1"; ERRORS=$((ERRORS + 1)); }
 
@@ -29,10 +29,17 @@ check_file() {
     err "$file: missing frontmatter"
     return
   fi
+  if ! awk 'NR > 1 && $0 == "---" { found = 1; exit } END { exit !found }' "$file"; then
+    err "$file: frontmatter is not closed with ---"
+    return
+  fi
   name="$(field "$file" name)"
   description="$(field "$file" description)"
   [ "$name" = "$expected_name" ] || err "$file: name '$name' should be '$expected_name'"
-  [ -n "$description" ] || err "$file: missing description"
+  case "$description" in
+    '' ) err "$file: missing description" ;;
+    '>'* | '|'*) err "$file: description must be on a single line" ;;
+  esac
   [ "${#description}" -le "$max" ] || err "$file: description is ${#description} chars (max $max): say what it does and when to use it"
   case "$file" in */SKILL.md) SKILLS_TOTAL=$((SKILLS_TOTAL + ${#description})) ;; esac
   case "$name" in
@@ -43,20 +50,11 @@ check_file() {
 echo "Skills"
 for skill in "$REPO"/skills/*/; do
   name="$(basename "$skill")"
-  file="$skill/SKILL.md"
-  if [ ! -f "$file" ]; then
+  if [ ! -f "$skill/SKILL.md" ]; then
     err "skills/$name: missing SKILL.md"
     continue
   fi
-  check_file "$file" "$name" "$SKILL_DESC_MAX"
-  while read -r ref; do
-    [ -n "$ref" ] || continue
-    # A reference can point to this skill's own file or to another skill's (e.g. dev-workflow's)
-    [ -f "$skill/$ref" ] || ls "$REPO"/skills/*/"$ref" >/dev/null 2>&1 \
-      || err "skills/$name: references missing file $ref"
-  done <<EOF
-$(grep -o 'references/[a-z0-9-]*\.md' "$file" | sort -u)
-EOF
+  check_file "$skill/SKILL.md" "$name" "$SKILL_DESC_MAX"
   echo "  ✔ $name"
 done
 
@@ -67,15 +65,68 @@ for agent in "$REPO"/agents/*.md; do
   echo "  ✔ $(basename "$agent" .md)"
 done
 
+echo "Cross-references and README"
+# Paths like ~/.agents/skills/<skill>/... and ~/.agents/agent-config/... are what agents and skills
+# read at runtime; references/x.md belongs to the skill it's written in unless another skill is
+# named next to it ("`dev-workflow` → `references/x.md`" or "dev-workflow/references/x.md").
+while IFS= read -r problem; do
+  [ -n "$problem" ] && err "$problem"
+done <<EOF
+$(python3 - "$REPO" <<'PY'
+import re, sys
+from pathlib import Path
+
+repo = Path(sys.argv[1])
+skills = {p.name for p in (repo / "skills").iterdir() if (p / "SKILL.md").exists()}
+agents = {p.stem for p in (repo / "agents").glob("*.md")}
+docs = list((repo / "skills").glob("*/SKILL.md")) + list((repo / "skills").glob("*/references/*.md")) \
+    + list((repo / "agents").glob("*.md")) + [repo / "global" / "AGENTS.md"]
+
+for doc in docs:
+    rel = doc.relative_to(repo)
+    own = doc.parts[len(repo.parts) + 1] if rel.parts[0] == "skills" else None
+    for n, line in enumerate(doc.read_text().splitlines(), 1):
+        for m in re.finditer(r"~/\.agents/skills/([a-z0-9-]+)(/[A-Za-z0-9_./-]*)?", line):
+            target = repo / "skills" / m.group(1) / (m.group(2) or "").lstrip("/")
+            if not target.exists():
+                print(f"{rel}:{n}: {m.group(0)} does not exist")
+        for m in re.finditer(r"~/\.agents/agent-config(/[A-Za-z0-9_./-]*)?", line):
+            if not (repo / (m.group(1) or "").lstrip("/")).exists():
+                print(f"{rel}:{n}: {m.group(0)} does not exist")
+        for m in re.finditer(r"(?:`([a-z0-9-]+)` → `|([a-z0-9-]+)/)?references/([a-z0-9-]+\.md)", line):
+            owner = m.group(1) or m.group(2) or own
+            if owner is None or owner not in skills:
+                continue
+            if not (repo / "skills" / owner / "references" / m.group(3)).exists():
+                print(f"{rel}:{n}: {owner}/references/{m.group(3)} does not exist")
+
+readme = (repo / "README.md").read_text()
+for name in sorted(skills | agents):
+    if f"`{name}`" not in readme:
+        print(f"README.md: `{name}` is not documented")
+PY
+)
+EOF
+echo "  ✔ checked"
+
 echo "plugins.txt"
-while read -r kind id _; do
+while read -r kind id source _; do
   case "$kind" in
-    ''|'#'*) ;;
-    marketplace) ;;
+    '' | '#'*) ;;
+    marketplace) [ -n "${source:-}" ] || err "plugins.txt: marketplace '$id' needs a source" ;;
     plugin) case "$id" in *@*) ;; *) err "plugins.txt: '$id' should be plugin@marketplace" ;; esac ;;
     *) err "plugins.txt: unknown line type '$kind'" ;;
   esac
 done <"$REPO/plugins.txt"
+
+echo "git-hooks/"
+for hook in "$REPO"/git-hooks/*; do
+  if [ -L "$hook" ]; then
+    [ "$(readlink "$hook")" = "_chain" ] || err "git-hooks/$(basename "$hook"): symlinks must point to _chain"
+  elif [ ! -x "$hook" ]; then
+    err "git-hooks/$(basename "$hook"): not executable"
+  fi
+done
 
 [ "$SKILLS_TOTAL" -le "$SKILLS_TOTAL_MAX" ] \
   || err "skill descriptions total $SKILLS_TOTAL chars (max $SKILLS_TOTAL_MAX): shorten some"
