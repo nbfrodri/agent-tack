@@ -34,3 +34,11 @@ Approved scope: read-only install preview, private ownership records, and conser
 - Missing Git hook directories now require recorded ownership or canonical harness-link evidence captured before link migration. A basename alone is insufficient. The legacy migration fixture now supplies a real prior canonical link.
 - RED: three new failures. GREEN: 51 lifecycle checks and all 87 installer checks. A final positive regression explicitly removes canonical links to exercise recorded Git evidence after moving a checkout; its expanded run is in progress.
 - Expanded final result: 54 lifecycle checks pass, including migration proved only by recorded ownership. All 87 existing installer checks and ShellCheck pass; no publication performed.
+
+## Retired hook-event restoration (#28)
+
+- Added isolated end-to-end regressions for a tagged baseline `Stop` hook removed by installation, followed by a theme edit, a later user `Stop` hook, or an edited installed `SessionStart` command.
+- All three baseline-hook assertions failed before the fix; the user's later values already survived.
+- Selective reversal now uses the original before/after snapshots to identify tagged commands removed from events absent from the current managed template. It adds those commands and their metadata back without replacing current groups or changing edited commands. Explicitly removed or invalid hook containers remain untouched.
+- Final lifecycle and installer regressions are running; no publication performed.
+- Final result: all 65 lifecycle checks and all 87 installer checks pass. ShellCheck for the changed shell test and `git diff --check` pass.

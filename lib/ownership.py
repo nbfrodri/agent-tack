@@ -212,6 +212,37 @@ def reverse_managed(before, managed, current):
     return reverse_value(before, managed, current)
 
 
+def restore_retired_events(before, after, managed, current, restored):
+    if not isinstance(current, dict) or not isinstance(restored, dict) or "hooks" not in current:
+        return
+    original = before.get("hooks", {})
+    installed = after.get("hooks", {})
+    wanted = managed.get("hooks", {})
+    present = restored.get("hooks", {})
+    if not all(isinstance(value, dict) for value in (original, installed, wanted, present)):
+        return
+    for event, groups in original.items():
+        if event in wanted or not isinstance(groups, list) or not isinstance(present.get(event, []), list):
+            continue
+        after_groups = installed.get(event, [])
+        if not isinstance(after_groups, list):
+            continue
+        retained = [hook for group in after_groups if isinstance(group, dict) and
+                    isinstance(group.get("hooks"), list) for hook in group["hooks"]]
+        displaced = []
+        for group in groups:
+            if not isinstance(group, dict) or not isinstance(group.get("hooks"), list):
+                continue
+            removed = [hook for hook in group["hooks"] if hook not in retained and
+                       isinstance(hook, dict) and any(tag in str(hook.get("command", ""))
+                                                     for tag in ("#harness", "#agent-config"))]
+            if removed:
+                displaced.append(dict(group, hooks=removed))
+        if displaced:
+            destination = restored.setdefault("hooks", {}).setdefault(event, [])
+            restore_displaced_hooks(displaced, destination)
+
+
 def same_parent(entry, path):
     if not path.parent.is_dir() or os.path.realpath(path.parent) != read(entry / "parent"):
         return False
@@ -268,6 +299,8 @@ def uninstall_entry(entry, dry_run):
         after = json.loads((entry / "after").read_text())
         managed = json.loads((entry / "managed").read_text())
         restored = before if current == after else reverse_managed(before, managed, current)
+        if current != after:
+            restore_retired_events(before, after, managed, current, restored)
         if restored == current:
             print(f"preserved settings: {path}")
             return False
