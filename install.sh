@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Installs this repo's configuration for Claude Code and Codex:
 #   - global instructions, skills and subagents (as symlinks into this repo)
-#   - Claude Code settings from claude/settings.json (merged, other keys kept)
+#   - Claude Code settings and hooks from claude/settings.json (merged, your other keys kept)
+#   - global git hooks from git-hooks/ (Conventional Commits, no AI attribution, protect main)
 #   - Claude Code marketplaces and plugins from plugins.txt (installed or updated to latest)
 #
 # Safe to re-run at any time. Existing files are backed up with a timestamp,
@@ -12,6 +13,8 @@ set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 STAMP="$(date +%Y%m%d-%H%M%S)"
+WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/agent-config.XXXXXX")" || { echo "cannot create a temp dir" >&2; exit 1; }
+trap 'rm -rf "$WORKDIR"' EXIT
 SKIP_PLUGINS=0
 FAILURES=0
 WARNINGS=0
@@ -20,7 +23,7 @@ for arg in "$@"; do
   case "$arg" in
     --skip-plugins) SKIP_PLUGINS=1 ;;
     -h|--help)
-      sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'
+      sed -n '2,11p' "$0" | sed 's/^# \{0,1\}//'
       exit 0
       ;;
     *)
@@ -124,26 +127,34 @@ install_links() {
   done
 }
 
-# Deep-merges claude/settings.json into ~/.claude/settings.json; repo values win, other keys are kept.
+# Merges claude/settings.json into ~/.claude/settings.json:
+#   - objects are deep-merged and the repo's values win; your other keys are kept
+#   - hooks: entries tagged "#agent-config" are replaced by the repo's, your own hooks are kept
+#   - __REPO__ in the repo file is replaced with this repo's path
 merge_settings() {
   section "Claude Code settings"
-  local src="$REPO/claude/settings.json" dest="$HOME/.claude/settings.json" tmp
+  local src="$REPO/claude/settings.json" dest="$HOME/.claude/settings.json"
+  local base rendered tmp line rc=0
   [ -f "$src" ] || { ok "no claude/settings.json in repo, nothing to merge"; return; }
+  case "$REPO" in
+    *\'*|*\"*|*\\*) fail "the repo path contains quotes or backslashes; move it to a simpler path"; return ;;
+  esac
   mkdir -p "$HOME/.claude"
-  if [ ! -s "$dest" ]; then
-    if cp "$src" "$dest"; then
-      ok "created $dest"
-    else
-      fail "could not create $dest"
-    fi
-    return
-  fi
-  tmp="$(mktemp "${TMPDIR:-/tmp}/settings.XXXXXX")" || { fail "cannot create temp file"; return; }
 
-  local rc=0
+  base="$WORKDIR/settings-base.json"
+  rendered="$WORKDIR/settings-repo.json"
+  tmp="$WORKDIR/settings-merged.json"
+
+  if [ -s "$dest" ]; then cp "$dest" "$base"; else printf '{}\n' > "$base"; fi
+  while IFS= read -r line || [ -n "$line" ]; do
+    printf '%s\n' "${line//__REPO__/$REPO}"
+  done < "$src" > "$rendered"
+
   if has python3; then
-    python3 - "$dest" "$src" > "$tmp" 2>/dev/null <<'PY'
+    python3 - "$base" "$rendered" > "$tmp" 2>/dev/null <<'PY'
 import json, sys
+
+TAG = "#agent-config"
 
 def merge(base, extra):
     for key, value in extra.items():
@@ -153,40 +164,93 @@ def merge(base, extra):
             base[key] = value
     return base
 
+def is_ours(group):
+    return isinstance(group, dict) and any(
+        isinstance(h, dict) and TAG in str(h.get("command", "")) for h in group.get("hooks", [])
+    )
+
 with open(sys.argv[1]) as f:
     current = json.load(f)
 with open(sys.argv[2]) as f:
     wanted = json.load(f)
 if not isinstance(current, dict):
     sys.exit("settings.json is not a JSON object")
-json.dump(merge(current, wanted), sys.stdout, indent=2)
+
+wanted_hooks = wanted.pop("hooks", {}) or {}
+merged = merge(current, wanted)
+hooks = merged.get("hooks") if isinstance(merged.get("hooks"), dict) else {}
+for event in list(hooks):
+    if isinstance(hooks[event], list):
+        hooks[event] = [g for g in hooks[event] if not is_ours(g)]
+        if not hooks[event]:
+            del hooks[event]
+for event, groups in wanted_hooks.items():
+    hooks.setdefault(event, []).extend(groups)
+if hooks:
+    merged["hooks"] = hooks
+else:
+    merged.pop("hooks", None)
+json.dump(merged, sys.stdout, indent=2, ensure_ascii=False)
 sys.stdout.write("\n")
 PY
     rc=$?
   elif has jq; then
-    jq -s '.[0] * .[1]' "$dest" "$src" > "$tmp" 2>/dev/null
+    jq -s '
+      def ours: type == "object" and any(.hooks[]?; ((.command? // "") | tostring | contains("#agent-config")));
+      .[0] as $d | .[1] as $s
+      | ($d * ($s | del(.hooks))) as $m
+      | (($d.hooks // {})
+          | with_entries(.value |= (if type == "array" then map(select(ours | not)) else . end))
+          | with_entries(select(.value != []))) as $kept
+      | (reduce (($s.hooks // {}) | to_entries[]) as $e ($kept; .[$e.key] = ((.[$e.key] // []) + $e.value))) as $h
+      | $m | if ($h | length) > 0 then .hooks = $h else del(.hooks) end
+    ' "$base" "$rendered" > "$tmp" 2>/dev/null
     rc=$?
   else
-    rm -f "$tmp"
     warn "python3 and jq not found: merge $src into $dest by hand"
     return
   fi
 
   if [ "$rc" -ne 0 ] || [ ! -s "$tmp" ]; then
-    rm -f "$tmp"
     fail "$dest is not valid JSON; left untouched. Fix it and re-run"
     return
   fi
-  if cmp -s "$tmp" "$dest"; then
-    rm -f "$tmp"
+  if [ -s "$dest" ] && cmp -s "$tmp" "$dest"; then
     ok "$dest already up to date"
     return
   fi
-  if cp "$dest" "$dest.bak-$STAMP" && mv "$tmp" "$dest"; then
+  if [ ! -s "$dest" ]; then
+    if cp "$tmp" "$dest"; then ok "created $dest"; else fail "could not create $dest"; fi
+    return
+  fi
+  if cp "$dest" "$dest.bak-$STAMP" && cp "$tmp" "$dest"; then
     ok "merged into $dest (previous copy: $dest.bak-$STAMP)"
   else
-    rm -f "$tmp"
     fail "could not write $dest"
+  fi
+}
+
+# Points git's global core.hooksPath at git-hooks/ (commit-msg, pre-push and pass-through hooks).
+# Never overrides a different hooksPath you already configured.
+install_git_hooks() {
+  section "Git hooks (global)"
+  if ! has git; then
+    warn "git not found: skipping global git hooks"
+    return
+  fi
+  local current target="$REPO/git-hooks"
+  chmod +x "$target"/_chain "$target"/commit-msg "$target"/pre-push 2>/dev/null
+  current="$(git config --global --get core.hooksPath 2>/dev/null || true)"
+  if [ "$current" = "$target" ]; then
+    ok "core.hooksPath already set to $target"
+  elif [ -z "$current" ]; then
+    if git config --global core.hooksPath "$target"; then
+      ok "core.hooksPath set to $target"
+    else
+      fail "could not set core.hooksPath"
+    fi
+  else
+    warn "core.hooksPath is already set to $current; not changing it. To use these hooks: git config --global core.hooksPath '$target'"
   fi
 }
 
@@ -303,6 +367,7 @@ main() {
   printf '%sInstalling agent-config from %s%s\n' "$C_HEAD" "$REPO" "$C_OFF"
   install_links
   merge_settings
+  install_git_hooks
   install_plugins
 
   section "Summary"
