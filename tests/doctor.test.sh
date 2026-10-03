@@ -132,6 +132,7 @@ run_doctor
 check 'missing essential Git is an error' [ "$RC" -eq 1 ]
 mv "$WORK/git" "$WORK/bin/git"
 STATE="$XDG_STATE_HOME/agent-harness/ownership"
+rm -rf "$STATE"
 mkdir -p "$STATE/entries/1"
 printf '1\n' > "$STATE/version"
 printf '%s\n' "$REPO" > "$STATE/repo"
@@ -141,6 +142,11 @@ printf '%s\n' "$HOME/.gemini/GEMINI.md" > "$STATE/entries/1/path"
 printf '%s\n' "$HOME/.gemini" > "$STATE/entries/1/parent"
 printf '%s\n' "$REPO/global/AGENTS.md" > "$STATE/entries/1/target"
 printf 'absent\n' > "$STATE/entries/1/before_kind"
+printf '%s\n' "$REPO" > "$STATE/entries/1/repo"
+python3 - "$HOME/.gemini" <<'IDENTITY' > "$STATE/entries/1/parent_identity"
+import os,sys
+info=os.stat(sys.argv[1]); print(str(info.st_dev)+':'+str(info.st_ino))
+IDENTITY
 run_doctor
 check 'recorded optional target missing is an error even when CLI is absent' [ "$RC" -eq 1 ]
 ln -s "$REPO/global/AGENTS.md" "$HOME/.gemini/GEMINI.md"
@@ -152,6 +158,11 @@ printf '%s\n' "$HOME/.gitconfig" > "$STATE/entries/2/path"
 printf '%s\n' "$HOME" > "$STATE/entries/2/parent"
 printf '%s\n' "$WORK/moved/git-hooks" > "$STATE/entries/2/target"
 printf '' > "$STATE/entries/2/before"
+printf '%s\n' "$WORK/moved" > "$STATE/entries/2/repo"
+python3 - "$HOME" <<'IDENTITY' > "$STATE/entries/2/parent_identity"
+import os,sys
+info=os.stat(sys.argv[1]); print(str(info.st_dev)+':'+str(info.st_ino))
+IDENTITY
 git config --global core.hooksPath "$WORK/moved/git-hooks"
 run_doctor
 check 'recorded managed Git hooksPath missing is an error' [ "$RC" -eq 1 ]
@@ -164,6 +175,8 @@ printf '%s\n' "$WORK/another-repo" > "$STATE/repo"
 run_doctor
 check 'ownership from another checkout is an error' [ "$RC" -eq 1 ]
 printf '%s\n' "$REPO" > "$STATE/repo"
+run_doctor
+check 'complete ownership schema remains valid after restored Git configuration' [ "$RC" -eq 0 ]
 snapshot() {
   python3 - "$HOME" "$WORK/outside" <<'SNAPSHOT'
 import hashlib,os,sys
