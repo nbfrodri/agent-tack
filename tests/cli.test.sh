@@ -38,7 +38,13 @@ check "enable reports config write failure" expect_exit 1 "$CLI" enable
 check "disable reports config write failure" expect_exit 1 "$CLI" disable
 rm .git/config.lock
 mkdir .harness
+git config --global harness.enabled true
+git config --local harness.enabled false
+check "local opt-out overrides global activation" expect_exit 1 "$CLI" status --quiet
 check "shared marker write failure is reported" expect_exit 1 "$CLI" enable --shared
+check "failed shared enable preserves disabled status" expect_exit 1 "$CLI" status --quiet
+check "failed shared enable preserves local opt-out" test "$(git config --local --get harness.enabled)" = false
+git config --global --unset harness.enabled
 rmdir .harness
 check "unknown enable options are rejected" expect_exit 2 "$CLI" enable --typo
 check "shared enable succeeds" expect_exit 0 "$CLI" enable --shared

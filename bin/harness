@@ -57,11 +57,11 @@ case "$cmd" in
     allowed_option=--shared; check_args "$@"
     require_repo
     if [ "${1:-}" = "--shared" ]; then
+      printf '# This project uses the agent-harness workflow (https://github.com/nbfrodri/agent-harness).\n' > "$root/.harness" \
+        || fail "cannot write the shared marker"
       if git config --local --get harness.enabled >/dev/null 2>&1; then
         git config --local --unset-all harness.enabled || fail "cannot clear local activation"
       fi
-      printf '# This project uses the agent-harness workflow (https://github.com/nbfrodri/agent-harness).\n' > "$root/.harness" \
-        || fail "cannot write the shared marker"
       echo "Enabled through $root/.harness — commit it to share it."
     else
       git config --local harness.enabled true || fail "cannot enable this clone"
