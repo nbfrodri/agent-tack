@@ -1,2 +1,26 @@
+# OS and editors
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/
+
+# Python (evals)
 __pycache__/
 *.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Eval output, when EVALS_OUT points inside the repo
+evals/out/
+
+# Personal, per-machine settings
+.claude/settings.local.json
+.env
+.env.*
+
+# Logs
+*.log
