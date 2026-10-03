@@ -1,23 +1,46 @@
 #!/usr/bin/env bash
-# Runs a behaviour eval: a real `claude -p` / `codex exec` session in a throwaway repo,
-# with the installed skills, instructions and hooks. Uses real model tokens.
-# Usage: evals/run.sh <scenario>   (s1-claude-new | s2-claude-bug | s3-claude-release | s4-codex-new)
-# Results go to $EVALS_OUT (default: $TMPDIR/agent-harness-evals); grade them with evals/grade.py.
+# Runs one behaviour eval: a real `claude -p` (or `codex exec`) session on a throwaway repo.
+# Uses real model tokens.
+#
+# Usage: evals/run.sh <scenario> [harness|baseline] [repetition]
+#   scenarios:  new-project | bug-fix | release | codex-new-project
+#   harness:    the full setup, with the project enabled (default)
+#   baseline:   Claude Code as shipped: no user settings, skills or instructions, and git
+#               without the global hooks (same repo and prompt)
+# Results go to $EVALS_OUT (default: $TMPDIR/agent-harness-evals)/<scenario>/<condition>-<rep>;
+# grade them with evals/grade.py and summarise them with evals/report.py.
 set -uo pipefail
 
+HARNESS_REPO="$(cd "$(dirname "$0")/.." && pwd)"
 EVALS="${EVALS_OUT:-${TMPDIR:-/tmp}/agent-harness-evals}"
 name="${1:?scenario name required}"
+condition="${2:-harness}"
+rep="${3:-1}"
 case "$name" in
-  s1-claude-new | s2-claude-bug | s3-claude-release | s4-codex-new) ;;
+  new-project | bug-fix | release | codex-new-project) ;;
   *)
-    echo "unknown scenario '$name' (s1-claude-new | s2-claude-bug | s3-claude-release | s4-codex-new)" >&2
+    echo "unknown scenario '$name' (new-project | bug-fix | release | codex-new-project)" >&2
     exit 2
     ;;
 esac
-dir="$EVALS/$name/repo"
-out="$EVALS/$name"
+case "$condition" in
+  harness | baseline) ;;
+  *) echo "unknown condition '$condition' (harness | baseline)" >&2; exit 2 ;;
+esac
+case "$rep" in *[!0-9]* | '') echo "repetition must be a number" >&2; exit 2 ;; esac
+
+out="$EVALS/$name/$condition-$rep"
+dir="$out/repo"
 rm -rf "$out"
 mkdir -p "$dir"
+
+if [ "$condition" = baseline ]; then
+  # A git config without the harness hooks, keeping only the user's identity
+  export GIT_CONFIG_GLOBAL="$out/gitconfig"
+  git config --file "$GIT_CONFIG_GLOBAL" user.name "$(git config --global --get user.name 2>/dev/null || echo Eval)"
+  git config --file "$GIT_CONFIG_GLOBAL" user.email "$(git config --global --get user.email 2>/dev/null || echo eval@example.com)"
+  git config --file "$GIT_CONFIG_GLOBAL" init.defaultBranch main
+fi
 
 NEW_PROJECT_PROMPT='Crea una pequeña librería en Python (usa uv) para calcular el total de un carrito de compra: precio por cantidad, 10% de descuento por volumen a partir de 10 unidades del mismo producto, e IVA del 21% sobre el total. Es un proyecto nuevo en esta carpeta. No hace falta que me preguntes nada, decide tú lo razonable.'
 
@@ -109,31 +132,35 @@ PY
 }
 
 case "$name" in
-  s1-claude-new|s4-codex-new) ;;
-  s2-claude-bug) seed_bug_repo ;;
-  s3-claude-release) seed_release_repo ;;
+  new-project | codex-new-project) (cd "$dir" && git init -q -b main) ;;
+  bug-fix) seed_bug_repo ;;
+  release) seed_release_repo ;;
 esac
 cd "$dir" || exit 1
+[ "$condition" = harness ] && "$HARNESS_REPO/bin/harness" enable >/dev/null
 
 case "$name" in
-  s1-claude-new) prompt="$NEW_PROJECT_PROMPT" ;;
-  s4-codex-new) prompt="$NEW_PROJECT_PROMPT" ;;
-  s2-claude-bug) prompt='Cuando el carrito está vacío, average_price peta con ZeroDivisionError. Debería devolver 0. Arréglalo.' ;;
-  s3-claude-release) prompt='Prepara la siguiente release del proyecto. No hay remoto configurado todavía.' ;;
+  new-project | codex-new-project) prompt="$NEW_PROJECT_PROMPT" ;;
+  bug-fix) prompt='Cuando el carrito está vacío, average_price peta con ZeroDivisionError. Debería devolver 0. Arréglalo.' ;;
+  release) prompt='Prepara la siguiente release del proyecto. No hay remoto configurado todavía.' ;;
 esac
 printf '%s\n' "$prompt" > "$out/prompt.txt"
 
+baseline_flags=()
+[ "$condition" = baseline ] && baseline_flags=(--setting-sources "project,local" --disable-slash-commands)
+
 start=$(date +%s)
 case "$name" in
-  s4-codex-new)
+  codex-new-project)
     codex exec --json -s workspace-write -c sandbox_workspace_write.network_access=true \
       --skip-git-repo-check -C "$dir" "$prompt" > "$out/transcript.jsonl" 2> "$out/stderr.log"
     ;;
   *)
     claude -p "$prompt" --output-format stream-json --verbose \
+      "${baseline_flags[@]+"${baseline_flags[@]}"}" \
       --permission-mode acceptEdits \
       --allowedTools "Bash(git *)" "Bash(uv *)" "Bash(python3 *)" "Bash(ls *)" "Bash(cat *)" \
-        "Bash(mkdir *)" "Bash(pytest *)" "Bash(find *)" "Bash(grep *)" "Bash(head *)" "Bash(sed -n *)" \
+        "Bash(mkdir *)" "Bash(pytest *)" "Bash(harness *)" "Bash(find *)" "Bash(grep *)" "Bash(head *)" "Bash(sed -n *)" \
         Read Write Edit Glob Grep Skill Agent TodoWrite \
       > "$out/transcript.jsonl" 2> "$out/stderr.log"
     ;;
