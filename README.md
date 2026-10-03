@@ -1,14 +1,50 @@
 # agent-config
 
-My personal configuration for AI coding assistants (Claude Code, Codex): skills, subagents and global instructions, kept in one place and linked into each tool.
+My personal configuration for AI coding assistants (Claude Code, Codex): skills, subagents, global instructions, settings and plugins, kept in one place and installed with one command.
+
+[![CI](https://github.com/nbfrodri/agent-config/actions/workflows/ci.yml/badge.svg)](https://github.com/nbfrodri/agent-config/actions/workflows/ci.yml)
+
+## Install on a new machine
+
+```bash
+git clone https://github.com/nbfrodri/agent-config.git ~/agent-config
+~/agent-config/install.sh
+```
+
+Then restart Claude Code and Codex. Re-run `./install.sh` at any time (after `git pull`, or after adding a skill): it's idempotent.
+
+What it does:
+
+| Step | Details |
+| --- | --- |
+| Global instructions | Links `global/AGENTS.md` to `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md` |
+| Skills | Links each `skills/<name>/` into `~/.agents/skills`, `~/.claude/skills` and `~/.codex/skills` |
+| Subagents | Links each `agents/<name>.md` into `~/.claude/agents` |
+| Settings | Deep-merges `claude/settings.json` into `~/.claude/settings.json` (your other keys are kept) |
+| Plugins | Adds the marketplaces in `plugins.txt`, refreshes them, and installs or **updates to the latest version** each plugin, enabling it if it was disabled |
+
+Safety guarantees:
+
+- Existing files and folders are never overwritten. They're moved to `<name>.bak-<timestamp>`.
+- An invalid `settings.json` is left untouched and reported.
+- Links left behind by skills or agents deleted from this repo are removed. Links that don't point into this repo are never touched.
+- Missing tools don't break the install:
+  - without `claude`, the plugins step is skipped with a warning;
+  - without `python3`, settings are merged with `jq`, and if neither is available you get a warning.
+- A failing step is reported, the rest still runs, and the exit code is non-zero, so you know to re-run.
+- `./install.sh --skip-plugins` skips the plugin step, e.g. when offline.
+- Works on Linux and macOS (including macOS's bash 3.2). CI tests both on every push.
 
 ## Structure
 
 ```
-global/AGENTS.md   # global instructions -> ~/.claude/CLAUDE.md and ~/.codex/AGENTS.md
-skills/<name>/     # Agent Skills (SKILL.md + references) -> ~/.agents/skills, ~/.claude/skills, ~/.codex/skills
-agents/<name>.md   # Claude Code subagents -> ~/.claude/agents
-install.sh         # creates the symlinks (idempotent)
+global/AGENTS.md      # global instructions for every AI assistant
+skills/<name>/        # Agent Skills (SKILL.md + references/), used by Claude Code and Codex
+agents/<name>.md      # Claude Code subagents
+claude/settings.json  # Claude Code settings merged into ~/.claude/settings.json
+plugins.txt           # Claude Code marketplaces and plugins
+install.sh            # installer (idempotent)
+tests/                # installer tests and skill/agent validation, run in CI
 ```
 
 ## Skills
@@ -17,7 +53,9 @@ install.sh         # creates the symlinks (idempotent)
 | --- | --- |
 | `dev-workflow` | Plan first, TDD, SOLID/DDD, Conventional Commits, GitHub flow, keep docs up to date |
 | `git-history` | Amend, fixup, squash, undo and recover commits; tidy a branch before push |
+| `release` | SemVer, next version from commits, CHANGELOG, tags, GitHub Releases, release-please |
 | `debugging` | Reproduce → regression test → isolate → verify hypothesis → fix the root cause |
+| `testing` | What and how to test per layer; references for pytest, Pest/PHPUnit and Vitest/Jest |
 | `new-project` | Scaffold a project with tests, lint, CI, README, AGENTS.md and Conventional Commits |
 | `frontend` | React/Next.js components, Server vs Client Components, state, forms, accessibility, component tests |
 | `api-design` | REST conventions, errors, validation, pagination, OpenAPI; references for Python, Laravel and Node |
@@ -35,25 +73,34 @@ Skills use the open Agent Skills format (`SKILL.md`), so both Claude Code and Co
 | --- | --- |
 | `planner` | Read-only architect: plan, DDD model, test strategy and commit breakdown before coding |
 | `code-reviewer` | Read-only review of the diff/branch: bugs, security, tests, SOLID/DDD, conventions, docs |
+| `test-writer` | Adds tests to existing code (coverage gaps, characterisation tests); never edits production code |
 | `docs-writer` | Updates README, .env.example, CHANGELOG and ADRs to match the changes |
 | `security-auditor` | Read-only full-stack security audit: OWASP Top 10, auth, injection, secrets, dependencies, infra |
 | `performance-analyzer` | Measures and ranks performance problems: Web Vitals, bundle, API latency, DB queries, caching |
 
 Agents use the Claude Code subagent format and are installed to `~/.claude/agents`.
 
-## Install on a new machine
+## Plugins
 
-```bash
-git clone https://github.com/nbfrodri/agent-config.git ~/agent-config
-~/agent-config/install.sh
-```
+| Plugin | Purpose |
+| --- | --- |
+| `context7` | Up-to-date library documentation, so the AI doesn't rely on outdated APIs |
+| `frontend-design` | Distinctive, polished UI design |
 
-Existing files that would be replaced are moved to `*.bak`.
+To add one, add a `plugin <name>@<marketplace>` line to `plugins.txt` (and a `marketplace` line if it comes from a new marketplace), then run `./install.sh`.
 
 ## Adding a skill or agent
 
-1. Create `skills/<name>/SKILL.md` (or `agents/<name>.md`).
-2. Run `./install.sh` to link it.
-3. Commit and push.
+1. Create `skills/<name>/SKILL.md` (or `agents/<name>.md`) with `name` and `description` frontmatter; the name must match the folder or file name.
+2. Run `tests/validate.sh` and `./install.sh`.
+3. Commit and push. CI validates it and tests the installer.
 
-Because the tools read through symlinks, editing files here takes effect immediately.
+Because the tools read through symlinks, editing files here takes effect immediately (restart the tool for new skills or agents).
+
+## Development
+
+```bash
+shellcheck install.sh tests/*.sh   # lint
+tests/validate.sh                  # validate skills, agents and plugins.txt
+tests/install.test.sh              # test the installer in throwaway HOME directories
+```
