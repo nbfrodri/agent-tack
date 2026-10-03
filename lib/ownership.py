@@ -23,12 +23,44 @@ def plain_path(value):
             and all(p not in (".", "..") for p in value.split("/")))
 
 
-def no_symlink_ancestors(path):
-    return not any(p.is_symlink() for p in [path, *path.parents])
+def no_symlink_ancestors(path, floor):
+    for current in [path, *path.parents]:
+        if current == floor:
+            return True
+        if current.is_symlink():
+            return False
+    return True
+
+
+def expected_link(path, target, home, repo):
+    fixed = {home + "/.agents/harness": repo,
+             home + "/.local/bin/harness": repo + "/bin/harness"}
+    skill_dirs = {home + "/.agents/skills"}
+    targets = Path(__file__).resolve().parent.parent / "targets.txt"
+    for line in targets.read_text().splitlines():
+        fields = line.split()
+        if not fields or fields[0].startswith("#"):
+            continue
+        if len(fields) < 5:
+            raise ValueError("invalid target declaration")
+        instructions, skills = fields[3:5]
+        if instructions.startswith("~/"):
+            fixed[home + instructions[1:]] = repo + "/global/AGENTS.md"
+        if skills.startswith("~/"):
+            skill_dirs.add(home + skills[1:])
+    if path in fixed:
+        return target == fixed[path]
+    parent, name = os.path.split(path)
+    if parent in skill_dirs and name not in ("", ".", ".."):
+        return target == repo + "/skills/" + name
+    if parent == home + "/.claude/agents" and name.endswith(".md"):
+        return target == repo + "/agents/" + name
+    return False
 
 
 def validate(state, home):
-    if not plain_path(str(state)) or not no_symlink_ancestors(state):
+    floor = Path(os.environ.get("XDG_STATE_HOME", home))
+    if not plain_path(str(state)) or not no_symlink_ancestors(state, floor):
         raise ValueError("unsafe ownership state path")
     for root, dirs, files in os.walk(state, followlinks=False):
         for path in [Path(root), *(Path(root) / n for n in dirs + files)]:
@@ -53,10 +85,17 @@ def validate(state, home):
         if (kind, path) in seen or not plain_path(path) or not plain_path(read(entry / "parent")):
             raise ValueError("invalid or duplicate ownership path")
         seen.add((kind, path))
+        entry_repo = read(entry / "repo")
+        identity = read(entry / "parent_identity")
+        if not plain_path(entry_repo) or (identity != "unavailable" and
+                (len(identity.split(":")) != 2 or not all(part.isdigit() for part in identity.split(":")))):
+            raise ValueError("invalid parent identity or source repository")
         if kind == "link":
             if not path.startswith(home.rstrip("/") + "/"):
                 raise ValueError("link outside HOME")
             target, before = read(entry / "target"), read(entry / "before_kind")
+            if not expected_link(path, target, home.rstrip("/"), entry_repo):
+                raise ValueError("link is outside declared installation targets")
             if not plain_path(target) or before not in ("absent", "symlink", "backup"):
                 raise ValueError("invalid link record")
             if before == "symlink":
@@ -79,7 +118,7 @@ def validate(state, home):
                         os.environ.get("XDG_CONFIG_HOME", home + "/.config") + "/git/config"}
             if os.environ.get("GIT_CONFIG_GLOBAL"):
                 expected.add(os.environ["GIT_CONFIG_GLOBAL"])
-            if path not in expected or not plain_path(read(entry / "target")):
+            if path not in expected or read(entry / "target") != entry_repo.rstrip("/") + "/git-hooks":
                 raise ValueError("unexpected Git config path")
             if "\n" in (entry / "before").read_text():
                 raise ValueError("unsupported multiline Git baseline")
@@ -108,11 +147,13 @@ def reverse_value(before, after, current):
     if isinstance(after, list) and isinstance(current, list) and (isinstance(before, list) or before is MISSING):
         original = before if isinstance(before, list) else []
         result = copy.deepcopy(current)
+        removed = False
         for item in after:
             if item in original:
                 continue
             if item in result:
                 result.remove(item)
+                removed = True
                 continue
             if not isinstance(item, dict) or not isinstance(item.get("hooks"), list):
                 continue
@@ -126,10 +167,33 @@ def reverse_value(before, after, current):
                 for hook in item["hooks"]:
                     if hook in hooks:
                         hooks.remove(hook)
+                        removed = True
                 if not hooks:
                     result.remove(group)
+        if removed:
+            restore_displaced_hooks(original, result)
         return MISSING if not result and before is MISSING else result
     return current
+
+
+def restore_displaced_hooks(original, current):
+    for group in original:
+        if not isinstance(group, dict) or not isinstance(group.get("hooks"), list):
+            continue
+        displaced = [hook for hook in group["hooks"] if isinstance(hook, dict) and
+                     any(tag in str(hook.get("command", "")) for tag in ("#harness", "#agent-config"))]
+        for hook in displaced:
+            if any(isinstance(item, dict) and hook in item.get("hooks", []) for item in current):
+                continue
+            metadata = {key: value for key, value in group.items() if key != "hooks"}
+            destination = next((item for item in current if isinstance(item, dict) and
+                                isinstance(item.get("hooks"), list) and
+                                {key: value for key, value in item.items() if key != "hooks"} == metadata), None)
+            if destination is None:
+                destination = copy.deepcopy(metadata)
+                destination["hooks"] = []
+                current.append(destination)
+            destination["hooks"].append(copy.deepcopy(hook))
 
 
 def reverse_managed(before, managed, current):
@@ -147,7 +211,10 @@ def reverse_managed(before, managed, current):
 
 
 def same_parent(entry, path):
-    return os.path.realpath(path.parent) == read(entry / "parent")
+    if not path.parent.is_dir() or os.path.realpath(path.parent) != read(entry / "parent"):
+        return False
+    info = path.parent.stat()
+    return f"{info.st_dev}:{info.st_ino}" == read(entry / "parent_identity")
 
 
 def write_json(path, value):

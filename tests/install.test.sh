@@ -141,7 +141,7 @@ echo "Settings merge with jq only (no python3)"
 if command -v jq >/dev/null 2>&1; then
   BIN="$WORK/bin-jq-only"
   mkdir -p "$BIN"
-  for tool in bash env mkdir dirname readlink ln rm mv date cp cmp mktemp sed basename git jq chmod cat find grep tr wc head; do
+  for tool in bash env mkdir dirname readlink ln rm mv date cp cmp mktemp sed basename git jq stat chmod cat find grep tr wc head; do
     [ -x "$(command -v "$tool")" ] && ln -s "$(command -v "$tool")" "$BIN/$tool"
   done
   H="$WORK/jq-only"
@@ -229,7 +229,7 @@ echo "Plugins step (fake claude CLI)"
 # A minimal PATH without the real claude, so the real CLI can never run here
 MINBIN="$WORK/bin-min"
 mkdir -p "$MINBIN"
-for tool in bash env mkdir dirname readlink ln rm mv date cp cmp mktemp sed basename git jq python3 chmod cat find grep tr wc head; do
+for tool in bash env mkdir dirname readlink ln rm mv date cp cmp mktemp sed basename git jq python3 stat chmod cat find grep tr wc head; do
   [ -x "$(command -v "$tool")" ] && ln -sf "$(command -v "$tool")" "$MINBIN/$tool"
 done
 FAKE="$WORK/fake-claude"

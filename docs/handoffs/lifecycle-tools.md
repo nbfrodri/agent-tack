@@ -16,3 +16,13 @@ Approved scope: read-only install preview, private ownership records, and conser
 - No Python is required to install; uninstall requires Python before mutation. No plugin uninstall or shared-directory deletion occurs.
 - Lifecycle checks: 24 pass, including observed failing tests for reversibility and settings edits across reinstall. ShellCheck passes for changed shell files. Full installer regression is running.
 - Next: adversarial metadata, repository-permission/plugin dry-run checks, Git restoration variations and dependency failures.
+
+## Milestone 3
+
+- Ownership now records each entry's source `repo` and physical `parent_identity` (`device:inode`). Changed physical parents and symlink parents are preserved, while stable ancestors outside HOME (including macOS temporary-directory aliases) are supported.
+- Link records are restricted to paths declared by `targets.txt`, shared skills, subagents and the two canonical harness links. Unsupported schema, public metadata and arbitrary HOME destinations fail validation before uninstall changes anything.
+- Independent review found two undo gaps. Regression tests first failed, then passed for restoring displaced tagged hooks alongside appended user hooks and honoring a previously absent explicit `GIT_CONFIG_GLOBAL` over an existing XDG config.
+- Conservative legacy behavior: pre-existing paths already matching the desired configuration are not claimed. Reinstalling an older unmanaged installation does not retroactively authorize removal of every existing path.
+- If neither `stat` nor Python can identify a parent during install, the entry records `unavailable` and uninstall preserves it. JSON restoration requires Python. Metadata retained for conflicts includes private snapshots; no values are printed.
+- Final targeted regression and invariant checks are running; no publish operations performed.
+- Final results: 44 lifecycle checks and all 87 existing installer checks pass; changed shell files pass ShellCheck. The last test-stub change replaced an equivalent quoted printf with a heredoc to satisfy lint.

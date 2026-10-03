@@ -13,7 +13,7 @@ for arg in "$@"; do
 done
 STATE="${XDG_STATE_HOME:-$HOME/.local/state}/agent-harness/ownership"
 if [ ! -e "$STATE" ] && [ ! -L "$STATE" ]; then
-  echo 'No ownership record; nothing removed. Install once to record managed changes.'
+  echo 'No ownership record; nothing removed. Pre-existing configuration is never inferred to be owned.'
   exit 0
 fi
 if ! command -v python3 >/dev/null 2>&1; then

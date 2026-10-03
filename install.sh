@@ -284,7 +284,7 @@ install_git_hooks() {
   fi
   local current target="$REPO/git-hooks" config_file
   config_file="${GIT_CONFIG_GLOBAL:-$HOME/.gitconfig}"
-  if [ ! -e "$config_file" ] && [ -e "${XDG_CONFIG_HOME:-$HOME/.config}/git/config" ]; then
+  if [ -z "${GIT_CONFIG_GLOBAL+x}" ] && [ ! -e "$config_file" ] && [ -e "${XDG_CONFIG_HOME:-$HOME/.config}/git/config" ]; then
     config_file="${XDG_CONFIG_HOME:-$HOME/.config}/git/config"
   fi
   if ! ownership_plain_path "$config_file" || ! ownership_no_symlinks "$config_file"; then
@@ -301,9 +301,9 @@ install_git_hooks() {
       mkdir -p "$(dirname "$config_file")" || { fail "cannot create Git config parent"; return; }
       ownership_git "$config_file" "$target" "$current" || { fail "cannot record Git ownership"; return; }
       if git config --global core.hooksPath "$target"; then
-      ok "core.hooksPath set to $target${current:+ (was $current)}"
-    else
-      fail "could not set core.hooksPath"
+        ok "core.hooksPath set to $target${current:+ (was $current)}"
+      else
+        fail "could not set core.hooksPath"
       fi
     fi
   else

@@ -10,27 +10,27 @@ ownership_plain_path() {
 }
 
 ownership_no_symlinks() {
-  local path="$1"
-  while [ "$path" != / ]; do
+  local path="$1" floor="${2:-$HOME}"
+  while [ "$path" != / ] && [ "$path" != "$floor" ]; do
     [ ! -L "$path" ] || return 1
     path="$(dirname "$path")"
   done
 }
 
 ownership_init() {
-  local entry
+  local entry state_base="${XDG_STATE_HOME:-$HOME}"
   OWN_PATHS=() OWN_KINDS=() OWN_ENTRIES=()
   OWN_COUNT=0
   OWNERSHIP="${XDG_STATE_HOME:-$HOME/.local/state}/agent-harness/ownership"
   if ! ownership_plain_path "$HOME" || ! ownership_plain_path "$REPO" || ! ownership_plain_path "$OWNERSHIP"; then
     fail 'ownership requires absolute paths without tabs, newlines or dot components'; return 1
   fi
-  ownership_no_symlinks "$OWNERSHIP" || { fail 'ownership state must not have symlink ancestors'; return 1; }
+  ownership_no_symlinks "$OWNERSHIP" "$state_base" || { fail 'ownership state must not have symlink ancestors'; return 1; }
   if [ -e "$OWNERSHIP" ]; then
-    [ -d "$OWNERSHIP" ] && [ -f "$OWNERSHIP/version" ] && [ "$(cat "$OWNERSHIP/version")" = 1 ] &&
-      [ "$(cat "$OWNERSHIP/home")" = "$HOME" ] && [ -d "$OWNERSHIP/entries" ] || {
-        fail 'invalid ownership state; installation stopped'; return 1;
-      }
+    if [ ! -d "$OWNERSHIP" ] || [ ! -f "$OWNERSHIP/version" ] || [ "$(cat "$OWNERSHIP/version")" != 1 ] ||
+      [ "$(cat "$OWNERSHIP/home")" != "$HOME" ] || [ ! -d "$OWNERSHIP/entries" ]; then
+      fail 'invalid ownership state; installation stopped'; return 1
+    fi
     [ -z "$(find "$OWNERSHIP" -type l -print)" ] || { fail 'ownership state contains symlinks'; return 1; }
     [ -z "$(find "$OWNERSHIP" \( -type f ! -perm 0600 \) -o \( -type d ! -perm 0700 \))" ] || {
       fail 'ownership state permissions are not private'; return 1;
@@ -82,7 +82,19 @@ ownership_begin() {
   OWN_COUNT=$((OWN_COUNT + 1))
   (umask 077; mkdir "$OWN_ENTRY" && printf '%s\n' "$kind" > "$OWN_ENTRY/kind" &&
     printf '%s\n' "$path" > "$OWN_ENTRY/path" &&
-    (cd "$(dirname "$path")" && pwd -P) > "$OWN_ENTRY/parent")
+    (cd "$(dirname "$path")" && pwd -P) > "$OWN_ENTRY/parent" &&
+    ownership_parent_identity "$(cat "$OWN_ENTRY/parent")" > "$OWN_ENTRY/parent_identity" &&
+    printf '%s\n' "$REPO" > "$OWN_ENTRY/repo")
+}
+
+ownership_parent_identity() {
+  if has stat; then
+    stat -c '%d:%i' "$1" 2>/dev/null || stat -f '%d:%i' "$1" 2>/dev/null
+  elif has python3; then
+    python3 -c 'import os,sys; s=os.stat(sys.argv[1]); print(str(s.st_dev)+":"+str(s.st_ino))' "$1"
+  else
+    printf 'unavailable\n'
+  fi
 }
 
 ownership_link() {
@@ -101,6 +113,7 @@ ownership_link() {
       fi
     fi
     printf '%s\n' "$target" > "$OWN_ENTRY/target"
+    printf '%s\n' "$REPO" > "$OWN_ENTRY/repo"
   )
 }
 
