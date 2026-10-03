@@ -208,61 +208,10 @@ merge_settings() {
   done < "$src" > "$rendered"
 
   if has python3; then
-    python3 - "$base" "$rendered" > "$tmp" 2>/dev/null <<'PY'
-import json, sys
-
-# Hooks this repo installs; "#agent-config" is the tag of older versions
-TAGS = ("#harness", "#agent-config")
-
-def merge(base, extra):
-    for key, value in extra.items():
-        if isinstance(value, dict) and isinstance(base.get(key), dict):
-            merge(base[key], value)
-        else:
-            base[key] = value
-    return base
-
-def is_ours(group):
-    return isinstance(group, dict) and any(
-        isinstance(h, dict) and any(t in str(h.get("command", "")) for t in TAGS) for h in group.get("hooks", [])
-    )
-
-with open(sys.argv[1]) as f:
-    current = json.load(f)
-with open(sys.argv[2]) as f:
-    wanted = json.load(f)
-if not isinstance(current, dict):
-    sys.exit("settings.json is not a JSON object")
-
-wanted_hooks = wanted.pop("hooks", {}) or {}
-merged = merge(current, wanted)
-hooks = merged.get("hooks") if isinstance(merged.get("hooks"), dict) else {}
-for event in list(hooks):
-    if isinstance(hooks[event], list):
-        hooks[event] = [g for g in hooks[event] if not is_ours(g)]
-        if not hooks[event]:
-            del hooks[event]
-for event, groups in wanted_hooks.items():
-    hooks.setdefault(event, []).extend(groups)
-if hooks:
-    merged["hooks"] = hooks
-else:
-    merged.pop("hooks", None)
-json.dump(merged, sys.stdout, indent=2, ensure_ascii=False)
-sys.stdout.write("\n")
-PY
+    python3 "$REPO/lib/settings-merge.py" "$base" "$rendered" > "$tmp" 2>/dev/null
     rc=$?
   elif has jq; then
-    jq -s '
-      def ours: type == "object" and any(.hooks[]?; ((.command? // "") | tostring | (contains("#harness") or contains("#agent-config"))));
-      .[0] as $d | .[1] as $s
-      | ($d * ($s | del(.hooks))) as $m
-      | (($d.hooks // {})
-          | with_entries(.value |= (if type == "array" then map(select(ours | not)) else . end))
-          | with_entries(select(.value != []))) as $kept
-      | (reduce (($s.hooks // {}) | to_entries[]) as $e ($kept; .[$e.key] = ((.[$e.key] // []) + $e.value))) as $h
-      | $m | if ($h | length) > 0 then .hooks = $h else del(.hooks) end
-    ' "$base" "$rendered" > "$tmp" 2>/dev/null
+    jq -s -f "$REPO/lib/settings-merge.jq" "$base" "$rendered" > "$tmp" 2>/dev/null
     rc=$?
   else
     warn "python3 and jq not found: merge $src into $dest by hand"
