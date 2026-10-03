@@ -134,6 +134,23 @@ commit "feat: blocked push"
 check "a failing local pre-push still blocks the push" "! push origin feat/x"
 rm -f "$R/.git/hooks/pre-push"
 
+echo "Server-side hooks of local bare repositories keep working"
+BARE="$WORK/deploy.git"
+git init -q --bare "$BARE"
+for hook in pre-receive post-receive; do
+  printf '#!/usr/bin/env bash\ncat > "%s/%s-ran"\n' "$WORK" "$hook" > "$BARE/hooks/$hook"
+  chmod +x "$BARE/hooks/$hook"
+done
+R="$WORK/deployer"
+new_repo "$R"
+git -C "$R" remote add deploy "$BARE"
+check "push to the bare repo works" "push deploy main"
+check "its pre-receive ran with the ref list" "grep -q refs/heads/main '$WORK/pre-receive-ran'"
+check "its post-receive ran" "grep -q refs/heads/main '$WORK/post-receive-ran'"
+printf '#!/usr/bin/env bash\necho rejected >&2\nexit 1\n' > "$BARE/hooks/pre-receive"
+commit "feat: rejected by the server"
+check "a failing pre-receive still rejects the push" "! push deploy main"
+
 echo "Claude hook: guard-bash"
 GUARD="$REPO/hooks/claude/guard-bash.sh"
 R="$WORK/guard"
