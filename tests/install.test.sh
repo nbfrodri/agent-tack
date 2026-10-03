@@ -2,10 +2,11 @@
 # Tests install.sh against throwaway HOME directories. Never touches the real HOME.
 # Usage: tests/install.test.sh
 set -uo pipefail
+unset XDG_STATE_HOME GIT_CONFIG_GLOBAL
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/agent-harness-test.XXXXXX")"
-trap 'rm -rf "$WORK"' EXIT
+trap 'if [ "${KEEP_TEST_WORK:-0}" != 1 ]; then rm -rf "$WORK"; else echo "Test artifacts: $WORK"; fi' EXIT
 PASSED=0
 FAILED=0
 

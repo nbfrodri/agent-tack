@@ -47,9 +47,12 @@ warn()    { printf '  %s!%s %s\n' "$C_WARN" "$C_OFF" "$1"; WARNINGS=$((WARNINGS 
 fail()    { printf '  %s✘%s %s\n' "$C_FAIL" "$C_OFF" "$1"; FAILURES=$((FAILURES + 1)); }
 has()     { command -v "$1" >/dev/null 2>&1; }
 
+# shellcheck source=lib/ownership.sh
+source "$REPO/lib/ownership.sh"
+
 # Moves an existing file or directory aside instead of overwriting it.
 backup() {
-  local target="$1" dest="$1.bak-$STAMP" n=1
+  local target="$1" dest="${2:-$1.bak-$STAMP}" n=1
   while [ -e "$dest" ] || [ -L "$dest" ]; do
     dest="$1.bak-$STAMP-$n"
     n=$((n + 1))
@@ -64,7 +67,7 @@ backup() {
 
 # Creates dest -> src, replacing an old symlink and backing up a real file.
 link() {
-  local src="$1" dest="$2"
+  local src="$1" dest="$2" displaced n=1
   if [ "$DRY_RUN" -eq 1 ]; then
     ok "would link $dest -> $src (preserve displaced files)"
     return
@@ -73,14 +76,22 @@ link() {
     fail "cannot create $(dirname "$dest")"
     return
   fi
+  displaced="$dest.bak-$STAMP"
+  while [ -e "$displaced" ] || [ -L "$displaced" ]; do
+    displaced="$dest.bak-$STAMP-$n"; n=$((n + 1))
+  done
   if [ -L "$dest" ]; then
     if [ "$(readlink "$dest")" = "$src" ]; then
       ok "$dest"
       return
     fi
+    ownership_link "$dest" "$src" "$displaced" || { fail "cannot record $dest"; return; }
     rm -f "$dest" || { fail "cannot replace symlink $dest"; return; }
   elif [ -e "$dest" ]; then
-    backup "$dest" || return
+    ownership_link "$dest" "$src" "$displaced" || { fail "cannot record $dest"; return; }
+    backup "$dest" "$displaced" || return
+  else
+    ownership_link "$dest" "$src" "$displaced" || { fail "cannot record $dest"; return; }
   fi
   if ln -s "$src" "$dest"; then
     ok "$dest -> $src"
@@ -209,6 +220,7 @@ merge_settings() {
     return
   fi
   mkdir -p "$HOME/.claude"
+  [ ! -L "$dest" ] || { fail "settings symlink left untouched: $dest"; return; }
 
   base="$WORKDIR/settings-base.json"
   rendered="$WORKDIR/settings-repo.json"
@@ -238,6 +250,7 @@ merge_settings() {
     ok "$dest already up to date"
     return
   fi
+  ownership_settings "$dest" "$tmp" "$rendered" || { fail "cannot record settings ownership"; return; }
   if [ ! -s "$dest" ]; then
     if cp "$tmp" "$dest"; then ok "created $dest"; else fail "could not create $dest"; fi
     return
@@ -269,7 +282,14 @@ install_git_hooks() {
     warn "git not found: skipping global git hooks"
     return
   fi
-  local current target="$REPO/git-hooks"
+  local current target="$REPO/git-hooks" config_file
+  config_file="${GIT_CONFIG_GLOBAL:-$HOME/.gitconfig}"
+  if [ ! -e "$config_file" ] && [ -e "${XDG_CONFIG_HOME:-$HOME/.config}/git/config" ]; then
+    config_file="${XDG_CONFIG_HOME:-$HOME/.config}/git/config"
+  fi
+  if ! ownership_plain_path "$config_file" || ! ownership_no_symlinks "$config_file"; then
+    fail "Git config path is unsafe for ownership tracking"; return
+  fi
   [ "$DRY_RUN" -eq 1 ] || chmod +x "$target"/_chain "$target"/commit-msg "$target"/pre-push 2>/dev/null
   current="$(git config --global --get core.hooksPath 2>/dev/null || true)"
   if [ "$current" = "$target" ]; then
@@ -277,10 +297,14 @@ install_git_hooks() {
   elif [ -z "$current" ] || is_harness_hooks "$current"; then
     if [ "$DRY_RUN" -eq 1 ]; then
       ok "would set core.hooksPath to $target"
-    elif git config --global core.hooksPath "$target"; then
+    else
+      mkdir -p "$(dirname "$config_file")" || { fail "cannot create Git config parent"; return; }
+      ownership_git "$config_file" "$target" "$current" || { fail "cannot record Git ownership"; return; }
+      if git config --global core.hooksPath "$target"; then
       ok "core.hooksPath set to $target${current:+ (was $current)}"
     else
       fail "could not set core.hooksPath"
+      fi
     fi
   else
     warn "core.hooksPath is already set to $current; not changing it. To use these hooks: git config --global core.hooksPath '$target'"
@@ -407,6 +431,7 @@ install_plugins() {
 
 main() {
   printf '%sInstalling agent-harness from %s%s\n' "$C_HEAD" "$REPO" "$C_OFF"
+  ownership_init || exit 1
   install_links
   merge_settings
   install_git_hooks

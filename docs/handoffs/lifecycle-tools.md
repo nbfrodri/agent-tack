@@ -8,3 +8,11 @@ Approved scope: read-only install preview, private ownership records, and conser
 - Lifecycle tests observed red (2 expected failures), then green (3 checks). Existing baseline: 87 installer checks pass.
 - Next: private ownership state at `${XDG_STATE_HOME:-$HOME/.local/state}/agent-harness/ownership`, first-install baselines across reinstalls, selective settings reversal, safe link and Git restoration.
 - Safety: no plugin uninstall, project deletion or broad directory cleanup. Refuse invalid ownership state and preserve user edits. JSON reversal requires Python; jq-only install remains supported.
+
+## Milestone 2
+
+- Added private version-1 ownership records, shell capture in `lib/ownership.sh`, Python validation/reversal in `lib/ownership.py`, and `uninstall.sh [--dry-run]`.
+- Reinstalls preserve original links and settings snapshots. Reversal compares owned values, retains user additions and edited hooks, and preserves changed link targets or physical parent paths.
+- No Python is required to install; uninstall requires Python before mutation. No plugin uninstall or shared-directory deletion occurs.
+- Lifecycle checks: 24 pass, including observed failing tests for reversibility and settings edits across reinstall. ShellCheck passes for changed shell files. Full installer regression is running.
+- Next: adversarial metadata, repository-permission/plugin dry-run checks, Git restoration variations and dependency failures.
