@@ -45,6 +45,7 @@ def observations(evs):
     """Adapt explicit provider events; arbitrary shell mutations remain opaque."""
     out = []
     pending = {}
+    pending_writes = {}
     for batch, event in enumerate(evs):
         if event.get("type") == "unparsed":
             out.append({"opaque": True})
@@ -54,12 +55,21 @@ def observations(evs):
                     name, inputs = block.get("name"), block.get("input", {})
                     if name in ("Write", "Edit", "MultiEdit") and inputs.get("file_path") and not (
                             name == "Write" and not inputs.get("content", "").strip()):
-                        out.append({"path": inputs["file_path"]})
+                        write = {"path": inputs["file_path"], "opaque": True}
+                        out.append(write)
+                        if block.get("id") is not None:
+                            pending_writes[block["id"]] = write
                     if name == "Bash":
                         command = inputs.get("command", "")
                         pending[block.get("id")] = command
                         out.append({"command": command})
                 elif block.get("type") == "tool_result":
+                    write = pending_writes.pop(block.get("tool_use_id"), None)
+                    if write is not None:
+                        if block.get("is_error"):
+                            write.pop("path", None)
+                        else:
+                            write.pop("opaque", None)
                     command = pending.get(block.get("tool_use_id"))
                     if command:
                         out.append({"command": command, "failed": bool(block.get("is_error")),

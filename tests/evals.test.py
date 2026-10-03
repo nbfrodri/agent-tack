@@ -26,7 +26,17 @@ def result(identifier, text, failed=False):
 
 
 class Metrics(unittest.TestCase):
-    def measure(self, events, scenario='bug-fix', run='exit=0 seconds=7'):
+    def measure(self, events, scenario='bug-fix', run='exit=0 seconds=7', complete_writes=True):
+        if complete_writes:
+            result_ids = {block.get('tool_use_id') for event in events
+                          for block in event.get('message', {}).get('content', []) if block.get('type') == 'tool_result'}
+            completed = []
+            for event in events:
+                completed.append(event)
+                for block in event.get('message', {}).get('content', []):
+                    if block.get('name') in ('Write', 'Edit', 'MultiEdit') and block.get('id') not in result_ids:
+                        completed.append(result(block.get('id'), 'File updated successfully'))
+            events = completed
         with tempfile.TemporaryDirectory() as temp:
             directory = Path(temp) / scenario / 'baseline-1'
             (directory / 'repo').mkdir(parents=True)
@@ -84,6 +94,22 @@ class Metrics(unittest.TestCase):
     def test_codex_atomic_patch_has_no_file_order(self):
         m = self.measure([{'type': 'item.completed', 'item': {'type': 'file_change', 'changes': [
             {'path': 'tests/test_cart.py', 'kind': 'add'}, {'path': 'src/cart.py', 'kind': 'update'}]}}])
+        self.assertIsNone(m['test_written_before_code'])
+        self.assertIsNone(m['red_green_verified'])
+
+    def test_failed_test_write_cannot_prove_test_first(self):
+        m = self.measure([use('Write', id='test-failed', file_path='tests/test_cart.py', content='assert total([]) == 0'),
+                          result('test-failed', 'Permission denied; file not written', True),
+                          use('Edit', id='implementation', file_path='src/cart.py', new_string='return 0'),
+                          result('implementation', 'File updated'),
+                          use('Write', id='test-real', file_path='tests/test_cart.py', content='assert total([]) == 0'),
+                          result('test-real', 'File written')])
+        self.assertIsNone(m['test_written_before_code'])
+        self.assertIsNone(m['red_green_verified'])
+
+    def test_write_without_result_keeps_order_unknown(self):
+        m = self.measure([use('Write', file_path='tests/test_cart.py', content='assert total([]) == 0'),
+                          use('Edit', file_path='src/cart.py', new_string='return 0')], complete_writes=False)
         self.assertIsNone(m['test_written_before_code'])
         self.assertIsNone(m['red_green_verified'])
 
