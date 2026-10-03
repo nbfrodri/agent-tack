@@ -28,13 +28,13 @@ python3 /tmp/resume-harness-benchmark-20261004.py /tmp/harness-frozen-benchmark-
 python3 /tmp/grade-harness-benchmark-20261004.py /tmp/harness-frozen-benchmark-20261004 /tmp/harness-six-run-20261004.yv_c1sj2
 ```
 
-All model calls require the user's resume instruction. Grade against metrics v2 and update attempts.json rather than claiming incomplete runs succeeded. The current attempts.json describes only H1/B1 and must be refreshed after resumption.
+The user chose to save the checkpoint and resume with Claude after the limit resets. This authorises the four remaining attempts once availability is restored; do not ask again for those attempts. Replacing failed attempts or exceeding six calls needs new authorisation. Grade against metrics v2 and update attempts.json rather than claiming incomplete runs succeeded. The current attempts.json describes only H1/B1 and must be refreshed after resumption.
 
-## Accidental installer state requiring explicit cleanup approval
+## Accidental installer state and reversible recovery
 
 H1 inherited the host XDG_STATE_HOME by mistake and created `/home/phobos/.local/state/agent-harness/ownership`. H2 installation stopped before any model call because that record refers to H1's temporary HOME. Read-only verification found ownership/home exactly `/tmp/harness-six-run-20261004.yv_c1sj2/home-harness-1` and all 96 recorded paths beneath that temporary HOME. Real user configuration paths were not targeted. Temporary credential HOMEs have now been removed.
 
-Automatic approval review rejected deletion of this record, citing irreversible removal under the real HOME without explicit authorization and possible reversal/uninstall damage. The record remains intact. Do not retry or bypass the rejection. Parent will request explicit permission for a cleanup limited to this verified record. XDG isolation is corrected for the pending four runs.
+Automatic approval review rejected deletion of this record, citing irreversible removal under the real HOME without explicit authorization and possible reversal/uninstall damage. The parent then prepared a safer reversible recovery that was approved: an atomic rename in the same filesystem to `/home/phobos/.local/state/agent-harness/benchmark-ownership-20261004`. All 96 records and private snapshots remain intact, and the active ownership path is clear. Nothing was deleted. Do not remove this backup without explicit permission. XDG isolation is corrected for the pending four runs.
 
 ## Verification
 
