@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Claude Code PostToolUse hook for Write/Edit/MultiEdit.
 # Formats the edited file with the formatter the project already uses, only in projects where
-# the harness is enabled (they are trusted, so their local formatter binaries may run) and only
+# the harness is enabled and explicitly trusted in local git config, and only
 # when the project has the formatter configured, so other repositories never get noisy diffs.
 # Never blocks: always exits 0.
 set -u
@@ -23,7 +23,7 @@ fi
 cli="$(cd "$(dirname "$0")/../../bin" && pwd)/harness"
 dir="$(cd "$(dirname "$file")" && pwd)" || exit 0
 root="$(git -C "$dir" rev-parse --show-toplevel 2>/dev/null)" || exit 0
-(cd "$root" && "$cli" status --quiet) || exit 0
+(cd "$root" && "$cli" status --quiet && "$cli" trusted --quiet) || exit 0
 
 has_file() {
   local f

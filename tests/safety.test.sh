@@ -156,6 +156,35 @@ stage 'display.txt' "$KEY"
 check 'custom diff prefixes and indicators cannot hide credentials' status_with_env 1 "PATH=$WORK/bin:$PATH" HARNESS_TEST_GIT_FAIL=display
 check 'the scan recognises credentials with custom diff display settings' grep -q 'AWS access key' "$WORK/hook-output"
 
+echo 'format-file: workflow activation is separate from local trust'
+new_repo formatter
+mkdir -p "$R/node_modules/.bin"
+printf '{}\n' > "$R/.prettierrc"
+printf '# shared activation\n' > "$R/.harness"
+cat > "$R/node_modules/.bin/prettier" <<'FORMATTER'
+#!/usr/bin/env bash
+printf 'ran\n' >> formatter-calls
+FORMATTER
+chmod +x "$R/node_modules/.bin/prettier"
+printf 'const value=1\n' > "$R/file.ts"
+format() {
+  python3 -c 'import json,sys; print(json.dumps({"tool_input":{"file_path":sys.argv[1]}}))' "$R/file.ts" | bash "$REPO/hooks/claude/format-file.sh"
+}
+not_formatted() { rm -f "$R/formatter-calls"; format && [ ! -e "$R/formatter-calls" ]; }
+was_formatted() { rm -f "$R/formatter-calls"; format && [ -f "$R/formatter-calls" ]; }
+check 'a shared marker alone never executes the formatter' not_formatted
+git config --global harness.trusted true
+check 'global trust never authorises a project formatter' not_formatted
+git -C "$R" config --local harness.trusted false
+check 'explicit local false blocks a formatter despite global trust' not_formatted
+git -C "$R" config --local harness.trusted true
+check 'explicit local trust and activation allow formatting' was_formatted
+git -C "$R" config --local harness.enabled false
+check 'trust alone does not activate the workflow' not_formatted
+git -C "$R" config --local --unset harness.enabled
+git -C "$R" config --local --unset harness.trusted
+check 'removing local trust prevents execution immediately' not_formatted
+
 echo
 echo "$PASSED passed, $FAILED failed"
 [ "$FAILED" -eq 0 ]
