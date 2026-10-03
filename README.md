@@ -77,6 +77,7 @@ evals/                # behaviour evals with real Claude/Codex sessions (manual,
 | `project-docs` | Docs for humans (`README`, `docs/`) and AIs (`AGENTS.md`): technical sheet, architecture, ADRs, plans, audits, handoffs, AI usage log; templates |
 | `github-issues` | Work from an issue to a PR that closes it, write issues, split plans into issues; issue and PR templates |
 | `lessons` | Turn corrections and preferences into versioned rules in the right file |
+| `orchestrate` | On request: split a plan into tasks for subagents in isolated worktrees, recommend model and effort per task, integrate and review |
 | `improve` | Review existing code or a project and propose prioritised improvements; always asks scope and focus first, then runs the reviewers |
 | `git-history` | Amend, fixup, squash, undo and recover commits; tidy a branch before push |
 | `release` | SemVer, next version from commits, CHANGELOG, tags, GitHub Releases, release-please |
@@ -103,6 +104,7 @@ Skills use the open Agent Skills format (`SKILL.md`), so both Claude Code and Co
 | `docs-writer` | Keeps README, AGENTS.md, docs/, .env.example, CHANGELOG and ADRs in sync; logs AI work |
 | `security-auditor` | Read-only full-stack security audit: OWASP Top 10, auth, injection, secrets, dependencies, infra |
 | `performance-analyzer` | Measures and ranks performance problems: Web Vitals, bundle, API latency, DB queries, caching |
+| `implementer` | Implements one planned task in its own branch/worktree following the workflow; used by `orchestrate` |
 | `architecture-reviewer` | Read-only architecture review of existing code: layering, coupling, boundaries, debt hot spots |
 | `ui-reviewer` | Reviews a running app in the browser at mobile and desktop widths: hierarchy, consistency, states, accessibility |
 

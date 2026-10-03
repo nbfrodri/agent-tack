@@ -16,6 +16,7 @@ Este es el modo de trabajar que el usuario quiere en todos sus proyectos, con cu
 ## El flujo para cada petición
 
 ### 1. Entender
+Si en `docs/handoffs/` hay un handoff en curso para esta rama o tarea, léelo primero y continúa desde ahí.
 Si la petición viene de un issue de GitHub ("el issue #12", una URL de issue), léelo entero con sus comentarios y usa sus criterios de aceptación como definición de "hecho" (skill `github-issues`). Lee el código relevante, los tests existentes y la documentación antes de proponer nada. Si la petición es ambigua de una forma que cambia el resultado, pregunta (agrupa las dudas en una sola vez). Si hay una respuesta razonable por defecto, úsala y dilo.
 
 ### 2. Clasificar el tamaño
@@ -30,6 +31,8 @@ El plan es corto y concreto. Usa la herramienta de tareas/plan si la hay (TodoWr
 - Qué tests se escriben primero.
 - Qué documentación hay que actualizar.
 - Riesgos o dudas abiertas.
+
+En tareas normales o grandes, crea también el handoff de la tarea y mantenlo al día en cada hito (ver `project-docs` → handoffs continuos), por si la sesión se corta.
 
 ### 4. Preparar la rama
 Si estás en `main`/`master`/`develop` y el cambio no es trivial, crea una rama: `feat/short-description`, `fix/…`, `refactor/…`, `docs/…`, `chore/…`. Comprueba antes `git status` para no mezclar cambios ajenos.
@@ -63,6 +66,7 @@ Resume al usuario: qué cambió, en qué commits, cómo se verificó, qué docs 
 - Skill `github-issues`: trabajar a partir de un issue, redactar issues, dividir un plan en issues y registrar bugs encontrados por el camino.
 - Skill `project-docs`: estructura de `docs/`, plantillas, ficha técnica, arquitectura, planes, auditorías, handoffs y registro de uso de IA.
 - Skill `improve`: revisar código o proyectos existentes y proponer mejoras priorizadas (arquitectura, código, rendimiento, seguridad, UI/UX, tests, docs). Siempre pregunta antes el alcance y los enfoques.
+- Skill `orchestrate`: solo si el usuario pide subagentes o trabajo en paralelo; reparte el plan entre agentes y pregunta modelo y esfuerzo por tarea.
 - Skill `lessons`: cuando el usuario te corrija o fije una preferencia duradera, guárdala como regla.
 - Skills por capa, cuando la tarea toque esa parte del stack: `frontend` (React/Next.js), `api-design` (Python, Laravel, Node), `database` (PostgreSQL, MySQL, MongoDB), `auth`, `e2e-testing` (Playwright), `deployment` (Vercel, VPS con Docker, AWS) y `observability`.
 - Agente `planner`: para tareas normales o grandes, delégale el plan (paso 3).
