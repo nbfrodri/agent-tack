@@ -1,0 +1,9 @@
+# Claude Code marketplaces and plugins installed by install.sh.
+# Lines:  marketplace <name> <source>   (source: GitHub owner/repo, git URL or path)
+#         plugin <plugin>@<marketplace>
+# Plugins are always updated to the latest version from the marketplace.
+
+marketplace claude-plugins-official anthropics/claude-plugins-official
+
+plugin context7@claude-plugins-official
+plugin frontend-design@claude-plugins-official

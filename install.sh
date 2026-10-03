@@ -1,35 +1,316 @@
 #!/usr/bin/env bash
-# Links this repo's skills, agents and global instructions into Claude Code and Codex.
-# Safe to re-run. Existing files that are not symlinks are moved to *.bak.
-set -euo pipefail
+# Installs this repo's configuration for Claude Code and Codex:
+#   - global instructions, skills and subagents (as symlinks into this repo)
+#   - Claude Code settings from claude/settings.json (merged, other keys kept)
+#   - Claude Code marketplaces and plugins from plugins.txt (installed or updated to latest)
+#
+# Safe to re-run at any time. Existing files are backed up with a timestamp,
+# never overwritten. A failing step is reported and the rest still runs.
+#
+# Usage: ./install.sh [--skip-plugins] [--help]
+set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+STAMP="$(date +%Y%m%d-%H%M%S)"
+SKIP_PLUGINS=0
+FAILURES=0
+WARNINGS=0
 
-link() {
-  local src="$1" dest="$2"
-  mkdir -p "$(dirname "$dest")"
-  if [ -e "$dest" ] && [ ! -L "$dest" ]; then
-    mv "$dest" "$dest.bak"
-    echo "backup: $dest -> $dest.bak"
+for arg in "$@"; do
+  case "$arg" in
+    --skip-plugins) SKIP_PLUGINS=1 ;;
+    -h|--help)
+      sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $arg (see --help)" >&2
+      exit 2
+      ;;
+  esac
+done
+
+if [ -t 1 ]; then
+  C_OK=$'\033[32m' C_WARN=$'\033[33m' C_FAIL=$'\033[31m' C_HEAD=$'\033[1m' C_OFF=$'\033[0m'
+else
+  C_OK='' C_WARN='' C_FAIL='' C_HEAD='' C_OFF=''
+fi
+section() { printf '\n%s== %s ==%s\n' "$C_HEAD" "$1" "$C_OFF"; }
+ok()      { printf '  %s✔%s %s\n' "$C_OK" "$C_OFF" "$1"; }
+warn()    { printf '  %s!%s %s\n' "$C_WARN" "$C_OFF" "$1"; WARNINGS=$((WARNINGS + 1)); }
+fail()    { printf '  %s✘%s %s\n' "$C_FAIL" "$C_OFF" "$1"; FAILURES=$((FAILURES + 1)); }
+has()     { command -v "$1" >/dev/null 2>&1; }
+
+# Moves an existing file or directory aside instead of overwriting it.
+backup() {
+  local target="$1" dest="$1.bak-$STAMP" n=1
+  while [ -e "$dest" ] || [ -L "$dest" ]; do
+    dest="$1.bak-$STAMP-$n"
+    n=$((n + 1))
+  done
+  if mv "$target" "$dest"; then
+    warn "backed up $target -> $dest"
+  else
+    fail "could not back up $target"
+    return 1
   fi
-  ln -sfn "$src" "$dest"
-  echo "linked: $dest -> $src"
 }
 
-# Global instructions
-link "$REPO/global/AGENTS.md" "$HOME/.claude/CLAUDE.md"
-link "$REPO/global/AGENTS.md" "$HOME/.codex/AGENTS.md"
+# Creates dest -> src, replacing an old symlink and backing up a real file.
+link() {
+  local src="$1" dest="$2"
+  if ! mkdir -p "$(dirname "$dest")"; then
+    fail "cannot create $(dirname "$dest")"
+    return
+  fi
+  if [ -L "$dest" ]; then
+    if [ "$(readlink "$dest")" = "$src" ]; then
+      ok "$dest"
+      return
+    fi
+    rm -f "$dest" || { fail "cannot replace symlink $dest"; return; }
+  elif [ -e "$dest" ]; then
+    backup "$dest" || return
+  fi
+  if ln -s "$src" "$dest"; then
+    ok "$dest -> $src"
+  else
+    fail "cannot link $dest"
+  fi
+}
 
-# Skills (shared standard folder + each tool's own folder)
-for skill in "$REPO"/skills/*/; do
-  name="$(basename "$skill")"
-  for dir in "$HOME/.agents/skills" "$HOME/.claude/skills" "$HOME/.codex/skills"; do
-    link "${skill%/}" "$dir/$name"
+# Removes symlinks into this repo whose target no longer exists (deleted skills or agents).
+prune() {
+  local dir="$1" entry target
+  [ -d "$dir" ] || return 0
+  for entry in "$dir"/*; do
+    [ -L "$entry" ] || continue
+    target="$(readlink "$entry")"
+    case "$target" in
+      "$REPO"/*)
+        if [ ! -e "$target" ]; then
+          rm -f "$entry" && ok "removed stale link $entry"
+        fi
+        ;;
+    esac
   done
-done
+}
 
-# Subagents (Claude Code format: agents/<name>.md)
-for agent in "$REPO"/agents/*.md; do
-  [ -e "$agent" ] || continue
-  link "$agent" "$HOME/.claude/agents/$(basename "$agent")"
-done
+install_links() {
+  section "Global instructions"
+  link "$REPO/global/AGENTS.md" "$HOME/.claude/CLAUDE.md"
+  link "$REPO/global/AGENTS.md" "$HOME/.codex/AGENTS.md"
+
+  section "Skills"
+  local skill_dirs="$HOME/.agents/skills $HOME/.claude/skills $HOME/.codex/skills"
+  local dir skill name
+  for dir in $skill_dirs; do
+    prune "$dir"
+  done
+  for skill in "$REPO"/skills/*/; do
+    [ -f "$skill/SKILL.md" ] || { warn "skipping $skill (no SKILL.md)"; continue; }
+    name="$(basename "$skill")"
+    for dir in $skill_dirs; do
+      link "${skill%/}" "$dir/$name"
+    done
+  done
+
+  section "Subagents (Claude Code)"
+  prune "$HOME/.claude/agents"
+  local agent
+  for agent in "$REPO"/agents/*.md; do
+    [ -e "$agent" ] || continue
+    link "$agent" "$HOME/.claude/agents/$(basename "$agent")"
+  done
+}
+
+# Deep-merges claude/settings.json into ~/.claude/settings.json; repo values win, other keys are kept.
+merge_settings() {
+  section "Claude Code settings"
+  local src="$REPO/claude/settings.json" dest="$HOME/.claude/settings.json" tmp
+  [ -f "$src" ] || { ok "no claude/settings.json in repo, nothing to merge"; return; }
+  mkdir -p "$HOME/.claude"
+  if [ ! -s "$dest" ]; then
+    if cp "$src" "$dest"; then
+      ok "created $dest"
+    else
+      fail "could not create $dest"
+    fi
+    return
+  fi
+  tmp="$(mktemp "${TMPDIR:-/tmp}/settings.XXXXXX")" || { fail "cannot create temp file"; return; }
+
+  local rc=0
+  if has python3; then
+    python3 - "$dest" "$src" > "$tmp" 2>/dev/null <<'PY'
+import json, sys
+
+def merge(base, extra):
+    for key, value in extra.items():
+        if isinstance(value, dict) and isinstance(base.get(key), dict):
+            merge(base[key], value)
+        else:
+            base[key] = value
+    return base
+
+with open(sys.argv[1]) as f:
+    current = json.load(f)
+with open(sys.argv[2]) as f:
+    wanted = json.load(f)
+if not isinstance(current, dict):
+    sys.exit("settings.json is not a JSON object")
+json.dump(merge(current, wanted), sys.stdout, indent=2)
+sys.stdout.write("\n")
+PY
+    rc=$?
+  elif has jq; then
+    jq -s '.[0] * .[1]' "$dest" "$src" > "$tmp" 2>/dev/null
+    rc=$?
+  else
+    rm -f "$tmp"
+    warn "python3 and jq not found: merge $src into $dest by hand"
+    return
+  fi
+
+  if [ "$rc" -ne 0 ] || [ ! -s "$tmp" ]; then
+    rm -f "$tmp"
+    fail "$dest is not valid JSON; left untouched. Fix it and re-run"
+    return
+  fi
+  if cmp -s "$tmp" "$dest"; then
+    rm -f "$tmp"
+    ok "$dest already up to date"
+    return
+  fi
+  if cp "$dest" "$dest.bak-$STAMP" && mv "$tmp" "$dest"; then
+    ok "merged into $dest (previous copy: $dest.bak-$STAMP)"
+  else
+    rm -f "$tmp"
+    fail "could not write $dest"
+  fi
+}
+
+# Prints "enabled", "disabled" or "missing" for a plugin id, or "unknown" if it can't tell.
+plugin_state() {
+  local id="$1" json
+  json="$(claude plugin list --json </dev/null 2>/dev/null)" || { echo unknown; return; }
+  if has jq; then
+    printf '%s' "$json" | jq -r --arg id "$id" \
+      '(map(select(.id == $id)) | first) as $p
+       | if $p == null then "missing" elif $p.enabled then "enabled" else "disabled" end' 2>/dev/null \
+      || echo unknown
+  elif has python3; then
+    printf '%s' "$json" | python3 -c '
+import json, sys
+plugins = [p for p in json.load(sys.stdin) if p.get("id") == sys.argv[1]]
+print("missing" if not plugins else ("enabled" if plugins[0].get("enabled") else "disabled"))
+' "$id" 2>/dev/null || echo unknown
+  else
+    echo unknown
+  fi
+}
+
+marketplace_exists() {
+  local name="$1" json
+  json="$(claude plugin marketplace list --json </dev/null 2>/dev/null)" || return 2
+  if has jq; then
+    printf '%s' "$json" | jq -e --arg n "$name" 'any(.[]; .name == $n)' >/dev/null 2>&1
+  elif has python3; then
+    printf '%s' "$json" | python3 -c '
+import json, sys
+sys.exit(0 if any(m.get("name") == sys.argv[1] for m in json.load(sys.stdin)) else 1)
+' "$name"
+  else
+    return 2
+  fi
+}
+
+install_plugins() {
+  section "Claude Code plugins"
+  if [ "$SKIP_PLUGINS" -eq 1 ]; then
+    ok "skipped (--skip-plugins)"
+    return
+  fi
+  if ! has claude; then
+    warn "claude CLI not found: install Claude Code, then re-run ./install.sh"
+    return
+  fi
+  if [ ! -f "$REPO/plugins.txt" ]; then
+    ok "no plugins.txt, nothing to install"
+    return
+  fi
+
+  local kind name source state rc
+  # fd 3 so that commands inside the loop can't consume the file's lines
+  while read -r kind name source _ <&3; do
+    case "$kind" in
+      ''|'#'*) continue ;;
+      marketplace)
+        marketplace_exists "$name"
+        rc=$?
+        if [ "$rc" -eq 1 ]; then
+          if claude plugin marketplace add "$source" </dev/null >/dev/null 2>&1; then
+            ok "marketplace $name added"
+          else
+            fail "could not add marketplace $name ($source)"
+            continue
+          fi
+        elif [ "$rc" -eq 2 ]; then
+          # Can't tell: adding an existing marketplace is harmless if it fails
+          claude plugin marketplace add "$source" </dev/null >/dev/null 2>&1 || true
+        fi
+        if claude plugin marketplace update "$name" </dev/null >/dev/null 2>&1; then
+          ok "marketplace $name refreshed"
+        else
+          warn "could not refresh marketplace $name; using its cached catalog"
+        fi
+        ;;
+      plugin)
+        state="$(plugin_state "$name")"
+        case "$state" in
+          missing|unknown)
+            if claude plugin install "$name" </dev/null >/dev/null 2>&1; then
+              ok "$name installed"
+            else
+              fail "could not install $name (try: claude plugin install $name)"
+              continue
+            fi
+            ;;
+          *)
+            if claude plugin update "$name" </dev/null >/dev/null 2>&1; then
+              ok "$name up to date"
+            else
+              warn "could not update $name; keeping the installed version"
+            fi
+            ;;
+        esac
+        if [ "$(plugin_state "$name")" = "disabled" ]; then
+          if claude plugin enable "$name" </dev/null >/dev/null 2>&1; then
+            ok "$name enabled"
+          else
+            fail "could not enable $name"
+          fi
+        fi
+        ;;
+      *)
+        warn "plugins.txt: unknown line type '$kind'"
+        ;;
+    esac
+  done 3< "$REPO/plugins.txt"
+}
+
+main() {
+  printf '%sInstalling agent-config from %s%s\n' "$C_HEAD" "$REPO" "$C_OFF"
+  install_links
+  merge_settings
+  install_plugins
+
+  section "Summary"
+  if [ "$FAILURES" -gt 0 ]; then
+    fail "$FAILURES step(s) failed, $WARNINGS warning(s). Fix the errors above and re-run; it's safe."
+    exit 1
+  fi
+  ok "done with $WARNINGS warning(s). Restart Claude Code and Codex to load the changes."
+}
+
+main
