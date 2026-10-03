@@ -1,6 +1,6 @@
 ---
 name: new-project
-description: Bootstrap a new project: git, structure, tests ready for TDD, lint and format, CI, docs, issue templates, Dependabot, harness enabled. Use when starting or scaffolding a project or adding missing basics (crea un proyecto, empieza una app, inicializa un repo).
+description: Bootstrap a new project: git, structure, tests ready for TDD, lint and format, CI, docs, issue templates, Dependabot, harness enabled. Use when starting or scaffolding a project or adding missing basics (create a project, start an app, initialise a repo).
 ---
 
 # New project

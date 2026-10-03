@@ -1,6 +1,6 @@
 ---
 name: improve
-description: Review existing code or a project and propose prioritised improvements (architecture, code, performance, security, UI/UX, tests, docs) through read-only reviewers; always asks scope and focus first. Use for review or improvement requests on existing work (qué mejorarías, revisa, audita, dale una vuelta).
+description: Review existing code or a project and propose prioritised improvements (architecture, code, performance, security, UI/UX, tests, docs) through read-only reviewers; always asks scope and focus first. Use for review or improvement requests on existing work (review, audit, suggest improvements).
 ---
 
 # Improve

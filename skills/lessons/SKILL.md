@@ -1,6 +1,6 @@
 ---
 name: lessons
-description: Turn the user's corrections and lasting preferences into versioned rules in the right file, so mistakes don't repeat. Use when the user corrects how you worked or states a rule (no así no, te dije que, siempre, nunca, a partir de ahora, apúntalo).
+description: Turn the user's corrections and lasting preferences into versioned rules in the right file, so mistakes don't repeat. Use when the user corrects how you worked or states a rule (corrections, always, never, from now on, remember this).
 ---
 
 # Lessons
@@ -10,7 +10,7 @@ When the user corrects you, the expensive part was the mistake; the cheap part i
 ## 1. Decide whether it's a lesson
 It is a lesson if it would apply again in a future, different task: a convention, a preference, a recurring mistake, or a gap in a skill. It is **not** a lesson if it only concerns this task ("this endpoint should return 404 here"); just apply it.
 
-When unsure, apply the fix, then ask in one line: "¿Lo guardo como regla para el futuro?".
+When unsure, apply the fix, then ask in one line: "Should I save this as a rule for future tasks?".
 
 ## 2. Choose where it belongs
 | The lesson is about… | Write it in |
@@ -29,7 +29,7 @@ CONFIG_REPO="$(cd ~/.agents/harness && pwd -P)"   # canonical link created by in
 - **Search first.** Grep the target file (and related skills) for an existing rule on the topic. Update or replace it instead of appending a second, contradictory one.
 - **One short rule, with the reason.** For example: "Use `pnpm`, not `npm`: the monorepo's lockfile and workspaces depend on it." The reason lets future readers apply it sensibly to cases the rule didn't foresee.
 - **Generalise, don't overfit.** Capture the principle behind the correction, not the literal case. Example: "use `Decimal` for money in every language", not "use Decimal in cart.py".
-- **Match the file's language and style.** Skills and docs are in English (descriptions keep Spanish trigger phrases); keep tables and lists consistent.
+- **Match the file's language and style.** Skills and docs, including trigger phrases, are in English; keep tables and lists consistent.
 - **Keep global instructions short.** `global/AGENTS.md` loads in every session; if it grows past ~40 lines, move detail into the relevant skill and leave a one-line pointer.
 - If the lesson contradicts something the user said before, point out the conflict and ask which wins.
 
@@ -45,4 +45,4 @@ Follow the user's git rules: committing is fine, **ask before pushing**. Changes
 
 ## 5. Tell the user
 One or two lines: what rule you saved, where, and the commit. For example:
-"Guardado en `skills/testing/references/python.md`: usar `pytest-randomly` siempre (commit `a1b2c3d`). ¿Hago push?"
+"Saved in `skills/testing/references/python.md`: always use `pytest-randomly` (commit `a1b2c3d`). Should I push?"

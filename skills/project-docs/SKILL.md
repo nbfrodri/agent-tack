@@ -1,6 +1,6 @@
 ---
 name: project-docs
-description: Project docs for humans (README, docs/) and AIs (AGENTS.md): technical sheet, architecture, ADRs, plans, audits, continuous handoffs, AI usage log, templates. Use when writing or updating docs, saving plans or audits, or for a handoff (documenta, haz un handoff, resume dónde estamos).
+description: Project docs for humans (README, docs/) and AIs (AGENTS.md): technical sheet, architecture, ADRs, plans, audits, continuous handoffs, AI usage log, templates. Use when writing or updating docs, saving plans or audits, or for a handoff (document, write a handoff, summarise progress).
 ---
 
 # Project documentation
@@ -70,6 +70,8 @@ The project documents how AI is used. This is the place for it: commits stay fre
 - `docs/ai/prompts.md`: when a prompt or request worked notably well for this project, offer to save it (one line saying when to use it, then the prompt).
 
 ## Architecture docs
+Every harness-enabled project must document its actual architecture in `docs/architecture.md` and link it from `README.md` and `docs/README.md`. In an existing project without it, create it during the first significant task after inspecting the code. Keep it current in the same change that alters components, dependencies or flows.
+
 Use Mermaid, which GitHub renders, and keep each diagram small:
 - a **context** diagram: the system, its users and the external systems it talks to;
 - a **container** diagram: the apps and services, databases and queues, and how they communicate;

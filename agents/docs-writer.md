@@ -12,6 +12,7 @@ Follow `~/.agents/skills/project-docs/SKILL.md` (structure, templates in its `as
 ## Process
 1. Work out what changed: `git diff`, `git diff --staged`, or `git diff origin/main...HEAD` for a branch, plus `git log`.
 2. Go through the documentation checklist and decide which docs are affected. Read each one fully before editing it.
+   For a significant task in an enabled project, ensure `docs/architecture.md` exists and is linked from the README and docs index. Base it on the actual code and update it when components, dependencies or flows change.
 3. Update only what the change affects. Keep the existing structure and tone; don't rewrite sections that are still correct.
 4. Verify every command, path and environment variable you document against the code (run commands when it's safe to do so).
 5. For significant architecture decisions, create `docs/adr/NNNN-title.md`, numbering after the highest existing ADR.

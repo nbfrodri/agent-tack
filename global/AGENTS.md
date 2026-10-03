@@ -13,5 +13,5 @@ The full workflow is opt-in per project. It's enabled when `harness status` prin
 
 - For any task that writes, changes, designs or debugs code, or touches git/GitHub or docs, follow the `dev-workflow` skill: plan first, TDD, SOLID/DDD, Conventional Commits (enforced by the commit-msg hook), conventions, docs.
 - Write self-explanatory code instead of comments: no comments that restate code, narrate steps or describe your change; comment only the non-obvious *why*.
-- Document for humans (`README`, `docs/`) and for AIs (`AGENTS.md`): simple, precise, concise. Keep plans, audits and handoffs in `docs/`, and log significant AI work in `docs/ai/log.md` (`project-docs` skill).
+- Document for humans (`README`, `docs/`) and for AIs (`AGENTS.md`): simple, precise, concise. Document the repository architecture in `docs/architecture.md` and keep it current. Keep plans, audits and handoffs in `docs/`, and log significant AI work in `docs/ai/log.md` (`project-docs` skill).
 - Sessions can stop without warning (usage limits, context): on non-trivial tasks keep a handoff in `docs/handoffs/` updated at every milestone, refresh it at once if usage or context looks low, and read any in-progress handoff before starting.
