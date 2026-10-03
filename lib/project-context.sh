@@ -27,7 +27,7 @@ include AGENTS.md 45
 include docs/architecture.md 45
 active=''
 for file in "$root"/docs/handoffs/*.md; do
-  [ -f "$file" ] && [ ! -L "$file" ] || continue
+  if [ ! -f "$file" ] || [ -L "$file" ]; then continue; fi
   if grep -qiE '^[-[:space:]]*(\*\*)?Status:(\*\*)?[[:space:]]*(in progress|paused)' "$file"; then
     active="${file#"$root"/}"
   fi

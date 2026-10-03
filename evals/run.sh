@@ -36,7 +36,7 @@ mkdir -p "$dir"
 exec 2> "$out/stderr.log"
 start=$(date +%s)
 isolated_home=""
-# shellcheck disable=SC2329 # Invoked by the EXIT trap.
+# shellcheck disable=SC2317,SC2329 # Invoked indirectly by the EXIT trap.
 finish() {
   status=$?
   printf 'exit=%s seconds=%s\n' "$status" "$(( $(date +%s) - start ))" > "$out/run.txt"
