@@ -118,6 +118,20 @@ chmod +x "$R/.git/hooks/pre-push"
 commit "feat: more"
 push origin feat/x
 check "local pre-push ran with the ref list" "grep -q 'refs/heads/feat/x' '$WORK/pre-push-stdin'"
+check "ref list keeps its trailing newline" "[ \"\$(tail -c 1 '$WORK/pre-push-stdin' | od -An -c | tr -d ' ')\" = '\\n' ]"
+# The usual hook shape (as in git's pre-push.sample) must see every ref
+cat > "$R/.git/hooks/pre-push" <<EOF
+#!/usr/bin/env bash
+n=0
+while read -r _local_ref _local_sha _remote_ref _remote_sha; do n=\$((n + 1)); done
+echo "\$n" > "$WORK/pre-push-count"
+EOF
+commit "feat: even more"
+push origin feat/x
+check "local pre-push 'while read' loop sees the pushed ref" "[ \"\$(cat '$WORK/pre-push-count')\" = 1 ]"
+printf '#!/usr/bin/env bash\nexit 1\n' > "$R/.git/hooks/pre-push"
+commit "feat: blocked push"
+check "a failing local pre-push still blocks the push" "! push origin feat/x"
 rm -f "$R/.git/hooks/pre-push"
 
 echo "Claude hook: guard-bash"

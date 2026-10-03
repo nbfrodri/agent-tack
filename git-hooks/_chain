@@ -7,7 +7,8 @@
 # hook itself (the other hook names are symlinks to it).
 
 # Runs .git/hooks/<name> of the current repository, if there is one, with the given arguments.
-# Reads stdin from AGENT_CONFIG_HOOK_STDIN when set (for hooks that consume stdin first).
+# Reads stdin from the file in AGENT_CONFIG_HOOK_STDIN_FILE when set (for hooks that consume
+# stdin first); the file is forwarded byte for byte so `while read` loops see every line.
 run_local_hook() {
   local name="$1" dir local_hook self
   shift
@@ -22,8 +23,8 @@ run_local_hook() {
   self="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$name"
   [ "$local_hook" -ef "$self" ] && return 0
 
-  if [ -n "${AGENT_CONFIG_HOOK_STDIN+set}" ]; then
-    printf '%s' "$AGENT_CONFIG_HOOK_STDIN" | AGENT_CONFIG_IN_LOCAL_HOOK=1 "$local_hook" "$@"
+  if [ -n "${AGENT_CONFIG_HOOK_STDIN_FILE:-}" ]; then
+    AGENT_CONFIG_IN_LOCAL_HOOK=1 "$local_hook" "$@" < "$AGENT_CONFIG_HOOK_STDIN_FILE"
   else
     AGENT_CONFIG_IN_LOCAL_HOOK=1 "$local_hook" "$@"
   fi
