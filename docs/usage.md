@@ -10,6 +10,9 @@ harness status            # enabled / disabled
 harness enable            # this clone only (git config; nothing added to the repo)
 harness enable --shared   # commit a .harness file so every clone has it
 harness disable
+harness context           # bounded project instructions, architecture and active handoff
+harness trust             # permit automatic project formatter execution in this clone
+harness trust --revoke     # revoke execution permission without disabling the workflow
 git config --global harness.enabled true   # every repo (a local disable still wins)
 ```
 
@@ -22,6 +25,14 @@ git config --global harness.enabled true   # every repo (a local disable still w
 | Full workflow and auto-format | ✔ | — |
 
 Start a new session after switching. Claude Code is told the status at session start; other tools check `harness status` as their instructions say. Projects created with "create a project…" are enabled automatically.
+
+## Startup context and formatter trust
+
+Claude Code's SessionStart hook supplies the activation status plus bounded excerpts from the project's `AGENTS.md`, `docs/architecture.md` and the newest active or paused handoff. Other tools follow the global instructions to run `harness context` at session start. This is an instruction-driven startup step for tools without a SessionStart hook.
+
+The combined document content is capped at 6,000 bytes, with per-file line limits. Missing files and symlinks outside the checkout are skipped. Read the referenced documents in full when needed. Disable the extra context with `git config harness.context false`; activation messages remain available.
+
+A shared `.harness` file enables workflow instructions but does not authorise execution of project code. Run `harness trust` only for a checkout whose formatter binaries and configuration you trust. Formatting requires both activation and explicit local trust; global trust settings are ignored. `harness trust --revoke` removes that execution permission.
 
 ## What to ask
 Talk normally, in your language:

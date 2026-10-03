@@ -41,9 +41,9 @@ Safety: existing files are moved to `<name>.bak-<timestamp>`, never overwritten;
 | `commit-msg` | git (global) | Removes AI attribution everywhere; in enabled projects, rejects subjects that aren't Conventional Commits. |
 | `pre-push` | git (global) | Refuses force-pushes and deletions of `main`/`master`. In enabled projects, only annotated `vX.Y.Z` tags, never moved or deleted. |
 | Other git hooks | git (global) | Pass through to each repo's own `.git/hooks/*` (client and server side). |
-| `session-context.sh` | Claude Code `SessionStart` | Tells Claude whether the project is enabled. |
+| `session-context.sh` | Claude Code `SessionStart` | Supplies activation status and bounded project instructions, architecture and active handoff through `harness context`. |
 | `guard-bash.sh` | Claude Code `PreToolUse` | Parses commands like a shell. Blocks force-pushing main, `--no-verify`, hook-path overrides and `rm -rf` of `/`, `~` or `..`; asks before discarding work, deleting branches, force-pushing other branches or wiping databases. |
-| `format-file.sh` | Claude Code `PostToolUse` | In enabled projects, formats each edited file with the project's own configured formatter. |
+| `format-file.sh` | Claude Code `PostToolUse` | In enabled, locally trusted projects, formats each edited file with the project's own formatter. |
 
 Repos with their own local `core.hooksPath` (e.g. Husky) use only their hooks; there, Claude's `attribution` setting still prevents its trailers.
 

@@ -6,14 +6,36 @@
 #   harness disable          disable (removes both markers)
 #   harness status           print whether it is enabled; exit 0 if enabled, 1 if not
 #   harness status --quiet   same, without output (used by hooks)
+#   harness trust            allow project formatter execution in this clone
+#   harness trust --revoke   revoke that local permission
+#   harness trusted --quiet  report local formatter trust (exit 0 if trusted)
+#   harness context          print bounded project instructions, architecture and handoff
 #
 # Outside enabled projects only the safety net stays active: the command guard, the protection
 # of main and the removal of AI attribution from commit messages.
 set -u
 
-usage() { sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'; }
 
 repo_root() { git rev-parse --show-toplevel 2>/dev/null; }
+
+fail() { printf 'harness: %s\n' "$1" >&2; exit 1; }
+require_repo() { root="$(repo_root)" || { echo "harness: not inside a git repository" >&2; exit 2; }; }
+check_args() {
+  [ "$#" -eq 0 ] && return 0
+  [ "$#" -eq 1 ] && [ "$1" = "$allowed_option" ] && return 0
+  echo "harness: unsupported arguments for $cmd (see --help)" >&2
+  exit 2
+}
+harness_root() {
+  local script="${BASH_SOURCE[0]}" dir target
+  while [ -L "$script" ]; do
+    dir="$(cd "$(dirname "$script")" && pwd)" || return 1
+    target="$(readlink "$script")" || return 1
+    case "$target" in /*) script="$target" ;; *) script="$dir/$target" ;; esac
+  done
+  cd "$(dirname "$script")/.." && pwd
+}
 
 # Enabled when the repo has a .harness file, or git config harness.enabled is true
 # (local, or global to enable it everywhere). An explicit local false wins over the file.
@@ -32,32 +54,66 @@ cmd="${1:-status}"
 
 case "$cmd" in
   enable)
-    root="$(repo_root)" || { echo "harness: not inside a git repository" >&2; exit 2; }
-    git config --unset harness.enabled 2>/dev/null
+    allowed_option=--shared; check_args "$@"
+    require_repo
     if [ "${1:-}" = "--shared" ]; then
-      printf '# This project uses the agent-harness workflow (https://github.com/nbfrodri/agent-harness).\n' > "$root/.harness"
+      if git config --local --get harness.enabled >/dev/null 2>&1; then
+        git config --local --unset-all harness.enabled || fail "cannot clear local activation"
+      fi
+      printf '# This project uses the agent-harness workflow (https://github.com/nbfrodri/agent-harness).\n' > "$root/.harness" \
+        || fail "cannot write the shared marker"
       echo "Enabled through $root/.harness — commit it to share it."
     else
-      git config harness.enabled true
+      git config --local harness.enabled true || fail "cannot enable this clone"
       echo "Enabled for this clone (git config harness.enabled true)."
     fi
     ;;
   disable)
-    root="$(repo_root)" || { echo "harness: not inside a git repository" >&2; exit 2; }
+    allowed_option=''; check_args "$@"
+    require_repo
+    git config --local harness.enabled false || fail "cannot disable this clone"
     if [ -f "$root/.harness" ]; then
-      rm -f "$root/.harness"
+      rm -f "$root/.harness" || fail "cannot remove the shared marker"
       echo "Removed $root/.harness — commit the removal to share it."
     fi
-    git config harness.enabled false
     echo "Disabled for this clone."
     ;;
   status)
+    allowed_option=--quiet; check_args "$@"
     if is_enabled; then
       [ "${1:-}" = "--quiet" ] || echo "enabled"
       exit 0
     fi
     [ "${1:-}" = "--quiet" ] || echo "disabled"
     exit 1
+    ;;
+  trust)
+    allowed_option=--revoke; check_args "$@"
+    require_repo
+    if [ "${1:-}" = --revoke ]; then
+      git config --local harness.trusted false || fail "cannot revoke local trust"
+      echo "Project formatter execution trust revoked for this clone."
+    else
+      git config --local harness.trusted true || fail "cannot trust this clone"
+      echo "Project formatter execution trusted for this clone."
+    fi
+    ;;
+  trusted)
+    allowed_option=--quiet; check_args "$@"
+    if [ "$(git config --local --bool --get harness.trusted 2>/dev/null)" = true ]; then
+      [ "${1:-}" = --quiet ] || echo trusted
+      exit 0
+    fi
+    [ "${1:-}" = --quiet ] || echo untrusted
+    exit 1
+    ;;
+  context)
+    allowed_option=''; check_args "$@"
+    is_enabled || exit 0
+    [ "$(git config --bool --get harness.context 2>/dev/null)" != false ] || exit 0
+    root="$(repo_root)" || exit 0
+    source_root="$(harness_root)" || fail "cannot locate installed context renderer"
+    bash "$source_root/lib/project-context.sh" "$root"
     ;;
   -h|--help|help)
     usage

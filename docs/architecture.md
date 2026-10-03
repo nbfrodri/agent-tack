@@ -31,7 +31,7 @@ flowchart LR
 | `targets.txt`, `plugins.txt` | Declare supported tools and Claude plugins | Read by the installer |
 | `install.sh` | Orchestrate installation and migration | Data files, settings merge, git and Claude CLI |
 | `lib/settings-merge.py`, `.jq` | Merge settings and replace harness-tagged hook groups | Python standard library or jq |
-| `bin/harness` | Enable, disable and report the per-project workflow | Git repository root and configuration |
+| `bin/harness` | Manage activation and local formatter trust; provide bounded startup context | Git repository root and configuration; `lib/project-context.sh` |
 | `git-hooks/` | Check staged secrets, commit messages and pushed refs; delegate local hooks | `bin/harness`, git and `_chain` |
 | `hooks/claude/` | Supply session context, assess Bash commands and format edited files | `bin/harness`; the guard also sources `lib/shell-parse.sh` |
 | `tests/`, `.github/workflows/ci.yml` | Validate content and exercise installation and hooks in temporary environments | Bash, git, Python, jq and ShellCheck |
@@ -51,9 +51,11 @@ flowchart LR
   session --> workflow
 ```
 
-`bin/harness` is the source of truth for activation. An explicit `harness.enabled=false` wins; otherwise `true` enables the workflow, followed by a shared `.harness` file. Hooks call the CLI rather than reading these markers themselves. Claude receives the status at session start; other tools follow the instructions to check it.
+`bin/harness` is the source of truth for activation. An explicit `harness.enabled=false` wins; otherwise `true` enables the workflow, followed by a shared `.harness` file. Hooks call the CLI rather than reading these markers themselves. Formatter execution additionally requires `harness trusted --quiet`, which reads only local trust configuration. Claude receives activation and `harness context` excerpts at session start; other tools follow the instructions to run the same context command.
 
-Instructions guide the model's workflow. Executable hooks enforce a narrower set of checks: secret scanning and attribution removal apply in every repository using the global git hooks; Conventional Commits and tag conventions depend on activation. Claude's command guard runs independently of activation, while file formatting requires an enabled project and uses its formatter configuration and executables.
+`lib/project-context.sh` reads bounded excerpts of project instructions, architecture and an active handoff, without loading the full docs tree. It has a shared byte budget and per-file line limits and skips missing files and external symlinks. `harness.context=false` disables these extra excerpts.
+
+Instructions guide the model's workflow. Executable hooks enforce a narrower set of checks: secret scanning and attribution removal apply in every repository using the global git hooks; Conventional Commits and tag conventions depend on activation. Claude's command guard runs independently of activation, while file formatting requires an enabled and locally trusted project.
 
 ## Git hook flow
 

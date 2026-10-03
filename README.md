@@ -36,6 +36,7 @@ Details: [architecture](docs/architecture.md) · [components](docs/components.md
 cd ~/Projects/my-app
 harness enable      # turn the full workflow on for this project (off by default)
 ```
+Project instructions, architecture and an active handoff are loaded as bounded startup context. Automatic formatting also needs `harness trust` for the local checkout. [Context and trust →](docs/usage.md#startup-context-and-formatter-trust)
 Then work as usual: "Add Google login", "Work on issue #12", "What would you improve?", "Improve it autonomously until it scores 8/10", "Prepare a release". `harness disable` turns it off. [Usage →](docs/usage.md)
 
 Update with `git pull && ./install.sh`. Sharing it with someone else: [sharing](docs/sharing.md).
