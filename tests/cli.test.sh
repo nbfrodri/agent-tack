@@ -135,5 +135,12 @@ check "disabled project succeeds with no context" expect_exit 0 "$CLI" disable
 check "disabled context succeeds" expect_exit 0 "$CLI" context
 check "disabled context is empty" test ! -s "$WORK/output"
 
+check "doctor rejects unsupported arguments" expect_exit 2 "$CLI" doctor --quiet
+check "help documents doctor" expect_exit 0 "$CLI" help
+check "help includes doctor syntax" contains 'doctor'
+cd "$HOME" || exit 1
+check "doctor dispatches installation diagnostics outside Git" expect_exit 1 "$CLI" doctor
+check "doctor diagnoses missing installed canonical link" contains "missing managed symlink: $HOME/.agents/harness"
+
 printf '\n%s passed, %s failed\n' "$PASSED" "$FAILED"
 [ "$FAILED" -eq 0 ]
