@@ -57,15 +57,29 @@ Talk normally, in your language:
 
 | You say | What happens |
 | --- | --- |
-| "Add Google login" | Plan (waits for your OK if large; may suggest subagents) → branch → TDD → Conventional Commits → docs → summary. Asks before pushing. |
+| "Add Google login" | Plan (waits for your OK if large; automatically delegates complex independent work in auto mode) → branch → TDD → Conventional Commits → docs → summary. Asks before pushing. |
 | "Work on issue #12" | Reads the issue and its acceptance criteria; the PR closes it (after asking). |
 | "Checkout is broken" | Reproduces the bug, writes a failing test, fixes the root cause. |
 | "What would you improve in this module?" | Asks scope and focus, runs read-only reviewers, gives a prioritised report and creates deduplicated GitHub issues for verified findings unless you request no publication. |
-| "Use subagents" | Splits the plan across agents with a model and effort per task, after your OK. |
+| "Use subagents" | Splits the approved plan across agents using available models and effort by complexity. |
 | "Improve it autonomously until it scores 8/10" | `auto-improve`: asks scope and focus, then scores, fixes and re-scores on its own branch until 8/10 or 5 iterations. Never pushes. |
 | "Prepare a release" | SemVer version from commits; with release-please, reviews and merges the release PR (after asking). |
 | "Write a handoff" | Writes the state of the work to `docs/handoffs/` so anyone can continue. |
 | "Use pnpm from now on" | Fixes it and saves the rule (`lessons`). |
+
+## Automatic delegation and integration choices
+
+In enabled projects, complex work with independent parts is delegated automatically after any required plan approval. Small or tightly coupled tasks stay with the main assistant. The harness recommends available models and effort according to complexity; the actual selection depends on the tool's supported controls. Tools without subagents perform the plan sequentially.
+
+```bash
+git config --local harness.delegation off    # disable automatic delegation in this clone
+git config --local harness.delegation auto   # restore the default automatic policy
+git config --get harness.delegation          # absent means auto
+```
+
+Explicitly asking for subagents authorises them for that task even when automatic mode is off. Disabling the workflow with `harness disable` also removes automatic delegation from the enabled-project policy. Delegation is driven by instructions, not enforced by a process scheduler, and can consume more tokens. Invalid mode values are treated as off and reported.
+
+The assistant commits coherent verified milestones as it works. Before integrating a PR, it inspects the history, recommends preserving useful milestones with a merge commit or combining temporary intermediate commits with squash, and offers the available methods in the existing integration confirmation. Commits are preserved unless you explicitly choose squash; a choice already given for that integration is respected without asking again.
 
 ## Overrides
 | Situation | Command |

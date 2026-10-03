@@ -1,35 +1,36 @@
 ---
 name: orchestrate
-description: Split an approved plan among subagents in isolated worktrees, recommending model and effort per task, then integrate, test and review. Use when the user asks for subagents or parallel work (use subagents, work in parallel, orchestrate this); for large divisible tasks, only suggest it.
+description: Delegate complex separable tasks using available models and isolated worktrees, then integrate and verify. Use for subagents or parallel work, or automatically for complex independent tasks in enabled projects unless harness.delegation is off.
 ---
 
 # Orchestrate
 
-You become the orchestrator: you plan, delegate, integrate and verify, and the subagents do the focused work. This pays off when a task splits into parts that are **independent** (different modules, layers or files) or that need a lot of reading, since each subagent has its own context. It costs more tokens and adds integration work, so it runs only when the user asks for it; for a large task that splits into independent parts you may suggest it, showing the breakdown and the model and effort table, and wait for a yes. If the task is small or tightly coupled, say so and suggest doing it directly.
+You plan, delegate, integrate and verify. Delegation pays off when a complex task splits into independent parts with clear file ownership, or needs substantial independent research. Keep small or tightly coupled work direct: extra agents consume tokens and require integration.
 
-## 1. Plan and split
-- Start from an approved plan (`dev-workflow`; the `planner` agent can produce it). If there isn't one, make it first and get approval.
-- Split it into tasks that can be done and tested on their own, with **clear contracts** between them: shared types, API shapes, function signatures and file ownership. Each file has one owner, so no two agents edit the same file.
-- Decide the order: independent tasks run in parallel; dependent ones wait for what they need. Shared groundwork, such as types, the contract or a migration, is usually done first by you or by one agent.
-- 2 to 5 agents in parallel is a sensible maximum; more means more conflicts and more cost.
-- Show the user the breakdown (task → agent → files → order), together with the model and effort question below, and wait for their OK.
+## 1. Check mode, plan and split
+
+In an enabled project, read `git config --get harness.delegation`: absent or `auto` enables automatic delegation; `off` disables automatic delegation. Treat any other value as off and explain the invalid setting. Outside enabled projects, suggest delegation and wait for approval unless the user requested it. An explicit request for subagents authorises delegation for that task even when automatic mode is off.
+
+- Follow the approved scope and planning requirements in `dev-workflow`. Automatic delegation does not authorise an unapproved large or risky implementation plan.
+- After the plan is approved, automatically delegate complex separable work in auto mode. Show the task, owner, files, model, effort and reason in a concise progress update; do not ask again for delegation approval.
+- Give each task acceptance criteria and clear contracts: shared types, API shapes, function signatures and file ownership. Each file has one owner.
+- Independent tasks may run in parallel; dependent tasks wait for their prerequisites. Establish shared contracts first.
+- Prefer two or three workers and stay within the runtime's concurrency limit. Delegate only when the expected benefit justifies the added token and integration cost.
+- In off mode, work directly; if delegation would help substantially, suggest it and wait for approval. Respect explicit cost limits or model preferences.
 
 ### Model and effort per task
-Always ask the user which model and effort to use for the subagents, **recommending one per task** based on its complexity, in a single question round (a table plus the choice "accept the recommendation / use the most capable model for everything / use the cheapest that fits / adjust per task"):
 
-| Task complexity | Examples | Recommended model | Effort |
+Inspect the current tool's actual model and reasoning controls before choosing. Use available capabilities, not hardcoded provider names or assumptions about a product. Apply these recommendations automatically in auto mode, unless the user specified another policy:
+
+| Task complexity | Examples | Model capability | Effort |
 | --- | --- | --- | --- |
-| Low: mechanical, well specified | Docs updates, renames, boilerplate, adding fixtures, searching or collecting information | Haiku (fast and cheap) | low |
-| Medium: standard implementation | A feature slice following existing patterns, tests for existing code, a typical bug fix | Sonnet | medium |
-| High: design-heavy or risky | Architecture, tricky bugs, concurrency, security, data migrations, unfamiliar code, integrating others' work | The most capable model available (Opus or newer) | high |
+| Low: mechanical, well specified | Docs, renames, fixtures, collecting information | Fast economical model that supports the task | low |
+| Medium: standard implementation | A feature following existing patterns, tests, typical bug fixes | Balanced coding model | medium |
+| High: design-heavy or risky | Architecture, security, migrations, tricky bugs, integration | Most capable suitable model available | high |
 
-Explain each recommendation in a few words ("touches auth, so high"). Bump one level up for code with no tests, unclear requirements or high cost of mistakes.
+Bump the recommendation for unclear requirements, missing tests or costly mistakes. If the runtime exposes no model choice, inherit the available model. If a model or effort cannot be set, report the actual fallback; do not claim a selection was applied. Do not rewrite shared agent definitions just to change one invocation's effort. Ask only when an unresolved choice materially affects the approved budget or scope.
 
-How it applies:
-- **Model:** pass it per delegation (the `model` parameter of the Agent tool in Claude Code).
-- **Effort:** in Claude Code it can't be set per delegation; it comes from the agent definition's `effort:` field (`low`, `medium`, `high`, `xhigh`, `max`; absent means the session's effort). If the chosen effort differs from the agent's, tell the user and offer to set it in that agent's file (it then becomes that agent's default) or to proceed with the agent's current effort. Never claim an effort was applied when it wasn't.
-- Record the chosen model and effort per task in the orchestration handoff and in `docs/ai/log.md`.
-- Keep a handoff for the whole orchestration (`project-docs` → continuous handoffs) listing each task, its agent, branch or worktree, and status (pending, running, done, merged). Update it as agents report, so the work can be resumed if the session stops.
+Record actual models, effort settings, fallbacks, branches/worktrees and task status in the orchestration handoff and `docs/ai/log.md`. Keep the handoff current as agents report so work can resume after interruption.
 
 ## 2. Delegate
 Pick the agent for each task:
@@ -40,9 +41,9 @@ Pick the agent for each task:
 | Docs | `docs-writer` |
 | Research, read-only analysis | `architecture-reviewer`, `security-auditor`, `performance-analyzer`, `ui-reviewer`, or a general-purpose/Explore agent |
 
-Every implementing agent runs **isolated in its own git worktree** (`isolation: "worktree"` in Claude Code), on its own branch `type/<slug>`, so parallel agents never step on each other.
+Every implementing agent works in its own Git worktree and branch `type/<slug>`. Use native worktree isolation when supported; otherwise create the worktree before delegation and explicitly pass its path. Shared working directories require disjoint read-only tasks; do not run overlapping writers.
 
-Each agent starts with no context, so its prompt must be self-contained:
+Regardless of whether the tool inherits conversation context, make each task prompt self-contained:
 - the goal and the acceptance criteria of its task;
 - the contract it must respect and the files it owns (and must not touch);
 - the relevant skills to follow (e.g. `api-design` + `database` for a backend slice) and the project's `AGENTS.md`;
@@ -50,7 +51,7 @@ Each agent starts with no context, so its prompt must be self-contained:
 
 ## 3. Integrate and verify
 1. When each agent reports, read its report and check its branch: diff, commits (Conventional Commits) and tests.
-2. Merge the branches into the integration branch in dependency order, resolving conflicts yourself. Run the **full** test suite, lint and type checks after each merge.
+2. Integrate local task commits in dependency order, resolving conflicts yourself. Run affected checks after each integration and the full required suite once the combined change is ready. Preserve verified milestones and follow the contextual merge choice for PR integration.
 3. Run `code-reviewer` on the integrated diff, and the specialist reviewers if the change touches their area (auth → `security-auditor`, UI → `ui-reviewer`).
 4. Fix what they find (directly, or with another agent round), then update docs (`project-docs`) and log the multi-agent work in `docs/ai/log.md`.
 5. Report to the user: what each agent did, the integrated result, how it was verified, and anything pending. Push or open a PR only after asking, as always.
@@ -58,4 +59,5 @@ Each agent starts with no context, so its prompt must be self-contained:
 If an agent fails or goes off track, don't merge its work blindly: inspect it, then retry with a clearer prompt, do it yourself, or drop it.
 
 ## Tools without subagents
-Codex and other tools without subagents follow the same plan sequentially: one task at a time, on its own branch, with the same contracts and the same integration checks. The model and effort recommendation still applies; the user switches them in that tool (e.g. Codex's model and reasoning-effort settings) between tasks.
+
+Check runtime capabilities rather than assuming that a named product supports or lacks subagents. If delegation is unavailable, carry out the same plan sequentially with the same contracts and checks. Explain the fallback and record the actual model; never imply that background agents or model switching occurred when they did not.

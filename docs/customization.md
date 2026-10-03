@@ -11,6 +11,7 @@ Clone it into any directory you choose and install from that checkout, as shown 
 | Conversation language, permissions and global preferences | `global/AGENTS.md` |
 | Planning, testing, commits and documentation workflow | `skills/dev-workflow/` and its references |
 | Task-specific guidance or reusable templates | `skills/<name>/SKILL.md`, `references/` and `assets/` |
+| Automatic delegation, complexity routing and model fallbacks | `skills/orchestrate/` (per-project opt-out: `git config harness.delegation off`) |
 | Agent responsibilities and defaults | `agents/*.md` |
 | Supported tools and installation paths | `targets.txt` |
 | Claude Code settings and registered hooks | `claude/settings.json` |
