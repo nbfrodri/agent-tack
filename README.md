@@ -65,14 +65,18 @@ hooks/claude/         # Claude Code hook scripts
 git-hooks/            # global git hooks (commit-msg, pre-push, pass-through)
 plugins.txt           # Claude Code marketplaces and plugins
 install.sh            # installer (idempotent)
-tests/                # installer tests and skill/agent validation, run in CI
+tests/                # installer, hooks and skill/agent tests, run in CI
+evals/                # behaviour evals with real Claude/Codex sessions (manual, uses tokens)
 ```
 
 ## Skills
 
 | Skill | Purpose |
 | --- | --- |
-| `dev-workflow` | Plan first, TDD, SOLID/DDD, Conventional Commits, GitHub flow, keep docs up to date |
+| `dev-workflow` | Plan first, TDD, SOLID/DDD, Conventional Commits, GitHub flow, docs; code and git conventions in `references/conventions.md` |
+| `project-docs` | Docs for humans (`README`, `docs/`) and AIs (`AGENTS.md`): technical sheet, architecture, ADRs, plans, audits, handoffs, AI usage log; templates |
+| `github-issues` | Work from an issue to a PR that closes it, write issues, split plans into issues; issue and PR templates |
+| `lessons` | Turn corrections and preferences into versioned rules in the right file |
 | `git-history` | Amend, fixup, squash, undo and recover commits; tidy a branch before push |
 | `release` | SemVer, next version from commits, CHANGELOG, tags, GitHub Releases, release-please |
 | `debugging` | Reproduce → regression test → isolate → verify hypothesis → fix the root cause |
@@ -95,7 +99,7 @@ Skills use the open Agent Skills format (`SKILL.md`), so both Claude Code and Co
 | `planner` | Read-only architect: plan, DDD model, test strategy and commit breakdown before coding |
 | `code-reviewer` | Read-only review of the diff/branch: bugs, security, tests, SOLID/DDD, conventions, docs |
 | `test-writer` | Adds tests to existing code (coverage gaps, characterisation tests); never edits production code |
-| `docs-writer` | Updates README, .env.example, CHANGELOG and ADRs to match the changes |
+| `docs-writer` | Keeps README, AGENTS.md, docs/, .env.example, CHANGELOG and ADRs in sync; logs AI work |
 | `security-auditor` | Read-only full-stack security audit: OWASP Top 10, auth, injection, secrets, dependencies, infra |
 | `performance-analyzer` | Measures and ranks performance problems: Web Vitals, bundle, API latency, DB queries, caching |
 
@@ -108,6 +112,8 @@ Agents use the Claude Code subagent format and are installed to `~/.claude/agent
 | `context7` | Up-to-date library documentation, so the AI doesn't rely on outdated APIs |
 | `frontend-design` | Distinctive, polished UI design |
 
+Browser control is already built in (Claude in Chrome for Claude Code, the browser tools bundled with Codex), so no browser MCP is installed. For databases, see `skills/database/references/mcp.md` (read-only, per project).
+
 To add one, add a `plugin <name>@<marketplace>` line to `plugins.txt` (and a `marketplace` line if it comes from a new marketplace), then run `./install.sh`.
 
 ## Adding a skill or agent
@@ -118,10 +124,28 @@ To add one, add a `plugin <name>@<marketplace>` line to `plugins.txt` (and a `ma
 
 Because the tools read through symlinks, editing files here takes effect immediately (restart the tool for new skills or agents).
 
+## Conventions at a glance
+
+| | |
+| --- | --- |
+| Commits | Conventional Commits, English, no AI attribution (enforced by hooks) |
+| PRs | Squash merge; the PR title is the commit on `main` |
+| Code | English; formatter defaults; functional first; no unnecessary comments |
+| JS/TS | pnpm, TypeScript strict, kebab-case files, named exports |
+| Python | uv, Ruff, mypy/pyright |
+| PHP | Composer, Pint, Larastan, Pest |
+| Docs | Simple and concise; `AGENTS.md` for AIs, `docs/` shared; plans, audits, handoffs and AI log in `docs/` |
+
+Full details: `skills/dev-workflow/references/conventions.md`.
+
+## Behaviour evals
+
+`evals/run.sh <scenario>` runs a real Claude Code or Codex session on a throwaway repo, and `evals/grade.py` checks what it did (commits, TDD order, tests, docs, release steps). They use real tokens, so run them by hand after changing skills.
+
 ## Development
 
 ```bash
-shellcheck -x install.sh tests/*.sh git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push hooks/claude/*.sh
+shellcheck -x install.sh tests/*.sh evals/run.sh git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push hooks/claude/*.sh
 tests/validate.sh                  # validate skills, agents and plugins.txt
 tests/install.test.sh              # test the installer in throwaway HOME directories
 tests/hooks.test.sh                # test git and Claude Code hooks in throwaway repositories
