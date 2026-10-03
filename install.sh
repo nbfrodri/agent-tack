@@ -237,8 +237,19 @@ PY
   fi
 }
 
+# True when a hooksPath belongs to an agent-config checkout: another copy of this repo, or a
+# git-hooks/ folder that no longer exists because the repo was moved or deleted.
+is_agent_config_hooks() {
+  local path="$1"
+  if [ -d "$path" ]; then
+    [ -e "$path/_chain" ] && [ -e "$path/../bin/agent-config" ]
+  else
+    [ "$(basename "$path")" = "git-hooks" ]
+  fi
+}
+
 # Points git's global core.hooksPath at git-hooks/ (commit-msg, pre-push and pass-through hooks).
-# Never overrides a different hooksPath you already configured.
+# Never overrides a hooksPath you configured for other hooks.
 install_git_hooks() {
   section "Git hooks (global)"
   if ! has git; then
@@ -250,9 +261,9 @@ install_git_hooks() {
   current="$(git config --global --get core.hooksPath 2>/dev/null || true)"
   if [ "$current" = "$target" ]; then
     ok "core.hooksPath already set to $target"
-  elif [ -z "$current" ]; then
+  elif [ -z "$current" ] || is_agent_config_hooks "$current"; then
     if git config --global core.hooksPath "$target"; then
-      ok "core.hooksPath set to $target"
+      ok "core.hooksPath set to $target${current:+ (was $current)}"
     else
       fail "could not set core.hooksPath"
     fi
