@@ -9,7 +9,7 @@
 # Safe to re-run at any time. Existing files are backed up with a timestamp,
 # never overwritten. A failing step is reported and the rest still runs.
 #
-# Usage: ./install.sh [--skip-plugins] [--help]
+# Usage: ./install.sh [--dry-run] [--skip-plugins] [--help]
 set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -17,12 +17,14 @@ STAMP="$(date +%Y%m%d-%H%M%S)"
 WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/agent-harness.XXXXXX")" || { echo "cannot create a temp dir" >&2; exit 1; }
 trap 'rm -rf "$WORKDIR"' EXIT
 SKIP_PLUGINS=0
+DRY_RUN=0
 FAILURES=0
 WARNINGS=0
 
 for arg in "$@"; do
   case "$arg" in
     --skip-plugins) SKIP_PLUGINS=1 ;;
+    --dry-run) DRY_RUN=1 ;;
     -h|--help)
       sed -n '2,11p' "$0" | sed 's/^# \{0,1\}//'
       exit 0
@@ -45,9 +47,12 @@ warn()    { printf '  %s!%s %s\n' "$C_WARN" "$C_OFF" "$1"; WARNINGS=$((WARNINGS 
 fail()    { printf '  %s✘%s %s\n' "$C_FAIL" "$C_OFF" "$1"; FAILURES=$((FAILURES + 1)); }
 has()     { command -v "$1" >/dev/null 2>&1; }
 
+# shellcheck source=lib/ownership.sh
+source "$REPO/lib/ownership.sh"
+
 # Moves an existing file or directory aside instead of overwriting it.
 backup() {
-  local target="$1" dest="$1.bak-$STAMP" n=1
+  local target="$1" dest="${2:-$1.bak-$STAMP}" n=1
   while [ -e "$dest" ] || [ -L "$dest" ]; do
     dest="$1.bak-$STAMP-$n"
     n=$((n + 1))
@@ -62,19 +67,31 @@ backup() {
 
 # Creates dest -> src, replacing an old symlink and backing up a real file.
 link() {
-  local src="$1" dest="$2"
+  local src="$1" dest="$2" displaced n=1
+  if [ "$DRY_RUN" -eq 1 ]; then
+    ok "would link $dest -> $src (preserve displaced files)"
+    return
+  fi
   if ! mkdir -p "$(dirname "$dest")"; then
     fail "cannot create $(dirname "$dest")"
     return
   fi
+  displaced="$dest.bak-$STAMP"
+  while [ -e "$displaced" ] || [ -L "$displaced" ]; do
+    displaced="$dest.bak-$STAMP-$n"; n=$((n + 1))
+  done
   if [ -L "$dest" ]; then
     if [ "$(readlink "$dest")" = "$src" ]; then
       ok "$dest"
       return
     fi
+    ownership_link "$dest" "$src" "$displaced" || { fail "cannot record $dest"; return; }
     rm -f "$dest" || { fail "cannot replace symlink $dest"; return; }
   elif [ -e "$dest" ]; then
-    backup "$dest" || return
+    ownership_link "$dest" "$src" "$displaced" || { fail "cannot record $dest"; return; }
+    backup "$dest" "$displaced" || return
+  else
+    ownership_link "$dest" "$src" "$displaced" || { fail "cannot record $dest"; return; }
   fi
   if ln -s "$src" "$dest"; then
     ok "$dest -> $src"
@@ -93,7 +110,8 @@ prune() {
     case "$target" in
       "$REPO"/*)
         if [ ! -e "$target" ]; then
-          rm -f "$entry" && ok "removed stale link $entry"
+          if [ "$DRY_RUN" -eq 1 ]; then ok "would remove stale link $entry"
+          else rm -f "$entry" && ok "removed stale link $entry"; fi
         fi
         ;;
     esac
@@ -159,7 +177,8 @@ EOF
   local old
   for old in "$HOME/.local/bin/agent-config" "$HOME/.agents/agent-config"; do
     if [ -L "$old" ]; then
-      rm -f "$old" && ok "removed old link $old"
+      if [ "$DRY_RUN" -eq 1 ]; then ok "would remove old link $old"
+      else rm -f "$old" && ok "removed old link $old"; fi
     fi
   done
 
@@ -168,7 +187,7 @@ EOF
   link "$REPO" "$HOME/.agents/harness"
 
   section "Command"
-  chmod +x "$REPO/bin/harness" 2>/dev/null
+  [ "$DRY_RUN" -eq 1 ] || chmod +x "$REPO/bin/harness" 2>/dev/null
   link "$REPO/bin/harness" "$HOME/.local/bin/harness"
   case ":$PATH:" in
     *":$HOME/.local/bin:"*) ;;
@@ -196,7 +215,12 @@ merge_settings() {
   case "$REPO" in
     *\'*|*\"*|*\\*) fail "the repo path contains quotes or backslashes; move it to a simpler path"; return ;;
   esac
+  if [ "$DRY_RUN" -eq 1 ]; then
+    ok "would merge $src into $dest"
+    return
+  fi
   mkdir -p "$HOME/.claude"
+  [ ! -L "$dest" ] || { fail "settings symlink left untouched: $dest"; return; }
 
   base="$WORKDIR/settings-base.json"
   rendered="$WORKDIR/settings-repo.json"
@@ -226,6 +250,7 @@ merge_settings() {
     ok "$dest already up to date"
     return
   fi
+  ownership_settings "$dest" "$tmp" "$rendered" || { fail "cannot record settings ownership"; return; }
   if [ ! -s "$dest" ]; then
     if cp "$tmp" "$dest"; then ok "created $dest"; else fail "could not create $dest"; fi
     return
@@ -237,16 +262,44 @@ merge_settings() {
   fi
 }
 
-# True when a hooksPath belongs to an agent-harness checkout (including older ones named
-# agent-config): another copy of this repo, or a git-hooks/ folder that no longer exists
-# because the repo was moved or deleted.
+# Capture canonical link evidence before installation migrates or repairs those links.
+capture_harness_hooks() {
+  local link_path root target entry
+  : > "$WORKDIR/prior-harness-hooks"
+  for link_path in "$HOME/.agents/harness" "$HOME/.agents/agent-config" \
+    "$HOME/.local/bin/harness" "$HOME/.local/bin/agent-config"; do
+    [ -L "$link_path" ] || continue
+    target="$(readlink "$link_path")"
+    ownership_plain_path "$target" || continue
+    case "$link_path" in
+      "$HOME/.agents/"*) root="${target%/}" ;;
+      *)
+        case "$target" in
+          */bin/harness|*/bin/agent-config) root="$(dirname "$(dirname "$target")")" ;;
+          *) continue ;;
+        esac
+        ;;
+    esac
+    printf '%s/git-hooks\n' "$root" >> "$WORKDIR/prior-harness-hooks"
+  done
+  for entry in "$OWNERSHIP"/entries/*; do
+    [ -d "$entry" ] || continue
+    [ "$(cat "$entry/kind")" = git ] || continue
+    cat "$entry/target" >> "$WORKDIR/prior-harness-hooks"
+  done
+}
+
+# Missing checkouts require recorded ownership or a prior canonical harness link.
 is_harness_hooks() {
-  local path="$1"
+  local path="$1" known
   if [ -d "$path" ]; then
     [ -e "$path/_chain" ] && { [ -e "$path/../bin/harness" ] || [ -e "$path/../bin/agent-config" ]; }
-  else
-    [ "$(basename "$path")" = "git-hooks" ]
+    return
   fi
+  while IFS= read -r known; do
+    [ "$known" != "$path" ] || return 0
+  done < "$WORKDIR/prior-harness-hooks"
+  return 1
 }
 
 # Points git's global core.hooksPath at git-hooks/ (commit-msg, pre-push and pass-through hooks).
@@ -257,16 +310,29 @@ install_git_hooks() {
     warn "git not found: skipping global git hooks"
     return
   fi
-  local current target="$REPO/git-hooks"
-  chmod +x "$target"/_chain "$target"/commit-msg "$target"/pre-push 2>/dev/null
+  local current target="$REPO/git-hooks" config_file
+  config_file="${GIT_CONFIG_GLOBAL:-$HOME/.gitconfig}"
+  if [ -z "${GIT_CONFIG_GLOBAL+x}" ] && [ ! -e "$config_file" ] && [ -e "${XDG_CONFIG_HOME:-$HOME/.config}/git/config" ]; then
+    config_file="${XDG_CONFIG_HOME:-$HOME/.config}/git/config"
+  fi
+  if ! ownership_plain_path "$config_file" || ! ownership_no_symlinks "$config_file"; then
+    fail "Git config path is unsafe for ownership tracking"; return
+  fi
+  [ "$DRY_RUN" -eq 1 ] || chmod +x "$target"/_chain "$target"/commit-msg "$target"/pre-push 2>/dev/null
   current="$(git config --global --get core.hooksPath 2>/dev/null || true)"
   if [ "$current" = "$target" ]; then
     ok "core.hooksPath already set to $target"
   elif [ -z "$current" ] || is_harness_hooks "$current"; then
-    if git config --global core.hooksPath "$target"; then
-      ok "core.hooksPath set to $target${current:+ (was $current)}"
+    if [ "$DRY_RUN" -eq 1 ]; then
+      ok "would set core.hooksPath to $target"
     else
-      fail "could not set core.hooksPath"
+      mkdir -p "$(dirname "$config_file")" || { fail "cannot create Git config parent"; return; }
+      ownership_git "$config_file" "$target" "$current" || { fail "cannot record Git ownership"; return; }
+      if git config --global core.hooksPath "$target"; then
+        ok "core.hooksPath set to $target${current:+ (was $current)}"
+      else
+        fail "could not set core.hooksPath"
+      fi
     fi
   else
     warn "core.hooksPath is already set to $current; not changing it. To use these hooks: git config --global core.hooksPath '$target'"
@@ -312,6 +378,15 @@ install_plugins() {
   section "Claude Code plugins"
   if [ "$SKIP_PLUGINS" -eq 1 ]; then
     ok "skipped (--skip-plugins)"
+    return
+  fi
+  if [ "$DRY_RUN" -eq 1 ]; then
+    while read -r kind name source _; do
+      case "$kind" in
+        marketplace) ok "would ensure marketplace $name ($source) and refresh its catalog" ;;
+        plugin) ok "would ensure plugin $name is installed, updated and enabled" ;;
+      esac
+    done < "$REPO/plugins.txt"
     return
   fi
   if ! has claude; then
@@ -384,6 +459,8 @@ install_plugins() {
 
 main() {
   printf '%sInstalling agent-harness from %s%s\n' "$C_HEAD" "$REPO" "$C_OFF"
+  ownership_init || exit 1
+  capture_harness_hooks
   install_links
   merge_settings
   install_git_hooks

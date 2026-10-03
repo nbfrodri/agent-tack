@@ -15,6 +15,7 @@ Commands:
   disable             Disable this clone and remove the shared marker
   trust [--revoke]     Allow or revoke project formatter execution in this clone
   trusted [--quiet]    Query local formatter trust independently of activation
+  doctor              Diagnose installation and project state without changes
   context             Print bounded project instructions, architecture and handoff
   help                Show this help (also works outside a Git repository)
 
@@ -29,6 +30,7 @@ Command options:
 Exit codes:
   status              0 if enabled, 1 if disabled; independent of formatter trust
   trusted             0 if locally trusted, 1 otherwise
+  doctor              0 if checked components are healthy, 1 if broken
   help                0; invalid commands or arguments return 2
 
 Examples:
@@ -37,6 +39,7 @@ Examples:
   harness trust
   harness trusted --quiet
   harness trust --revoke
+  harness doctor
   harness help
 
 Formatter execution requires both activation and local trust. Trust applies only
@@ -150,6 +153,11 @@ case "$cmd" in
     root="$(repo_root)" || exit 0
     source_root="$(harness_root)" || fail "cannot locate installed context renderer"
     bash "$source_root/lib/project-context.sh" "$root"
+    ;;
+  doctor)
+    allowed_option=''; check_args "$@"
+    source_root="$(harness_root)" || fail "cannot locate installed diagnostics"
+    bash "$source_root/lib/doctor.sh" "$source_root"
     ;;
   -h|--help|help)
     allowed_option=''; check_args "$@"

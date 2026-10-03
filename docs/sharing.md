@@ -16,7 +16,7 @@ You can customize every part of your copy to fit your own workflow; see [customi
    | File | What to change |
    | --- | --- |
    | `global/AGENTS.md` | The language the AI speaks and the "ask before" rules (every agent and skill follows it) |
-   | `skills/dev-workflow/references/conventions.md` | Stack choices: pnpm, kebab-case, squash merge, release-please… |
+   | `skills/dev-workflow/references/conventions.md` | Stack choices: pnpm, kebab-case, merge commits, release-please… |
    | `plugins.txt`, `claude/settings.json` | Claude Code plugins and settings |
    | `README.md`, `bin/harness` | The repo URL |
 5. **Restart the tools and enable a project:** `harness enable`.

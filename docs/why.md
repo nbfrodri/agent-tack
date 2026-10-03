@@ -15,18 +15,18 @@ One versioned repo that makes any AI assistant work like a disciplined senior en
 - **One way of working:** plan → TDD → small Conventional Commits → docs → review, the same in every supported tool, installed with one command.
 - **Rules that are enforced:** git hooks and Claude Code hooks apply the rules that matter whatever the model does.
 - **Expert knowledge on demand:** 19 skills and 10 agents that load only when a task needs them.
-- **You stay in control:** opt-in per project; it asks before anything outward-facing, and asks scope and focus before reviewing, delegating or improving autonomously.
+- **You stay in control:** opt-in per project; it asks before anything outward-facing, and asks scope and focus before reviewing or improving autonomously; automatic delegation has a per-project opt-out.
 
 ## Strengths
 | | What you get |
 | --- | --- |
-| **Consistency** | The same workflow and conventions in every project and session: plans, tests first, atomic commits, squash-merged PRs, SemVer releases, docs for humans and AIs. |
+| **Consistency** | The same workflow and conventions in every project and session: plans, tests first, frequent atomic commits preserved through PR integration, SemVer releases, docs for humans and AIs. |
 | **Safety net** | Blocks force-pushes and deletion of `main`, catastrophic `rm -rf`, hook bypasses and tag rewrites; asks before discarding work or wiping a database. Git-level rules apply to every tool and to you. |
 | **Clean history** | Conventional Commits enforced, AI attribution removed, changelogs and versions computed from commits. |
 | **Better code** | TDD, SOLID/DDD where it fits, self-explanatory code, stack-specific best practices. |
 | **Continuity** | Continuous handoffs, so a session cut off by usage limits resumes where it stopped, in any tool or machine. |
 | **It learns** | Corrections become versioned rules (`lessons`). |
-| **Scales up** | Parallel reviewers (`improve`), multi-agent delegation with per-task models (`orchestrate`), and an autonomous improvement loop with a scored target (`auto-improve`), always with your OK. |
+| **Scales up** | Parallel reviewers (`improve`), multi-agent delegation with per-task models (`orchestrate`), and an autonomous improvement loop with a scored target (`auto-improve`), within the approved scope and delegation mode. |
 | **Low overhead** | Opt-in per project; skill descriptions kept to a budget (~1.2k tokens per session). |
 | **Proven** | ~260 automated tests on Linux and macOS, and [measured results](results.md) against a plain assistant. |
 
@@ -37,4 +37,4 @@ One versioned repo that makes any AI assistant work like a disciplined senior en
 - **Against risk:** dangerous mistakes are blocked at the git and tool level, not left to the model's judgement.
 
 ## Limits
-Skills and instructions guide the model; only the hooks guarantee. The command guard reads commands like a shell but is a safety net, not a sandbox. Subagents cost extra tokens, which is why delegation is always your call. Tools other than Claude Code get the instructions and skills but not the Claude-specific agents and hooks; git hooks apply to all of them.
+Skills and instructions guide the model; only the hooks guarantee. The command guard reads commands like a shell but is a safety net, not a sandbox. Subagents cost extra tokens; automatic delegation targets complex independent work and can be disabled per project. Tools other than Claude Code get the instructions and skills but not the Claude-specific agents and hooks; git hooks apply to all of them.

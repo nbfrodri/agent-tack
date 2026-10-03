@@ -64,8 +64,8 @@ Build the scaffold in a few logical commits, for example:
 7. `ci: add release-please`
 8. `build: add Docker setup` (if chosen)
 
-Run lint and tests before finishing. Ask the user before creating the GitHub repo and pushing, and ask whether it should be public or private (`gh repo create <name> --private --source . --push`). Once created, configure squash merging as in `conventions.md`:
+Run lint and tests before finishing. Ask the user before creating the GitHub repo and pushing, and ask whether it should be public or private (`gh repo create <name> --private --source . --push`). With permission, enable both merge methods so the user can choose from a contextual recommendation, as in `conventions.md`:
 ```bash
-gh repo edit --enable-squash-merge --squash-merge-commit-message pr-title-description \
-  --enable-merge-commit=false --enable-rebase-merge=false --delete-branch-on-merge
+gh repo edit --enable-merge-commit --enable-squash-merge \
+  --enable-rebase-merge=false --delete-branch-on-merge=false
 ```

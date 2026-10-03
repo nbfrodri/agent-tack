@@ -4,7 +4,7 @@ set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/harness-cli.XXXXXX")" || exit 1
 trap 'rm -rf "$WORK"' EXIT
-export HOME="$WORK/home" XDG_CONFIG_HOME="$WORK/home/.config" GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL="$WORK/home/gitconfig"
+export HOME="$WORK/home" XDG_CONFIG_HOME="$WORK/home/.config" XDG_STATE_HOME="$WORK/home/.local/state" GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL="$WORK/home/gitconfig"
 mkdir -p "$HOME" "$WORK/project/docs/handoffs"
 git init -q "$WORK/project"
 cd "$WORK/project" || exit 1
@@ -134,6 +134,13 @@ check "missing documents are accepted" expect_exit 0 "$CLI" context
 check "disabled project succeeds with no context" expect_exit 0 "$CLI" disable
 check "disabled context succeeds" expect_exit 0 "$CLI" context
 check "disabled context is empty" test ! -s "$WORK/output"
+
+check "doctor rejects unsupported arguments" expect_exit 2 "$CLI" doctor --quiet
+check "help documents doctor" expect_exit 0 "$CLI" help
+check "help includes doctor syntax" contains 'doctor'
+cd "$HOME" || exit 1
+check "doctor dispatches installation diagnostics outside Git" expect_exit 1 "$CLI" doctor
+check "doctor diagnoses missing installed canonical link" contains "missing managed symlink: $HOME/.agents/harness"
 
 printf '\n%s passed, %s failed\n' "$PASSED" "$FAILED"
 [ "$FAILED" -eq 0 ]

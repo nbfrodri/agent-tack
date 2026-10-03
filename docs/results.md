@@ -2,7 +2,13 @@
 
 What the harness changes in practice, measured on real sessions: the same tasks with and without it.
 
-## Method
+## Current reevaluation checkpoint
+
+The 2026-10-04 metric-version-2 bug-fix comparison is paused at the owner's request until Claude's session limit resets. Two attempts were interrupted (CLI exit 1); four authorised attempts remain. There are **no completed samples and no valid new comparison**. The configuration was frozen at `a8fd642`, using core harness installation without marketplace plugins, Claude Code 2.1.288 and observed model `claude-sonnet-4-6`. [Sanitized attempt evidence](benchmarks/2026-10-04-bug-fix-attempts.json) and [resume checkpoint](handoffs/2026-10-04-benchmark.md) preserve the protocol and failure state.
+
+The harness attempt also exposed an isolation error in the temporary benchmark launcher: an inherited XDG state path created a benchmark-only ownership record outside the temporary HOME. The record was moved aside intact through an approved reversible recovery; pending runs isolate all XDG paths. These interrupted observations do not establish correctness, process or cost advantages.
+
+## Historical method
 - **Scenarios:** create a small Python library from scratch (`new-project`), fix a reported bug (`bug-fix`), and prepare a release (`release`), with the same repo and prompt in both conditions.
 - **Conditions:**
   - *Harness*: the full setup, with the project enabled.

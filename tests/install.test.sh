@@ -2,10 +2,11 @@
 # Tests install.sh against throwaway HOME directories. Never touches the real HOME.
 # Usage: tests/install.test.sh
 set -uo pipefail
+unset XDG_STATE_HOME GIT_CONFIG_GLOBAL
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/agent-harness-test.XXXXXX")"
-trap 'rm -rf "$WORK"' EXIT
+trap 'if [ "${KEEP_TEST_WORK:-0}" != 1 ]; then rm -rf "$WORK"; else echo "Test artifacts: $WORK"; fi' EXIT
 PASSED=0
 FAILED=0
 
@@ -140,7 +141,7 @@ echo "Settings merge with jq only (no python3)"
 if command -v jq >/dev/null 2>&1; then
   BIN="$WORK/bin-jq-only"
   mkdir -p "$BIN"
-  for tool in bash env mkdir dirname readlink ln rm mv date cp cmp mktemp sed basename git jq chmod cat find grep tr wc head; do
+  for tool in bash env mkdir dirname readlink ln rm mv date cp cmp mktemp sed basename git jq stat chmod cat find grep tr wc head; do
     [ -x "$(command -v "$tool")" ] && ln -s "$(command -v "$tool")" "$BIN/$tool"
   done
   H="$WORK/jq-only"
@@ -197,6 +198,8 @@ check "and it tells you" "grep -q 'already set to /my/own/hooks' '$H.log'"
 H="$WORK/git-moved"
 mkdir -p "$H"
 git_global "$H" core.hooksPath "$WORK/old-location/agent-config/git-hooks"
+mkdir -p "$H/.agents"
+ln -s "$WORK/old-location/agent-config" "$H/.agents/agent-config"
 check "exits 0 when the repo was moved" "run_install '$H'"
 check "a hooksPath into a moved (missing) agent-config is updated" "[ \"\$(git_global '$H' --get core.hooksPath)\" = '$REPO/git-hooks' ]"
 H="$WORK/git-other-checkout"
@@ -228,7 +231,7 @@ echo "Plugins step (fake claude CLI)"
 # A minimal PATH without the real claude, so the real CLI can never run here
 MINBIN="$WORK/bin-min"
 mkdir -p "$MINBIN"
-for tool in bash env mkdir dirname readlink ln rm mv date cp cmp mktemp sed basename git jq python3 chmod cat find grep tr wc head; do
+for tool in bash env mkdir dirname readlink ln rm mv date cp cmp mktemp sed basename git jq python3 stat chmod cat find grep tr wc head; do
   [ -x "$(command -v "$tool")" ] && ln -sf "$(command -v "$tool")" "$MINBIN/$tool"
 done
 FAKE="$WORK/fake-claude"

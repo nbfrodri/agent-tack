@@ -23,7 +23,7 @@ Read the relevant code, tests and docs before proposing anything. If the request
 ### 2. Size the task
 - **Trivial** (typo, rename, one-line tweak, a question): just do it, no formal plan.
 - **Normal** (a bounded feature or bug): write a short plan and carry it out without waiting.
-- **Large or risky** (several modules, architecture changes, data migrations, deleting things, public API changes, debatable design decisions): present the plan and **wait for the user's approval** before touching code. If the plan splits into independent parts, suggest delegating them to subagents (`orchestrate`, with its model and effort recommendation) as an option; never start it without the user's OK.
+- **Large or risky** (several modules, architecture changes, data migrations, deleting things, public API changes, debatable design decisions): present the plan and **wait for the user's approval** before touching code. For complex independent parts, include a delegation breakdown through `orchestrate`; automatic delegation starts only after the plan is approved and respects `harness.delegation`.
 
 ### 3. Plan
 Short and concrete, using the tool's task or plan feature if there is one (TodoWrite, plan mode, update_plan…):
@@ -32,7 +32,7 @@ Short and concrete, using the tool's task or plan feature if there is one (TodoW
 - which tests come first;
 - which docs need updating;
 - risks and open questions;
-- for large plans that split into independent parts: an optional delegation section (subagents, with model and effort per task, as in `orchestrate`), offered to the user, never started without their OK.
+- for large plans that split into independent parts: a delegation section with file ownership and recommended available model/effort per task, as in `orchestrate`; respect the project's delegation mode and the approved plan.
 
 For normal or large tasks, also create the task's handoff and keep it current at every milestone (`project-docs` → continuous handoffs), in case the session stops.
 
@@ -43,7 +43,7 @@ On `main`/`master`/`develop` with a non-trivial change, create a branch: `feat/s
 Red → green → refactor for all logic with behaviour: a test that fails for the right reason, the minimal code to pass it, then clean up. Design with SOLID and, where there's a real business domain, DDD. Write code following `references/conventions.md`. Be pragmatic: one-off scripts, config and prototypes don't need the full ceremony, but they still need some test or verification. Details: `references/tdd.md` and `references/design.md`.
 
 ### 6. Atomic commits
-One commit per logical change, in Conventional Commits, committing as you go rather than in one big commit at the end. Details: `references/git-github.md`.
+Commit each coherent verified milestone immediately, in Conventional Commits: tests plus the behavior they verify, a focused refactor, or related documentation. Do not wait for the task to finish before committing all its changes. Record milestone SHAs in the handoff. Recommend an integration method from the branch history and offer the user a choice in the existing merge confirmation; preserve commits unless the user explicitly chooses squash. Details: `references/git-github.md`.
 
 ### 7. Document
 Simple, precise and concise docs for humans (`README`, `docs/`) and AIs (`AGENTS.md`), following `project-docs`. Save approved plans, relevant audits and, if the task is left unfinished, a handoff in `docs/`; add a row to `docs/ai/log.md` for each significant task. Go through the checklist in `references/documentation.md` before closing the task, and record significant architecture decisions as ADRs.
@@ -66,7 +66,7 @@ Use them when the current tool has them:
 - `github-issues`: working from an issue, writing issues, splitting a plan into issues, recording bugs found along the way.
 - `project-docs`: `docs/` structure, templates, technical sheet, architecture, plans, audits, handoffs and the AI usage log.
 - `improve`: reviewing existing code or projects and proposing prioritised improvements; always asks scope and focus first.
-- `orchestrate`: only when the user asks for subagents or parallel work; splits the plan among agents and asks model and effort per task.
+- `orchestrate`: for explicit requests or automatic complex separable work; checks delegation mode, routes by complexity using available models, and verifies the integrated result.
 - `auto-improve`: only when the user asks for autonomous improvement; an evaluator scores the project and you lead agents until a target score, on its own branch.
 - `lessons`: when the user corrects you or sets a lasting preference, save it as a rule.
 - Stack skills when the task touches that layer: `frontend`, `api-design`, `database`, `auth`, `e2e-testing`, `deployment`, `observability`.

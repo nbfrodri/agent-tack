@@ -36,6 +36,8 @@ Examples:
 
 With TDD, a test and the code that makes it pass usually share a commit (`feat`/`fix`); the refactor that follows goes in its own `refactor` commit.
 
+Commit at each coherent verified milestone while working, rather than collecting every feature, fix and document in a final bulk commit. Do not leave failing regression tests as the final branch state; keep the passing test and fix together.
+
 ## No AI attribution
 
 No `Co-Authored-By` trailers for any AI, no "🤖 Generated with …" lines and no mentions of Claude/Codex/ChatGPT as authors, in commits, PRs, issues, tags, release notes or changelogs. Use the user's git identity (`git config user.name/user.email`) and never change it. The global `commit-msg` hook removes AI trailers anyway; never bypass hooks with `--no-verify`.
@@ -65,7 +67,13 @@ Before committing: review `git diff --staged` so no secrets, generated files or 
 
 ## Pull requests
 
-PRs are integrated with **squash merge**: the PR title becomes the commit on `main`, so it must be a valid Conventional Commit (see `conventions.md`). Body:
+Before requesting integration approval, inspect the branch commits and recommend a method with a short reason:
+- **Merge commit** when the commits are coherent, verified milestones worth retaining individually.
+- **Squash** when the branch represents one change and its history contains temporary fixes, repeated corrections or work in progress that would obscure that change.
+
+In the existing integration confirmation, offer both available methods and let the user choose. Preserve commits by default; squash requires the user's explicit choice. If the user already specified a method for this integration, follow it without asking again. Do not add a separate approval step or rewrite published commits to prepare the choice. Explain repository constraints when a method is unavailable; changing repository settings requires permission.
+
+Every branch commit and the PR title follow Conventional Commits (see `conventions.md`). When squashing, the resulting commit must also follow Conventional Commits and describe the complete change. Body:
 ```markdown
 ## Summary
 What changes and why (1-3 sentences).

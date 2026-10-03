@@ -8,15 +8,15 @@ Defaults for every project. **A project's existing conventions win**: follow its
 | --- | --- |
 | Commit messages | [Conventional Commits 1.0](https://www.conventionalcommits.org): `type(scope): description`, English, imperative, ≤ 72 chars. Enforced in enabled projects by the `commit-msg` hook (which only rejects over 100). Details in `git-github.md`. |
 | Branches | `type/short-description`, or `type/123-short-description` when there's an issue. Short-lived. |
-| Merging PRs | **Squash merge.** Each PR becomes one commit on `main` whose message is the PR title plus its description. So the **PR title must be a valid Conventional Commit**: it's what lands in history and what the changelog and the version bump are computed from. |
-| Commits inside a PR branch | Still Conventional Commits (the hook enforces it), but they're squashed on merge, so `fixup!` commits and small steps are fine there. |
-| After merge | The branch is deleted automatically. |
+| Merging PRs | Recommend merge commit for coherent verified milestones, or squash for one change with temporary intermediate commits. Offer available methods in the integration confirmation; preserve commits unless the user explicitly chooses squash. The PR title and every commit follow Conventional Commits. |
+| Commits inside a PR branch | Commit coherent verified milestones while working. A passing test and its implementation usually share a commit. Resolve temporary fixup commits before publication, without rewriting published history unless authorised. |
+| After merge | Delete branches only when authorised by the user. |
 | Attribution | No AI attribution anywhere (see `git-github.md`). |
 
 Repository settings to match (new repos, or existing ones with the user's permission):
 ```bash
-gh repo edit --enable-squash-merge --squash-merge-commit-message pr-title-description \
-  --enable-merge-commit=false --enable-rebase-merge=false --delete-branch-on-merge
+gh repo edit --enable-merge-commit --enable-squash-merge \
+  --enable-rebase-merge=false --delete-branch-on-merge=false
 ```
 
 ## Releases and tags

@@ -6,10 +6,30 @@ Day-to-day use: switching the harness on and off, what to ask, and keeping it up
 
 Run `harness help`, `harness --help` or `harness -h` for command syntax, options, exit codes and examples. Help also works outside a Git repository. Running `harness` without a command displays project status.
 
+## Installation, diagnostics and removal
+
+Clone into any directory you choose and run `./install.sh` from that checkout. Installation exposes global configuration through symlinks; you can enable the workflow in any Git project, independently of where the harness repository lives. Keep the checkout available or reinstall after moving it.
+
+```bash
+./install.sh --dry-run                 # preview links, settings, Git and plugin actions
+./install.sh --dry-run --skip-plugins  # preview local configuration only
+./install.sh --skip-plugins            # apply local configuration only
+harness doctor                        # check installation and current project; no writes
+./uninstall.sh --dry-run               # preview safe restoration
+./uninstall.sh                         # restore recorded unchanged state
+```
+
+Doctor checks required tools, managed links, Claude settings and hook registration, ownership metadata, effective Git hooks, project activation and formatter trust. Missing optional CLIs and deliberate foreign hooks paths produce warnings. Broken managed components produce errors (exit 1); a healthy checked installation exits 0. Doctor works outside Git and never runs plugins or prints restoration snapshots or credentials. It diagnoses configuration rather than proving every external tool works.
+
+Installation records changes privately under `${XDG_STATE_HOME:-$HOME/.local/state}/agent-harness/ownership`. Original state and installation-time tool declarations survive reinstallations, so later customization does not invalidate historical ownership. These snapshots may include private settings: do not commit or share them. Uninstall needs Python to validate ownership and selectively restore settings. It removes unchanged recorded links, restores safely displaced original files or links, and reverses unchanged owned settings and Git hooks. Changed links, parent directories, settings and hooks are preserved conservatively; retained records allow a later retry.
+
+Uninstall never deletes project files, project activation/trust configuration or shared plugins. It cannot infer ownership of legacy configuration: paths already identical before recording began are preserved. Installation and uninstall previews make no persistent changes. Installation accepts paths with spaces; use absolute paths without tabs, newlines or dot components, and keep the checkout path free of quotes and backslashes for Claude hook command substitution.
+
 ## On/off per project
 The full workflow (plan, TDD, conventions, docs, handoffs, AI log, Conventional Commits, auto-format) is opt-in per project. Everywhere else the AI works normally and only the safety net stays on.
 
 ```bash
+harness doctor            # read-only installation and project diagnostics
 harness help              # CLI reference; aliases: --help and -h
 harness status            # workflow activation and local formatter trust
 harness status --quiet    # no output; exit 0 when enabled, 1 when disabled
@@ -57,15 +77,29 @@ Talk normally, in your language:
 
 | You say | What happens |
 | --- | --- |
-| "Add Google login" | Plan (waits for your OK if large; may suggest subagents) → branch → TDD → Conventional Commits → docs → summary. Asks before pushing. |
+| "Add Google login" | Plan (waits for your OK if large; automatically delegates complex independent work in auto mode) → branch → TDD → Conventional Commits → docs → summary. Asks before pushing. |
 | "Work on issue #12" | Reads the issue and its acceptance criteria; the PR closes it (after asking). |
 | "Checkout is broken" | Reproduces the bug, writes a failing test, fixes the root cause. |
 | "What would you improve in this module?" | Asks scope and focus, runs read-only reviewers, gives a prioritised report and creates deduplicated GitHub issues for verified findings unless you request no publication. |
-| "Use subagents" | Splits the plan across agents with a model and effort per task, after your OK. |
+| "Use subagents" | Splits the approved plan across agents using available models and effort by complexity. |
 | "Improve it autonomously until it scores 8/10" | `auto-improve`: asks scope and focus, then scores, fixes and re-scores on its own branch until 8/10 or 5 iterations. Never pushes. |
 | "Prepare a release" | SemVer version from commits; with release-please, reviews and merges the release PR (after asking). |
 | "Write a handoff" | Writes the state of the work to `docs/handoffs/` so anyone can continue. |
 | "Use pnpm from now on" | Fixes it and saves the rule (`lessons`). |
+
+## Automatic delegation and integration choices
+
+In enabled projects, complex work with independent parts is delegated automatically after any required plan approval. Small or tightly coupled tasks stay with the main assistant. The harness recommends available models and effort according to complexity; the actual selection depends on the tool's supported controls. Tools without subagents perform the plan sequentially.
+
+```bash
+git config --local harness.delegation off    # disable automatic delegation in this clone
+git config --local harness.delegation auto   # restore the default automatic policy
+git config --get harness.delegation          # absent means auto
+```
+
+Explicitly asking for subagents authorises them for that task even when automatic mode is off. Disabling the workflow with `harness disable` also removes automatic delegation from the enabled-project policy. Delegation is driven by instructions, not enforced by a process scheduler, and can consume more tokens. Invalid mode values are treated as off and reported.
+
+The assistant commits coherent verified milestones as it works. Before integrating a PR, it inspects the history, recommends preserving useful milestones with a merge commit or combining temporary intermediate commits with squash, and offers the available methods in the existing integration confirmation. Commits are preserved unless you explicitly choose squash; a choice already given for that integration is respected without asking again.
 
 ## Overrides
 | Situation | Command |
