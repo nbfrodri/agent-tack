@@ -51,6 +51,15 @@ Ejecuta la suite de tests, linter, formateador y type-checker del proyecto. No d
 ### 9. Cerrar
 Resume al usuario: qué cambió, en qué commits, cómo se verificó, qué docs se actualizaron y qué queda pendiente o arriesgado. Ofrece hacer push / abrir el PR si aplica.
 
+## Skills y agentes relacionados
+Úsalos cuando estén disponibles en la herramienta actual:
+- Skill `new-project`: crear un proyecto desde cero o añadirle lo básico que falta (tests, CI, lint, README).
+- Skill `debugging`: cualquier bug, error, test o CI que falle.
+- Skill `git-history`: corregir, juntar o deshacer commits, y limpiar el historial antes del push.
+- Agente `planner`: para tareas normales o grandes, delégale el plan (paso 3).
+- Agente `code-reviewer`: revisa el diff antes de ofrecer el push (entre los pasos 8 y 9).
+- Agente `docs-writer`: actualiza la documentación (paso 7) cuando el cambio afecte a varios documentos.
+
 ## Buenas prácticas generales
 - Cambios pequeños y enfocados; no metas refactors ajenos a la tarea (anótalos como sugerencia).
 - Nombres que expresen intención en el lenguaje del dominio; funciones cortas con una responsabilidad.
