@@ -20,7 +20,8 @@ What it does:
 | Global instructions | Links `global/AGENTS.md` to `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md` |
 | Skills | Links each `skills/<name>/` into `~/.agents/skills`, `~/.claude/skills` and `~/.codex/skills` |
 | Subagents | Links each `agents/<name>.md` into `~/.claude/agents` |
-| Settings | Deep-merges `claude/settings.json` into `~/.claude/settings.json` (your other keys are kept) |
+| Settings | Deep-merges `claude/settings.json` into `~/.claude/settings.json` (your other keys and your own hooks are kept) |
+| Git hooks | Sets the global `core.hooksPath` to `git-hooks/` (unless you already use a different one) |
 | Plugins | Adds the marketplaces in `plugins.txt`, refreshes them, and installs or **updates to the latest version** each plugin, enabling it if it was disabled |
 
 Safety guarantees:
@@ -35,13 +36,33 @@ Safety guarantees:
 - `./install.sh --skip-plugins` skips the plugin step, e.g. when offline.
 - Works on Linux and macOS (including macOS's bash 3.2). CI tests both on every push.
 
+## Enforced rules (hooks)
+
+Skills and instructions guide the AI; hooks **enforce** the rules that matter, whatever the AI (or you) does.
+
+| Hook | Where | What it does |
+| --- | --- | --- |
+| `commit-msg` | git (global) | Removes AI attribution (`Co-Authored-By` of Claude, Codex, Copilot…, "Generated with…") and rejects subjects that aren't Conventional Commits. Merge, revert and `fixup!`/`squash!` messages are accepted. |
+| `pre-push` | git (global) | Refuses force-pushes and deletions of `main`/`master` on any remote. One-off override: `AGENT_CONFIG_ALLOW_FORCE_PUSH=1 git push …` |
+| Other git hooks | git (global) | Pass through to each repository's own `.git/hooks/*`, so pre-commit, lefthook or custom hooks keep working. |
+| `guard-bash.sh` | Claude Code `PreToolUse` | **Blocks** force-pushing main, `--no-verify`, `rm -rf` of `/`, `~` or `..`. **Asks first** for `reset --hard`, `clean -f`, discarding changes, deleting branches, force-pushing other branches, recursive deletes outside the project, and dropping/resetting databases. |
+| `format-file.sh` | Claude Code `PostToolUse` | Formats each edited file with the formatter the project already has configured (Biome, Prettier, Ruff, Black, Pint, gofmt, cargo fmt). Projects without one are left alone. |
+
+Git hooks apply to Claude, Codex, any other tool and your own commits. Notes:
+
+- In a repository with different commit conventions: `git config agentconfig.conventionalCommits false` (AI attribution is still removed).
+- Repositories that set their own local `core.hooksPath` (e.g. Husky) use only their hooks; there, Claude's `attribution` setting still prevents its trailers.
+- Claude hooks are tagged `#agent-config` in `settings.json`; re-installing replaces only those.
+
 ## Structure
 
 ```
 global/AGENTS.md      # global instructions for every AI assistant
 skills/<name>/        # Agent Skills (SKILL.md + references/), used by Claude Code and Codex
 agents/<name>.md      # Claude Code subagents
-claude/settings.json  # Claude Code settings merged into ~/.claude/settings.json
+claude/settings.json  # Claude Code settings and hooks merged into ~/.claude/settings.json
+hooks/claude/         # Claude Code hook scripts
+git-hooks/            # global git hooks (commit-msg, pre-push, pass-through)
 plugins.txt           # Claude Code marketplaces and plugins
 install.sh            # installer (idempotent)
 tests/                # installer tests and skill/agent validation, run in CI
@@ -100,7 +121,8 @@ Because the tools read through symlinks, editing files here takes effect immedia
 ## Development
 
 ```bash
-shellcheck install.sh tests/*.sh   # lint
+shellcheck -x install.sh tests/*.sh git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push hooks/claude/*.sh
 tests/validate.sh                  # validate skills, agents and plugins.txt
 tests/install.test.sh              # test the installer in throwaway HOME directories
+tests/hooks.test.sh                # test git and Claude Code hooks in throwaway repositories
 ```

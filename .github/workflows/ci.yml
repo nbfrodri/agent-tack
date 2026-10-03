@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: ShellCheck
-        run: shellcheck install.sh tests/*.sh
+        run: shellcheck -x install.sh tests/*.sh git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push hooks/claude/*.sh
       - name: Validate skills, agents and plugins.txt
         run: tests/validate.sh
 
@@ -26,3 +26,5 @@ jobs:
       - uses: actions/checkout@v4
       - name: Test install.sh in throwaway HOME directories
         run: tests/install.test.sh
+      - name: Test git and Claude Code hooks
+        run: tests/hooks.test.sh

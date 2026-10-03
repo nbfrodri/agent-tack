@@ -39,6 +39,9 @@ En TDD, el test y el código que lo hace pasar suelen ir en el mismo commit (`fe
 
 ## Sin atribución de IA
 
+Los hooks globales de git lo hacen cumplir: `commit-msg` borra estas líneas y exige Conventional Commits, y `pre-push` impide reescribir `main`. Si un hook rechaza algo, corrige la causa; nunca uses `--no-verify`.
+
+
 No añadas trailers `Co-Authored-By` de ninguna IA, ni "🤖 Generated with …", ni menciones a Claude/Codex/ChatGPT en commits, PRs, issues, tags o changelogs. Usa la identidad de git configurada por el usuario (`git config user.name/user.email`) y no la cambies.
 
 ## Ramas
