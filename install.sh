@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Installs this repo's configuration for Claude Code and Codex:
-#   - global instructions, skills and subagents (as symlinks into this repo)
+#   - global instructions and skills for every AI tool in targets.txt, and Claude Code
+#     subagents (as symlinks into this repo)
 #   - Claude Code settings and hooks from claude/settings.json (merged, your other keys kept)
 #   - global git hooks from git-hooks/ (Conventional Commits, no AI attribution, protect main)
 #   - Claude Code marketplaces and plugins from plugins.txt (installed or updated to latest)
@@ -99,22 +100,58 @@ prune() {
   done
 }
 
+# Expands a leading ~ in a path from targets.txt
+expand_home() {
+  case "$1" in
+    "~"/*) printf '%s/%s' "$HOME" "${1#\~/}" ;;
+    *) printf '%s' "$1" ;;
+  esac
+}
+
+# True when a tool from targets.txt should be configured on this machine
+tool_wanted() {
+  local when="$1" commands="$2" cmd
+  [ "$when" = always ] && return 0
+  for cmd in $(printf '%s' "$commands" | tr ',' ' '); do
+    has "$cmd" && return 0
+  done
+  return 1
+}
+
 install_links() {
-  section "Global instructions"
-  link "$REPO/global/AGENTS.md" "$HOME/.claude/CLAUDE.md"
-  link "$REPO/global/AGENTS.md" "$HOME/.codex/AGENTS.md"
+  local tool when commands instructions skills_dir dir skill name skill_dirs=""
+  section "AI tools"
+  # fd 3 so that nothing inside the loop can consume the file's lines
+  while read -r tool when commands instructions skills_dir _ <&3; do
+    case "$tool" in '' | '#'*) continue ;; esac
+    if ! tool_wanted "$when" "$commands"; then
+      ok "$tool: not installed, skipped"
+      continue
+    fi
+    if [ "$instructions" = "-" ]; then
+      warn "$tool: no file for global instructions; paste $REPO/global/AGENTS.md into its user rules once (Cursor: Customize → Rules)"
+    else
+      link "$REPO/global/AGENTS.md" "$(expand_home "$instructions")"
+    fi
+    [ "$skills_dir" = "-" ] || skill_dirs="$skill_dirs
+$(expand_home "$skills_dir")"
+  done 3< "$REPO/targets.txt"
 
   section "Skills"
-  local dir skill name
-  for dir in "$HOME/.agents/skills" "$HOME/.claude/skills" "$HOME/.codex/skills"; do
+  skill_dirs="$HOME/.agents/skills$skill_dirs"
+  while IFS= read -r dir; do
     prune "$dir"
-  done
+  done <<EOF
+$skill_dirs
+EOF
   for skill in "$REPO"/skills/*/; do
     [ -f "$skill/SKILL.md" ] || { warn "skipping $skill (no SKILL.md)"; continue; }
     name="$(basename "$skill")"
-    for dir in "$HOME/.agents/skills" "$HOME/.claude/skills" "$HOME/.codex/skills"; do
+    while IFS= read -r dir; do
       link "${skill%/}" "$dir/$name"
-    done
+    done <<EOF
+$skill_dirs
+EOF
   done
 
   section "Old names (agent-config)"

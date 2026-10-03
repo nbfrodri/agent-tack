@@ -273,6 +273,25 @@ mkdir -p "$H"
 check "without claude: exits 0" "HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 PATH='$MINBIN' '$REPO/install.sh' >'$H.log' 2>&1"
 check "without claude: warns" "grep -q 'claude CLI not found' '$H.log'"
 
+echo "Other AI tools (targets.txt)"
+TOOLS="$WORK/fake-tools"
+mkdir -p "$TOOLS"
+for tool in gemini copilot cursor-agent; do
+  printf '#!/bin/sh\nexit 0\n' > "$TOOLS/$tool"
+  chmod +x "$TOOLS/$tool"
+done
+H="$WORK/tools"
+mkdir -p "$H"
+check "exits 0 with gemini, copilot and cursor installed" "HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 PATH='$TOOLS:$MINBIN' '$REPO/install.sh' --skip-plugins >'$H.log' 2>&1"
+check "gemini: global instructions in ~/.gemini/GEMINI.md" "[ \"\$(readlink '$H/.gemini/GEMINI.md')\" = '$REPO/global/AGENTS.md' ]"
+check "copilot: global instructions in ~/.copilot/copilot-instructions.md" "[ \"\$(readlink '$H/.copilot/copilot-instructions.md')\" = '$REPO/global/AGENTS.md' ]"
+check "copilot: skills in ~/.copilot/skills" "[ \"\$(find '$H/.copilot/skills' -maxdepth 1 -type l | wc -l | tr -d ' ')\" = '$skill_count' ]"
+check "cursor: told how to add the global instructions" "grep -q 'cursor: no file for global instructions' '$H.log'"
+check "opencode not installed: nothing created for it" "[ ! -e '$H/.config/opencode' ]"
+check "crush not installed: ~/.config/AGENTS.md not created" "[ ! -e '$H/.config/AGENTS.md' ]"
+check "claude and codex are always configured" "[ -L '$H/.claude/CLAUDE.md' ] && [ -L '$H/.codex/AGENTS.md' ]"
+check "every tool gets the shared ~/.agents/skills" "[ \"\$(find '$H/.agents/skills' -maxdepth 1 -type l | wc -l | tr -d ' ')\" = '$skill_count' ]"
+
 echo "Rejects unknown options"
 check "exits 2" "HOME='$WORK/opt' XDG_CONFIG_HOME='$WORK/opt/.config' GIT_CONFIG_NOSYSTEM=1 '$REPO/install.sh' --nope >/dev/null 2>&1; [ \$? -eq 2 ]"
 
