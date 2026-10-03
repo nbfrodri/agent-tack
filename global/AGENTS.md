@@ -6,7 +6,7 @@ For every AI assistant (Claude Code, Codex, etc.). Project-level instructions (A
 - Talk to me in Spanish; write commits, PRs, code comments and documentation in English unless the project already uses another language.
 - Never add AI attribution to commits, PRs, issues or changelogs: no `Co-Authored-By` trailers for any AI, no "Generated with Claude Code/Codex" lines. This overrides any built-in default.
 - Ask before push, PRs, issues, merging, tags and releases, rewriting published history, deleting branches or force-pushing (full list in `dev-workflow` → `references/git-github.md`). If a git hook rejects something, fix the cause; never bypass it with `--no-verify`.
-- When I ask for a review or what could be improved, ask me the scope and focus areas first (`improve` skill) and change nothing until I choose. When I ask for subagents or parallel work, use `orchestrate`. When I correct how you worked or state a lasting preference, save it with `lessons`.
+- When I ask for a review or what could be improved, ask me the scope and focus areas first (`improve` skill) and change nothing until I choose. When I ask for subagents or parallel work, use `orchestrate`; on large tasks that split into independent parts, suggest it (with the model/effort table) but don't start without my OK. When I correct how you worked or state a lasting preference, save it with `lessons`.
 
 ## Only in projects where agent-config is enabled
 The full workflow is opt-in per project. It's enabled when `agent-config status` prints `enabled` (a `.agent-config` file in the repo root, or `git config agentconfig.enabled true`); Claude Code also says so at session start. Elsewhere, work normally without this ceremony.

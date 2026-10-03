@@ -23,7 +23,7 @@ Read the relevant code, tests and docs before proposing anything. If the request
 ### 2. Size the task
 - **Trivial** (typo, rename, one-line tweak, a question): just do it, no formal plan.
 - **Normal** (a bounded feature or bug): write a short plan and carry it out without waiting.
-- **Large or risky** (several modules, architecture changes, data migrations, deleting things, public API changes, debatable design decisions): present the plan and **wait for the user's approval** before touching code.
+- **Large or risky** (several modules, architecture changes, data migrations, deleting things, public API changes, debatable design decisions): present the plan and **wait for the user's approval** before touching code. If the plan splits into independent parts, suggest delegating them to subagents (`orchestrate`, with its model and effort recommendation) as an option; never start it without the user's OK.
 
 ### 3. Plan
 Short and concrete, using the tool's task or plan feature if there is one (TodoWrite, plan mode, update_plan…):

@@ -41,7 +41,7 @@ My personal configuration for AI coding assistants (Claude Code, Codex): skills,
    | "Trabaja en el issue #12" | Reads the issue, uses its acceptance criteria, opens a PR that closes it (after asking). |
    | "No funciona el checkout" | Reproduces the bug, writes a failing test, fixes the root cause. |
    | "¿Qué mejorarías de este módulo?" | Asks you the scope and focus areas, runs read-only reviewers, gives a prioritised report. |
-   | "Hazlo con subagentes" | Splits the plan across agents, recommending a model and effort per task for you to confirm. |
+   | "Hazlo con subagentes" | Splits the plan across agents, recommending a model and effort per task for you to confirm. On large divisible tasks the AI suggests this itself, but never starts without your OK. |
    | "Haz una release" | Works out the SemVer version; with release-please, reviews and merges the release PR (after asking). |
    | "Haz un handoff" | Writes the state of the work to `docs/handoffs/` so any AI or person can continue. |
    | "No, así no: usa pnpm" | Fixes it and saves the rule (`lessons`) so it doesn't happen again. |

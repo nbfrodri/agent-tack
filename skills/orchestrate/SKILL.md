@@ -1,11 +1,11 @@
 ---
 name: orchestrate
-description: Split an approved plan among subagents in isolated worktrees, recommending model and effort per task, then integrate, test and review. Use ONLY when the user explicitly asks for subagents or parallel work (hazlo con subagentes, en paralelo, orquesta esto).
+description: Split an approved plan among subagents in isolated worktrees, recommending model and effort per task, then integrate, test and review. Use when the user asks for subagents or parallel work (hazlo con subagentes, en paralelo, orquesta esto); for large divisible tasks, only suggest it.
 ---
 
 # Orchestrate
 
-You become the orchestrator: you plan, delegate, integrate and verify, and the subagents do the focused work. This pays off when a task splits into parts that are **independent** (different modules, layers or files) or that need a lot of reading, since each subagent has its own context. It costs more tokens and adds integration work, so it's done only when the user asks for it. If the task is small or tightly coupled, say so and suggest doing it directly.
+You become the orchestrator: you plan, delegate, integrate and verify, and the subagents do the focused work. This pays off when a task splits into parts that are **independent** (different modules, layers or files) or that need a lot of reading, since each subagent has its own context. It costs more tokens and adds integration work, so it runs only when the user asks for it; for a large task that splits into independent parts you may suggest it, showing the breakdown and the model and effort table, and wait for a yes. If the task is small or tightly coupled, say so and suggest doing it directly.
 
 ## 1. Plan and split
 - Start from an approved plan (`dev-workflow`; the `planner` agent can produce it). If there isn't one, make it first and get approval.
