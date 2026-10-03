@@ -379,7 +379,7 @@ echo "Switch: harness enable/disable/status"
 R="$WORK/switch"
 new_repo "$R"
 git config --global --unset harness.enabled
-status_of() { (cd "$R" && "$CLI" status); }
+status_of() { (cd "${1:-$R}" && "$CLI" status) | sed -n '1p'; }
 check "disabled by default" "[ \"\$(status_of)\" = disabled ]"
 check "status exits 1 when disabled" "! (cd '$R' && '$CLI' status --quiet)"
 check "free-form commits allowed when disabled" "commit 'quick fix'"
@@ -398,9 +398,9 @@ check "the .harness file alone enables it" "[ \"\$(status_of)\" = enabled ]"
 (cd "$R" && "$CLI" disable >/dev/null)
 check "disable removes the file" "[ ! -e '$R/.harness' ] && [ \"\$(status_of)\" = disabled ]"
 git config --global harness.enabled true
-check "global true enables every repo" "[ \"\$(cd '$WORK/repo' && '$CLI' status)\" = enabled ]"
+check "global true enables every repo" "[ \"\$(status_of '$WORK/repo')\" = enabled ]"
 check "a local false wins over global true" "[ \"\$(status_of)\" = disabled ]"
-check "outside a git repo: disabled" "[ \"\$(cd '$WORK' && '$CLI' status)\" = disabled ]"
+check "outside a git repo: disabled" "[ \"\$(status_of '$WORK')\" = disabled ]"
 check "unknown command exits 2" "(cd '$R' && '$CLI' nope >/dev/null 2>&1); [ \$? -eq 2 ]"
 
 echo "Claude hook: session-context"

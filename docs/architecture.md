@@ -55,6 +55,8 @@ flowchart LR
 
 `bin/harness` is the source of truth for activation. An explicit `harness.enabled=false` wins; otherwise `true` enables the workflow, followed by a shared `.harness` file. Hooks call the CLI rather than reading these markers themselves. Formatter execution additionally requires `harness trusted --quiet`, which reads only local trust configuration. Claude receives activation and `harness context` excerpts at session start; other tools follow the instructions to run the same context command.
 
+Human-readable `harness status` reports activation and local formatter trust together. Its exit code, including `--quiet`, depends only on activation. `harness trusted` and its quiet mode depend only on local trust; both commands share the same trust predicate.
+
 `lib/project-context.sh` reads bounded excerpts of project instructions, architecture and an active handoff, without loading the full docs tree. It has a shared byte budget and per-file line limits and skips missing files and external symlinks. `harness.context=false` disables these extra excerpts.
 
 Instructions guide the model's workflow. Executable hooks enforce a narrower set of checks: secret scanning and attribution removal apply in every repository using the global git hooks; Conventional Commits and tag conventions depend on activation. Claude's command guard runs independently of activation, while file formatting requires an enabled and locally trusted project.

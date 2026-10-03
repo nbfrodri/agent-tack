@@ -1,21 +1,48 @@
 #!/usr/bin/env bash
-# Turns the full agent-harness workflow on or off for the current git repository.
-#
-#   harness enable           enable for this clone only (stored in .git/config, invisible to others)
-#   harness enable --shared  enable through a committed .harness file (travels with the repo)
-#   harness disable          disable (removes both markers)
-#   harness status           print whether it is enabled; exit 0 if enabled, 1 if not
-#   harness status --quiet   same, without output (used by hooks)
-#   harness trust            allow project formatter execution in this clone
-#   harness trust --revoke   revoke that local permission
-#   harness trusted --quiet  report local formatter trust (exit 0 if trusted)
-#   harness context          print bounded project instructions, architecture and handoff
-#
-# Outside enabled projects only the safety net stays active: the command guard, the protection
-# of main and the removal of AI attribution from commit messages.
+# Manage the agent-harness workflow and formatter trust for Git projects.
 set -u
 
-usage() { sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() {
+  cat <<'HELP'
+Usage: harness [command] [options]
+
+Manage the workflow and local formatter trust for the current Git project.
+Default command: status
+
+Commands:
+  status [--quiet]     Show workflow activation and local formatter trust
+  enable [--shared]    Enable this clone, or use a shareable .harness marker
+  disable             Disable this clone and remove the shared marker
+  trust [--revoke]     Allow or revoke project formatter execution in this clone
+  trusted [--quiet]    Query local formatter trust independently of activation
+  context             Print bounded project instructions, architecture and handoff
+  help                Show this help (also works outside a Git repository)
+
+Global options:
+  -h, --help          Show this help
+
+Command options:
+  --quiet             Suppress output for status or trusted; preserve exit codes
+  --shared            Enable with a .harness file you can commit and share
+  --revoke            Revoke local formatter trust without disabling the workflow
+
+Exit codes:
+  status              0 if enabled, 1 if disabled; independent of formatter trust
+  trusted             0 if locally trusted, 1 otherwise
+  help                0; invalid commands or arguments return 2
+
+Examples:
+  harness enable
+  harness status
+  harness trust
+  harness trusted --quiet
+  harness trust --revoke
+  harness help
+
+Formatter execution requires both activation and local trust. Trust applies only
+to Claude Code's automatic formatter hook; it is not a general command permission.
+HELP
+}
 
 repo_root() { git rev-parse --show-toplevel 2>/dev/null; }
 
@@ -47,6 +74,10 @@ is_enabled() {
   [ "$setting" = "false" ] && return 1
   [ "$setting" = "true" ] && return 0
   [ -f "$root/.harness" ]
+}
+
+is_trusted() {
+  [ "$(git config --local --bool --get harness.trusted 2>/dev/null)" = true ]
 }
 
 cmd="${1:-status}"
@@ -81,11 +112,16 @@ case "$cmd" in
   status)
     allowed_option=--quiet; check_args "$@"
     if is_enabled; then
-      [ "${1:-}" = "--quiet" ] || echo "enabled"
-      exit 0
+      workflow_state=enabled; workflow_exit=0
+    else
+      workflow_state=disabled; workflow_exit=1
     fi
-    [ "${1:-}" = "--quiet" ] || echo "disabled"
-    exit 1
+    if [ "${1:-}" != --quiet ]; then
+      printf '%s\n' "$workflow_state"
+      if is_trusted; then echo 'formatter trust: trusted'
+      else echo 'formatter trust: untrusted'; fi
+    fi
+    exit "$workflow_exit"
     ;;
   trust)
     allowed_option=--revoke; check_args "$@"
@@ -100,7 +136,7 @@ case "$cmd" in
     ;;
   trusted)
     allowed_option=--quiet; check_args "$@"
-    if [ "$(git config --local --bool --get harness.trusted 2>/dev/null)" = true ]; then
+    if is_trusted; then
       [ "${1:-}" = --quiet ] || echo trusted
       exit 0
     fi
@@ -116,6 +152,7 @@ case "$cmd" in
     bash "$source_root/lib/project-context.sh" "$root"
     ;;
   -h|--help|help)
+    allowed_option=''; check_args "$@"
     usage
     ;;
   *)

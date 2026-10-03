@@ -16,7 +16,7 @@ Out of the box, AI assistants forget your conventions every session, skip tests,
 | **Agents** | `planner`, `implementer`, `code-reviewer`, `test-writer`, `docs-writer`, `evaluator`, `architecture-reviewer`, `security-auditor`, `performance-analyzer`, `ui-reviewer` |
 | **Enforced by hooks** | Conventional Commits, no AI attribution, no secrets or `.env` committed, protected `main` and tags, a guard against dangerous commands, auto-format |
 | **Tools** | Claude Code, Codex, Cursor, GitHub Copilot CLI, Gemini CLI, OpenCode, Crush |
-| **Quality** | 426 automated checks; CI targets Linux and macOS; [measured results](docs/results.md) |
+| **Quality** | 450 automated checks; CI targets Linux and macOS; [measured results](docs/results.md) |
 
 Details: [architecture](docs/architecture.md) · [components](docs/components.md) · [how it works](docs/how-it-works.md) · [conventions](docs/conventions.md).
 
@@ -36,7 +36,7 @@ Details: [architecture](docs/architecture.md) · [components](docs/components.md
 cd ~/Projects/my-app
 harness enable      # turn the full workflow on for this project (off by default)
 ```
-Project instructions, architecture and an active handoff are loaded as bounded startup context. Automatic formatting also needs `harness trust` for the local checkout. [Context and trust →](docs/usage.md#startup-context-and-formatter-trust)
+Project instructions, architecture and an active handoff are loaded as bounded startup context. Automatic formatting also needs `harness trust` for the local checkout; `harness status` shows both activation and formatter trust. Run `harness help` for commands and examples. [Context and trust →](docs/usage.md#startup-context-and-formatter-trust)
 Then work as usual: "Add Google login", "Work on issue #12", "What would you improve?", "Improve it autonomously until it scores 8/10", "Prepare a release". `harness disable` turns it off. [Usage →](docs/usage.md)
 
 Update with `git pull && ./install.sh`. Sharing it with someone else: [sharing](docs/sharing.md).
