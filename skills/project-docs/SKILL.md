@@ -54,7 +54,13 @@ Templates for every document are in this skill's `assets/` (`assets/README.md`, 
 These are committed so the reasons behind the work stay in history and anyone can pick the work up from another machine.
 - **Plans:** when a plan is approved (from you or the `planner` agent), save it to `docs/plans/` with `Status: approved`. Update the status to `done` (or `abandoned`, with the reason) when the work finishes. Commit as `docs(plans): …`.
 - **Audits:** reports from `code-reviewer`, `security-auditor` and `performance-analyzer` (or manual reviews) that matter beyond the current conversation, such as pre-release audits or large reviews, go to `docs/audits/`, with findings and their status. The agents are read-only, so the main agent saves the file. Commit as `docs(audits): …`.
-- **Handoffs:** when work stops midway (end of session, context running out, the user asks for one, or before switching AI tool), write `docs/handoffs/YYYY-MM-DD-slug.md`: goal, state, what's done, what's next, open questions, how to verify. Another AI or person must be able to continue from it alone. Commit as `docs(handoffs): …`.
+- **Handoffs (continuous checkpoints):** a session can stop at any moment (usage limits, context running out, a crash), and the AI cannot query the remaining usage, so don't wait until the end to write the handoff:
+  - For any normal or large task, create `docs/handoffs/YYYY-MM-DD-slug.md` when the work starts (template in `assets/`), with `Status: in progress`.
+  - Update it at every milestone (each commit or plan step): done, next step, open questions, how to verify. This is just a file edit, with no commit each time; the file survives on disk even if the session dies.
+  - Refresh it **immediately** when there are signs the session may end soon: a low remaining-context or token budget, a usage-limit warning, a very long session, or before a risky or long-running step.
+  - Commit it (`docs(handoffs): …`) when stopping without finishing, before switching machine or AI tool, or when the user asks for a handoff.
+  - When the task is finished, delete it: the plan, the commits and `docs/ai/log.md` keep the record.
+  - Another AI or person must be able to continue from it alone.
 - **Screenshots:** UI changes, bugs and audits can include screenshots in `docs/assets/screenshots/`, referenced from the relevant document. Never include real personal data in screenshots.
 
 ## AI usage

@@ -1,6 +1,8 @@
 # Handoff: title
 
-- **Date:** YYYY-MM-DD
+- **Status:** in progress | paused
+- **Last updated:** YYYY-MM-DD HH:MM
+- **Tool:** Claude Code / Codex / …
 - **Branch:** `feat/…` (last commit `abc1234`)
 - **Plan / issue:** [plan](../plans/…), #123
 
