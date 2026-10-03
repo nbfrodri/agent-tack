@@ -11,6 +11,7 @@ Engine-specific guidance (read the one the project uses):
 - PostgreSQL: `references/postgresql.md`
 - MySQL: `references/mysql.md`
 - MongoDB: `references/mongodb.md`
+- Letting the AI inspect a dev database through a read-only MCP server: `references/mcp.md`
 
 ## Choosing (for new projects)
 Default to **PostgreSQL** for most applications: relational integrity, transactions, JSONB for flexible bits, full-text search. Use **MySQL** when the project, host or team already uses it (e.g. many Laravel setups). Choose **MongoDB** when the data really is document-shaped (data read and written as a whole, variable schemas, little cross-document joining), not just to avoid designing a schema.
