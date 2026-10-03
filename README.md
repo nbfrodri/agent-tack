@@ -20,7 +20,7 @@ install.sh         # creates the symlinks (idempotent)
 ## Install on a new machine
 
 ```bash
-git clone https://github.com/<user>/agent-config.git ~/agent-config
+git clone https://github.com/nbfrodri/agent-config.git ~/agent-config
 ~/agent-config/install.sh
 ```
 
