@@ -16,6 +16,21 @@ install.sh         # creates the symlinks (idempotent)
 | Skill | Purpose |
 | --- | --- |
 | `dev-workflow` | Plan first, TDD, SOLID/DDD, Conventional Commits, GitHub flow, keep docs up to date |
+| `git-history` | Amend, fixup, squash, undo and recover commits; tidy a branch before push |
+| `debugging` | Reproduce → regression test → isolate → verify hypothesis → fix the root cause |
+| `new-project` | Scaffold a project with tests, lint, CI, README, AGENTS.md and Conventional Commits |
+
+Skills use the open Agent Skills format (`SKILL.md`), so both Claude Code and Codex can use them.
+
+## Agents
+
+| Agent | Purpose |
+| --- | --- |
+| `planner` | Read-only architect: plan, DDD model, test strategy and commit breakdown before coding |
+| `code-reviewer` | Read-only review of the diff/branch: bugs, security, tests, SOLID/DDD, conventions, docs |
+| `docs-writer` | Updates README, .env.example, CHANGELOG and ADRs to match the changes |
+
+Agents use the Claude Code subagent format and are installed to `~/.claude/agents`.
 
 ## Install on a new machine
 
