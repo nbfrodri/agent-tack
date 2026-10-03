@@ -56,9 +56,12 @@ Resume al usuario: qué cambió, en qué commits, cómo se verificó, qué docs 
 - Skill `new-project`: crear un proyecto desde cero o añadirle lo básico que falta (tests, CI, lint, README).
 - Skill `debugging`: cualquier bug, error, test o CI que falle.
 - Skill `git-history`: corregir, juntar o deshacer commits, y limpiar el historial antes del push.
+- Skills por capa, cuando la tarea toque esa parte del stack: `frontend` (React/Next.js), `api-design` (Python, Laravel, Node), `database` (PostgreSQL, MySQL, MongoDB), `auth`, `e2e-testing` (Playwright), `deployment` (Vercel, VPS con Docker, AWS) y `observability`.
 - Agente `planner`: para tareas normales o grandes, delégale el plan (paso 3).
 - Agente `code-reviewer`: revisa el diff antes de ofrecer el push (entre los pasos 8 y 9).
 - Agente `docs-writer`: actualiza la documentación (paso 7) cuando el cambio afecte a varios documentos.
+- Agente `security-auditor`: antes de releases y tras cambios en auth, pagos, subida de archivos o manejo de input.
+- Agente `performance-analyzer`: cuando algo va lento o antes de lanzar algo sensible al rendimiento.
 
 ## Buenas prácticas generales
 - Cambios pequeños y enfocados; no metas refactors ajenos a la tarea (anótalos como sugerencia).
