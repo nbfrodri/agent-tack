@@ -4,16 +4,55 @@ My personal configuration for AI coding assistants (Claude Code, Codex): skills,
 
 [![CI](https://github.com/nbfrodri/agent-config/actions/workflows/ci.yml/badge.svg)](https://github.com/nbfrodri/agent-config/actions/workflows/ci.yml)
 
-## Install on a new machine
+## Install
 
-```bash
-git clone https://github.com/nbfrodri/agent-config.git ~/Projects/agent-config
-~/Projects/agent-config/install.sh
-```
+1. **Check the requirements.** `git` and `bash` (macOS's bash 3.2 is fine); `python3` or `jq`; Claude Code and/or Codex. Optional but recommended: the GitHub CLI `gh`, logged in (`gh auth login`), for issues, PRs and releases.
+2. **Clone the repo** anywhere; `~/Projects` is the convention:
+   ```bash
+   git clone https://github.com/nbfrodri/agent-config.git ~/Projects/agent-config
+   ```
+3. **Run the installer:**
+   ```bash
+   ~/Projects/agent-config/install.sh
+   ```
+   It ends with `done with N warning(s)`. Read any warning. If a step failed it says how to fix it, and re-running is always safe. Use `--skip-plugins` when offline.
+4. **Make sure `~/.local/bin` is in your `PATH`** (the installer warns if it isn't), so the `agent-config` command works.
+5. **Restart Claude Code and Codex** so they load the skills, agents, hooks and instructions.
+6. **Verify:**
+   ```bash
+   agent-config status                  # inside any repo: prints enabled or disabled
+   git config --global core.hooksPath   # → ~/Projects/agent-config/git-hooks
+   ```
+   In Claude Code, `/agents` lists `planner`, `code-reviewer`… and `/hooks` shows the hooks tagged `#agent-config`.
 
-Then restart Claude Code and Codex. Re-run `./install.sh` at any time (after `git pull`, or after adding a skill): it's idempotent.
+## How to use
 
-What it does:
+1. **Enable the workflow in a project.** It's off everywhere by default; only the safety net is always on (see [On/off per project](#onoff-per-project)).
+   ```bash
+   cd ~/Projects/my-app
+   agent-config enable            # only on this machine
+   agent-config enable --shared   # or: commit a .agent-config file so it's on for every clone
+   ```
+   Projects created through the AI with "crea un proyecto…" are enabled automatically.
+2. **Start a new session** in that project and work as usual, in Spanish. Some examples:
+   | You say | What happens |
+   | --- | --- |
+   | "Añade login con Google" | Plan (waits for your OK if it's large) → branch → TDD → small Conventional Commits → docs → summary. It asks before pushing. |
+   | "Trabaja en el issue #12" | Reads the issue, uses its acceptance criteria, opens a PR that closes it (after asking). |
+   | "No funciona el checkout" | Reproduces the bug, writes a failing test, fixes the root cause. |
+   | "¿Qué mejorarías de este módulo?" | Asks you the scope and focus areas, runs read-only reviewers, gives a prioritised report. |
+   | "Hazlo con subagentes" | Splits the plan across agents, recommending a model and effort per task for you to confirm. |
+   | "Haz una release" | Works out the SemVer version; with release-please, reviews and merges the release PR (after asking). |
+   | "Haz un handoff" | Writes the state of the work to `docs/handoffs/` so any AI or person can continue. |
+   | "No, así no: usa pnpm" | Fixes it and saves the rule (`lessons`) so it doesn't happen again. |
+3. **Disable it** where you don't want the ceremony: `agent-config disable`.
+4. **Keep it up to date** on each machine:
+   ```bash
+   cd ~/Projects/agent-config && git pull && ./install.sh
+   ```
+5. **Change the rules** by editing the files here (or by telling the AI, which uses `lessons`), then commit and push. Changes apply immediately on this machine through the symlinks; restart the tool for new skills or agents.
+
+## What the installer does
 
 | Step | Details |
 | --- | --- |
