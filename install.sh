@@ -9,7 +9,7 @@
 # Safe to re-run at any time. Existing files are backed up with a timestamp,
 # never overwritten. A failing step is reported and the rest still runs.
 #
-# Usage: ./install.sh [--skip-plugins] [--help]
+# Usage: ./install.sh [--dry-run] [--skip-plugins] [--help]
 set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -17,12 +17,14 @@ STAMP="$(date +%Y%m%d-%H%M%S)"
 WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/agent-harness.XXXXXX")" || { echo "cannot create a temp dir" >&2; exit 1; }
 trap 'rm -rf "$WORKDIR"' EXIT
 SKIP_PLUGINS=0
+DRY_RUN=0
 FAILURES=0
 WARNINGS=0
 
 for arg in "$@"; do
   case "$arg" in
     --skip-plugins) SKIP_PLUGINS=1 ;;
+    --dry-run) DRY_RUN=1 ;;
     -h|--help)
       sed -n '2,11p' "$0" | sed 's/^# \{0,1\}//'
       exit 0
@@ -63,6 +65,10 @@ backup() {
 # Creates dest -> src, replacing an old symlink and backing up a real file.
 link() {
   local src="$1" dest="$2"
+  if [ "$DRY_RUN" -eq 1 ]; then
+    ok "would link $dest -> $src (preserve displaced files)"
+    return
+  fi
   if ! mkdir -p "$(dirname "$dest")"; then
     fail "cannot create $(dirname "$dest")"
     return
@@ -93,7 +99,8 @@ prune() {
     case "$target" in
       "$REPO"/*)
         if [ ! -e "$target" ]; then
-          rm -f "$entry" && ok "removed stale link $entry"
+          if [ "$DRY_RUN" -eq 1 ]; then ok "would remove stale link $entry"
+          else rm -f "$entry" && ok "removed stale link $entry"; fi
         fi
         ;;
     esac
@@ -159,7 +166,8 @@ EOF
   local old
   for old in "$HOME/.local/bin/agent-config" "$HOME/.agents/agent-config"; do
     if [ -L "$old" ]; then
-      rm -f "$old" && ok "removed old link $old"
+      if [ "$DRY_RUN" -eq 1 ]; then ok "would remove old link $old"
+      else rm -f "$old" && ok "removed old link $old"; fi
     fi
   done
 
@@ -168,7 +176,7 @@ EOF
   link "$REPO" "$HOME/.agents/harness"
 
   section "Command"
-  chmod +x "$REPO/bin/harness" 2>/dev/null
+  [ "$DRY_RUN" -eq 1 ] || chmod +x "$REPO/bin/harness" 2>/dev/null
   link "$REPO/bin/harness" "$HOME/.local/bin/harness"
   case ":$PATH:" in
     *":$HOME/.local/bin:"*) ;;
@@ -196,6 +204,10 @@ merge_settings() {
   case "$REPO" in
     *\'*|*\"*|*\\*) fail "the repo path contains quotes or backslashes; move it to a simpler path"; return ;;
   esac
+  if [ "$DRY_RUN" -eq 1 ]; then
+    ok "would merge $src into $dest"
+    return
+  fi
   mkdir -p "$HOME/.claude"
 
   base="$WORKDIR/settings-base.json"
@@ -258,12 +270,14 @@ install_git_hooks() {
     return
   fi
   local current target="$REPO/git-hooks"
-  chmod +x "$target"/_chain "$target"/commit-msg "$target"/pre-push 2>/dev/null
+  [ "$DRY_RUN" -eq 1 ] || chmod +x "$target"/_chain "$target"/commit-msg "$target"/pre-push 2>/dev/null
   current="$(git config --global --get core.hooksPath 2>/dev/null || true)"
   if [ "$current" = "$target" ]; then
     ok "core.hooksPath already set to $target"
   elif [ -z "$current" ] || is_harness_hooks "$current"; then
-    if git config --global core.hooksPath "$target"; then
+    if [ "$DRY_RUN" -eq 1 ]; then
+      ok "would set core.hooksPath to $target"
+    elif git config --global core.hooksPath "$target"; then
       ok "core.hooksPath set to $target${current:+ (was $current)}"
     else
       fail "could not set core.hooksPath"
@@ -312,6 +326,15 @@ install_plugins() {
   section "Claude Code plugins"
   if [ "$SKIP_PLUGINS" -eq 1 ]; then
     ok "skipped (--skip-plugins)"
+    return
+  fi
+  if [ "$DRY_RUN" -eq 1 ]; then
+    while read -r kind name source _; do
+      case "$kind" in
+        marketplace) ok "would ensure marketplace $name ($source) and refresh its catalog" ;;
+        plugin) ok "would ensure plugin $name is installed, updated and enabled" ;;
+      esac
+    done < "$REPO/plugins.txt"
     return
   fi
   if ! has claude; then
