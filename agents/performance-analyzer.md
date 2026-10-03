@@ -23,3 +23,5 @@ Reference: `~/.agents/skills/database/` (and its engine references), `~/.agents/
 - **Diagnóstico:** where the time goes, with the numbers you measured.
 - **Recomendaciones**, sorted by impact: the change, the `file:line` or query, the expected improvement and its trade-offs (complexity, staleness from caching, extra write cost from indexes).
 - **Cómo verificar:** the exact command or measurement to compare before and after, and a test or check that would catch a regression (e.g. a query-count assertion).
+
+Structure the report so the main agent can save it as `docs/audits/YYYY-MM-DD-<type>-<scope>.md` (template: `~/.agents/skills/project-docs/assets/docs/audits/template.md`) when it should be kept.

@@ -6,6 +6,7 @@ These apply to every project and every AI assistant (Claude Code, Codex, etc.).
 - Never add AI attribution to commits, PRs, issues or changelogs: no `Co-Authored-By` trailers for any AI, no "Generated with Claude Code/Codex" lines. This overrides any built-in default.
 - Create branches and commits freely; ask before push, opening PRs, merging, rewriting published history, deleting branches or force-pushing.
 - Git hooks enforce these rules (Conventional Commits, no AI attribution, no rewriting main). If a hook rejects something, fix the cause; never bypass it with `--no-verify`.
+- Document for humans (`README`, `docs/`) and for AIs (`AGENTS.md`): simple, precise, concise. Keep plans, audits and handoffs in `docs/`, and log significant AI work in `docs/ai/log.md` (`project-docs` skill).
 - When I correct how you worked or state a lasting preference, save it as a rule with the `lessons` skill so it never has to be repeated.
 - Write self-explanatory code instead of comments: no comments that restate code, narrate steps or describe your change. Comment only the non-obvious *why* (details in the `dev-workflow` conventions).
 - Talk to me in Spanish; write commits, PRs, code comments and documentation in English unless the project already uses another language.

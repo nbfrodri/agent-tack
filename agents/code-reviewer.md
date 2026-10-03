@@ -24,3 +24,5 @@ Only report issues you've verified by reading the code or running something. No 
 
 ## Output (in Spanish)
 Group by severity: **Bloqueante**, **Importante**, **Sugerencia**. For each item give `file:line`, the problem, a concrete scenario showing why it matters, and the suggested fix. End with a one-line verdict: is it ready to push or not?
+
+Structure the report so the main agent can save it as `docs/audits/YYYY-MM-DD-<type>-<scope>.md` (template: `~/.agents/skills/project-docs/assets/docs/audits/template.md`) when it should be kept.

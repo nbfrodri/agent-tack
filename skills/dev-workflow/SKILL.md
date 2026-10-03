@@ -44,7 +44,7 @@ Un commit por cambio lógico, con Conventional Commits, haciendo commit a medida
 → Detalles en `references/git-github.md`.
 
 ### 7. Documentar
-Antes de dar la tarea por cerrada, revisa si el cambio afecta a README, docs/, CHANGELOG, comentarios de API, ejemplos, variables de entorno o instrucciones de instalación, y actualízalos en el mismo PR. Las decisiones de arquitectura importantes se registran como ADR.
+Documentación simple, precisa y concisa, para humanos (`README`, `docs/`) y para IAs (`AGENTS.md`), siguiendo la skill `project-docs`. Guarda en `docs/` los planes aprobados, las auditorías relevantes y un handoff si la tarea queda a medias, y añade una fila a `docs/ai/log.md` por cada tarea significativa. Antes de dar la tarea por cerrada, revisa si el cambio afecta a README, docs/, CHANGELOG, comentarios de API, ejemplos, variables de entorno o instrucciones de instalación, y actualízalos en el mismo PR. Las decisiones de arquitectura importantes se registran como ADR.
 → Detalles en `references/documentation.md`.
 
 ### 8. Verificar
@@ -61,6 +61,7 @@ Resume al usuario: qué cambió, en qué commits, cómo se verificó, qué docs 
 - Skill `testing`: cómo escribir buenos tests en pytest, Pest/PHPUnit y Vitest/Jest (paso 5).
 - Skill `release`: versionado SemVer, CHANGELOG, tags y GitHub Releases.
 - Skill `github-issues`: trabajar a partir de un issue, redactar issues, dividir un plan en issues y registrar bugs encontrados por el camino.
+- Skill `project-docs`: estructura de `docs/`, plantillas, ficha técnica, arquitectura, planes, auditorías, handoffs y registro de uso de IA.
 - Skill `lessons`: cuando el usuario te corrija o fije una preferencia duradera, guárdala como regla.
 - Skills por capa, cuando la tarea toque esa parte del stack: `frontend` (React/Next.js), `api-design` (Python, Laravel, Node), `database` (PostgreSQL, MySQL, MongoDB), `auth`, `e2e-testing` (Playwright), `deployment` (Vercel, VPS con Docker, AWS) y `observability`.
 - Agente `planner`: para tareas normales o grandes, delégale el plan (paso 3).

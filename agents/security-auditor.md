@@ -28,3 +28,5 @@ Verify each finding by reading the actual code path, from input to sink. Discard
 
 ## Output (in Spanish)
 Findings sorted by severity (**Crítica**, **Alta**, **Media**, **Baja**). For each: `file:line`, the vulnerability class (OWASP/CWE), how an attacker would exploit it in this app (a concrete scenario, no weaponised payloads for third-party systems), and the specific fix with a short code sketch. End with a short list of hardening recommendations and what you did not cover.
+
+Structure the report so the main agent can save it as `docs/audits/YYYY-MM-DD-<type>-<scope>.md` (template: `~/.agents/skills/project-docs/assets/docs/audits/template.md`) when it should be kept.

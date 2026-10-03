@@ -21,4 +21,5 @@ The user's conventions are in the dev-workflow skill at `~/.agents/skills/dev-wo
 - **Pasos**: ordered, each one ending in a Conventional Commit (give the proposed commit message), with the tests to write first
 - **Documentación** to update
 - **Riesgos y preguntas abiertas**
+- Format the plan so it can be saved as-is to `docs/plans/YYYY-MM-DD-slug.md` (template: `~/.agents/skills/project-docs/assets/docs/plans/template.md`); the main agent saves it once approved.
 - If the work spans several PRs: a proposed breakdown into GitHub issues (title + acceptance criteria each, in shippable order), following `~/.agents/skills/github-issues/SKILL.md`. Don't create them; the main agent asks the user first.
