@@ -1,6 +1,6 @@
 ---
 name: lessons
-description: Turn the user's corrections and stated preferences into permanent rules, so the same mistake never happens twice, in any tool or machine. Use whenever the user corrects how you worked ("no, así no", "te dije que…", "otra vez lo mismo", "eso está mal porque…"), states a lasting preference or rule ("siempre…", "nunca…", "a partir de ahora…", "recuerda que…", "apúntalo", "aprende esto"), or when you discover that one of the user's skills or instructions was wrong, missing or ambiguous. Not for one-off instructions that only apply to the current task.
+description: Turn the user's corrections and lasting preferences into versioned rules in the right file, so mistakes don't repeat. Use when the user corrects how you worked or states a rule (no así no, te dije que, siempre, nunca, a partir de ahora, apúntalo).
 ---
 
 # Lessons

@@ -17,8 +17,14 @@ field() {
   ' "$1"
 }
 
+# Descriptions of every skill and agent load in every session, so they're kept within a budget
+SKILL_DESC_MAX=400
+AGENT_DESC_MAX=300
+SKILLS_TOTAL_MAX=6000
+SKILLS_TOTAL=0
+
 check_file() {
-  local file="$1" expected_name="$2" name description
+  local file="$1" expected_name="$2" max="$3" name description
   if [ "$(head -n 1 "$file")" != "---" ]; then
     err "$file: missing frontmatter"
     return
@@ -27,7 +33,8 @@ check_file() {
   description="$(field "$file" description)"
   [ "$name" = "$expected_name" ] || err "$file: name '$name' should be '$expected_name'"
   [ -n "$description" ] || err "$file: missing description"
-  [ "${#description}" -le 1024 ] || err "$file: description is ${#description} chars (max 1024)"
+  [ "${#description}" -le "$max" ] || err "$file: description is ${#description} chars (max $max): say what it does and when to use it"
+  case "$file" in */SKILL.md) SKILLS_TOTAL=$((SKILLS_TOTAL + ${#description})) ;; esac
   case "$name" in
     *[!a-z0-9-]*) err "$file: name must be lowercase letters, digits and hyphens" ;;
   esac
@@ -41,7 +48,7 @@ for skill in "$REPO"/skills/*/; do
     err "skills/$name: missing SKILL.md"
     continue
   fi
-  check_file "$file" "$name"
+  check_file "$file" "$name" "$SKILL_DESC_MAX"
   while read -r ref; do
     [ -n "$ref" ] || continue
     # A reference can point to this skill's own file or to another skill's (e.g. dev-workflow's)
@@ -56,7 +63,7 @@ done
 echo "Agents"
 for agent in "$REPO"/agents/*.md; do
   [ -e "$agent" ] || continue
-  check_file "$agent" "$(basename "$agent" .md)"
+  check_file "$agent" "$(basename "$agent" .md)" "$AGENT_DESC_MAX"
   echo "  ✔ $(basename "$agent" .md)"
 done
 
@@ -69,6 +76,10 @@ while read -r kind id _; do
     *) err "plugins.txt: unknown line type '$kind'" ;;
   esac
 done <"$REPO/plugins.txt"
+
+[ "$SKILLS_TOTAL" -le "$SKILLS_TOTAL_MAX" ] \
+  || err "skill descriptions total $SKILLS_TOTAL chars (max $SKILLS_TOTAL_MAX): shorten some"
+echo "Skill descriptions: $SKILLS_TOTAL / $SKILLS_TOTAL_MAX chars"
 
 if [ "$ERRORS" -gt 0 ]; then
   echo "$ERRORS error(s)"

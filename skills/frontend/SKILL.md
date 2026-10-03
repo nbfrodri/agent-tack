@@ -1,6 +1,6 @@
 ---
 name: frontend
-description: Frontend engineering with React and Next.js - component design, Server vs Client Components, data fetching, forms and validation, state management, styling, accessibility (WCAG), responsive design, loading/error/empty states, and component tests with Testing Library. Use whenever building or changing UI, pages, layouts, components, hooks, forms, client state or styling in a React/Next.js project, or when the user mentions frontend, interfaz, pantalla, componente, página or formulario.
+description: React and Next.js frontend: components, Server vs Client Components, data fetching, forms, state, styling, accessibility and component tests. Use when building or changing UI (frontend, interfaz, pantalla, componente, formulario).
 ---
 
 # Frontend (React / Next.js)

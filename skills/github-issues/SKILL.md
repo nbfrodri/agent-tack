@@ -1,6 +1,6 @@
 ---
 name: github-issues
-description: GitHub issues workflow with the gh CLI - working on an issue end to end (read it, plan, branch linked to the issue, implement, PR that closes it), writing clear bug reports and feature requests, splitting a plan or epic into small issues, recording bugs found along the way, labels, milestones, triage, and issue/PR templates for a repo. Use whenever the user mentions an issue or ticket ("el issue #12", "trabaja en la #34", "crea un issue", "abre una incidencia", "apunta este bug", "divide esto en tareas", "qué issues hay pendientes"), pastes a github.com/.../issues/ URL, or when you find an out-of-scope bug or follow-up worth tracking.
+description: GitHub issues with gh: work an issue end to end (linked branch, PR that closes it), write bug reports and feature requests, split plans into issues, triage, templates. Use when an issue or ticket is mentioned (el issue #12, crea un issue, qué hay pendiente).
 ---
 
 # GitHub issues

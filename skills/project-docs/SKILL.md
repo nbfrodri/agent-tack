@@ -1,6 +1,6 @@
 ---
 name: project-docs
-description: How to document a project for two audiences, humans (README, docs/) and AI assistants (AGENTS.md), with a standard docs/ structure - technical sheet (overview), architecture with Mermaid diagrams, development and deployment guides, glossary, ADRs, runbooks, plans, audits, handoffs, screenshots and AI usage (policy, work log, prompts). Use whenever creating or updating project documentation, a README, AGENTS.md, architecture docs or a technical sheet; when saving a plan, audit or review report; when the user asks for a handoff ("haz un handoff", "deja esto listo para seguir mañana", "resume dónde estamos"); after significant AI-assisted work (to log it); and when setting up a new project.
+description: Project docs for humans (README, docs/) and AIs (AGENTS.md): technical sheet, architecture, ADRs, plans, audits, continuous handoffs, AI usage log, templates. Use when writing or updating docs, saving plans or audits, or for a handoff (documenta, haz un handoff, resume dónde estamos).
 ---
 
 # Project documentation

@@ -1,6 +1,6 @@
 ---
 name: docs-writer
-description: Keeps documentation in sync with the code - updates README, AGENTS.md, docs/ (overview, architecture, development, glossary), .env.example and CHANGELOG, writes ADRs, and logs AI work in docs/ai/log.md, based on the current changes. Use proactively at the end of a task that changed behaviour, configuration, commands, APIs or architecture, or when the user asks to document something or update the README.
+description: Keeps README, AGENTS.md, docs/, .env.example and CHANGELOG in sync with the code, writes ADRs and logs AI work. Use at the end of a task that changed behaviour, config, APIs or architecture.
 tools: Read, Grep, Glob, Bash, Edit, Write
 model: sonnet
 ---

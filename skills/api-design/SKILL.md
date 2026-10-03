@@ -1,6 +1,6 @@
 ---
 name: api-design
-description: Backend and API design for Python (FastAPI, Django), PHP (Laravel) and Node.js (Express, NestJS, Fastify) - REST resource design, HTTP status codes, consistent error format, validation, pagination, filtering, versioning, OpenAPI contracts, layering (controllers → use cases → domain → repositories) and API tests. Use whenever creating or changing endpoints, routes, controllers, request/response schemas, webhooks or backend services, or when the user mentions API, endpoint, backend, REST, servidor or ruta.
+description: Backend and API design for FastAPI, Django, Laravel and Express/NestJS/Fastify: REST conventions, status codes, errors, validation, pagination, OpenAPI, layering and API tests. Use when creating or changing endpoints, routes, controllers, schemas or webhooks (API, endpoint, backend, ruta).
 ---
 
 # API design and backend structure

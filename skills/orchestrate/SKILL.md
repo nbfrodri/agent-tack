@@ -1,6 +1,6 @@
 ---
 name: orchestrate
-description: Delegate a large task to several subagents (multi-agent) - split an approved plan into independent tasks, assign each to the right agent with the right skills, run them in parallel in isolated git worktrees, then integrate, test and review. Use ONLY when the user explicitly asks for subagents, agents, multi-agent, parallel work or delegation ("hazlo con subagentes", "repártelo entre agentes", "en paralelo", "orquesta esto").
+description: Split an approved plan among subagents in isolated worktrees, recommending model and effort per task, then integrate, test and review. Use ONLY when the user explicitly asks for subagents or parallel work (hazlo con subagentes, en paralelo, orquesta esto).
 ---
 
 # Orchestrate

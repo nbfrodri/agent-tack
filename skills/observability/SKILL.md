@@ -1,6 +1,6 @@
 ---
 name: observability
-description: Logging, error handling, monitoring and health checks for full-stack apps (Next.js, Python, Laravel, Node) - structured JSON logs with request IDs, log levels, centralised error handling, error tracking (Sentry), metrics, tracing with OpenTelemetry, health and readiness endpoints, uptime checks and alerts. Use whenever adding or changing logging, error handlers, monitoring, health checks or alerting, preparing an app for production, or when the user mentions logs, errores en producción, monitorización, Sentry, métricas or "no sé qué pasa en producción".
+description: Structured logs with request IDs, error handling, Sentry, health checks, metrics, tracing and alerts. Use when adding logging, monitoring or error tracking, or preparing an app for production (logs, errores en producción, monitorización, Sentry).
 ---
 
 # Observability

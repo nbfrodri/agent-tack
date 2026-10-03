@@ -1,6 +1,6 @@
 ---
 name: test-writer
-description: Adds missing tests to existing code - finds coverage gaps, writes characterisation tests for legacy or untested code before refactors, adds regression tests and edge cases, in pytest, Pest/PHPUnit, Vitest/Jest or Playwright following the project's conventions. Use when the user asks to add tests, raise coverage or "cubrir con tests" code that already exists, or before refactoring untested code. Not for new features under TDD, where the main agent writes the test first.
+description: Adds tests to existing code (coverage gaps, characterisation tests before refactors) without touching production code; report-only mode for assessments. Not for new features under TDD.
 tools: Read, Grep, Glob, Bash, Edit, Write
 model: inherit
 ---

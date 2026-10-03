@@ -1,6 +1,6 @@
 ---
 name: architecture-reviewer
-description: Read-only review of the architecture of existing code - module structure, layering and dependency direction, coupling and cohesion, DDD bounded contexts and aggregates, separation of domain from frameworks, boundaries between frontend/backend/database, hot spots of technical debt - with prioritised, evidence-backed improvement proposals. Use when the user asks to review or improve the architecture or structure of a project or module, or as part of the improve skill.
+description: Read-only architecture review of existing code: layering, dependency direction, coupling, DDD boundaries and debt hot spots, with prioritised evidence-backed proposals. Used by improve or on request.
 tools: Read, Grep, Glob, Bash
 model: inherit
 ---

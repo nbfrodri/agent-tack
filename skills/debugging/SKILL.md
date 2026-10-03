@@ -1,6 +1,6 @@
 ---
 name: debugging
-description: Systematic debugging method - reproduce, isolate, form hypotheses, verify with evidence, fix the root cause and lock it in with a regression test. Use whenever something is broken, failing, crashing, slow, flaky or behaving unexpectedly - a bug report, a stack trace, a failing test or CI job, "no funciona", "da error", "a veces falla" - even if the user only pastes an error message.
+description: Systematic debugging: reproduce, write a regression test, isolate, verify hypotheses and fix the root cause. Use for any bug, error, stack trace, failing test or CI job, crash or flaky behaviour (no funciona, da error, a veces falla).
 ---
 
 # Debugging

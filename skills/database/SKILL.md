@@ -1,6 +1,6 @@
 ---
 name: database
-description: Database design and data access for PostgreSQL, MySQL and MongoDB - schema and data modelling, migrations (Alembic, Django, Laravel, Prisma, Drizzle, Knex), indexes, query optimisation, N+1 prevention, transactions, constraints, seeds, backups and safe production changes. Use whenever creating or changing tables, collections, models, migrations, queries, indexes or ORM code, when something is slow at the database level, or when the user mentions base de datos, tabla, consulta, SQL, migración, Postgres, MySQL or Mongo.
+description: PostgreSQL, MySQL and MongoDB: modelling, safe migrations, indexes, N+1, transactions, backups and read-only DB access for the AI. Use when changing tables, collections, models, migrations, queries or ORM code, or for slow queries (base de datos, tabla, consulta, migración).
 ---
 
 # Database

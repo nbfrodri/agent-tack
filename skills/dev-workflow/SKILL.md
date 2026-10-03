@@ -1,6 +1,6 @@
 ---
 name: dev-workflow
-description: Flujo de trabajo de ingeniería del usuario para cualquier tarea de software - planificar antes de actuar, TDD, SOLID, DDD, commits con Conventional Commits, ramas y PRs en GitHub, y mantener README/documentación al día. En proyectos con agent-config activado (`agent-config status` → enabled), úsala SIEMPRE que la petición implique escribir, modificar, refactorizar, diseñar o depurar código, crear un proyecto, hacer commits, ramas, push, PRs, releases o tocar documentación, aunque el usuario no mencione la skill ni "buenas prácticas". También cuando pida un plan, una arquitectura o revisar código.
+description: The user's engineering workflow for projects with agent-config enabled: plan first, TDD, SOLID/DDD, code and git conventions (Conventional Commits, branches, PRs) and docs. Use whenever writing, changing or debugging code, committing or opening PRs in such projects (programa, implementa, arregla, haz commit).
 ---
 
 # Dev Workflow

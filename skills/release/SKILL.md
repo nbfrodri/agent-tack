@@ -1,6 +1,6 @@
 ---
 name: release
-description: Versioning and releases - Semantic Versioning, deciding the next version from Conventional Commits, CHANGELOG (Keep a Changelog), git tags, GitHub Releases with gh, automated releases (release-please, semantic-release, changesets), version bumps in package.json/pyproject.toml/composer.json, pre-releases, hotfixes and rollbacks of a release. Use whenever the user wants to release, publish, tag or version a project, write or update a changelog, create a GitHub release, set up automated releases, or asks "qué versión toca", "saca una versión", "haz una release" or "crea un tag".
+description: Versioning and releases: SemVer from Conventional Commits, CHANGELOG, tags, GitHub Releases, release automation and hotfixes. Use when releasing, tagging or writing a changelog (saca una versión, haz una release, qué versión toca).
 ---
 
 # Releases and versioning

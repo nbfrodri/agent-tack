@@ -1,6 +1,6 @@
 ---
 name: git-history
-description: Clean up and fix git history safely - amend, fixup, squash, reword, split or reorder commits, undo commits, recover lost work with reflog, resolve rebase conflicts, and prepare a branch before push or PR. Use whenever the user wants to change, undo, combine or tidy commits, says something like "arregla el último commit", "junta estos commits", "deshaz el commit", "me equivoqué de rama", "limpia el historial antes del push", or a push is rejected as non-fast-forward.
+description: Fix and tidy git history safely: amend, fixup, squash, reword, split, undo or recover commits, rebase conflicts, wrong branch. Use when changing or undoing commits or cleaning up before a push (arregla el commit, junta commits, deshaz, me equivoqué de rama).
 ---
 
 # Git history

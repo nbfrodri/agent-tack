@@ -1,6 +1,6 @@
 ---
 name: ui-reviewer
-description: Read-only UI/UX and visual design review of a running web app - looks at real pages in the browser at mobile and desktop widths and reviews visual hierarchy, layout and spacing, consistency with the design system, typography and colour, interaction states (loading, empty, error, hover, focus), forms and feedback, responsiveness and accessibility (contrast, keyboard, labels), with screenshots as evidence and prioritised suggestions. Use when the user asks to review or improve how an app or screen looks or feels, or as part of the improve skill.
+description: Reviews a running web app in the browser at mobile and desktop widths: hierarchy, consistency, states, forms and accessibility, with screenshots. Used by improve or on request.
 model: inherit
 ---
 

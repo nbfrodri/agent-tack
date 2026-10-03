@@ -1,6 +1,6 @@
 ---
 name: performance-analyzer
-description: Finds and explains performance problems across the full stack with measurements - slow pages and Core Web Vitals, bundle size and React re-renders in Next.js, slow API endpoints, N+1 and unindexed queries in PostgreSQL/MySQL/MongoDB, missing caching, blocking I/O, memory leaks and container resource limits. Use when something is slow, before launching a performance-sensitive feature, or when the user asks to optimise, speed up or profile ("va lento", "optimiza", "tarda mucho").
+description: Measures and ranks performance problems across the stack (Web Vitals, bundle, API latency, DB queries, caching) before recommending fixes. Use when something is slow (va lento, optimiza).
 tools: Read, Grep, Glob, Bash, WebFetch
 model: inherit
 ---

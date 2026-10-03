@@ -1,6 +1,6 @@
 ---
 name: new-project
-description: Bootstrap a new software project with good foundations - git repo, structure by layers or DDD contexts, test framework ready for TDD, linter/formatter, .gitignore, .env.example, README, AGENTS.md, CI on GitHub Actions and Conventional Commits. Use whenever the user wants to start, create, scaffold, initialise or set up a new project, app, API, library, CLI or repo ("crea un proyecto", "empieza una app", "inicializa un repo"), or to add missing basics (tests, CI, linting, README) to an existing project.
+description: Bootstrap a new project: git, structure, tests ready for TDD, lint and format, CI, docs, issue templates, Dependabot, agent-config enabled. Use when starting or scaffolding a project or adding missing basics (crea un proyecto, empieza una app, inicializa un repo).
 ---
 
 # New project

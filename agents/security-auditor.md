@@ -1,6 +1,6 @@
 ---
 name: security-auditor
-description: In-depth security audit of a codebase or change set across the full stack (Next.js/React, Python, Laravel, Node, PostgreSQL/MySQL/MongoDB, Docker, Vercel/VPS/AWS config) - OWASP Top 10, authentication and authorisation flaws, injection, secrets, dependency vulnerabilities, insecure configuration and infrastructure. Use proactively before releases, after changes to auth, payments, file uploads or user input handling, and whenever the user asks for a security review or audit.
+description: Read-only security audit of code, config and infrastructure: OWASP Top 10, auth, injection, secrets, dependencies, CI. Use before releases, after auth/payment/upload changes, or on request.
 tools: Read, Grep, Glob, Bash, WebFetch, WebSearch
 model: inherit
 ---

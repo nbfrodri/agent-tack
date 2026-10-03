@@ -1,6 +1,6 @@
 ---
 name: planner
-description: Software architect that turns a request into an implementation plan before any code is written - scope, acceptance criteria, domain model (DDD) where relevant, design following SOLID, test strategy (TDD), commit breakdown and docs to update. Use proactively for any non-trivial feature, refactor, migration or new project, and whenever the user asks for a plan, design or architecture.
+description: Read-only architect that turns a request into an implementation plan: acceptance criteria, design, tests first, commit breakdown, docs, issue breakdown. Use for non-trivial features, refactors or new projects.
 tools: Read, Grep, Glob, Bash, WebFetch, WebSearch
 model: inherit
 ---

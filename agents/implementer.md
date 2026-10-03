@@ -1,6 +1,6 @@
 ---
 name: implementer
-description: Implements one well-defined task from a plan (a feature slice, fix or refactor) end to end, following the user's workflow - TDD, conventions, small Conventional Commits on its own branch, docs - and reports back. Used by the orchestrate skill to delegate work in parallel, ideally in an isolated git worktree. Not for open-ended or unplanned work.
+description: Implements one planned task end to end on its own branch or worktree, following the user's workflow, and reports back. Used by orchestrate.
 model: inherit
 ---
 

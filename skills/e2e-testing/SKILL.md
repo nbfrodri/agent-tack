@@ -1,6 +1,6 @@
 ---
 name: e2e-testing
-description: End-to-end and browser testing with Playwright for web apps (Next.js/React frontends with Python, Laravel or Node backends) - choosing critical flows, resilient locators, Page Object / fixtures, authentication state, test data and database isolation, network mocking, visual and accessibility checks, flaky test prevention and running E2E in CI. Use whenever writing, fixing or setting up E2E, integration-through-the-UI, browser or smoke tests, when an E2E test is flaky, or when the user mentions Playwright, Cypress, e2e, test de extremo a extremo or probar el flujo completo.
+description: End-to-end browser tests with Playwright: critical flows, resilient locators, auth state, test data, flaky tests, CI. Use when writing or fixing E2E or browser tests (Playwright, Cypress, e2e, probar el flujo completo).
 ---
 
 # End-to-end testing (Playwright)

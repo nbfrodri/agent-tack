@@ -1,6 +1,6 @@
 ---
 name: code-reviewer
-description: Reviews code changes (uncommitted diff, a branch vs main, or a PR) for correctness bugs, test coverage (TDD), SOLID/DDD design, security, Conventional Commits and missing documentation. Use proactively after implementing a feature or fix and before pushing or opening a PR, or whenever the user asks for a review.
+description: Reviews a diff, branch or PR (or a whole scope in project mode) for bugs, tests, design, security, conventions and docs. Use after implementing and before pushing or opening a PR.
 tools: Read, Grep, Glob, Bash
 model: inherit
 ---

@@ -1,6 +1,6 @@
 ---
 name: deployment
-description: Containerising and deploying full-stack apps to Vercel, a VPS with Docker, or AWS - Dockerfiles (multi-stage, non-root), docker-compose for local dev and production, environment variables and secrets, CI/CD with GitHub Actions, preview/staging/production environments, database migrations on deploy, HTTPS, reverse proxies, zero-downtime releases and rollbacks. Use whenever writing a Dockerfile or docker-compose file, setting up CI/CD or a deploy pipeline, choosing where to host, configuring environments or domains, or when the user mentions deploy, despliegue, producción, Docker, Vercel, VPS, AWS, servidor or hosting.
+description: Docker, CI/CD with GitHub Actions and deploys to Vercel, a VPS or AWS: environments, secrets, migrations on deploy, rollbacks. Use for Dockerfiles, compose files, pipelines, hosting or production (deploy, despliegue, producción, servidor).
 ---
 
 # Deployment

@@ -1,6 +1,6 @@
 ---
 name: testing
-description: Writing good automated tests in Python (pytest), PHP/Laravel (Pest, PHPUnit) and JavaScript/TypeScript (Vitest, Jest) - what to test at each layer, test structure and naming, factories and fixtures, mocking at the boundaries, database tests, coverage, characterisation tests for legacy code, and fixing slow or flaky tests. Use whenever writing, adding, fixing or reviewing tests or test setup, when the user asks to "add tests", "cubrir con tests", raise coverage, test existing code, or when a feature needs tests as part of TDD.
+description: Writing good tests with pytest, Pest/PHPUnit and Vitest/Jest: what to test per layer, factories, mocks at the boundaries, DB tests, coverage, legacy code, flaky tests. Use when writing, fixing or reviewing tests (añade tests, cubrir con tests).
 ---
 
 # Testing
