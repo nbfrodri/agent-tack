@@ -54,7 +54,13 @@ check_tools_and_links() {
   while read -r tool when commands instructions skills_dir _ <&3; do
     case "$tool" in ''|'#'*) continue ;; esac
     if ! selected_tool detect "$commands"; then warn "optional CLI unavailable: $tool"; fi
-    selected_tool "$when" "$commands" || continue
+    if [ "$when" != always ]; then
+      if { [ "$instructions" = - ] || { [ ! -e "$(expand_home "$instructions")" ] && [ ! -L "$(expand_home "$instructions")" ]; }; } &&
+         { [ "$skills_dir" = - ] || [ ! -d "$(expand_home "$skills_dir")" ]; }; then
+        if selected_tool detect "$commands"; then warn "$tool: detected but not configured by this installation"; fi
+        continue
+      fi
+    fi
     if [ "$instructions" != - ]; then
       check_link "$REPO/global/AGENTS.md" "$(expand_home "$instructions")"
     else

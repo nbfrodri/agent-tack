@@ -4,6 +4,7 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/harness-doctor-test.XXXXXX")"
 trap 'rm -rf "$WORK"' EXIT
 export HOME="$WORK/home" XDG_CONFIG_HOME="$WORK/home/.config"
+export XDG_STATE_HOME="$HOME/.local/state"
 export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL="$HOME/.gitconfig"
 unset GIT_DIR GIT_WORK_TREE GIT_CONFIG_COUNT
 mkdir -p "$HOME" "$WORK/outside" "$WORK/bin"
@@ -47,6 +48,17 @@ check 'missing required skill is an error' [ "$RC" -eq 1 ]
 ln -s "$REPO/skills/testing" "$HOME/.claude/skills/testing"
 run_doctor unexpected
 check 'unsupported arguments return 2' [ "$RC" -eq 2 ]
+printf '#!/bin/sh\nexit 13\n' > "$WORK/bin/gemini"
+chmod +x "$WORK/bin/gemini"
+run_doctor
+check 'new optional CLI does not imply an existing managed installation' [ "$RC" -eq 0 ]
+check 'new optional CLI missing configuration is a warning' grep -q 'WARN.*gemini.*not configured' "$WORK/report"
+rm "$WORK/bin/gemini"
+mkdir -p "$HOME/.gemini"
+ln -s "$WORK/missing" "$HOME/.gemini/GEMINI.md"
+run_doctor
+check 'optional configured broken links fail even with absent CLI' [ "$RC" -eq 1 ]
+rm "$HOME/.gemini/GEMINI.md"
 cp "$HOME/.claude/settings.json" "$WORK/settings-good"
 printf '{broken' > "$HOME/.claude/settings.json"
 run_doctor
