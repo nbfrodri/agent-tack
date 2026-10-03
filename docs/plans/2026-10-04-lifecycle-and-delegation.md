@@ -1,6 +1,6 @@
 # Lifecycle tools, automatic delegation and reevaluation
 
-- Status: approved
+- Status: implementation complete; benchmark paused at the owner's request
 - Approval: owner requested a new evaluation and implementation of doctor, installation preview, safe uninstall and a new benchmark; chose automatic delegation by complexity and six real runs of one representative scenario.
 - Baseline: `422cfd4`; previous initial audit score 7.4/10. Reevaluation must score current evidence, not planned work.
 
@@ -22,3 +22,7 @@
 - Parent: CLI dispatch, delegation policy, documentation, audit issues, integration and final evaluation.
 
 Uninstall must not assume that any path containing "harness" is owned. Keep original ownership evidence across reinstallations and defend against changed link targets and parent directories. Benchmark runs must not observe configuration edits mid-run.
+
+## Outcome
+
+Lifecycle tools, automatic delegation, contextual integration choices, documentation and all five verified findings are implemented in focused local commits. The [audit](../audits/2026-10-04-improvement-agent-harness.md) records the final score and checks. The six-run benchmark has two interrupted attempts and four pending; the owner chose to save and resume when Claude's session limit resets. No new comparison is claimed. The [benchmark handoff](../handoffs/2026-10-04-benchmark.md) retains the exact frozen revision, protocol and remaining authorisation. Publication is still unrequested.

@@ -39,3 +39,5 @@ Codex baseline runs use temporary HOME, XDG and CODEX_HOME directories. Only `au
 
 
 Each eval writes `metadata.json` with the scenario, condition, repetition, prompt SHA-256, harness revision, provider/CLI version, metric version and permission allowlist. Set `EVALS_MODEL` to request an explicit model; the resolved model is recorded only when observed in the transcript. A missing observation remains unknown. Do not publish raw transcripts or authentication files. Freeze the harness checkout before comparing runs so instruction edits cannot alter one condition mid-experiment.
+
+For an isolated comparison, set private HOME, XDG_CONFIG_HOME, XDG_STATE_HOME, XDG_DATA_HOME, XDG_CACHE_HOME, provider config/auth directories and Git configuration **before** installing either condition. Merely changing HOME does not override inherited XDG paths. Copy only required authentication files with private permissions and remove those temporary copies after each attempt. Keep failed or interrupted attempts separate from completed samples; runner exit status and provider errors take precedence over an artifact-only score.

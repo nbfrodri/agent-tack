@@ -1,7 +1,7 @@
 # Six-run benchmark checkpoint
 
 - Status: paused at the user's request; resume when Claude's session limit resets.
-- Branch: `test/benchmark-reproducibility`; implementation commits `19bac43`, `81f23c3` integrated by parent.
+- Integration branch: `feat/lifecycle-doctor-and-auto-delegation`; benchmark source branch: `test/benchmark-reproducibility`; implementation commits `19bac43`, `81f23c3` integrated by parent.
 - Frozen checkout: `/tmp/harness-frozen-benchmark-20261004`, detached `a8fd642a2aa0197e152b12e42f1755a9fa89e6e9`.
 - Raw private output root: `/tmp/harness-six-run-20261004.yv_c1sj2/raw`. Never commit raw transcripts or credential files.
 - Sanitized aggregates: `/tmp/harness-six-run-20261004.yv_c1sj2/aggregate` (metadata, metrics v2, runner exits, report, attempts, independent functional checks).
