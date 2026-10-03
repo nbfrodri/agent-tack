@@ -6,10 +6,30 @@ Day-to-day use: switching the harness on and off, what to ask, and keeping it up
 
 Run `harness help`, `harness --help` or `harness -h` for command syntax, options, exit codes and examples. Help also works outside a Git repository. Running `harness` without a command displays project status.
 
+## Installation, diagnostics and removal
+
+Clone into any directory you choose and run `./install.sh` from that checkout. Installation exposes global configuration through symlinks; you can enable the workflow in any Git project, independently of where the harness repository lives. Keep the checkout available or reinstall after moving it.
+
+```bash
+./install.sh --dry-run                 # preview links, settings, Git and plugin actions
+./install.sh --dry-run --skip-plugins  # preview local configuration only
+./install.sh --skip-plugins            # apply local configuration only
+harness doctor                        # check installation and current project; no writes
+./uninstall.sh --dry-run               # preview safe restoration
+./uninstall.sh                         # restore recorded unchanged state
+```
+
+Doctor checks required tools, managed links, Claude settings and hook registration, ownership metadata, effective Git hooks, project activation and formatter trust. Missing optional CLIs and deliberate foreign hooks paths produce warnings. Broken managed components produce errors (exit 1); a healthy checked installation exits 0. Doctor works outside Git and never runs plugins or prints restoration snapshots or credentials. It diagnoses configuration rather than proving every external tool works.
+
+Installation records changes privately under `${XDG_STATE_HOME:-$HOME/.local/state}/agent-harness/ownership`. Original state survives reinstallations. These snapshots may include private settings: do not commit or share them. Uninstall needs Python to validate ownership and selectively restore settings. It removes unchanged recorded links, restores safely displaced original files or links, and reverses unchanged owned settings and Git hooks. Changed links, parent directories, settings and hooks are preserved conservatively; retained records allow a later retry.
+
+Uninstall never deletes project files, project activation/trust configuration or shared plugins. It cannot infer ownership of legacy configuration: paths already identical before recording began are preserved. Installation and uninstall previews make no persistent changes. Installation accepts paths with spaces; use absolute paths without tabs, newlines or dot components, and keep the checkout path free of quotes and backslashes for Claude hook command substitution.
+
 ## On/off per project
 The full workflow (plan, TDD, conventions, docs, handoffs, AI log, Conventional Commits, auto-format) is opt-in per project. Everywhere else the AI works normally and only the safety net stays on.
 
 ```bash
+harness doctor            # read-only installation and project diagnostics
 harness help              # CLI reference; aliases: --help and -h
 harness status            # workflow activation and local formatter trust
 harness status --quiet    # no output; exit 0 when enabled, 1 when disabled

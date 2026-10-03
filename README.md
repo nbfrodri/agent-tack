@@ -16,7 +16,7 @@ Out of the box, AI assistants forget your conventions every session, skip tests,
 | **Agents** | `planner`, `implementer`, `code-reviewer`, `test-writer`, `docs-writer`, `evaluator`, `architecture-reviewer`, `security-auditor`, `performance-analyzer`, `ui-reviewer` |
 | **Enforced by hooks** | Conventional Commits, no AI attribution, no secrets or `.env` committed, protected `main` and tags, a guard against dangerous commands, auto-format |
 | **Tools** | Claude Code, Codex, Cursor, GitHub Copilot CLI, Gemini CLI, OpenCode, Crush |
-| **Quality** | 450 automated checks; CI targets Linux and macOS; [measured results](docs/results.md) |
+| **Quality** | Isolated regression checks; CI targets Linux and macOS; [measured results](docs/results.md) |
 
 Details: [architecture](docs/architecture.md) · [components](docs/components.md) · [how it works](docs/how-it-works.md) · [conventions](docs/conventions.md).
 
@@ -28,8 +28,11 @@ Details: [architecture](docs/architecture.md) · [components](docs/components.md
    ~/Projects/agent-harness/install.sh
    ```
    Keep the repository at that path after installation: the installed files are symlinks to it. If you move it, run `install.sh` again from its new location.
+   Preview changes with `./install.sh --dry-run`; add `--skip-plugins` to configure local files without plugin operations. Run `harness doctor` after installation to diagnose links, settings, Git hooks and project state without changing anything.
 3. Read any warning it prints (e.g. Cursor needs its global rules pasted once), and make sure `~/.local/bin` is in your `PATH`.
 4. Restart your AI tools.
+
+To uninstall, run `./uninstall.sh --dry-run` first, then `./uninstall.sh` from the checkout. Uninstall requires `python3`; it restores only recorded, unchanged harness-owned state and preserves user edits, project files and shared plugins. Existing configuration from installations without ownership records is not automatically claimed. [Installation and removal →](docs/usage.md#installation-diagnostics-and-removal)
 
 ## Use
 ```bash
@@ -37,6 +40,7 @@ cd ~/Projects/my-app
 harness enable      # turn the full workflow on for this project (off by default)
 ```
 Project instructions, architecture and an active handoff are loaded as bounded startup context. Automatic formatting also needs `harness trust` for the local checkout; `harness status` shows both activation and formatter trust. Run `harness help` for commands and examples. [Context and trust →](docs/usage.md#startup-context-and-formatter-trust)
+Complex independent tasks are delegated automatically using available models after any required plan approval. Disable automatic delegation with `git config harness.delegation off`; small tasks stay direct. [Delegation and integration choices →](docs/usage.md#automatic-delegation-and-integration-choices)
 Then work as usual: "Add Google login", "Work on issue #12", "What would you improve?", "Improve it autonomously until it scores 8/10", "Prepare a release". `harness disable` turns it off. [Usage →](docs/usage.md)
 
 Update with `git pull && ./install.sh`. Sharing it with someone else: [sharing](docs/sharing.md).
@@ -45,7 +49,7 @@ Update with `git pull && ./install.sh`. Sharing it with someone else: [sharing](
 Make the harness your own after cloning it: change the rules, workflow, skills, agents, supported tools, plugins and hooks to fit your preferences. Keep personal changes in your own clone or fork. [Customization guide →](docs/customization.md)
 
 ## Results
-Same tasks, same tool, 12 real sessions ([method and full tables](docs/results.md)):
+Historical results from 12 real sessions with the original grading heuristics (including a test-order metric since corrected) ([method, full tables and limitations](docs/results.md)):
 
 | | Plain assistant | With the harness |
 | --- | --- | --- |

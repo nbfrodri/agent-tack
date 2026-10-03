@@ -27,11 +27,13 @@ flowchart LR
 | --- | --- | --- |
 | `global/AGENTS.md` | Always-on preferences and the workflow for enabled projects | Skills for detailed instructions |
 | `skills/` | Task-specific procedures, references and reusable assets | Global preferences and project conventions |
-| `agents/` | Role-specific instructions for planning, implementation and review | Skills; loaded as subagents by Claude Code |
+| `agents/` | Role-specific instructions for planning, implementation and review | Skills; native definitions where supported, otherwise role instructions for the current runtime |
 | `targets.txt`, `plugins.txt` | Declare supported tools and Claude plugins | Read by the installer |
 | `install.sh` | Orchestrate installation and migration | Data files, settings merge, git and Claude CLI |
+| `lib/ownership.sh`, `lib/ownership.py`, `uninstall.sh` | Record private installation ownership and restore unchanged managed state without removing project files or shared plugins | Bash records and Python standard library validation/restoration |
+| `lib/doctor.sh` | Diagnose managed links, settings, ownership, Git hooks and project state without writes | Installer data, private metadata, Git and `bin/harness` queries |
 | `lib/settings-merge.py`, `.jq` | Merge settings and replace harness-tagged commands while preserving user commands and group metadata | Python standard library or jq |
-| `bin/harness` | Manage activation and local formatter trust; provide bounded startup context | Git repository root and configuration; `lib/project-context.sh` |
+| `bin/harness` | Manage activation and local formatter trust; provide bounded startup context | Git repository root and configuration; `lib/project-context.sh` and `lib/doctor.sh` |
 | `git-hooks/` | Check staged secrets, commit messages and pushed refs; delegate local hooks | `bin/harness`, git and `_chain` |
 | `hooks/claude/` | Supply session context, assess Bash commands and format edited files | `bin/harness`; the guard sources `lib/shell-parse.sh`, which uses its Python parser when available |
 | `tests/`, `.github/workflows/ci.yml` | Validate content and exercise installation and hooks in temporary environments | Bash, git, Python, jq and ShellCheck |
@@ -40,6 +42,14 @@ flowchart LR
 The installer does not implement hook policy. Git hooks share only their local-hook delegation library; Claude's shell parser tokenizes commands and its guard decides what to deny or ask about.
 
 The shell parser uses Python's standard library for bounded lexical analysis and communicates with Bash through NUL-delimited records. A conservative Bash fallback handles short commands when Python is unavailable. Unsupported executable constructs and exceeded limits request review rather than being silently skipped.
+
+## Installation ownership and diagnostics
+
+`install.sh --dry-run` reports intended operations without changing HOME, Git configuration, checkout permissions or plugin state. Applying changes records private versioned ownership evidence through `lib/ownership.sh`: destination, installed target/value, original state and physical parent identity. The first baseline survives reinstallations; already-identical legacy configuration is not newly claimed.
+
+`uninstall.sh` delegates validation and selective restoration to `lib/ownership.py`. It checks the manifest before mutation, restores only unchanged recorded state, preserves user edits and changed parents, and retains incomplete records for retry. JSON snapshots remain local and private. It requires Python even when installation used the jq merge fallback. Neither uninstall nor doctor removes project data or invokes plugin removal.
+
+`harness doctor` delegates to `lib/doctor.sh` and uses `targets.txt`, installed configuration and ownership metadata to diagnose managed components. Deliberate foreign Git hooks and missing optional tools are warnings; broken managed components are errors. Project checks query the CLI's existing activation/trust predicates. Diagnostics read metadata structure, not private restoration snapshot contents for display.
 
 ## Project activation and sessions
 
@@ -58,6 +68,8 @@ flowchart LR
 Human-readable `harness status` reports activation and local formatter trust together. Its exit code, including `--quiet`, depends only on activation. `harness trusted` and its quiet mode depend only on local trust; both commands share the same trust predicate.
 
 `lib/project-context.sh` reads bounded excerpts of project instructions, architecture and an active handoff, without loading the full docs tree. It has a shared byte budget and per-file line limits and skips missing files and external symlinks. `harness.context=false` disables these extra excerpts.
+
+In enabled projects, `skills/orchestrate/` routes complex independent tasks to available models and effort settings under an approved plan. `harness.delegation=off` opts out of automatic delegation; missing/auto uses it. Capability detection and sequential fallbacks avoid promises that the current runtime cannot fulfil.
 
 Instructions guide the model's workflow. Executable hooks enforce a narrower set of checks: secret scanning and attribution removal apply in every repository using the global git hooks; Conventional Commits and tag conventions depend on activation. Claude's command guard runs independently of activation, while file formatting requires an enabled and locally trusted project.
 

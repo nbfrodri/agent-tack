@@ -4,10 +4,12 @@ How to change this repo safely: commands, adding skills or agents, and measuring
 
 ## Commands
 ```bash
-shellcheck -x install.sh bin/harness lib/*.sh tests/*.sh evals/run.sh git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push git-hooks/pre-commit hooks/claude/*.sh hooks/claude/lib/*.sh
+shellcheck -x install.sh uninstall.sh bin/harness lib/*.sh tests/*.sh evals/run.sh git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push git-hooks/pre-commit hooks/claude/*.sh hooks/claude/lib/*.sh
 tests/validate.sh        # skills, agents, cross-references, README coverage, budgets
 tests/validate.test.sh   # the validator catches each kind of error
 tests/install.test.sh    # installer, in throwaway HOME directories
+tests/lifecycle.test.sh  # ownership, previews and safe uninstall
+tests/doctor.test.sh     # read-only installation diagnostics
 tests/hooks.test.sh      # git and Claude Code hooks, in throwaway repos
 tests/cli.test.sh        # activation errors, local trust and bounded startup context
 tests/settings.test.sh   # mixed user and harness hook groups in Python and jq
@@ -34,3 +36,6 @@ Latest results: [results](results.md).
 Metrics version 2 separates Claude and Codex transcript formats, preserves unknown evidence as `null` and distinguishes test-file order from a verified red/green test run. Reports group runs by provider and metrics version rather than combining incompatible measurements.
 
 Codex baseline runs use temporary HOME, XDG and CODEX_HOME directories. Only `auth.json` is copied with private permissions and removed afterward; API authentication through environment variables also works. Keyring-only authentication or credentials defined only in `config.toml` need a compatible authentication method before running the baseline. No global instructions, skills or Codex configuration are copied.
+
+
+Each eval writes `metadata.json` with the scenario, condition, repetition, prompt SHA-256, harness revision, provider/CLI version, metric version and permission allowlist. Set `EVALS_MODEL` to request an explicit model; the resolved model is recorded only when observed in the transcript. A missing observation remains unknown. Do not publish raw transcripts or authentication files. Freeze the harness checkout before comparing runs so instruction edits cannot alter one condition mid-experiment.
