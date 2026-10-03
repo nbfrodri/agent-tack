@@ -1,6 +1,6 @@
 ---
 name: orchestrate
-description: Split an approved plan among subagents in isolated worktrees, recommending model and effort per task, then integrate, test and review. Use when the user asks for subagents or parallel work (hazlo con subagentes, en paralelo, orquesta esto); for large divisible tasks, only suggest it.
+description: Split an approved plan among subagents in isolated worktrees, recommending model and effort per task, then integrate, test and review. Use when the user asks for subagents or parallel work (use subagents, work in parallel, orchestrate this); for large divisible tasks, only suggest it.
 ---
 
 # Orchestrate

@@ -1,6 +1,6 @@
 ---
 name: improve
-description: Review existing code or a project and propose prioritised improvements (architecture, code, performance, security, UI/UX, tests, docs) through read-only reviewers; always asks scope and focus first. Use for review or improvement requests on existing work (qué mejorarías, revisa, audita, dale una vuelta).
+description: Review existing code or a project, propose prioritised improvements and create deduplicated GitHub issues for verified findings through read-only reviews. Always asks scope and focus first. Use for review, audit or improvement requests on existing work.
 ---
 
 # Improve
@@ -43,9 +43,19 @@ Also ask, if it isn't obvious, about context that changes priorities: is it a pr
 - For each finding give: what's wrong and where (`file:line` or a screenshot), why it matters (a concrete consequence), the proposed change, effort, and any risk. If tests are missing where a refactor is proposed, say that characterisation tests come first (`test-writer`).
 - Add a short **"What's good"** section: what to keep doing, so it doesn't get "improved" away.
 
-Show the report to the user in their language (global instructions), concisely, then offer:
+## 4. Create GitHub issues automatically
+
+An audit request authorises creating issues for its verified findings in the project's GitHub repository. Do this after assembling the report, without asking for another confirmation; an explicit user request for no publication takes precedence. Reviewers remain read-only; the main agent performs the writes using `github-issues`.
+
+- Confirm the repository with `gh repo view` and search both open and closed issues. Link an existing open issue when it already tracks the same unresolved problem. A closed issue is evidence to review, not a reason to discard a reproduced regression.
+- Create one issue per independently fixable finding, with evidence, reproduction, impact, proposed change and acceptance criteria. Save body text to a temporary file and use `--body-file`.
+- Do not turn optional feature suggestions or unverified concerns into issues unless the user asks for them.
+- If GitHub is unavailable, no GitHub remote exists or creation is denied, report what remains untracked and keep the local audit. Do not invent issue URLs or repeatedly retry writes with uncertain results; check whether an issue was created first.
+- Record issue links and status in the audit and include them in the report to the user. Pushes, PRs, merges and other writes still follow their own approval rules.
+
+Show the report and issue links to the user in their language (global instructions), concisely, then offer:
 1. to save it to `docs/audits/YYYY-MM-DD-improvement-<scope>.md` (template in `project-docs`);
-2. to create GitHub issues for the chosen findings (`github-issues`, after confirmation);
+2. to start work on the created or existing issues they choose;
 3. to start implementing the ones they choose, via `dev-workflow`, one finding per branch or PR.
 
 ## Principles

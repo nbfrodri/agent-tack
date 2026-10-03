@@ -69,10 +69,7 @@ echo "Cross-references and README"
 # Paths like ~/.agents/skills/<skill>/... and ~/.agents/harness/... are what agents and skills
 # read at runtime; references/x.md belongs to the skill it's written in unless another skill is
 # named next to it ("`dev-workflow` → `references/x.md`" or "dev-workflow/references/x.md").
-while IFS= read -r problem; do
-  [ -n "$problem" ] && err "$problem"
-done <<EOF
-$(python3 - "$REPO" <<'PY'
+if problems="$(python3 - "$REPO" <<'PY'
 import re, sys
 from pathlib import Path
 
@@ -105,9 +102,16 @@ for name in sorted(skills | agents):
     if f"`{name}`" not in readme:
         print(f"README.md: `{name}` is not documented")
 PY
-)
+)"; then
+  while IFS= read -r problem; do
+    [ -n "$problem" ] && err "$problem"
+  done <<EOF
+$problems
 EOF
-echo "  ✔ checked"
+  echo "  ✔ checked"
+else
+  err "cross-reference checker failed"
+fi
 
 echo "plugins.txt"
 while read -r kind id source _; do

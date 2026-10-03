@@ -3,6 +3,7 @@
 Docs are updated in the same change as the code that affects them; outdated docs are worse than none. Structure, templates, docs for humans and AIs, plans, audits and handoffs: `project-docs` skill.
 
 ## Before closing a task
+- Does this enabled project have `docs/architecture.md` linked from its README and docs index? → if missing, add it during a significant task, based on the code.
 - Did installing, configuring or running change? → `README.md`, `docs/development.md` and `AGENTS.md` (commands).
 - New environment variables or config? → `.env.example` (no real values) and `docs/development.md`.
 - Did a public API, CLI or endpoint change? → `docs/api.md` or the generated reference, and examples.

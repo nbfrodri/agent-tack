@@ -9,7 +9,7 @@
 #               without the global hooks (same repo and prompt)
 # Results go to $EVALS_OUT (default: $TMPDIR/agent-harness-evals)/<scenario>/<condition>-<rep>;
 # grade them with evals/grade.py and summarise them with evals/report.py.
-set -uo pipefail
+set -eEuo pipefail
 
 HARNESS_REPO="$(cd "$(dirname "$0")/.." && pwd)"
 EVALS="${EVALS_OUT:-${TMPDIR:-/tmp}/agent-harness-evals}"
@@ -33,16 +33,31 @@ out="$EVALS/$name/$condition-$rep"
 dir="$out/repo"
 rm -rf "$out"
 mkdir -p "$dir"
+exec 2> "$out/stderr.log"
+start=$(date +%s)
+isolated_home=""
+# shellcheck disable=SC2317,SC2329 # Invoked indirectly by the EXIT trap.
+finish() {
+  status=$?
+  printf 'exit=%s seconds=%s\n' "$status" "$(( $(date +%s) - start ))" > "$out/run.txt"
+  if [ -n "$isolated_home" ]; then rm -rf "$isolated_home"; fi
+}
+trap finish EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+trap 'status=$?; echo "Scenario setup failed (exit=$status)" >> "$out/stderr.log"; exit "$status"' ERR
 
 if [ "$condition" = baseline ]; then
   # A git config without the harness hooks, keeping only the user's identity
+  eval_user=$(git config --global --get user.name 2>/dev/null || echo Eval)
+  eval_email=$(git config --global --get user.email 2>/dev/null || echo eval@example.com)
   export GIT_CONFIG_GLOBAL="$out/gitconfig"
-  git config --file "$GIT_CONFIG_GLOBAL" user.name "$(git config --global --get user.name 2>/dev/null || echo Eval)"
-  git config --file "$GIT_CONFIG_GLOBAL" user.email "$(git config --global --get user.email 2>/dev/null || echo eval@example.com)"
+  git config --file "$GIT_CONFIG_GLOBAL" user.name "$eval_user"
+  git config --file "$GIT_CONFIG_GLOBAL" user.email "$eval_email"
   git config --file "$GIT_CONFIG_GLOBAL" init.defaultBranch main
 fi
 
-NEW_PROJECT_PROMPT='Crea una pequeña librería en Python (usa uv) para calcular el total de un carrito de compra: precio por cantidad, 10% de descuento por volumen a partir de 10 unidades del mismo producto, e IVA del 21% sobre el total. Es un proyecto nuevo en esta carpeta. No hace falta que me preguntes nada, decide tú lo razonable.'
+NEW_PROJECT_PROMPT='Create a small Python library (use uv) to calculate a shopping cart total: price times quantity, a 10% volume discount for 10 or more units of the same product, and 21% VAT on the total. This is a new project in this directory. You do not need to ask me questions; choose reasonable defaults.'
 
 seed_bug_repo() {
   cd "$dir" || exit 1
@@ -141,15 +156,28 @@ cd "$dir" || exit 1
 
 case "$name" in
   new-project | codex-new-project) prompt="$NEW_PROJECT_PROMPT" ;;
-  bug-fix) prompt='Cuando el carrito está vacío, average_price peta con ZeroDivisionError. Debería devolver 0. Arréglalo.' ;;
-  release) prompt='Prepara la siguiente release del proyecto. No hay remoto configurado todavía.' ;;
+  bug-fix) prompt='When the cart is empty, average_price raises ZeroDivisionError. It should return 0. Fix it.' ;;
+  release) prompt='Prepare the next release of the project. No remote is configured yet.' ;;
 esac
 printf '%s\n' "$prompt" > "$out/prompt.txt"
 
 baseline_flags=()
 [ "$condition" = baseline ] && baseline_flags=(--setting-sources "project,local" --disable-slash-commands)
 
+if [ "$condition" = baseline ] && [ "$name" = codex-new-project ]; then
+  auth_source="${CODEX_HOME:-$HOME/.codex}/auth.json"
+  isolated_home=$(mktemp -d "${TMPDIR:-/tmp}/harness-eval-home.XXXXXX")
+  chmod 700 "$isolated_home"
+  mkdir -m 700 "$isolated_home/.codex" "$isolated_home/.config"
+  if [ -f "$auth_source" ]; then
+    (umask 077; cat "$auth_source" > "$isolated_home/.codex/auth.json")
+  fi
+  export HOME="$isolated_home" CODEX_HOME="$isolated_home/.codex" XDG_CONFIG_HOME="$isolated_home/.config"
+fi
+
 start=$(date +%s)
+trap - ERR
+set +e
 case "$name" in
   codex-new-project)
     codex exec --json -s workspace-write -c sandbox_workspace_write.network_access=true \
@@ -165,4 +193,5 @@ case "$name" in
       > "$out/transcript.jsonl" 2> "$out/stderr.log"
     ;;
 esac
-echo "exit=$? seconds=$(( $(date +%s) - start ))" > "$out/run.txt"
+status=$?
+exit "$status"

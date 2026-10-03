@@ -3,9 +3,9 @@
 # Denies commands that are catastrophic or bypass safety nets, and asks for confirmation
 # for commands that destroy work or data. Everything else is left to the normal permission flow.
 #
-# Commands are parsed like a shell would (lib/shell-parse.sh), and `bash -c`/`eval` strings and
-# substitutions are checked too, so quoted text is never mistaken for commands and quoted targets
-# are still recognised. This file holds only the policy: what to deny and what to ask about.
+# Supported shell words, bash -c/eval strings and substitutions are inspected. Unsupported
+# executable syntax and analysis limits require review. Quoted data stays data.
+# This file holds only the policy: what to deny and what to ask about.
 #
 # Input: the hook JSON on stdin. Output: a permission decision as JSON, or nothing.
 # Fails open (allows) if the input can't be parsed, so a broken hook never blocks work.
@@ -71,7 +71,7 @@ check_git() {
     if [ "$skip_next" -eq 1 ]; then
       skip_next=0
       case "$prev" in
-        -c) case "$(printf '%s' "$a" | tr '[:upper:]' '[:lower:]')" in
+        -c | --config-env) case "$(printf '%s' "$a" | tr '[:upper:]' '[:lower:]')" in
               core.hookspath=*) deny "Overriding core.hooksPath disables the git hooks that enforce the user's rules." ;;
             esac ;;
       esac
@@ -80,8 +80,8 @@ check_git() {
     if [ -z "$sub" ]; then
       case "$a" in
         -C | -c | --git-dir | --work-tree | --namespace | --config-env) prev="$a"; skip_next=1 ;;
-        --config-env=*) case "$(printf '%s' "$a" | tr '[:upper:]' '[:lower:]')" in
-                          *core.hookspath*) deny "Overriding core.hooksPath disables the git hooks that enforce the user's rules." ;;
+        -c?* | --config-env=*) case "$(printf '%s' "$a" | tr '[:upper:]' '[:lower:]')" in
+                          -ccore.hookspath=* | --config-env=core.hookspath=*) deny "Overriding core.hooksPath disables the git hooks that enforce the user's rules." ;;
                         esac ;;
         -*) ;;
         *) sub="$a" ;;
@@ -169,6 +169,10 @@ check_git_commit() {
         letters="${a#-}"
         k=0
         while [ "$k" -lt "${#letters}" ]; do
+          if [ "$k" -ge 128 ]; then
+            ask "Compact git option exceeds the analysis limit; review the complete command."
+            break
+          fi
           letter="${letters:k:1}"
           case "$letter" in
             n) deny "git commit -n is --no-verify: it skips the git hooks that enforce commit conventions." ;;
@@ -272,10 +276,15 @@ check_database() {
 
 # Checks one simple command given as words
 check_command() {
-  local words=() w skip_redir=0 i=0 cmd base
+  COMMAND_COUNT=$((COMMAND_COUNT + 1))
+  if [ "$COMMAND_COUNT" -gt 256 ]; then
+    ask "Shell command count limit exceeded; review the complete command."
+    return 0
+  fi
+  local words=() w skip_redir=0 has_redir=0 i=0 cmd base
   for w in "$@"; do
     if [ "$skip_redir" -eq 1 ]; then skip_redir=0; continue; fi
-    if [ "$w" = "$REDIR" ]; then skip_redir=1; continue; fi
+    if [ "$w" = "$REDIR" ]; then skip_redir=1; has_redir=1; continue; fi
     words+=("$w")
   done
   [ "${#words[@]}" -gt 0 ] || return 0
@@ -283,10 +292,58 @@ check_command() {
   # Skip env assignments and wrappers that run the rest as a command
   while [ "$i" -lt "${#words[@]}" ]; do
     w="${words[$i]}"
-    case "$w" in
+    case "${w##*/}" in
       *=*) case "$w" in -*) break ;; esac; i=$((i + 1)) ;;
-      sudo | doas | command | exec | nohup | time | builtin) i=$((i + 1)) ;;
-      env | nice | stdbuf | ionice)
+      sudo | doas)
+        i=$((i + 1))
+        while [ "$i" -lt "${#words[@]}" ]; do
+          case "${words[$i]}" in
+            --) i=$((i + 1)); break ;;
+            -u | -g | -h | -p | -C | -T | -R | -D | -a | --user | --group | --host | --prompt | --close-from | --command-timeout | --chroot | --chdir)
+              i=$((i + 2)) ;;
+            -n | -E | -H | -S | -b | -k | -K | -A | --non-interactive | --preserve-env | --set-home | --stdin | --background | --reset-timestamp)
+              i=$((i + 1)) ;;
+            --user=* | --group=* | --host=* | --prompt=* | --preserve-env=* | --chdir=* | --chroot=* | -u?* | -g?*)
+              i=$((i + 1)) ;;
+            -*) ask "Unsupported privilege-wrapper option requires review."; return 0 ;;
+            *=*) i=$((i + 1)) ;;
+            *) break ;;
+          esac
+        done
+        ;;
+      command | exec | nohup | time | builtin)
+        i=$((i + 1))
+        while [ "$i" -lt "${#words[@]}" ]; do
+          case "${words[$i]}" in
+            -- | -p) i=$((i + 1)) ;;
+            -v | -V) return 0 ;;
+            -*) ask "Unsupported command-wrapper option requires review."; return 0 ;;
+            *) break ;;
+          esac
+        done
+        ;;
+      env)
+        i=$((i + 1))
+        while [ "$i" -lt "${#words[@]}" ]; do
+          case "${words[$i]}" in
+            --) i=$((i + 1)); break ;;
+            -S | --split-string)
+              if [ $((i + 1)) -ge "${#words[@]}" ]; then
+                ask "Missing env split string requires review."; return 0
+              fi
+              check_env_split "${words[$((i + 1))]}" "${words[@]:$((i + 2))}"
+              return 0 ;;
+            -S?*) check_env_split "${words[$i]#-S}" "${words[@]:$((i + 1))}"; return 0 ;;
+            --split-string=*) check_env_split "${words[$i]#--split-string=}" "${words[@]:$((i + 1))}"; return 0 ;;
+            -u | --unset | -C | --chdir) i=$((i + 2)) ;;
+            -i | --ignore-environment | -0 | --null | --unset=* | --chdir=*) i=$((i + 1)) ;;
+            -*) ask "Unsupported env option requires review."; return 0 ;;
+            *=*) i=$((i + 1)) ;;
+            *) break ;;
+          esac
+        done
+        ;;
+      nice | stdbuf | ionice)
         i=$((i + 1))
         while [ "$i" -lt "${#words[@]}" ]; do
           case "${words[$i]}" in
@@ -327,18 +384,29 @@ check_command() {
   local args=("${words[@]:$((i + 1))}")
 
   case "$base" in
+    *'__subst__'* | *'$'* | *'`'*) ask "Dynamic executable name requires review." ;;
     git) check_git "${args[@]+"${args[@]}"}" ;;
     rm) check_rm "${args[@]+"${args[@]}"}" ;;
     bash | sh | zsh | dash | ksh)
-      local k=0
+      local k=0 shell_string=0
       while [ "$k" -lt "${#args[@]}" ]; do
         case "${args[$k]}" in
-          -c | -*c) [ $((k + 1)) -lt "${#args[@]}" ] && analyze "${args[$((k + 1))]}" ; break ;;
+          -c | -*c)
+            shell_string=1
+            if [ $((k + 1)) -lt "${#args[@]}" ]; then
+              analyze "${args[$((k + 1))]}"
+            else
+              ask "Missing shell command string requires review."
+            fi
+            break ;;
           -*) ;;
           *) break ;;
         esac
         k=$((k + 1))
       done
+      if [ "$shell_string" -eq 0 ] && [ "$has_redir" -eq 1 ]; then
+        ask "Shell stdin script or here-string requires review."
+      fi
       ;;
     eval) analyze "${args[*]+"${args[*]}"}" ;;
   esac
@@ -354,13 +422,54 @@ check_command() {
   esac
 }
 
-DEPTH=0
-analyze() {
-  [ "$DEPTH" -lt 4 ] || return 0
+check_env_split() {
+  local split="$1" token TOKENS SUBS PARSE_ERROR
+  shift
+  if [ "$DEPTH" -ge 4 ]; then
+    ask "Shell analysis depth limit exceeded; review the complete command."
+    return 0
+  fi
+  case "$split" in
+    *\\* | *'$'* | *'`'*) ask "Unsupported env split-string expansion requires review."; return 0 ;;
+  esac
+  tokenize "$split"
+  if [ -n "$PARSE_ERROR" ]; then ask "$PARSE_ERROR"; return 0; fi
+  for token in "${TOKENS[@]+"${TOKENS[@]}"}"; do
+    case "$token" in
+      "$SEP" | "$REDIR") ask "Unsupported env split-string syntax requires review."; return 0 ;;
+    esac
+  done
   DEPTH=$((DEPTH + 1))
-  local TOKENS SUBS t segment=() sub
+  check_command env "${TOKENS[@]+"${TOKENS[@]}"}" "$@"
+  DEPTH=$((DEPTH - 1))
+}
+
+DEPTH=0
+COMMAND_COUNT=0
+ANALYSIS_COUNT=0
+analyze() {
+  ANALYSIS_COUNT=$((ANALYSIS_COUNT + 1))
+  if [ "$ANALYSIS_COUNT" -gt 64 ]; then
+    ask "Shell analysis count limit exceeded; review the complete command."
+    return 0
+  fi
+  if [ "$DEPTH" -ge 4 ]; then
+    ask "Shell analysis depth limit exceeded; review the complete command."
+    return 0
+  fi
+  if [ "${#1}" -gt 65536 ]; then
+    ask "Command size exceeds the 65536-character analysis limit; review the complete command."
+    return 0
+  fi
+  DEPTH=$((DEPTH + 1))
+  local TOKENS SUBS PARSE_ERROR t segment=() sub
   set -f
   tokenize "$1"
+  if [ -n "$PARSE_ERROR" ]; then
+    ask "$PARSE_ERROR"
+    DEPTH=$((DEPTH - 1))
+    return 0
+  fi
   for t in "${TOKENS[@]+"${TOKENS[@]}"}"; do
     if [ "$t" = "$SEP" ]; then
       check_command "${segment[@]+"${segment[@]}"}"

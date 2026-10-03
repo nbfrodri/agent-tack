@@ -16,17 +16,18 @@ Out of the box, AI assistants forget your conventions every session, skip tests,
 | **Agents** | `planner`, `implementer`, `code-reviewer`, `test-writer`, `docs-writer`, `evaluator`, `architecture-reviewer`, `security-auditor`, `performance-analyzer`, `ui-reviewer` |
 | **Enforced by hooks** | Conventional Commits, no AI attribution, no secrets or `.env` committed, protected `main` and tags, a guard against dangerous commands, auto-format |
 | **Tools** | Claude Code, Codex, Cursor, GitHub Copilot CLI, Gemini CLI, OpenCode, Crush |
-| **Quality** | ~260 tests on Linux and macOS; [measured results](docs/results.md) |
+| **Quality** | 426 automated checks; CI targets Linux and macOS; [measured results](docs/results.md) |
 
-Details: [components](docs/components.md) · [how it works](docs/how-it-works.md) · [conventions](docs/conventions.md).
+Details: [architecture](docs/architecture.md) · [components](docs/components.md) · [how it works](docs/how-it-works.md) · [conventions](docs/conventions.md).
 
 ## Install
 1. Requirements: Linux, macOS or Windows with WSL; `git`, `bash`, `python3` or `jq`, and at least one supported AI tool. Recommended: `gh`, logged in.
-2. Clone and install:
+2. Clone and install. The path below is an example; replace `~/Projects/agent-harness` in both commands with any directory where you want to keep the repository:
    ```bash
    git clone https://github.com/nbfrodri/agent-harness.git ~/Projects/agent-harness
    ~/Projects/agent-harness/install.sh
    ```
+   Keep the repository at that path after installation: the installed files are symlinks to it. If you move it, run `install.sh` again from its new location.
 3. Read any warning it prints (e.g. Cursor needs its global rules pasted once), and make sure `~/.local/bin` is in your `PATH`.
 4. Restart your AI tools.
 
@@ -35,9 +36,13 @@ Details: [components](docs/components.md) · [how it works](docs/how-it-works.md
 cd ~/Projects/my-app
 harness enable      # turn the full workflow on for this project (off by default)
 ```
-Then work as usual: "Añade login con Google", "Trabaja en el issue #12", "¿Qué mejorarías?", "Mejóralo solo hasta un 8", "Haz una release". `harness disable` turns it off. [Usage →](docs/usage.md)
+Project instructions, architecture and an active handoff are loaded as bounded startup context. Automatic formatting also needs `harness trust` for the local checkout. [Context and trust →](docs/usage.md#startup-context-and-formatter-trust)
+Then work as usual: "Add Google login", "Work on issue #12", "What would you improve?", "Improve it autonomously until it scores 8/10", "Prepare a release". `harness disable` turns it off. [Usage →](docs/usage.md)
 
 Update with `git pull && ./install.sh`. Sharing it with someone else: [sharing](docs/sharing.md).
+
+## Customize
+Make the harness your own after cloning it: change the rules, workflow, skills, agents, supported tools, plugins and hooks to fit your preferences. Keep personal changes in your own clone or fork. [Customization guide →](docs/customization.md)
 
 ## Results
 Same tasks, same tool, 12 real sessions ([method and full tables](docs/results.md)):
@@ -56,6 +61,8 @@ Same tasks, same tool, 12 real sessions ([method and full tables](docs/results.m
 | [Why](docs/why.md) | The problem, the solution, strengths and limits |
 | [Usage](docs/usage.md) | On/off, what to ask, overrides, updating |
 | [How it works](docs/how-it-works.md) | Supported tools, installer, hooks, layout |
+| [Architecture](docs/architecture.md) | Components, dependencies, installation and runtime flows |
+| [Customization](docs/customization.md) | Adapt the harness to your preferences and keep personal changes |
 | [Components](docs/components.md) | Every skill, agent and plugin |
 | [Conventions](docs/conventions.md) | Commits, PRs, releases, code, docs |
 | [Results](docs/results.md) | Measured with vs without the harness |

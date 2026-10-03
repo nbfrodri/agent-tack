@@ -1,6 +1,6 @@
 ---
 name: e2e-testing
-description: End-to-end browser tests with Playwright: critical flows, resilient locators, auth state, test data, flaky tests, CI. Use when writing or fixing E2E or browser tests (Playwright, Cypress, e2e, probar el flujo completo).
+description: End-to-end browser tests with Playwright: critical flows, resilient locators, auth state, test data, flaky tests, CI. Use when writing or fixing E2E or browser tests (Playwright, Cypress, e2e, test the full flow).
 ---
 
 # End-to-end testing (Playwright)

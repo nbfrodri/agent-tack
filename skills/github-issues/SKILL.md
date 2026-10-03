@@ -1,15 +1,15 @@
 ---
 name: github-issues
-description: GitHub issues with gh: work an issue end to end (linked branch, PR that closes it), write bug reports and feature requests, split plans into issues, triage, templates. Use when an issue or ticket is mentioned (el issue #12, crea un issue, qué hay pendiente).
+description: GitHub issues with gh: work an issue end to end (linked branch, PR that closes it), write bug reports and feature requests, split plans into issues, triage, templates. Use when an issue or ticket is mentioned (issue #12, create an issue, list pending work).
 ---
 
 # GitHub issues
 
 Issues are the project's to-do list and its memory: why something was built, what was decided and what's still pending. Good issues are small, specific and have acceptance criteria, so anyone (a person or an AI) can pick one up and know when it's done.
 
-Creating, editing, commenting on, labelling or closing issues is visible to other people, so **ask the user before any write** to GitHub. Reading (`gh issue list/view`) is always fine.
+Creating, editing, commenting on, labelling or closing issues is visible to other people, so **ask the user before any write** to GitHub unless already authorised. The `improve` audit workflow authorises creation of issues for verified findings, without a second confirmation, except when the user requests no publication. This exception does not authorise comments, closing issues or unrelated writes. Reading (`gh issue list/view`) is always fine.
 
-## Working on an issue ("trabaja en el issue #12")
+## Working on an issue ("work on issue #12")
 1. **Read it whole:** `gh issue view 12 --comments`, including linked issues/PRs and any screenshots or logs. Check it's still open and not already being worked on (assignee, linked branches: `gh issue develop --list 12`).
 2. **Clarify:** if the acceptance criteria are missing or ambiguous, propose them to the user (and, with permission, as a comment on the issue) before coding.
 3. **Plan** as usual (`dev-workflow`), with the issue's acceptance criteria as the definition of done.
@@ -72,7 +72,7 @@ Don't silently fix unrelated problems inside the current change, and don't forge
 ## Labels, milestones, triage
 - Use the repo's existing labels (`gh label list`). For new repos, a minimal set: `bug`, `enhancement`, `documentation`, `chore`, `good first issue`, `priority: high`.
 - Milestones group the issues of a release (pairs well with the `release` skill).
-- "¿Qué hay pendiente?": `gh issue list --state open --limit 50` (filter with `--label`, `--assignee @me`, `--milestone`), then summarise by priority and suggest what to tackle next and why.
+- "What is pending?": `gh issue list --state open --limit 50` (filter with `--label`, `--assignee @me`, `--milestone`), then summarise by priority and suggest what to tackle next and why.
 
 ## Templates for a repository
 To give a repo issue forms and a PR template, copy this skill's `assets/`:

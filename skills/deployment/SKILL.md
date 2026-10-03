@@ -1,6 +1,6 @@
 ---
 name: deployment
-description: Docker, CI/CD with GitHub Actions and deploys to Vercel, a VPS or AWS: environments, secrets, migrations on deploy, rollbacks. Use for Dockerfiles, compose files, pipelines, hosting or production (deploy, despliegue, producción, servidor).
+description: Docker, CI/CD with GitHub Actions and deploys to Vercel, a VPS or AWS: environments, secrets, migrations on deploy, rollbacks. Use for Dockerfiles, compose files, pipelines, hosting or production (deploy, production, server).
 ---
 
 # Deployment

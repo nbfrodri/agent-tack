@@ -19,10 +19,14 @@ def merge(base, extra):
             base[key] = value
     return base
 
-def is_ours(group):
-    return isinstance(group, dict) and any(
-        isinstance(h, dict) and any(t in str(h.get("command", "")) for t in TAGS) for h in group.get("hooks", [])
-    )
+def is_ours(hook):
+    return isinstance(hook, dict) and any(t in str(hook.get("command", "")) for t in TAGS)
+
+def clean_group(group):
+    if not isinstance(group, dict) or not isinstance(group.get("hooks"), list):
+        return group
+    kept = [hook for hook in group["hooks"] if not is_ours(hook)]
+    return dict(group, hooks=kept) if kept else None
 
 with open(sys.argv[1]) as f:
     current = json.load(f)
@@ -36,7 +40,12 @@ merged = merge(current, wanted)
 hooks = merged.get("hooks") if isinstance(merged.get("hooks"), dict) else {}
 for event in list(hooks):
     if isinstance(hooks[event], list):
-        hooks[event] = [g for g in hooks[event] if not is_ours(g)]
+        kept = []
+        for group in hooks[event]:
+            cleaned = clean_group(group)
+            if cleaned is not None:
+                kept.append(cleaned)
+        hooks[event] = kept
         if not hooks[event]:
             del hooks[event]
 for event, groups in wanted_hooks.items():

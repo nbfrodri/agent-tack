@@ -1,6 +1,6 @@
 ---
 name: auto-improve
-description: Autonomous improvement loop: an evaluator scores the project, you act as team lead delegating fixes to agents, then re-score, until the target score or a limit is reached; works on its own branch and never pushes. Use only when the user asks for it (modo autónomo, mejóralo solo, auto-improve, itera hasta una nota).
+description: Autonomous improvement loop: an evaluator scores the project, you act as team lead delegating fixes to agents, then re-score, until the target score or a limit is reached; works on its own branch and never pushes. Use only when the user asks for it (autonomous mode, auto-improve, iterate until a target score).
 ---
 
 # Auto-improve

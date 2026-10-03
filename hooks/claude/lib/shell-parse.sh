@@ -1,18 +1,18 @@
 # Shell command parser for the Claude Code hooks (sourced, not executed).
 #
 # tokenize <command> splits a command line the way a shell would: quotes and escapes, the
-# separators ; & | && || ( ) and newlines, heredoc bodies (skipped: they're data), and
+# separators ; & | && || ( ) and newlines, heredocs and
 # redirections. It sets:
 #   TOKENS  the unquoted words, with SEP between simple commands and REDIR before redirection targets
 #   SUBS    the bodies of $(…) and `…` substitutions, to be checked as commands too
-# shellcheck shell=bash
+# shellcheck shell=bash disable=SC2034
 
 SEP=$'\x1f'
 REDIR=$'\x1e'
 
 # Splits a command line into TOKENS (unquoted words), with SEP between simple commands and REDIR
 # before redirection targets. Command substitutions are collected in SUBS to be checked too.
-tokenize() {
+tokenize_bash() {
   local s="$1" len=${#1} i=0 c tok="" has_tok=0 quote="" heredoc="" strip_tabs=0 j depth rest
   TOKENS=()
   SUBS=()
@@ -131,4 +131,48 @@ tokenize() {
     i=$((i + 1))
   done
   flush
+}
+
+SHELL_PARSE_HELPER="$(dirname "${BASH_SOURCE[0]}")/shell-parse.py"
+
+tokenize() {
+  TOKENS=()
+  SUBS=()
+  PARSE_ERROR=""
+  if command -v python3 >/dev/null 2>&1; then
+    local kind value complete=0
+    while IFS= read -r -d '' kind && IFS= read -r -d '' value; do
+      case "$kind" in
+        T) TOKENS+=("$value") ;;
+        S) SUBS+=("$value") ;;
+        E) PARSE_ERROR="$value" ;;
+        Z) complete=1 ;;
+      esac
+    done < <(printf '%s' "$1" | python3 "$SHELL_PARSE_HELPER" 2>/dev/null)
+    [ "$complete" -eq 1 ] || PARSE_ERROR="Shell parser failed; review the complete command."
+    return 0
+  fi
+  if [ "${#1}" -gt 1024 ]; then
+    PARSE_ERROR="Command size exceeds the Bash fallback limit without Python; review the complete command."
+    return 0
+  fi
+  # The fallback has no full shell grammar; every uncertain input must be reviewed.
+  case "$1" in
+    *'<<'* | *\$* | *'`'* | *'('* | *')'* | *'{'* | *'}'*)
+      PARSE_ERROR="Shell syntax requires review because Python is unavailable."
+      return 0 ;;
+  esac
+  tokenize_bash "$1"
+  local token start=1
+  for token in "${TOKENS[@]+"${TOKENS[@]}"}"; do
+    if [ "$token" = "$SEP" ]; then start=1; continue; fi
+    if [ "$start" -eq 1 ]; then
+      case "$token" in
+        '!' | if | then | elif | else | fi | for | while | until | do | done | case | 'esac' | select | function)
+          PARSE_ERROR="Shell control flow requires review because Python is unavailable."
+          return 0 ;;
+      esac
+    fi
+    start=0
+  done
 }

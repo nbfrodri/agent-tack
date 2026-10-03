@@ -1,6 +1,6 @@
 ---
 name: dev-workflow
-description: The user's engineering workflow for projects with harness enabled: plan first, TDD, SOLID/DDD, code and git conventions (Conventional Commits, branches, PRs) and docs. Use whenever writing, changing or debugging code, committing or opening PRs in such projects (programa, implementa, arregla, haz commit).
+description: The user's engineering workflow for projects with harness enabled: plan first, TDD, SOLID/DDD, code and git conventions (Conventional Commits, branches, PRs) and docs. Use whenever writing, changing or debugging code, committing or opening PRs in such projects (implement, fix, commit).
 ---
 
 # Dev Workflow
@@ -47,6 +47,8 @@ One commit per logical change, in Conventional Commits, committing as you go rat
 
 ### 7. Document
 Simple, precise and concise docs for humans (`README`, `docs/`) and AIs (`AGENTS.md`), following `project-docs`. Save approved plans, relevant audits and, if the task is left unfinished, a handoff in `docs/`; add a row to `docs/ai/log.md` for each significant task. Go through the checklist in `references/documentation.md` before closing the task, and record significant architecture decisions as ADRs.
+
+Every enabled project should have `docs/architecture.md`, linked from its README and documentation index. If it is missing in an existing project, add it during the first significant task after reading the code. Document the actual components, responsibilities, dependency direction and key flows; update it whenever those change. Use `project-docs` for the format.
 
 ### 8. Verify
 Run the project's tests, linter, formatter and type checker. Never say something works without having checked it; if something fails or couldn't run, say so clearly, with the output.

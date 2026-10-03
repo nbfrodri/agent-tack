@@ -415,6 +415,7 @@ FORMAT="$REPO/hooks/claude/format-file.sh"
 P="$WORK/project"
 mkdir -p "$P/node_modules/.bin" "$P/src"
 git init -q "$P"
+git -C "$P" config --local harness.trusted true
 cat > "$P/node_modules/.bin/prettier" <<'EOF'
 #!/usr/bin/env bash
 for a in "$@"; do case "$a" in -*) ;; *) echo "// formatted" >> "$a" ;; esac; done
@@ -446,6 +447,7 @@ done
 RS="$WORK/rust-project"
 mkdir -p "$RS/src"
 git init -q "$RS"
+git -C "$RS" config --local harness.trusted true
 printf '[package]\nname = "demo"\nedition = "2021"\n' > "$RS/Cargo.toml"
 echo "fn main(){}" > "$RS/src/main.rs"
 printf '{"tool_input":{"file_path":"%s"}}' "$RS/src/main.rs" | PATH="$STUBS:$PATH" bash "$FORMAT"

@@ -38,6 +38,7 @@ else
 fi
 
 echo "Detects"
+expect_failure "a checker exception fails validation" "cross-reference checker failed" "rm README.md"
 # Expected messages quote paths literally, as written in the docs
 # shellcheck disable=SC2088
 {
