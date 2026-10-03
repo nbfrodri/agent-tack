@@ -85,9 +85,15 @@ git config --global core.hooksPath /my/deliberate/hooks
 run_doctor
 check 'deliberate unrelated hooksPath warns without failing' [ "$RC" -eq 0 ]
 check 'unrelated hooks warning is explicit' grep -q 'WARN.*global Git hooks' "$WORK/report"
+mkdir -p "$WORK/custom/git-hooks"
+printf '# user helper\n' > "$WORK/custom/git-hooks/_chain"
+git config --global core.hooksPath "$WORK/custom/git-hooks"
+run_doctor
+check 'foreign git-hooks directory and _chain do not establish ownership' [ "$RC" -eq 0 ]
+check 'foreign git-hooks directory receives an explicit warning' grep -q 'WARN.*global Git hooks' "$WORK/report"
 git config --global core.hooksPath "$WORK/moved/git-hooks"
 run_doctor
-check 'missing managed Git hooks are an error' [ "$RC" -eq 1 ]
+check 'unrecorded missing git-hooks path is an optional warning' [ "$RC" -eq 0 ]
 git config --global core.hooksPath "$REPO/git-hooks"
 git -C "$WORK/outside" init -q
 (cd "$WORK/outside" && "$REPO/bin/harness" enable >/dev/null && "$REPO/bin/harness" trust >/dev/null)
@@ -140,6 +146,16 @@ check 'recorded optional target missing is an error even when CLI is absent' [ "
 ln -s "$REPO/global/AGENTS.md" "$HOME/.gemini/GEMINI.md"
 run_doctor
 check 'valid ownership metadata and recorded links are healthy' [ "$RC" -eq 0 ]
+mkdir -p "$STATE/entries/2"
+printf 'git\n' > "$STATE/entries/2/kind"
+printf '%s\n' "$HOME/.gitconfig" > "$STATE/entries/2/path"
+printf '%s\n' "$HOME" > "$STATE/entries/2/parent"
+printf '%s\n' "$WORK/moved/git-hooks" > "$STATE/entries/2/target"
+printf '' > "$STATE/entries/2/before"
+git config --global core.hooksPath "$WORK/moved/git-hooks"
+run_doctor
+check 'recorded managed Git hooksPath missing is an error' [ "$RC" -eq 1 ]
+git config --global core.hooksPath "$REPO/git-hooks"
 printf '99\n' > "$STATE/version"
 run_doctor
 check 'unsupported ownership version is an error' [ "$RC" -eq 1 ]

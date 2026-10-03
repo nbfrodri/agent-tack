@@ -6,7 +6,7 @@ if [ "$#" -ne 1 ] || [ ! -d "$1" ]; then
   exit 2
 fi
 REPO="$(cd "$1" && pwd)" || exit 2
-FAILURES=0 WARNINGS=0
+FAILURES=0 WARNINGS=0 OWNERSHIP_VALID=0
 ok() { printf 'OK   %s\n' "$1"; }
 warn() { printf 'WARN %s\n' "$1"; WARNINGS=$((WARNINGS + 1)); }
 fail() { printf 'FAIL %s\n' "$1"; FAILURES=$((FAILURES + 1)); }
@@ -151,6 +151,15 @@ PYTHON
     *) fail 'Claude settings: invalid or unreadable JSON object' ;;
   esac
 }
+recorded_git_hooks_path() {
+  local path="$1" state="${XDG_STATE_HOME:-$HOME/.local/state}/agent-harness/ownership" entry
+  [ "$OWNERSHIP_VALID" -eq 1 ] || return 1
+  for entry in "$state"/entries/*; do
+    [ -f "$entry/kind" ] && [ -f "$entry/target" ] || continue
+    if [ "$(< "$entry/kind")" = git ] && [ "$(< "$entry/target")" = "$path" ]; then return 0; fi
+  done
+  return 1
+}
 check_hooks_path() {
   local scope="$1" path="$2" source
   if [ "$path" = "$REPO/git-hooks" ]; then
@@ -160,7 +169,7 @@ check_hooks_path() {
     ok "$scope Git hooks: configured for this checkout"
   elif [ -z "$path" ]; then
     fail "$scope Git hooks: no hooksPath configured"
-  elif [ "${path##*/}" = git-hooks ] && { [ ! -d "$path" ] || [ -f "$path/_chain" ]; }; then
+  elif recorded_git_hooks_path "$path"; then
     fail "$scope Git hooks: managed hooksPath points to another or missing checkout"
   else
     warn "$scope Git hooks: deliberate non-harness hooksPath; managed hooks are not active"
@@ -204,6 +213,7 @@ check_ownership() {
   else
     warn 'complete ownership schema and permissions were not verified'
   fi
+  OWNERSHIP_VALID=1
   for entry in "$state"/entries/*; do
     [ -d "$entry" ] || continue
     if [ ! -f "$entry/kind" ]; then fail 'installation ownership entry is incomplete'; continue; fi
