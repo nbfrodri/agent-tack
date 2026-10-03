@@ -17,18 +17,31 @@ HOOK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 msg_file="$1"
 [ -f "$msg_file" ] || exit 0
 
-# 1. Strip AI attribution lines
-AI_PATTERN='^[[:space:]]*(co-authored-by:.*(claude|anthropic|openai|codex|chatgpt|gpt-|copilot|gemini|cursor|aider|devin|windsurf|noreply@anthropic\.com)|.*generated (with|by) .*(claude|codex|chatgpt|copilot|cursor|gemini)|🤖)'
-if grep -qiE "$AI_PATTERN" "$msg_file"; then
-  tmp="$(mktemp "${TMPDIR:-/tmp}/commit-msg.XXXXXX")" || exit 1
-  # Drop the matching lines, then trailing blank lines left behind
-  grep -viE "$AI_PATTERN" "$msg_file" \
-    | awk '{ lines[NR] = $0 } END { n = NR; while (n > 0 && lines[n] ~ /^[[:space:]]*$/) n--; for (i = 1; i <= n; i++) print lines[i] }' \
-    > "$tmp"
-  cat "$tmp" > "$msg_file"
-  rm -f "$tmp"
+# 1. Strip AI attribution: Co-authored-by trailers whose name is exactly an AI tool or whose
+#    email is an AI vendor's, and the "Generated with <tool>" footer. The subject line and any
+#    other text are never touched.
+tmp="$(mktemp "${TMPDIR:-/tmp}/commit-msg.XXXXXX")" || exit 1
+awk '
+  function is_attribution(line,   s) {
+    s = tolower(line)
+    if (s ~ /^[[:space:]]*co-authored-by:/) {
+      if (s ~ /<[^>]*@(anthropic\.com|openai\.com|cursor\.com)>/) return 1
+      return s ~ /^[[:space:]]*co-authored-by:[[:space:]]*(claude|claude code|claude [a-z]+( [0-9.]+)?|codex|chatgpt|copilot|github copilot|cursor agent|gemini|gemini code assist|aider|windsurf)[[:space:]]*</
+    }
+    return s ~ /^[[:space:]]*(🤖[[:space:]]*)?generated (with|by) \[?(claude code|claude|codex|chatgpt|github copilot|copilot|cursor|gemini|aider|windsurf)\]?(\(https?:[^)]*\))?[[:space:]]*\.?[[:space:]]*$/
+  }
+  !in_body { print; if ($0 !~ /^[[:space:]]*(#|$)/) in_body = 1; next }
+  /^#/ { print; next }
+  is_attribution($0) { next }
+  { print }
+' "$msg_file" > "$tmp"
+if ! cmp -s "$tmp" "$msg_file"; then
+  # Drop trailing blank lines left behind by removed trailers
+  awk '{ lines[NR] = $0 } END { n = NR; while (n > 0 && lines[n] ~ /^[[:space:]]*$/) n--; for (i = 1; i <= n; i++) print lines[i] }' \
+    "$tmp" > "$msg_file"
   echo "commit-msg: removed AI attribution lines from the commit message" >&2
 fi
+rm -f "$tmp"
 
 # 2. Conventional Commits check on the subject (first non-comment, non-empty line)
 if "$HOOK_DIR/../bin/agent-config" status --quiet \
