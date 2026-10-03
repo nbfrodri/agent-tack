@@ -51,6 +51,17 @@ selected_tool() {
   for command in $commands; do has "$command" && return 0; done
   return 1
 }
+optional_target_configured() {
+  local instructions="$1" skills_dir="$2" source dir
+  if [ "$instructions" != - ] && [ -L "$(expand_home "$instructions")" ]; then return 0; fi
+  [ "$skills_dir" != - ] || return 1
+  dir="$(expand_home "$skills_dir")"
+  for source in "$REPO"/skills/*; do
+    [ -f "$source/SKILL.md" ] || continue
+    [ -L "$dir/${source##*/}" ] && return 0
+  done
+  return 1
+}
 check_tools_and_links() {
   local tool when commands instructions skills_dir source
   for tool in bash git readlink; do
@@ -66,8 +77,7 @@ check_tools_and_links() {
     case "$tool" in ''|'#'*) continue ;; esac
     if ! selected_tool detect "$commands"; then warn "optional CLI unavailable: $tool"; fi
     if [ "$when" != always ]; then
-      if { [ "$instructions" = - ] || { [ ! -e "$(expand_home "$instructions")" ] && [ ! -L "$(expand_home "$instructions")" ]; }; } &&
-         { [ "$skills_dir" = - ] || [ ! -d "$(expand_home "$skills_dir")" ]; }; then
+      if ! optional_target_configured "$instructions" "$skills_dir"; then
         if selected_tool detect "$commands"; then warn "$tool: detected but not configured by this installation"; fi
         continue
       fi

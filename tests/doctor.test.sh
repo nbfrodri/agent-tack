@@ -58,6 +58,11 @@ chmod +x "$WORK/bin/gemini"
 run_doctor
 check 'new optional CLI does not imply an existing managed installation' [ "$RC" -eq 0 ]
 check 'new optional CLI missing configuration is a warning' grep -q 'WARN.*gemini.*not configured' "$WORK/report"
+mkdir -p "$HOME/.gemini"
+printf 'user rules\n' > "$HOME/.gemini/GEMINI.md"
+run_doctor
+check 'unmanaged optional instructions do not imply a managed installation' [ "$RC" -eq 0 ]
+rm "$HOME/.gemini/GEMINI.md"
 rm "$WORK/bin/gemini"
 mkdir -p "$HOME/.gemini"
 ln -s "$WORK/missing" "$HOME/.gemini/GEMINI.md"
