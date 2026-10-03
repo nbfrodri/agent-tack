@@ -100,6 +100,8 @@ chmod 600 "$STATE/home"
 H="$WORK/git-original"
 mkdir -p "$H"
 HOME="$H" XDG_CONFIG_HOME="$H/.config" GIT_CONFIG_NOSYSTEM=1 git config --global core.hooksPath "$WORK/missing/git-hooks"
+mkdir -p "$H/.agents"
+ln -s "$WORK/missing" "$H/.agents/agent-config"
 HOME="$H" XDG_CONFIG_HOME="$H/.config" GIT_CONFIG_NOSYSTEM=1 git config --global user.name 'Keep User'
 run install.sh --skip-plugins
 check 'uninstall restores prior Git hooks path' 'run uninstall.sh'
@@ -134,7 +136,7 @@ check 'explicit managed Git entry is removed and XDG preserved' "! HOME='$H' XDG
 H="$WORK/preview-all"
 mkdir -p "$H" "$WORK/fake-cli" "$WORK/repo-preview"
 cp -R "$REPO/bin" "$REPO/git-hooks" "$REPO/lib" "$REPO/global" "$REPO/skills" "$REPO/agents" "$REPO/claude" "$WORK/repo-preview/"
-cp "$REPO/install.sh" "$REPO/targets.txt" "$REPO/plugins.txt" "$WORK/repo-preview/"
+cp "$REPO/install.sh" "$REPO/uninstall.sh" "$REPO/targets.txt" "$REPO/plugins.txt" "$WORK/repo-preview/"
 chmod -x "$WORK/repo-preview/bin/harness" "$WORK/repo-preview/git-hooks/_chain" "$WORK/repo-preview/git-hooks/commit-msg" "$WORK/repo-preview/git-hooks/pre-push"
 cat > "$WORK/fake-cli/claude" <<'STUB'
 #!/bin/sh
@@ -144,6 +146,37 @@ chmod +x "$WORK/fake-cli/claude"
 check 'dry-run with available plugin CLI succeeds' "HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 PATH='$WORK/fake-cli:$PATH' '$WORK/repo-preview/install.sh' --dry-run > '$WORK/preview-output'"
 check 'dry-run never invokes plugins or creates HOME state' "[ ! -e '$H/plugin-calls' ] && [ -z \"\$(find '$H' -mindepth 1 -print)\" ]"
 check 'dry-run never changes repository executable permissions' "[ ! -x '$WORK/repo-preview/bin/harness' ] && [ ! -x '$WORK/repo-preview/git-hooks/_chain' ] && [ ! -x '$WORK/repo-preview/git-hooks/commit-msg' ] && [ ! -x '$WORK/repo-preview/git-hooks/pre-push' ]"
+
+
+H="$WORK/changed-targets"
+mkdir -p "$H"
+check 'install with initial target declarations succeeds' "HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 '$WORK/repo-preview/install.sh' --skip-plugins > '$WORK/changed-targets.log' 2>&1"
+python3 - "$WORK/repo-preview/targets.txt" <<'PYTEST'
+import pathlib,sys
+p=pathlib.Path(sys.argv[1]); p.write_text(p.read_text().replace('~/.claude/CLAUDE.md', '~/.claude/RENAMED.md'))
+PYTEST
+check 'reinstall accepts historical target destinations' "HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 '$WORK/repo-preview/install.sh' --skip-plugins > '$WORK/changed-targets.log' 2>&1"
+check 'renamed target is installed and previous link remains recorded' "[ -L '$H/.claude/RENAMED.md' ] && [ -L '$H/.claude/CLAUDE.md' ]"
+python3 - "$WORK/repo-preview/targets.txt" <<'PYTEST'
+import pathlib,sys
+p=pathlib.Path(sys.argv[1]); p.write_text('\n'.join(line for line in p.read_text().splitlines() if not line.startswith('claude '))+'\n')
+PYTEST
+check 'uninstall accepts removed target declarations' "HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 '$WORK/repo-preview/uninstall.sh' > '$WORK/changed-targets.log' 2>&1"
+check 'both recorded instruction destinations are removed' "[ ! -L '$H/.claude/CLAUDE.md' ] && [ ! -L '$H/.claude/RENAMED.md' ]"
+H="$WORK/foreign-missing-hooks"
+mkdir -p "$H"
+HOME="$H" XDG_CONFIG_HOME="$H/.config" GIT_CONFIG_NOSYSTEM=1 git config --global core.hooksPath "$WORK/foreign/missing/git-hooks"
+check 'install tolerates an unowned missing hooks directory' 'run install.sh --skip-plugins'
+check 'missing directory basename does not prove harness ownership' "[ \"\$(HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 git config --global --get core.hooksPath)\" = '$WORK/foreign/missing/git-hooks' ]"
+
+
+H="$WORK/recorded-move"
+mkdir -p "$H"
+check 'install records Git source for a later checkout move' "HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 '$WORK/repo-preview/install.sh' --skip-plugins > '$WORK/recorded-move.log' 2>&1"
+mv "$WORK/repo-preview" "$WORK/repo-moved"
+rm "$H/.agents/harness" "$H/.local/bin/harness"
+check 'ownership record proves a moved checkout without canonical links' 'run install.sh --skip-plugins'
+check 'recorded moved Git hooks migrate to the current checkout' "[ \"\$(HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 git config --global --get core.hooksPath)\" = '$REPO/git-hooks' ]"
 
 printf '\n%s passed, %s failed\n' "$PASSED" "$FAILED"
 [ "$FAILED" -eq 0 ]

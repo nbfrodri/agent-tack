@@ -84,7 +84,8 @@ ownership_begin() {
     printf '%s\n' "$path" > "$OWN_ENTRY/path" &&
     (cd "$(dirname "$path")" && pwd -P) > "$OWN_ENTRY/parent" &&
     ownership_parent_identity "$(cat "$OWN_ENTRY/parent")" > "$OWN_ENTRY/parent_identity" &&
-    printf '%s\n' "$REPO" > "$OWN_ENTRY/repo")
+    printf '%s\n' "$REPO" > "$OWN_ENTRY/repo" &&
+    { [ "$kind" != link ] || cp "$REPO/targets.txt" "$OWN_ENTRY/targets"; })
 }
 
 ownership_parent_identity() {

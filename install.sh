@@ -262,16 +262,44 @@ merge_settings() {
   fi
 }
 
-# True when a hooksPath belongs to an agent-harness checkout (including older ones named
-# agent-config): another copy of this repo, or a git-hooks/ folder that no longer exists
-# because the repo was moved or deleted.
+# Capture canonical link evidence before installation migrates or repairs those links.
+capture_harness_hooks() {
+  local link_path root target entry
+  : > "$WORKDIR/prior-harness-hooks"
+  for link_path in "$HOME/.agents/harness" "$HOME/.agents/agent-config" \
+    "$HOME/.local/bin/harness" "$HOME/.local/bin/agent-config"; do
+    [ -L "$link_path" ] || continue
+    target="$(readlink "$link_path")"
+    ownership_plain_path "$target" || continue
+    case "$link_path" in
+      "$HOME/.agents/"*) root="${target%/}" ;;
+      *)
+        case "$target" in
+          */bin/harness|*/bin/agent-config) root="$(dirname "$(dirname "$target")")" ;;
+          *) continue ;;
+        esac
+        ;;
+    esac
+    printf '%s/git-hooks\n' "$root" >> "$WORKDIR/prior-harness-hooks"
+  done
+  for entry in "$OWNERSHIP"/entries/*; do
+    [ -d "$entry" ] || continue
+    [ "$(cat "$entry/kind")" = git ] || continue
+    cat "$entry/target" >> "$WORKDIR/prior-harness-hooks"
+  done
+}
+
+# Missing checkouts require recorded ownership or a prior canonical harness link.
 is_harness_hooks() {
-  local path="$1"
+  local path="$1" known
   if [ -d "$path" ]; then
     [ -e "$path/_chain" ] && { [ -e "$path/../bin/harness" ] || [ -e "$path/../bin/agent-config" ]; }
-  else
-    [ "$(basename "$path")" = "git-hooks" ]
+    return
   fi
+  while IFS= read -r known; do
+    [ "$known" != "$path" ] || return 0
+  done < "$WORKDIR/prior-harness-hooks"
+  return 1
 }
 
 # Points git's global core.hooksPath at git-hooks/ (commit-msg, pre-push and pass-through hooks).
@@ -432,6 +460,7 @@ install_plugins() {
 main() {
   printf '%sInstalling agent-harness from %s%s\n' "$C_HEAD" "$REPO" "$C_OFF"
   ownership_init || exit 1
+  capture_harness_hooks
   install_links
   merge_settings
   install_git_hooks

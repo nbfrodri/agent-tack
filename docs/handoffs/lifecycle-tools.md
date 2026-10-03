@@ -26,3 +26,11 @@ Approved scope: read-only install preview, private ownership records, and conser
 - If neither `stat` nor Python can identify a parent during install, the entry records `unavailable` and uninstall preserves it. JSON restoration requires Python. Metadata retained for conflicts includes private snapshots; no values are printed.
 - Final targeted regression and invariant checks are running; no publish operations performed.
 - Final results: 44 lifecycle checks and all 87 existing installer checks pass; changed shell files pass ShellCheck. The last test-stub change replaced an equivalent quoted printf with a heredoc to satisfy lint.
+
+## Final audit follow-up
+
+- Reproduced failures when a configured instruction destination was renamed after installation, and when an unrelated missing `git-hooks` directory was configured globally.
+- New link records retain a private `targets` snapshot. Validation uses that installation-time declaration, so later edits or removed declarations do not invalidate legitimate historical ownership. Older records without the snapshot retain the existing current-declaration fallback. Arbitrary HOME destinations are still rejected.
+- Missing Git hook directories now require recorded ownership or canonical harness-link evidence captured before link migration. A basename alone is insufficient. The legacy migration fixture now supplies a real prior canonical link.
+- RED: three new failures. GREEN: 51 lifecycle checks and all 87 installer checks. A final positive regression explicitly removes canonical links to exercise recorded Git evidence after moving a checkout; its expanded run is in progress.
+- Expanded final result: 54 lifecycle checks pass, including migration proved only by recorded ownership. All 87 existing installer checks and ShellCheck pass; no publication performed.

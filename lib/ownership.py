@@ -32,12 +32,11 @@ def no_symlink_ancestors(path, floor):
     return True
 
 
-def expected_link(path, target, home, repo):
+def expected_link(path, target, home, repo, declaration):
     fixed = {home + "/.agents/harness": repo,
              home + "/.local/bin/harness": repo + "/bin/harness"}
     skill_dirs = {home + "/.agents/skills"}
-    targets = Path(__file__).resolve().parent.parent / "targets.txt"
-    for line in targets.read_text().splitlines():
+    for line in declaration.read_text().splitlines():
         fields = line.split()
         if not fields or fields[0].startswith("#"):
             continue
@@ -94,7 +93,10 @@ def validate(state, home):
             if not path.startswith(home.rstrip("/") + "/"):
                 raise ValueError("link outside HOME")
             target, before = read(entry / "target"), read(entry / "before_kind")
-            if not expected_link(path, target, home.rstrip("/"), entry_repo):
+            declaration = entry / "targets"
+            if not declaration.exists():
+                declaration = Path(__file__).resolve().parent.parent / "targets.txt"
+            if not expected_link(path, target, home.rstrip("/"), entry_repo, declaration):
                 raise ValueError("link is outside declared installation targets")
             if not plain_path(target) or before not in ("absent", "symlink", "backup"):
                 raise ValueError("invalid link record")
