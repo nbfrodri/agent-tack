@@ -1,7 +1,7 @@
 # Audit: improvement — whole project
 
 - **Date:** 2026-10-03
-- **By:** Claude Code (Opus 5.5) with the `improve` skill: `architecture-reviewer`, `code-reviewer` (project mode), `security-auditor`, `test-writer` (report only); docs reviewed by the main agent
+- **By:** Claude Code with the `improve` skill: `architecture-reviewer`, `code-reviewer` (project mode), `security-auditor`, `test-writer` (report only); docs reviewed by the main agent
 - **Scope:** whole repository at `2a53f33`
 - **Verdict:** solid design; two hook bugs already break local hooks silently and must be fixed first
 - **Outcome:** all findings fixed on 2026-10-03, each with regression tests

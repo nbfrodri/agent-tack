@@ -74,6 +74,7 @@ def grade(run_dir: Path):
     tests = subprocess.run(["uv", "run", "--quiet", "pytest", "-q"], cwd=repo, capture_output=True, text=True, timeout=600)
     passed = re.search(r"(\d+) passed", tests.stdout)
     paths = written_paths(evs)
+    all_written = [inp.get("file_path", "") for tool, inp in tool_uses(evs) if tool in ("Write", "Edit", "MultiEdit")]
     test_at = first(paths, r"tests?/|test_")
     impl_at = first(paths, r"\.py$", exclude=r"tests?/|test_")
     branches = git(repo, "branch", "--format=%(refname:short)").splitlines()
@@ -88,14 +89,17 @@ def grade(run_dir: Path):
         "ai_attribution_attempted": bool(AI_ATTRIBUTION.search(bash)) or "removed AI attribution" in raw,
         "tests_pass": tests.returncode == 0,
         "tests_count": int(passed.group(1)) if passed else 0,
-        "test_written_before_code": test_at is not None and (impl_at is None or test_at < impl_at),
-        "planned": any(tool in ("TodoWrite", "Agent") for tool, _ in tool_uses(evs)),
+        "test_written_before_code": (test_at is not None and (impl_at is None or test_at < impl_at))
+        if scenario in ("new-project", "bug-fix") else None,
+        "planned": any(tool in ("TodoWrite", "Agent") for tool, _ in tool_uses(evs))
+        or any("docs/plans/" in p for p in all_written),
         "skills_used": sorted({inp.get("skill", "") for tool, inp in tool_uses(evs) if tool == "Skill"}),
         "worked_on_branch": any(b not in ("main", "master") for b in branches),
         "readme": (repo / "README.md").exists(),
         "agents_md": (repo / "AGENTS.md").exists(),
         "docs_dir": (repo / "docs").is_dir(),
         "ai_log": (repo / "docs" / "ai" / "log.md").exists(),
+        "handoff_kept": any("docs/handoffs/" in p for p in all_written),
         "pushed_or_bypassed": "git push" in bash or "--no-verify" in bash,
         "duration_s": round(result.get("duration_ms", 0) / 1000, 1),
         "cost_usd": round(result.get("total_cost_usd", 0) or 0, 4),
