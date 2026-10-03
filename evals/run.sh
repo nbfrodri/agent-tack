@@ -40,6 +40,7 @@ isolated_home=""
 finish() {
   status=$?
   printf 'exit=%s seconds=%s\n' "$status" "$(( $(date +%s) - start ))" > "$out/run.txt"
+  python3 "$HARNESS_REPO/evals/metadata.py" finish "$out" || true
   if [ -n "$isolated_home" ]; then rm -rf "$isolated_home"; fi
 }
 trap finish EXIT
@@ -161,6 +162,15 @@ case "$name" in
 esac
 printf '%s\n' "$prompt" > "$out/prompt.txt"
 
+provider=claude
+[ "$name" = codex-new-project ] && provider=codex
+cli_version=$("$provider" --version 2>/dev/null || true)
+harness_revision=$(git -C "$HARNESS_REPO" rev-parse HEAD)
+python3 "$HARNESS_REPO/evals/metadata.py" start "$out" "$name" "$condition" "$rep" "$provider" \
+  "${EVALS_MODEL:-}" "$cli_version" "$harness_revision"
+model_flags=()
+[ -z "${EVALS_MODEL:-}" ] || model_flags=(--model "$EVALS_MODEL")
+
 baseline_flags=()
 [ "$condition" = baseline ] && baseline_flags=(--setting-sources "project,local" --disable-slash-commands)
 
@@ -180,11 +190,11 @@ trap - ERR
 set +e
 case "$name" in
   codex-new-project)
-    codex exec --json -s workspace-write -c sandbox_workspace_write.network_access=true \
+    codex exec --json "${model_flags[@]+"${model_flags[@]}"}" -s workspace-write -c sandbox_workspace_write.network_access=true \
       --skip-git-repo-check -C "$dir" "$prompt" > "$out/transcript.jsonl" 2> "$out/stderr.log"
     ;;
   *)
-    claude -p "$prompt" --output-format stream-json --verbose \
+    claude -p "$prompt" "${model_flags[@]+"${model_flags[@]}"}" --output-format stream-json --verbose \
       "${baseline_flags[@]+"${baseline_flags[@]}"}" \
       --permission-mode acceptEdits \
       --allowedTools "Bash(git *)" "Bash(uv *)" "Bash(python3 *)" "Bash(ls *)" "Bash(cat *)" \

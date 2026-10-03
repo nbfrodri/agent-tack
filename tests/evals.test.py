@@ -164,6 +164,27 @@ class Runner(unittest.TestCase):
         self.assertIn('partial', (run / 'transcript.jsonl').read_text())
         self.assertIn('diagnostic', (run / 'stderr.log').read_text())
 
+    def test_explicit_model_and_reproducibility_metadata(self):
+        self.env['EVALS_MODEL'] = 'fixture-model'
+        self.stub('claude', 'if [ "$1" = --version ]; then echo fixture-cli; exit; fi\n'
+                  'printf "%s\\n" "$@" > "' + str(self.root / 'args') + '"\n'
+                  "echo '{\"type\":\"system\",\"subtype\":\"init\",\"model\":\"fixture-resolved\"}'")
+        outcome = self.run_eval('bug-fix')
+        self.assertEqual(outcome.returncode, 0, outcome.stderr)
+        metadata = json.loads((self.root / 'out/bug-fix/baseline-1/metadata.json').read_text())
+        import hashlib
+        prompt = (self.root / 'out/bug-fix/baseline-1/prompt.txt').read_bytes()
+        self.assertEqual(metadata['prompt_sha256'], hashlib.sha256(prompt).hexdigest())
+        self.assertEqual(metadata['requested_model'], 'fixture-model')
+        self.assertEqual(metadata['resolved_model'], 'fixture-resolved')
+        self.assertEqual(metadata['cli_version'], 'fixture-cli')
+        self.assertEqual(metadata['metrics_version'], 2)
+        self.assertEqual(metadata['permission_mode'], 'acceptEdits')
+        self.assertEqual(metadata['condition'], 'baseline')
+        self.assertEqual(metadata['provider'], 'claude')
+        self.assertEqual(len(metadata['harness_revision']), 40)
+        self.assertIn('--model\nfixture-model', (self.root / 'args').read_text())
+
     def test_setup_failure_does_not_invoke_cli(self):
         self.stub('git', 'if [ "$1" = init ]; then echo setup-failed >&2; exit 23; fi\nexec /usr/bin/git "$@"')
         self.stub('claude', 'echo wrongly-invoked')
