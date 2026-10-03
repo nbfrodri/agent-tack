@@ -194,7 +194,9 @@ mkdir -p "$SPACED"
 H="$WORK/spaced-repo-home"
 mkdir -p "$H"
 check "installer works from a repo path with spaces" "HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 '$SPACED/install.sh' --skip-plugins >'$H.log' 2>&1"
-check "hooks point at the spaced repo path" "grep -q \"$SPACED/hooks/claude/guard-bash.sh\" '$H/.claude/settings.json'"
+# Compare against the normalised path (macOS TMPDIR ends in '/', so WORK may contain '//')
+SPACED_REAL="$(cd "$SPACED" && pwd)"
+check "hooks point at the spaced repo path" "grep -qF \"$SPACED_REAL/hooks/claude/guard-bash.sh\" '$H/.claude/settings.json'"
 
 echo "Plugins step (fake claude CLI)"
 # A minimal PATH without the real claude, so the real CLI can never run here
