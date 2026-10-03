@@ -30,7 +30,7 @@ Independent review reproduced five defects in the unpublished doctor/lifecycle c
 | Mutable `targets.txt` declarations invalidate historical ownership after customization | Medium | [#30](https://github.com/nbfrodri/agent-harness/issues/30) | Fixed locally in `485a368`; new link records retain private installation-time declarations |
 | Installer replaces an unrecorded missing foreign hooksPath merely named `git-hooks` | Medium | [#31](https://github.com/nbfrodri/agent-harness/issues/31) | Fixed locally in `485a368`; migration requires checkout, recorded ownership or prior canonical-link evidence |
 
-Issues remain open while the feature branch is local; publication and issue closure require the owner's next instruction. The fifth finding is preexisting in the published baseline; the other four were identified before publishing the new features.
+The owner authorised publication of the feature branch after verification. Fix commits are published; issues remain open pending owner-authorised closure. The fifth finding is preexisting in the published baseline; the other four were identified before publishing the new features.
 
 ## Approved improvement work
 
@@ -56,4 +56,4 @@ The remaining improvement is empirical: finish the paused benchmark before claim
 
 The temporary launcher also inherited XDG_STATE_HOME in its first attempt and created a benchmark-only ownership record in the real HOME. Automatic review rejected deleting it. A safer reversible rename was subsequently approved: all 96 temporary-home records and private snapshots were preserved under `benchmark-ownership-20261004`, clearing the active ownership path. Pending runs isolate all XDG directories. Raw authentication files and transcripts remain excluded from publication.
 
-These scores are for the inspected repository and personal-use scope, not a certification that the shell guard is a sandbox or that instructions will always be followed. Uninstall deliberately preserves conflicting edits and cannot infer legacy ownership. Linux checks do not establish macOS behavior for unpublished changes; CI is configured to run the new suites on both systems once published. The feature branch remains local, and the five tracking issues remain open pending publication and owner-authorised closure.
+These scores are for the inspected repository and personal-use scope, not a certification that the shell guard is a sandbox or that instructions will always be followed. Uninstall deliberately preserves conflicting edits and cannot infer legacy ownership. Linux checks do not establish macOS behavior for unpublished changes; CI is configured to run the new suites on both systems on a main push or PR. The feature branch is published, and the five tracking issues remain open pending owner-authorised closure.

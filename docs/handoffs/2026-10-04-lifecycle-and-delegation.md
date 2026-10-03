@@ -7,9 +7,9 @@
 - Implemented: `harness doctor`, installation preview, private ownership and safe uninstall, automatic complexity-based delegation, contextual merge/squash choice and reproducible eval metadata.
 - User preferences: commit each coherent verified milestone; recommend integration method from branch history in the existing approval, preserving commits unless squash explicitly chosen. Project delegation absent/auto is automatic; off disables automatic delegation.
 - Key milestones: `2b1faa4` contextual merge; `cb9b7aa` automatic routing; `28d1722` doctor CLI; `a8fd642` lifecycle boundaries; `485a368` customized targets/moved-hook evidence; `e0d5277` retired hook restoration; `027ba67` interrupted eval evidence/recovery; `c3b320b` isolated CLI state.
-- Verification: 560 checks across verified milestones; ShellCheck 0.9/0.11 and content validation. No new macOS/remote CI run because this branch is unpublished.
-- Issues #27–#31: verified, created through the approved audit workflow, all fixed locally; remain open until publication and owner-authorised closure.
-- No feature-branch push, PR, merge, tag or release authorised. Recommend preserving commits for this branch's independent verified milestones; offer available methods when integration is requested.
+- Verification: 560 checks across verified milestones; ShellCheck 0.9/0.11 and content validation. No new macOS/remote CI run; feature pushes do not trigger the current main/PR workflow.
+- Issues #27–#31: verified, created through the approved audit workflow, fix commits published; remain open pending owner-authorised closure.
+- Owner authorised push after implementation; branch published to origin through `2188188`. PR, merge, tag and release are not authorised. Recommend preserving commits for this branch's independent verified milestones; offer available methods when integration is requested.
 
 ## Remaining benchmark work
 
