@@ -1,6 +1,6 @@
 # Whole-project improvement audit
 
-Assessment for personal use, prioritising incremental fixes. Executable code reviewed at `f93cb50`; the requested documentation and English-content changes were added during this review. The ten verified findings have been fixed and published on [`fix/audit-hardening-and-session-context`](https://github.com/nbfrodri/agent-harness/tree/fix/audit-hardening-and-session-context). Issues #13–#24 are closed as completed at the owner's request, with fix commits and verification recorded in their comments. Integration into `main` is pending.
+Assessment for personal use, prioritising incremental fixes. Executable code reviewed at `f93cb50`; the requested documentation and English-content changes were added during this review. The ten verified findings have been fixed and published on [`fix/audit-hardening-and-session-context`](https://github.com/nbfrodri/agent-harness/tree/fix/audit-hardening-and-session-context). Issues #13–#24 are closed as completed at the owner's request, with fix commits and verification recorded in their comments. Integration into `main` and remote CI are tracked in [PR #25](https://github.com/nbfrodri/agent-harness/pull/25).
 
 ## Resolution tracking
 
@@ -21,7 +21,7 @@ Requested additions: [#23](https://github.com/nbfrodri/agent-harness/issues/23) 
 
 The scorecard below records the initial assessment, rather than a new post-fix score. The implementation plan is [complete](../plans/2026-10-03-audit-hardening-and-context.md). On integration, 10,014-character guard input took 0.127 s and 50,014 took 0.196 s; 70,014 characters returned `ask` in 0.057 s. Times are local observations, not guaranteed cross-platform thresholds.
 
-Final local checks passed: ShellCheck, content validation and 426 automated checks (12 validator, 87 installer, 177 existing hooks, 34 CLI/context, 2 settings, 42 security, 56 guard and 16 offline eval checks). Integration review also verified that failed shared activation preserves a local opt-out and unsuccessful tool writes cannot prove test-first ordering. Remote CI, macOS and a live model benchmark remain unverified.
+Final local checks passed: ShellCheck, content validation and 426 automated checks (12 validator, 87 installer, 177 existing hooks, 34 CLI/context, 2 settings, 42 security, 56 guard and 16 offline eval checks). Integration review also verified that failed shared activation preserves a local opt-out and unsuccessful tool writes cannot prove test-first ordering. Remote CI and macOS results are recorded in [PR #25](https://github.com/nbfrodri/agent-harness/pull/25); no live model benchmark was run.
 
 ## Scorecard
 
