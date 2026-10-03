@@ -196,8 +196,57 @@ mkdir -p "$H"
 check "installer works from a repo path with spaces" "HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 '$SPACED/install.sh' --skip-plugins >'$H.log' 2>&1"
 check "hooks point at the spaced repo path" "grep -q \"$SPACED/hooks/claude/guard-bash.sh\" '$H/.claude/settings.json'"
 
+echo "Plugins step (fake claude CLI)"
+# A minimal PATH without the real claude, so the real CLI can never run here
+MINBIN="$WORK/bin-min"
+mkdir -p "$MINBIN"
+for tool in bash env mkdir dirname readlink ln rm mv date cp cmp mktemp sed basename git jq python3 chmod cat find grep tr wc head; do
+  [ -x "$(command -v "$tool")" ] && ln -sf "$(command -v "$tool")" "$MINBIN/$tool"
+done
+FAKE="$WORK/fake-claude"
+mkdir -p "$FAKE"
+cat > "$FAKE/claude" <<'STUB'
+#!/usr/bin/env bash
+echo "$*" >> "$CLAUDE_LOG"
+case "$*" in
+  "plugin list --json") printf '%s\n' "$FAKE_PLUGINS" ;;
+  "plugin marketplace list --json") printf '%s\n' "$FAKE_MARKETPLACES" ;;
+  "plugin install "*) cat > /dev/null; [ "${FAKE_FAIL_INSTALL:-0}" = 1 ] && exit 1 ;;
+esac
+exit 0
+STUB
+chmod +x "$FAKE/claude"
+run_plugins() {
+  local home="$1"
+  shift
+  mkdir -p "$home"
+  : > "$home.calls"
+  env "$@" HOME="$home" XDG_CONFIG_HOME="$home/.config" GIT_CONFIG_NOSYSTEM=1 PATH="$FAKE:$MINBIN" \
+    CLAUDE_LOG="$home.calls" "$REPO/install.sh" >"$home.log" 2>&1
+}
+called() { grep -qxF -- "$2" "$1.calls"; }
+
+H="$WORK/plugins"
+check "exits 0" "run_plugins '$H' FAKE_MARKETPLACES='[]' FAKE_PLUGINS='[{\"id\":\"context7@claude-plugins-official\",\"enabled\":false}]'"
+check "adds the missing marketplace" "called '$H' 'plugin marketplace add anthropics/claude-plugins-official'"
+check "refreshes the marketplace" "called '$H' 'plugin marketplace update claude-plugins-official'"
+check "updates an installed plugin" "called '$H' 'plugin update context7@claude-plugins-official'"
+check "re-enables a disabled plugin" "called '$H' 'plugin enable context7@claude-plugins-official'"
+check "installs a missing plugin" "called '$H' 'plugin install frontend-design@claude-plugins-official'"
+check "every plugin in plugins.txt is processed" "[ \"\$(grep -c '^plugin \\(install\\|update\\)' '$H.calls')\" = \"\$(grep -c '^plugin ' '$REPO/plugins.txt')\" ]"
+H="$WORK/plugins-known-marketplace"
+run_plugins "$H" FAKE_MARKETPLACES='[{"name":"claude-plugins-official"}]' FAKE_PLUGINS='[]'
+check "doesn't re-add a known marketplace" "! grep -q '^plugin marketplace add' '$H.calls'"
+H="$WORK/plugins-fail"
+check "a failed install makes the run fail" "! run_plugins '$H' FAKE_MARKETPLACES='[]' FAKE_PLUGINS='[]' FAKE_FAIL_INSTALL=1"
+check "and says which plugin" "grep -q 'could not install frontend-design' '$H.log'"
+H="$WORK/no-claude"
+mkdir -p "$H"
+check "without claude: exits 0" "HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 PATH='$MINBIN' '$REPO/install.sh' >'$H.log' 2>&1"
+check "without claude: warns" "grep -q 'claude CLI not found' '$H.log'"
+
 echo "Rejects unknown options"
-check "exits 2" "HOME='$WORK/opt' '$REPO/install.sh' --nope >/dev/null 2>&1; [ \$? -eq 2 ]"
+check "exits 2" "HOME='$WORK/opt' XDG_CONFIG_HOME='$WORK/opt/.config' GIT_CONFIG_NOSYSTEM=1 '$REPO/install.sh' --nope >/dev/null 2>&1; [ \$? -eq 2 ]"
 
 echo
 echo "$PASSED passed, $FAILED failed"
