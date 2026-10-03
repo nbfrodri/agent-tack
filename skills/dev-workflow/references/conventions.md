@@ -19,6 +19,19 @@ gh repo edit --enable-squash-merge --squash-merge-commit-message pr-title-descri
   --enable-merge-commit=false --enable-rebase-merge=false --delete-branch-on-merge
 ```
 
+## Releases and tags
+
+| Topic | Convention |
+| --- | --- |
+| Versioning | [SemVer](https://semver.org) for every project, computed from Conventional Commits: `fix`/`perf` → patch, `feat` → minor, breaking change → major. Start at `0.1.0`; release `1.0.0` when the project reaches production or has a stable public API. |
+| Tags | `vMAJOR.MINOR.PATCH` (e.g. `v1.4.2`), **annotated**, on `main`. Pre-releases: `v2.0.0-alpha.1`, `-beta.N`, `-rc.N`. No other tag names. Published tags are never moved or deleted. Enforced by the `pre-push` hook in enabled projects. |
+| How releases happen | **release-please** by default: a GitHub Action keeps a release PR open with the next version and the CHANGELOG computed from the commits on `main`; merging it creates the tag and the GitHub Release. Manual releases (`release` skill) only where release-please isn't set up. |
+| Changelog | `CHANGELOG.md` in the repo (Keep a Changelog sections) **and** the same notes in the GitHub Release. |
+| Release commit | `chore(main): release X.Y.Z` (release-please) or `chore(release): vX.Y.Z` (manual). |
+| Hotfixes | A `fix` commit on `main` and a patch release; branch from the tag (`hotfix/X.Y.Z`) only when `main` holds unreleasable work. |
+
+Details and setup: `release` skill.
+
 ## All languages
 - **English** for all identifiers, comments, docstrings, logs and error messages (user-facing UI text follows the product's language, through i18n where there is more than one). Business terms are translated consistently; when the translation isn't obvious, add it to the project glossary (`docs/glossary.md`) with the original Spanish term.
 - Names say what something is or does: no abbreviations except universal ones (`id`, `url`, `db`). Booleans read as questions (`isActive`, `has_access`, `canEdit`). Functions are verbs, classes and types nouns.

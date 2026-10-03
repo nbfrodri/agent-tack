@@ -26,6 +26,7 @@ Follow `dev-workflow` → `references/conventions.md` (pnpm for JS/TS, uv for Py
 - Documentation following the `project-docs` skill, starting from its templates: `README.md`, `AGENTS.md`, a `CLAUDE.md` containing just `@AGENTS.md`, `docs/README.md`, `docs/overview.md`, `docs/architecture.md`, `docs/development.md` and `docs/ai/README.md`.
 - CI in `.github/workflows/ci.yml`: install, lint, type-check and test on push and pull requests.
 - Issue forms and a PR template: copy them from the `github-issues` skill's `assets/` into `.github/`.
+- Releases: release-please from the `release` skill's `assets/` (workflow, config with the stack's `release-type`, manifest at `0.1.0`), plus an empty `CHANGELOG.md`. Tags and versions follow `conventions.md` → "Releases and tags".
 - Dependabot: `.github/dependabot.yml` with weekly updates for the project's package ecosystems and for `github-actions` (see the example below).
 - Optional, if the user wants them: commit-msg hook with commitlint (or equivalent) to enforce Conventional Commits; a pre-commit hook for lint/format; a `LICENSE` (ask which one); `docs/adr/0001-record-architecture-decisions.md`.
 
@@ -54,6 +55,7 @@ Build the scaffold in a few logical commits, for example:
 4. `ci: add GitHub Actions workflow`
 5. `docs: add README, AGENTS.md and project docs`
 6. `chore(github): add issue templates and Dependabot`
+7. `ci: add release-please`
 
 Run lint and tests before finishing. Ask the user before creating the GitHub repo and pushing, and ask whether it should be public or private (`gh repo create <name> --private --source . --push`). Once created, configure squash merging as in `conventions.md`:
 ```bash

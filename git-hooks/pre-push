@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
-# Global pre-push hook: refuses to rewrite or delete main/master on any remote
-# (force pushes, deletions), then runs the repository's own pre-push hook, if any.
+# Global pre-push hook:
+#   - refuses to rewrite or delete main/master on any remote (force pushes, deletions);
+#   - in projects where agent-config is enabled, only lets annotated vX.Y.Z tags (and
+#     -alpha.N/-beta.N/-rc.N pre-releases) through, and never moves or deletes a published tag;
+#   - then runs the repository's own pre-push hook, if any.
 #
-# Deliberate one-off override:  AGENT_CONFIG_ALLOW_FORCE_PUSH=1 git push --force ...
+# Deliberate one-off overrides:
+#   AGENT_CONFIG_ALLOW_FORCE_PUSH=1 git push --force ...   (main/master)
+#   AGENT_CONFIG_ALLOW_TAG=1 git push ...                  (tags)
 set -u
 
 HOOK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -16,35 +21,62 @@ cat > "$stdin_file"
 
 is_zero() { case "$1" in *[!0]*) return 1 ;; *) return 0 ;; esac; }
 
-if [ "${AGENT_CONFIG_ALLOW_FORCE_PUSH:-}" != "1" ]; then
-  while read -r _local_ref local_sha remote_ref remote_sha; do
-    [ -n "${remote_ref:-}" ] || continue
-    case "$remote_ref" in
-      refs/heads/main|refs/heads/master) ;;
-      *) continue ;;
-    esac
-    branch="${remote_ref#refs/heads/}"
+check_tags=0
+if [ "${AGENT_CONFIG_ALLOW_TAG:-}" != "1" ] && "$HOOK_DIR/../bin/agent-config" status --quiet; then
+  check_tags=1
+fi
 
-    if is_zero "$local_sha"; then
-      echo "pre-push: refusing to delete '$branch' on $remote_name." >&2
-      exit 1
-    fi
-    # A new branch on the remote is fine
-    is_zero "$remote_sha" && continue
+tag_error() {
+  cat >&2 <<EOF
+pre-push: $1
+Release tags are annotated vX.Y.Z (or vX.Y.Z-alpha.N / -beta.N / -rc.N) and never change once
+published. Create one with: git tag -a v1.2.3 -m "v1.2.3"
+(Deliberate override: AGENT_CONFIG_ALLOW_TAG=1 git push ...)
+EOF
+  exit 1
+}
 
-    # The push must be a fast-forward: the remote tip must be an ancestor of what we push.
-    # If we don't even have the remote tip locally, the push would overwrite unknown commits.
-    if ! git cat-file -e "${remote_sha}^{commit}" 2>/dev/null \
-      || ! git merge-base --is-ancestor "$remote_sha" "$local_sha" 2>/dev/null; then
-      cat >&2 <<EOF
+while read -r _local_ref local_sha remote_ref remote_sha; do
+  [ -n "${remote_ref:-}" ] || continue
+  case "$remote_ref" in
+    refs/tags/*)
+      [ "$check_tags" -eq 1 ] || continue
+      tag="${remote_ref#refs/tags/}"
+      is_zero "$local_sha" && tag_error "refusing to delete the published tag '$tag' on $remote_name."
+      is_zero "$remote_sha" || [ "$remote_sha" = "$local_sha" ] \
+        || tag_error "refusing to move the published tag '$tag' on $remote_name."
+      printf '%s\n' "$tag" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta|rc)\.[0-9]+)?$' \
+        || tag_error "tag '$tag' doesn't follow the release convention."
+      [ "$(git cat-file -t "$local_sha" 2>/dev/null)" = "tag" ] \
+        || tag_error "tag '$tag' is lightweight; release tags must be annotated."
+      continue
+      ;;
+    refs/heads/main | refs/heads/master)
+      [ "${AGENT_CONFIG_ALLOW_FORCE_PUSH:-}" != "1" ] || continue
+      ;;
+    *) continue ;;
+  esac
+  branch="${remote_ref#refs/heads/}"
+
+  if is_zero "$local_sha"; then
+    echo "pre-push: refusing to delete '$branch' on $remote_name." >&2
+    exit 1
+  fi
+  # A new branch on the remote is fine
+  is_zero "$remote_sha" && continue
+
+  # The push must be a fast-forward: the remote tip must be an ancestor of what we push.
+  # If we don't even have the remote tip locally, the push would overwrite unknown commits.
+  if ! git cat-file -e "${remote_sha}^{commit}" 2>/dev/null \
+    || ! git merge-base --is-ancestor "$remote_sha" "$local_sha" 2>/dev/null; then
+    cat >&2 <<EOF
 pre-push: refusing to rewrite '$branch' on $remote_name (not a fast-forward).
 Rewriting the history of $branch can destroy other people's work.
 Use 'git revert' to undo published commits, or pull/rebase your local changes first.
 (Deliberate override: AGENT_CONFIG_ALLOW_FORCE_PUSH=1 git push ...)
 EOF
-      exit 1
-    fi
-  done < "$stdin_file"
-fi
+    exit 1
+  fi
+done < "$stdin_file"
 
 AGENT_CONFIG_HOOK_STDIN_FILE="$stdin_file" run_local_hook pre-push "$@"

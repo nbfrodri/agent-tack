@@ -128,6 +128,27 @@ git -C "$R" commit -q --amend --allow-empty -m "feat: on branch (amended)" >/dev
 check "feature branch rewritten locally (test precondition)" "[ \"\$(git -C '$R' rev-parse HEAD)\" != '$before' ]"
 check "force push to a feature branch is allowed" "push --force origin feat/x"
 
+echo "pre-push: tags follow the release convention in enabled projects"
+git -C "$R" switch -q main
+git -C "$R" tag v1.0.0
+check "lightweight tag is refused" "! push origin v1.0.0"
+git -C "$R" tag -d v1.0.0 >/dev/null
+git -C "$R" tag -a v1.0.0 -m v1.0.0
+check "annotated vX.Y.Z tag is accepted" "push origin v1.0.0"
+git -C "$R" tag -a v2.0.0-rc.1 -m v2.0.0-rc.1
+check "annotated pre-release tag is accepted" "push origin v2.0.0-rc.1"
+git -C "$R" tag -a release-1 -m release-1
+check "tag name outside the convention is refused" "! push origin release-1"
+check "deleting a published tag is refused" "! push origin :refs/tags/v1.0.0"
+git -C "$R" tag -d v1.0.0 >/dev/null
+git -C "$R" tag -a v1.0.0 -m "moved" HEAD~1
+check "moving a published tag is refused" "! push --force origin v1.0.0"
+check "override allows a deliberate tag change" "AGENT_CONFIG_ALLOW_TAG=1 push --force origin v1.0.0"
+git -C "$R" config agentconfig.enabled false
+check "projects not enabled can push any tag" "push origin release-1"
+git -C "$R" config --unset agentconfig.enabled
+git -C "$R" switch -q feat/x
+
 echo "pre-push: local pre-push hook receives stdin"
 cat > "$R/.git/hooks/pre-push" <<EOF
 #!/usr/bin/env bash
