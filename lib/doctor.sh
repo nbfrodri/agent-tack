@@ -155,7 +155,7 @@ recorded_git_hooks_path() {
   local path="$1" state="${XDG_STATE_HOME:-$HOME/.local/state}/agent-harness/ownership" entry
   [ "$OWNERSHIP_VALID" -eq 1 ] || return 1
   for entry in "$state"/entries/*; do
-    [ -f "$entry/kind" ] && [ -f "$entry/target" ] || continue
+    if [ ! -f "$entry/kind" ] || [ ! -f "$entry/target" ]; then continue; fi
     if [ "$(< "$entry/kind")" = git ] && [ "$(< "$entry/target")" = "$path" ]; then return 0; fi
   done
   return 1
