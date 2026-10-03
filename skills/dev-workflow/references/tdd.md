@@ -5,7 +5,9 @@
 2. **Verde:** escribe el código mínimo para que pase. Nada de funcionalidad especulativa.
 3. **Refactor:** con los tests en verde, elimina duplicación y mejora nombres y estructura. Los tests siguen en verde tras cada paso.
 
-Repite en pasos pequeños. Empieza por el caso más simple y ve añadiendo casos límite.
+Repite en pasos pequeños: un comportamiento por ciclo, no toda la batería de tests de golpe. Empieza por el caso más simple y ve añadiendo casos límite. Los ciclos cortos hacen que cada fallo apunte a un único cambio.
+
+En un módulo nuevo, el primer rojo suele ser un `ImportError`, que no prueba nada del comportamiento. Crea primero la interfaz mínima (firmas que lanzan `NotImplementedError` o devuelven un valor vacío) para que el test falle en la aserción.
 
 ## Bugs
 Antes de arreglar un bug, escribe un test que lo reproduzca y falle. Así el arreglo queda demostrado y protegido contra regresiones.

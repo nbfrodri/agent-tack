@@ -39,7 +39,7 @@ Group by the type of change, describe the impact, link PRs or issues, and keep c
 
 ## Manual release checklist
 1. On an up-to-date `main` with a clean working tree; CI green; `git pull --ff-only`.
-2. Decide the version (above) and confirm it with the user.
+2. Decide the version (above). If the user only asked what the next version would be, stop and propose it. If they asked you to prepare the release, go ahead and state the version and the reason in your summary: the commit and tag are local and easy to undo (`git tag -d`, `git reset`). Pushing is the irreversible step, and it always needs the user's confirmation.
 3. Bump the version wherever it lives: `package.json` (`npm version <x> --no-git-tag-version`), `pyproject.toml` (`uv version <x>`, or edit it), `composer.json` (usually no version field; the git tag is the version), app constants, Helm/Docker labels.
 4. Update `CHANGELOG.md`.
 5. Commit: `chore(release): v1.5.0`.
