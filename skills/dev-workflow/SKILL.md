@@ -65,6 +65,7 @@ Use them when the current tool has them:
 - `project-docs`: `docs/` structure, templates, technical sheet, architecture, plans, audits, handoffs and the AI usage log.
 - `improve`: reviewing existing code or projects and proposing prioritised improvements; always asks scope and focus first.
 - `orchestrate`: only when the user asks for subagents or parallel work; splits the plan among agents and asks model and effort per task.
+- `auto-improve`: only when the user asks for autonomous improvement; an evaluator scores the project and you lead agents until a target score, on its own branch.
 - `lessons`: when the user corrects you or sets a lasting preference, save it as a rule.
 - Stack skills when the task touches that layer: `frontend`, `api-design`, `database`, `auth`, `e2e-testing`, `deployment`, `observability`.
 - Agent `planner`: delegate the plan for normal or large tasks (step 3).
