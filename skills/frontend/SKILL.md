@@ -19,6 +19,7 @@ For Next.js specifics (App Router, Server Components, Server Actions, caching, r
 - Props are typed (TypeScript), minimal, and named for intent. Prefer composition (`children`, slots) over boolean-prop explosions.
 - Derive values instead of storing duplicated state. Use `useEffect` only to synchronise with external systems, never to compute values from props or state.
 - Stable, meaningful `key`s for lists (never the index if items can be reordered).
+- Files in kebab-case (`user-profile.tsx`) with named exports; see `dev-workflow` → `references/conventions.md` for naming and style.
 - Co-locate files by feature (`features/orders/components`, `hooks`, `api`, `tests`) rather than by type, unless the project already does otherwise.
 
 ## State

@@ -1,0 +1,84 @@
+# Conventions
+
+Defaults for every project. **A project's existing conventions win**: follow its linter, formatter and style first, and use these where it has none (and in new projects).
+
+## Git
+
+| Topic | Convention |
+| --- | --- |
+| Commit messages | [Conventional Commits 1.0](https://www.conventionalcommits.org): `type(scope): description`, English, imperative, ≤ 72 chars. Enforced by the global `commit-msg` hook. Details in `git-github.md`. |
+| Branches | `type/short-description`, or `type/123-short-description` when there's an issue. Short-lived. |
+| Merging PRs | **Squash merge.** Each PR becomes one commit on `main` whose message is the PR title plus its description. So the **PR title must be a valid Conventional Commit**: it's what lands in history and what the changelog and the version bump are computed from. |
+| Commits inside a PR branch | Still Conventional Commits (the hook enforces it), but they're squashed on merge, so `fixup!` commits and small steps are fine there. |
+| After merge | The branch is deleted automatically. |
+| Attribution | No AI attribution anywhere. |
+
+Repository settings to match (new repos, or existing ones with the user's permission):
+```bash
+gh repo edit --enable-squash-merge --squash-merge-commit-message pr-title-description \
+  --enable-merge-commit=false --enable-rebase-merge=false --delete-branch-on-merge
+```
+
+## All languages
+- **English** for all identifiers, comments, docstrings, logs and error messages (user-facing UI text follows the product's language, through i18n where there is more than one). Business terms are translated consistently; when the translation isn't obvious, add it to the project glossary (`docs/glossary.md`) with the original Spanish term.
+- Names say what something is or does: no abbreviations except universal ones (`id`, `url`, `db`). Booleans read as questions (`isActive`, `has_access`, `canEdit`). Functions are verbs, classes and types nouns.
+- Comments explain *why*, never restate *what*. No commented-out code; git has the history.
+- Money: decimal types (`Decimal`, `decimal.js`/`big.js`, `brick/money`) or integer minor units, never floats. Dates and times: UTC, ISO 8601 at the boundaries.
+- Small functions with one level of abstraction; early returns over nested `if`s; no magic numbers (use named constants).
+- Errors: explicit and typed (domain error classes); never swallow them.
+
+## Code style (how code is written)
+
+### Formatting: the tools decide
+Formatting is never discussed or done by hand: the formatter runs on save, in the Claude hook after every edit, and in CI. Use each tool's **defaults** and don't add config that overrides them:
+- TypeScript/JavaScript (Prettier or Biome): 2-space indentation, **double quotes, semicolons**, trailing commas, 80 columns.
+- Python (Ruff format): 4 spaces, double quotes, 88 columns.
+- PHP (Pint, Laravel preset): 4 spaces, PSR-12.
+- Every repo has an `.editorconfig` (UTF-8, LF line endings, final newline, trimmed trailing whitespace) so editors agree with the formatters.
+
+### Writing style
+- **Functional first.** Pure functions and immutable data by default; side effects (I/O, DB, network, time, randomness) pushed to the edges and injected. Use classes where they add something: DDD entities and aggregates that protect invariants, value objects, and services or repositories with injected dependencies (and wherever a framework expects them, as NestJS or Laravel do).
+- **Flat control flow.** Use guard clauses and early returns instead of nesting; at most two levels of indentation inside a function; no nested ternaries.
+- **Small and focused.** A function does one thing at one level of abstraction; if it needs a comment to separate "parts", those parts are functions. Use an options object or a parameter object beyond three parameters.
+- **Explicit over clever.** Use descriptive names rather than short ones, and readable steps rather than dense one-liners. Prefer `map`/`filter`/comprehensions for simple transformations and a plain loop when the logic gets complex.
+- **Immutability.** `const` by default (`let` only when reassigned); never mutate arguments; return new objects/arrays. In Python, no mutable default arguments; prefer tuples or frozen dataclasses for fixed data.
+- **Async.** Use `async`/`await` rather than `.then()` chains; run independent work in parallel (`Promise.all`, `asyncio.gather`); never leave a promise unhandled.
+- **Types as documentation.** Declare explicit return types on exported functions; model states with union or discriminated types and enums instead of loose strings and booleans; make illegal states unrepresentable when it's cheap.
+- **Errors.** Throw or raise domain-specific errors with context; catch only where you can handle or translate them (usually at the boundary).
+
+### Comments and docs in code
+- **Docstrings / JSDoc on the public API only**, when the purpose or behaviour isn't obvious from the name and types: exported functions, classes and modules of libraries and shared code. Describe what it does, its non-obvious parameters, return value, errors raised, and an example if it helps.
+- **Inline comments explain why**: a business rule, a workaround (with a link to the issue), a non-obvious performance or security reason. Never restate what the code says.
+- `TODO` only with an issue reference: `// TODO(#123): …`.
+
+## TypeScript / JavaScript (React, Next.js, Node)
+| Topic | Convention |
+| --- | --- |
+| Package manager | **pnpm** for new projects (`pnpm-lock.yaml`, `packageManager` field in `package.json` via Corepack). In existing projects, the one its lockfile says. |
+| Language | TypeScript with `"strict": true`; no `any` (use `unknown` and narrow it); `import type` for type-only imports. |
+| Formatting and linting | The project's tool. New projects: Biome, or ESLint + Prettier when a framework preset needs ESLint (e.g. `eslint-config-next`). |
+| File names | **kebab-case** for every file: `user-profile.tsx`, `use-cart.ts`, `order-service.ts`. Next.js special files keep their names (`page.tsx`, `layout.tsx`, `route.ts`). |
+| Identifiers | `PascalCase` components, classes, types and interfaces (no `I` prefix); `camelCase` variables and functions; `useSomething` hooks; `UPPER_SNAKE_CASE` true constants. |
+| Exports | Named exports. Default exports only where the framework requires them (Next.js `page`, `layout`, `route`, config files). |
+| Imports | Path alias `@/` for project files instead of long `../../..` chains. |
+| Components | Function components; props type named `<Component>Props`; one exported component per file (small private helpers may live alongside). |
+
+## Python (FastAPI, Django, scripts)
+| Topic | Convention |
+| --- | --- |
+| Tooling | **uv** (dependencies, virtualenv, running); **Ruff** for lint and format (PEP 8); **mypy** or **pyright** (strict in new projects). |
+| Layout | `src/<package>/` with `tests/` alongside (Django: the standard project/app layout). |
+| Identifiers | `snake_case` modules, functions and variables; `PascalCase` classes; `UPPER_SNAKE_CASE` constants; leading `_` for private. |
+| Types | Type hints on every public function and method; `X \| None` rather than `Optional[X]`; Pydantic models or dataclasses rather than bare dicts for structured data. |
+| Docstrings | Google style, on public modules, classes and functions whose purpose isn't obvious from the name and types. |
+| Idioms | `pathlib` over `os.path`; f-strings; context managers for resources; `logging`, not `print`, in application code. |
+
+## PHP (Laravel)
+| Topic | Convention |
+| --- | --- |
+| Tooling | **Composer**; **Laravel Pint** (PSR-12 plus the Laravel preset); **Larastan** at the highest level the project can sustain; Pest for tests. |
+| Laravel naming | Models singular `PascalCase` (`Order`); tables plural `snake_case` (`order_items`); controllers singular plus `Controller` (`OrderController`); Form Requests `StoreOrderRequest`/`UpdateOrderRequest`; Actions as verb + noun (`CreateOrder`); Resources `OrderResource`; route URIs plural kebab-case (`/order-items`); route names dotted (`orders.show`). |
+| Code | `declare(strict_types=1);` in domain and application classes; typed properties, parameters and return types everywhere; constructor property promotion; backed enums instead of string constants. |
+
+## SQL and data
+Tables plural `snake_case`; columns `snake_case`; foreign keys `<singular>_id`; timestamps `created_at`/`updated_at`; indexes `idx_<table>_<columns>`. See the `database` skill.

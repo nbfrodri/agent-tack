@@ -60,7 +60,7 @@ Antes de commitear: revisa `git diff --staged`, que no entren secretos, archivos
 
 ## Pull Requests
 
-Título en formato Conventional Commit. Cuerpo:
+Los PRs se integran con **squash merge**: el título del PR se convierte en el commit de `main`, así que debe ser un Conventional Commit válido (ver `conventions.md`). Título en formato Conventional Commit. Cuerpo:
 ```markdown
 ## Summary
 What changes and why (1-3 sentences).
@@ -76,6 +76,8 @@ Risks, follow-ups, screenshots if UI.
 
 Closes #123
 ```
+Para trabajar a partir de issues, redactarlos o dividir un plan en issues, sigue la skill `github-issues`.
+
 PRs pequeños y revisables; si crece mucho, divídelo. Usa `gh` para crear PRs (`gh pr create --title … --body …`), siempre con permiso del usuario.
 
 ## Versionado y releases

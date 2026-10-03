@@ -9,12 +9,14 @@ Este es el modo de trabajar que el usuario quiere en todos sus proyectos, con cu
 
 **Idioma:** habla con el usuario en el idioma en que te escriba (normalmente español). Commits, PRs, issues, comentarios de código y documentación van en **inglés**, salvo que el repo ya use otro idioma de forma consistente.
 
+**Convenciones de código y git:** sigue `references/conventions.md` (estilo, nombres, idioma, formateo, merge de PRs).
+
 **Las convenciones del proyecto mandan.** Si el repo tiene su propio CONTRIBUTING, AGENTS.md, CLAUDE.md, linter, formato de commits o estructura de carpetas, síguelos por encima de esta guía. Esta skill rellena los huecos, no pisa lo que ya existe.
 
 ## El flujo para cada petición
 
 ### 1. Entender
-Lee el código relevante, los tests existentes y la documentación antes de proponer nada. Si la petición es ambigua de una forma que cambia el resultado, pregunta (agrupa las dudas en una sola vez). Si hay una respuesta razonable por defecto, úsala y dilo.
+Si la petición viene de un issue de GitHub ("el issue #12", una URL de issue), léelo entero con sus comentarios y usa sus criterios de aceptación como definición de "hecho" (skill `github-issues`). Lee el código relevante, los tests existentes y la documentación antes de proponer nada. Si la petición es ambigua de una forma que cambia el resultado, pregunta (agrupa las dudas en una sola vez). Si hay una respuesta razonable por defecto, úsala y dilo.
 
 ### 2. Clasificar el tamaño
 - **Trivial** (typo, renombrar, ajuste de una línea, pregunta): hazlo directamente, sin plan formal.
@@ -33,7 +35,7 @@ El plan es corto y concreto. Usa la herramienta de tareas/plan si la hay (TodoWr
 Si estás en `main`/`master`/`develop` y el cambio no es trivial, crea una rama: `feat/short-description`, `fix/…`, `refactor/…`, `docs/…`, `chore/…`. Comprueba antes `git status` para no mezclar cambios ajenos.
 
 ### 5. Implementar con TDD
-Ciclo rojo → verde → refactor para toda lógica con comportamiento: escribe un test que falle por la razón correcta, el código mínimo para pasarlo, y luego limpia. Diseña siguiendo SOLID y, donde haya un dominio de negocio real, DDD. Sé pragmático: scripts de un uso, configuración o prototipos no necesitan la ceremonia completa, pero sí algún test o verificación.
+Ciclo rojo → verde → refactor para toda lógica con comportamiento: escribe un test que falle por la razón correcta, el código mínimo para pasarlo, y luego limpia. Diseña siguiendo SOLID y, donde haya un dominio de negocio real, DDD. Escribe el código según `references/conventions.md`. Sé pragmático: scripts de un uso, configuración o prototipos no necesitan la ceremonia completa, pero sí algún test o verificación.
 → Detalles en `references/tdd.md` y `references/design.md`.
 
 ### 6. Commits atómicos
@@ -58,6 +60,8 @@ Resume al usuario: qué cambió, en qué commits, cómo se verificó, qué docs 
 - Skill `git-history`: corregir, juntar o deshacer commits, y limpiar el historial antes del push.
 - Skill `testing`: cómo escribir buenos tests en pytest, Pest/PHPUnit y Vitest/Jest (paso 5).
 - Skill `release`: versionado SemVer, CHANGELOG, tags y GitHub Releases.
+- Skill `github-issues`: trabajar a partir de un issue, redactar issues, dividir un plan en issues y registrar bugs encontrados por el camino.
+- Skill `lessons`: cuando el usuario te corrija o fije una preferencia duradera, guárdala como regla.
 - Skills por capa, cuando la tarea toque esa parte del stack: `frontend` (React/Next.js), `api-design` (Python, Laravel, Node), `database` (PostgreSQL, MySQL, MongoDB), `auth`, `e2e-testing` (Playwright), `deployment` (Vercel, VPS con Docker, AWS) y `observability`.
 - Agente `planner`: para tareas normales o grandes, delégale el plan (paso 3).
 - Agente `code-reviewer`: revisa el diff antes de ofrecer el push (entre los pasos 8 y 9).
