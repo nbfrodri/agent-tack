@@ -31,7 +31,7 @@ Talk normally, in your language:
 | "Add Google login" | Plan (waits for your OK if large; may suggest subagents) → branch → TDD → Conventional Commits → docs → summary. Asks before pushing. |
 | "Work on issue #12" | Reads the issue and its acceptance criteria; the PR closes it (after asking). |
 | "Checkout is broken" | Reproduces the bug, writes a failing test, fixes the root cause. |
-| "What would you improve in this module?" | Asks scope and focus, runs read-only reviewers, gives a prioritised report. |
+| "What would you improve in this module?" | Asks scope and focus, runs read-only reviewers, gives a prioritised report and creates deduplicated GitHub issues for verified findings unless you request no publication. |
 | "Use subagents" | Splits the plan across agents with a model and effort per task, after your OK. |
 | "Improve it autonomously until it scores 8/10" | `auto-improve`: asks scope and focus, then scores, fixes and re-scores on its own branch until 8/10 or 5 iterations. Never pushes. |
 | "Prepare a release" | SemVer version from commits; with release-please, reviews and merges the release PR (after asking). |

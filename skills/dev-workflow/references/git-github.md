@@ -54,7 +54,7 @@ This is the single, detailed list; the global instructions summarise it.
 
 **Ask first:**
 - `push`;
-- creating or editing PRs and issues, or commenting on them;
+- creating or editing PRs and issues, or commenting on them (the `improve` audit workflow already authorises creation of verified finding issues unless the user requests no publication);
 - `merge`;
 - rebasing or amending published commits;
 - deleting branches;

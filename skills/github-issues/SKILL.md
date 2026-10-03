@@ -7,7 +7,7 @@ description: GitHub issues with gh: work an issue end to end (linked branch, PR 
 
 Issues are the project's to-do list and its memory: why something was built, what was decided and what's still pending. Good issues are small, specific and have acceptance criteria, so anyone (a person or an AI) can pick one up and know when it's done.
 
-Creating, editing, commenting on, labelling or closing issues is visible to other people, so **ask the user before any write** to GitHub. Reading (`gh issue list/view`) is always fine.
+Creating, editing, commenting on, labelling or closing issues is visible to other people, so **ask the user before any write** to GitHub unless already authorised. The `improve` audit workflow authorises creation of issues for verified findings, without a second confirmation, except when the user requests no publication. This exception does not authorise comments, closing issues or unrelated writes. Reading (`gh issue list/view`) is always fine.
 
 ## Working on an issue ("work on issue #12")
 1. **Read it whole:** `gh issue view 12 --comments`, including linked issues/PRs and any screenshots or logs. Check it's still open and not already being worked on (assignee, linked branches: `gh issue develop --list 12`).
