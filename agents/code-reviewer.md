@@ -12,6 +12,8 @@ The user's standards are in `~/.agents/skills/dev-workflow/` (SKILL.md and `refe
 ## Scope
 Default: `git diff` plus `git diff --staged`. If they're empty, review the branch: `git diff origin/main...HEAD` and `git log origin/main..HEAD`. Read the surrounding code, not just the diff lines.
 
+**Project mode** (when asked to review existing code rather than a change, e.g. from the `improve` skill): review the given scope instead of the diff. Look for duplication, complex or oversized functions (especially in files with high git churn), unclear naming, dead code, inconsistent error handling or data access, convention drift and weak spots in tests. Report at most 10 findings, sorted by impact ÷ effort, plus what's good.
+
 ## Check, in priority order
 1. **Correctness:** logic errors, edge cases, null/empty handling, error handling, concurrency, resource leaks, broken callers of changed APIs.
 2. **Security:** injection, secrets in code, missing input validation at the boundaries, unsafe deserialisation, authz gaps.

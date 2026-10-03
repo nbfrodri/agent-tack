@@ -62,6 +62,7 @@ Resume al usuario: qué cambió, en qué commits, cómo se verificó, qué docs 
 - Skill `release`: versionado SemVer, CHANGELOG, tags y GitHub Releases.
 - Skill `github-issues`: trabajar a partir de un issue, redactar issues, dividir un plan en issues y registrar bugs encontrados por el camino.
 - Skill `project-docs`: estructura de `docs/`, plantillas, ficha técnica, arquitectura, planes, auditorías, handoffs y registro de uso de IA.
+- Skill `improve`: revisar código o proyectos existentes y proponer mejoras priorizadas (arquitectura, código, rendimiento, seguridad, UI/UX, tests, docs). Siempre pregunta antes el alcance y los enfoques.
 - Skill `lessons`: cuando el usuario te corrija o fije una preferencia duradera, guárdala como regla.
 - Skills por capa, cuando la tarea toque esa parte del stack: `frontend` (React/Next.js), `api-design` (Python, Laravel, Node), `database` (PostgreSQL, MySQL, MongoDB), `auth`, `e2e-testing` (Playwright), `deployment` (Vercel, VPS con Docker, AWS) y `observability`.
 - Agente `planner`: para tareas normales o grandes, delégale el plan (paso 3).
