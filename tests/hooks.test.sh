@@ -174,9 +174,16 @@ guard() {
   fi
   printf '%s' "$json" | bash "$GUARD"
 }
+# A crash (non-zero exit) or malformed JSON must never pass as "allow"
 decision() {
-  local out
+  local out rc
   out="$(guard "$1")"
+  rc=$?
+  if [ "$rc" -ne 0 ]; then echo "error: exit $rc"; return; fi
+  if [ -n "$out" ] && ! printf '%s' "$out" | python3 -c 'import json, sys; json.load(sys.stdin)' 2>/dev/null; then
+    echo "error: invalid JSON: $out"
+    return
+  fi
   case "$out" in
     *'"deny"'*) echo deny ;;
     *'"ask"'*) echo ask ;;
@@ -226,6 +233,60 @@ expect deny "git push --force-with-lease"
 git -C "$R" switch -q -c feat/y
 expect ask "git push --force-with-lease"
 expect ask "git push --force"
+
+# Quoting: quoted text is data, quoted targets are still targets
+expect allow "git commit -m 'docs: explain why --no-verify is denied'"
+expect allow "git commit -m \"fix: handle a; rm -rf / edge\""
+expect allow "grep -rn \"DROP TABLE\" migrations/"
+expect allow "echo 'git push --force origin main'"
+expect deny "rm -rf \"\$HOME\""
+expect deny "rm -rf \"/\""
+expect deny "rm -rf '~'"
+expect deny "rm -rf --no-preserve-root /tmp/x"
+# Short options and hook bypasses
+expect deny "git commit -n -m 'fix: x'"
+expect deny "git commit -nm 'fix: x'"
+expect deny "git commit -anm 'fix: x'"
+expect allow "git commit -m 'fix: n is fine in a message'"
+expect allow "git commit -mnote"
+expect allow "git push -n origin feat/x"
+expect deny "git -c core.hooksPath=/dev/null commit -m 'fix: x'"
+expect deny "git config core.hooksPath /dev/null"
+expect allow "git config --get core.hooksPath"
+# Wrappers, absolute paths and nested commands
+expect deny "env FOO=1 git push --force origin main"
+expect deny "/usr/bin/git push --force origin main"
+expect deny "sudo rm -rf /"
+expect deny "sleep 1 & rm -rf ~"
+expect deny "bash -c \"rm -rf ~\""
+expect deny "sh -c 'git push -f origin main'"
+expect deny "eval rm -rf ~"
+expect deny "echo \$(rm -rf ~)"
+expect deny "timeout 5 git push --force origin main"
+# Push targets
+expect deny "git push origin :main"
+expect deny "git push --force origin refs/heads/main"
+expect deny "git push --force origin feat/y:main"
+expect deny "git push --mirror"
+# Heredoc bodies are data
+expect allow "$(printf 'cat > notes.md <<EOF\nNever run rm -rf / or git push --force origin main\nEOF')"
+expect allow "$(printf 'git commit -F - <<'"'"'MSG'"'"'\nfix: x\n\nmentions --no-verify\nMSG')"
+expect deny "$(printf 'cat > a.txt <<EOF\ntext\nEOF\nrm -rf ~')"
+# Discarding changes
+expect ask "git restore src/app.ts"
+expect allow "git restore --staged src/app.ts"
+expect ask "git checkout -- src/app.ts"
+expect ask "git checkout -f main"
+expect allow "git checkout -b feat/new"
+expect ask "git switch --discard-changes main"
+expect allow "git switch main"
+expect ask "git branch -Df old"
+expect allow "git branch -d merged"
+# A deny later in the command wins over an earlier ask
+expect deny "git reset --hard && rm -rf /"
+# Redirection targets are not rm targets
+expect allow "rm -rf dist 2> /dev/null"
+expect ask "rm -rf /etc/foo\\ bar"
 check "invalid JSON input is allowed (fails open)" "[ -z \"\$(printf 'not json' | bash '$GUARD')\" ]"
 
 echo "Switch: agent-config enable/disable/status"
