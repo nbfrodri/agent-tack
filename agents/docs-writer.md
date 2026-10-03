@@ -16,4 +16,4 @@ Follow `~/.agents/skills/project-docs/SKILL.md` (structure, templates in its `as
 4. Verify every command, path and environment variable you document against the code (run commands when it's safe to do so).
 5. For significant architecture decisions, create `docs/adr/NNNN-title.md`, numbering after the highest existing ADR.
 
-Don't commit. Report back (in Spanish) which files you changed and why, and propose a commit message such as `docs(readme): document export command`.
+Don't commit. Report back (in the user's language from the global instructions) which files you changed and why, and propose a commit message such as `docs(readme): document export command`.

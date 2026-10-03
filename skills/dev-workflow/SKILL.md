@@ -31,7 +31,8 @@ Short and concrete, using the tool's task or plan feature if there is one (TodoW
 - ordered steps, each ending in a commit;
 - which tests come first;
 - which docs need updating;
-- risks and open questions.
+- risks and open questions;
+- for large plans that split into independent parts: an optional delegation section (subagents, with model and effort per task, as in `orchestrate`), offered to the user, never started without their OK.
 
 For normal or large tasks, also create the task's handoff and keep it current at every milestone (`project-docs` → continuous handoffs), in case the session stops.
 

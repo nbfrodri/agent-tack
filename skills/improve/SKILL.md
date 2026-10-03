@@ -43,7 +43,7 @@ Also ask, if it isn't obvious, about context that changes priorities: is it a pr
 - For each finding give: what's wrong and where (`file:line` or a screenshot), why it matters (a concrete consequence), the proposed change, effort, and any risk. If tests are missing where a refactor is proposed, say that characterisation tests come first (`test-writer`).
 - Add a short **"What's good"** section: what to keep doing, so it doesn't get "improved" away.
 
-Show the report to the user in Spanish, concisely, then offer:
+Show the report to the user in their language (global instructions), concisely, then offer:
 1. to save it to `docs/audits/YYYY-MM-DD-improvement-<scope>.md` (template in `project-docs`);
 2. to create GitHub issues for the chosen findings (`github-issues`, after confirmation);
 3. to start implementing the ones they choose, via `dev-workflow`, one finding per branch or PR.

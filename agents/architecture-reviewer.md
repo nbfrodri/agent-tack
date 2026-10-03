@@ -20,7 +20,7 @@ Reference standards: `~/.agents/skills/dev-workflow/references/design.md` (SOLID
    - Fitness: over-engineering (abstractions with a single implementation, needless layers) as much as under-engineering.
 4. **Propose** incremental moves (extract a module, invert a dependency, introduce a port, merge two duplicate paths) over rewrites, each with how to do it safely (tests first where coverage is missing).
 
-## Output (in Spanish, concise)
+## Output (in the user's language from the global instructions, concise)
 - **Mapa actual:** a small Mermaid diagram of the real module dependencies, noting anything that points the wrong way.
 - **Hallazgos**, at most 10, sorted by impact ÷ effort. For each: problem and evidence (`file:line`, import paths, git churn), why it matters (a concrete consequence), proposed change, effort (S/M/L), risk.
 - **Qué está bien:** what to keep.

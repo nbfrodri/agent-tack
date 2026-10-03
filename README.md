@@ -1,8 +1,64 @@
 # agent-config
 
-My personal configuration for AI coding assistants (Claude Code, Codex): skills, subagents, global instructions, settings and plugins, kept in one place and installed with one command.
+**A portable, versioned harness for AI coding agents** (Claude Code, Codex): the instructions, skills, subagents, hooks, conventions and tooling that make an AI assistant work like a disciplined senior engineer, kept in one repo and installed on any machine with one command. Think of it as *dotfiles for AI agents*.
 
 [![CI](https://github.com/nbfrodri/agent-config/actions/workflows/ci.yml/badge.svg)](https://github.com/nbfrodri/agent-config/actions/workflows/ci.yml)
+
+## At a glance
+
+| Part | What's in it |
+| --- | --- |
+| **Global instructions** | One short file read by every assistant: language, no AI attribution, what to ask before doing, and the workflow rules for enabled projects. |
+| **Workflow** | `dev-workflow`: understand → size → plan → branch → TDD → atomic commits → docs → verify → summary, with code, git and release conventions. |
+| **18 skills** | *Process:* `dev-workflow`, `new-project`, `debugging`, `testing`, `git-history`, `release`, `github-issues`, `project-docs`, `improve`, `orchestrate`, `lessons`. *Stack:* `frontend` (React/Next.js), `api-design` (FastAPI, Django, Laravel, Node), `database` (PostgreSQL, MySQL, MongoDB), `auth`, `e2e-testing` (Playwright), `deployment` (Vercel, VPS + Docker, AWS), `observability`. |
+| **9 agents** | `planner`, `implementer`, `code-reviewer`, `test-writer`, `docs-writer`, `architecture-reviewer`, `security-auditor`, `performance-analyzer`, `ui-reviewer`. |
+| **Hooks (enforced)** | Git, for every tool and for you: Conventional Commits, AI attribution removed, `main` and release tags protected, per-repo hooks kept working. Claude Code: a command guard that blocks or asks before dangerous commands, auto-formatting with the project's formatter, and the project's status at session start. |
+| **Per-project switch** | `agent-config enable / disable / status`: the full workflow only where you want it; the safety net everywhere. |
+| **Conventions** | Conventional Commits, squash-merged PRs, SemVer with annotated `vX.Y.Z` tags and release-please, English code without comment noise, pnpm / uv / Composer, formatter defaults. |
+| **Docs system** | `README` for humans, `AGENTS.md` for AIs, and `docs/` with a technical sheet, architecture, ADRs, plans, audits, continuous handoffs and an AI work log, with templates. |
+| **Project templates** | `.editorconfig`, issue forms, a PR template, Dependabot and release-please, ready for new projects. |
+| **Plugins** | `context7` (up-to-date library docs) and `frontend-design`, installed and kept up to date. |
+| **Installer** | `install.sh`: idempotent, backs up instead of overwriting, merges settings without touching yours, works on Linux and macOS. |
+| **Quality** | ~250 tests and CI on Linux and macOS, a validator for skills and cross-references, behaviour evals with real AI sessions, GitHub rulesets on `main` and tags. |
+
+## Why this exists
+
+### The problem
+AI coding assistants are fast, but out of the box they're inconsistent teammates:
+- **Every session starts from zero.** The conventions you explained yesterday are gone today, and Claude and Codex each behave differently.
+- **Good practice is optional for them.** They skip tests, write one giant commit, sign commits as "Co-Authored-By: Claude", over-comment the code, forget the README, and stop halfway without leaving notes.
+- **Some mistakes are expensive:** a force-push to `main`, `rm -rf` in the wrong place, a `--no-verify` that skips the checks, a migration run against the wrong database.
+- **Prompt rules get forgotten.** Instructions in a chat or a long system prompt are suggestions; nothing stops the model when it ignores them.
+- **Setup doesn't travel.** Each machine and each tool ends up with its own half-remembered configuration.
+
+### The solution
+One versioned repo that turns an AI assistant into a teammate that works like a disciplined senior engineer, on any machine, with any assistant:
+- **One way of working, everywhere:** plan → TDD → small Conventional Commits → docs → review, the same in Claude Code and Codex, installed with one command.
+- **Rules that are enforced, not just written:** git hooks and Claude Code hooks apply the rules that matter whatever the model does, so a forgotten instruction can't become a broken `main`.
+- **Expert knowledge on demand:** 18 skills (frontend, APIs, databases, auth, testing, deployment, releases…) and 9 specialised agents load only when a task needs them.
+- **You stay in control:** it's opt-in per project, asks before anything outward-facing (push, PRs, releases), and asks you scope and focus before reviewing or delegating.
+
+### Strengths
+| | What you get |
+| --- | --- |
+| **Consistency** | The same workflow and conventions in every project and every session: plans, tests first, atomic commits, squash-merged PRs, SemVer releases, docs for humans and for AIs. |
+| **Safety net** | Blocks force-pushes and deletion of `main`, catastrophic `rm -rf`, hook bypasses and published-tag rewrites; asks before discarding work or wiping a database. Works for Claude, Codex, any other tool and your own commands. |
+| **Clean history** | Conventional Commits enforced, AI attribution removed automatically, one commit per logical change, changelogs and versions computed from commits. |
+| **Better code** | TDD, SOLID/DDD where it fits, self-explanatory code without comment noise, stack-specific best practices instead of generic answers. |
+| **Continuity** | Continuous handoffs, so a session cut off by usage limits resumes exactly where it stopped, even in another tool or on another machine; plans, audits and an AI work log in `docs/`. |
+| **It learns** | Corrections become versioned rules (`lessons`), so the same mistake isn't made twice, on any machine. |
+| **Scales up when needed** | Reviews with parallel specialised reviewers (`improve`), and multi-agent delegation with a model and effort recommended per task (`orchestrate`), only with your OK. |
+| **Low overhead** | Opt-in per project; skill descriptions are kept to a budget (~1.2k tokens per session) and details load only when used. |
+| **Proven** | ~250 automated tests on Linux and macOS (installer, hooks, validator), behaviour evals with real Claude and Codex sessions, and its own improvement audit with every finding fixed. |
+
+### Why use it
+- **For you:** less time correcting the AI and re-explaining conventions; more time reviewing good changes. Nothing to remember: the rules apply themselves.
+- **For your projects:** a readable history, tests that exist, docs that match the code and releases that are boring, in the best sense.
+- **For a team:** everyone's assistant follows the same playbook, so AI-written code looks like the team's code. New members get the conventions on day one by running one command.
+- **Against risk:** the dangerous mistakes are blocked at the git and tool level, not left to the model's judgement.
+
+### Limits (honestly)
+Skills and instructions guide the model; only the hooks guarantee. The command guard reads commands like a shell but is a safety net, not a sandbox. Subagents cost extra tokens, which is why delegation is always your call. Codex gets the skills and instructions, but not the Claude-specific agents and hooks; the git hooks apply to both.
 
 ## Install
 
@@ -51,6 +107,30 @@ My personal configuration for AI coding assistants (Claude Code, Codex): skills,
    cd ~/Projects/agent-config && git pull && ./install.sh
    ```
 5. **Change the rules** by editing the files here (or by telling the AI, which uses `lessons`), then commit and push. Changes apply immediately on this machine through the symlinks; restart the tool for new skills or agents.
+
+## Using it on someone else's machine
+
+This repo is personal (private, with its owner's preferences), so another person should run **their own copy**:
+
+1. **Get access.** The owner either invites them as a collaborator (*Settings → Collaborators*), or makes the repo public or a template (*Settings → Template repository*).
+2. **Create their own copy:** *Use this template* (or fork) on GitHub, so they can push their own changes and keep their rules versioned.
+3. **Clone their copy and install:**
+   ```bash
+   git clone https://github.com/<their-user>/agent-config.git ~/Projects/agent-config
+   ~/Projects/agent-config/install.sh
+   ```
+4. **Adapt the personal bits:**
+   | File | What to change |
+   | --- | --- |
+   | `global/AGENTS.md` | The language the AI talks in (Spanish here) and the "ask before" rules. Every agent and skill uses the language set here. |
+   | `skills/dev-workflow/references/conventions.md` | Stack choices made for this owner: pnpm, kebab-case files, squash merge, release-please, comment policy… |
+   | `plugins.txt` | Claude Code plugins to install. |
+   | `claude/settings.json` | Claude Code settings and hooks merged into theirs (their own keys and hooks are kept). |
+   | `README.md`, `bin/agent-config` | The repo URL (badge, clone command, `.agent-config` marker text). |
+5. **Restart Claude Code and Codex, and enable it in a project:** `agent-config enable`.
+6. **Keep it theirs:** they can pull improvements from the original with `git remote add upstream <original-url>` and `git pull upstream main`, then re-run `./install.sh`.
+
+Things that are already per-user and need no changes: the git identity (commits use their `git config user.name/email`), existing `~/.claude/settings.json` keys and hooks (merged, never overwritten), and any global `core.hooksPath` of their own (left alone).
 
 ## What the installer does
 

@@ -24,7 +24,7 @@ Reference: `~/.agents/skills/frontend/SKILL.md` (states, accessibility, responsi
 7. **Accessibility:** keyboard navigation and visible focus, semantic headings and landmarks, alt text, labelled icon buttons; run an automated check (axe, Lighthouse) if available.
 8. **Copy:** clear, concise and consistent labels and messages.
 
-## Output (in Spanish, concise)
+## Output (in the user's language from the global instructions, concise)
 - **Resumen:** two or three lines on the overall impression.
 - **Hallazgos**, at most 10, sorted by user impact ÷ effort. For each: screen and width, the problem with a screenshot reference, why it matters for the user, a concrete fix (a component, CSS/Tailwind change or copy change, pointing to the likely file), and effort (S/M/L).
 - **Qué está bien:** patterns to keep.
