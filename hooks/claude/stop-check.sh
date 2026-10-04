@@ -50,6 +50,17 @@ case "$("$cli" context 2>/dev/null)" in
   *"Handoff check: may be stale"* | *"Handoff check: handoff names branch"*) add "the handoff may be stale: refresh it before stopping." ;;
 esac
 
+# Kept out of $( ) because bash 3.2 misparses a case pattern's ")" inside command substitution.
+first_match() {
+  local file
+  while IFS= read -r file; do
+    # shellcheck disable=SC2254 # The map's globs are patterns by design.
+    case "$file" in $1) printf '%s\n' "$file"; return ;; esac
+  done <<EOF
+$changed
+EOF
+}
+
 if [ -f docs-map.txt ]; then
   base=""
   current="$(git branch --show-current 2>/dev/null)"
@@ -62,8 +73,7 @@ if [ -f docs-map.txt ]; then
   while IFS='|' read -r pattern docs; do
     pattern="$(printf '%s' "$pattern" | tr -d '[:space:]')"
     case "$pattern" in '' | '#'*) continue ;; esac
-    # shellcheck disable=SC2254 # The map's globs are patterns by design.
-    matched="$(printf '%s\n' "$changed" | while IFS= read -r file; do case "$file" in $pattern) printf '%s\n' "$file" ;; esac; done | head -n 1)"
+    matched="$(first_match "$pattern")"
     [ -n "$matched" ] || continue
     covered=false missing=""
     # Doc names are literal paths: disable globbing so an entry like "*" is not expanded.

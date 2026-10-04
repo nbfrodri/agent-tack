@@ -78,7 +78,7 @@ for arg in "$@"; do
 done
 
 if [ -z "$feature" ]; then
-  [ "$unset" = false ] && [ "$target_scope" = local ] || usage_error 'config needs a feature name'
+  if [ "$unset" = true ] || [ "$target_scope" = global ]; then usage_error 'config needs a feature name'; fi
   list
   exit 0
 fi

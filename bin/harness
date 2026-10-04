@@ -172,7 +172,9 @@ case "$cmd" in
         exit 0
         ;;
       new)
-        [ "$#" -eq 4 ] && [ "$3" = --from ] || { echo "harness: usage: harness mode new NAME --from MODE" >&2; exit 2; }
+        if [ "$#" -ne 4 ] || [ "$3" != --from ]; then
+          echo "harness: usage: harness mode new NAME --from MODE" >&2; exit 2
+        fi
         new_mode "$2" "$4"
         exit
         ;;
