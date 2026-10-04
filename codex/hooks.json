@@ -1,0 +1,60 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '__REPO__/hooks/claude/guard-bash.sh' --codex #harness",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '__REPO__/hooks/claude/budget.sh' #harness",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "apply_patch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '__REPO__/hooks/claude/fast-check.sh' #harness",
+            "timeout": 90
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '__REPO__/hooks/claude/stop-check.sh' #harness",
+            "timeout": 90
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '__REPO__/hooks/claude/session-context.sh' #harness",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

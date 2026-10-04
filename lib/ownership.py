@@ -112,7 +112,7 @@ def validate(state, home):
                 if not plain_path(backup) or not backup.startswith(path + ".bak-") or "/" in backup[len(path):]:
                     raise ValueError("backup is not adjacent to its managed path")
         elif kind == "settings":
-            if path != home.rstrip("/") + "/.claude/settings.json":
+            if path not in (home.rstrip("/") + "/.claude/settings.json", home.rstrip("/") + "/.codex/hooks.json"):
                 raise ValueError("unexpected settings path")
             for name in ("before", "after", "managed"):
                 with (entry / name).open() as stream:

@@ -214,10 +214,17 @@ EOF
 #   - hooks: entries tagged "#harness" are replaced by the repo's, your own hooks are kept
 #   - __REPO__ in the repo file is replaced with this repo's path
 merge_settings() {
-  section "Claude Code settings"
-  local src="$REPO/claude/settings.json" dest="$HOME/.claude/settings.json"
+  merge_json "Claude Code settings" "$REPO/claude/settings.json" "$HOME/.claude/settings.json"
+  merge_json "Codex hooks" "$REPO/codex/hooks.json" "$HOME/.codex/hooks.json"
+}
+
+# Merges a repo template (with __REPO__ placeholders) into a JSON settings file, keeping the
+# user's own keys and hooks and recording ownership so uninstall can reverse it.
+merge_json() {
+  section "$1"
+  local src="$2" dest="$3"
   local base rendered tmp line rc=0
-  [ -f "$src" ] || { ok "no claude/settings.json in repo, nothing to merge"; return; }
+  [ -f "$src" ] || { ok "no ${src#"$REPO"/} in repo, nothing to merge"; return; }
   case "$REPO" in
     *\'*|*\"*|*\\*) fail "the repo path contains quotes or backslashes; move it to a simpler path"; return ;;
   esac
@@ -225,7 +232,7 @@ merge_settings() {
     ok "would merge $src into $dest"
     return
   fi
-  mkdir -p "$HOME/.claude"
+  mkdir -p "$(dirname "$dest")"
   [ ! -L "$dest" ] || { fail "settings symlink left untouched: $dest"; return; }
 
   base="$WORKDIR/settings-base.json"

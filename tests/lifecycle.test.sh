@@ -24,7 +24,9 @@ mkdir -p "$H/.claude" "$H/.codex"
 printf 'original notes\n' > "$H/.claude/CLAUDE.md"
 ln -s "$WORK/original-rules" "$H/.codex/AGENTS.md"
 printf '{"theme":"dark","attribution":{"commit":"original"}}\n' > "$H/.claude/settings.json"
+printf '{"hooks":{"Stop":[{"hooks":[{"type":"command","command":"echo my-codex-hook"}]}]}}\n' > "$H/.codex/hooks.json"
 check 'install records ownership' 'run install.sh --skip-plugins'
+check 'codex hooks merged next to the user hook' "grep -q 'echo my-codex-hook' '$H/.codex/hooks.json' && grep -q 'guard-bash.sh' '$H/.codex/hooks.json'"
 STATE="$H/.local/state/agent-harness/ownership"
 check 'private ownership schema exists' "[ \"\$(cat '$STATE/version' 2>/dev/null)\" = 1 ]"
 check 'reinstall succeeds' 'run install.sh --skip-plugins'
@@ -34,6 +36,7 @@ check 'uninstall succeeds' 'run uninstall.sh'
 check 'original instruction file restored after reinstall' "[ ! -L '$H/.claude/CLAUDE.md' ] && grep -q 'original notes' '$H/.claude/CLAUDE.md'"
 check 'displaced original symlink restored' "[ \"\$(readlink '$H/.codex/AGENTS.md')\" = '$WORK/original-rules' ]"
 check 'only original settings remain' "python3 -c 'import json,sys; assert json.load(open(sys.argv[1])) == {\"theme\":\"dark\",\"attribution\":{\"commit\":\"original\"}}' '$H/.claude/settings.json'"
+check 'only the user codex hook remains' "python3 -c 'import json,sys; assert json.load(open(sys.argv[1])) == {\"hooks\":{\"Stop\":[{\"hooks\":[{\"type\":\"command\",\"command\":\"echo my-codex-hook\"}]}]}}' '$H/.codex/hooks.json'"
 check 'owned Git hooks entry removed' "! HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 git config --global --get core.hooksPath"
 check 'uninstall does not delete the project' "[ -f '$REPO/install.sh' ]"
 
