@@ -26,16 +26,20 @@ Installation records changes privately under `${XDG_STATE_HOME:-$HOME/.local/sta
 Uninstall never deletes project files, project activation/trust configuration or shared plugins. It cannot infer ownership of legacy configuration: paths already identical before recording began are preserved. Installation and uninstall previews make no persistent changes. Installation accepts paths with spaces; use absolute paths without tabs, newlines or dot components, and keep the checkout path free of quotes and backslashes for Claude hook command substitution.
 
 ## On/off per project
-The full workflow (plan, TDD, conventions, docs, handoffs, AI log, Conventional Commits, auto-format) is opt-in per project. Everywhere else the AI works normally and only the safety net stays on.
+The workflow (planning, TDD, conventions, docs, Conventional Commits, auto-format) is opt-in per project, and its weight follows the [workflow mode](#workflow-modes). Everywhere else the AI works normally and only the safety net stays on.
 
 ```bash
 harness doctor            # read-only installation and project diagnostics
 harness help              # CLI reference; aliases: --help and -h
-harness status            # workflow activation and local formatter trust
+harness status            # workflow activation, mode and local formatter trust
 harness status --quiet    # no output; exit 0 when enabled, 1 when disabled
 harness enable            # this clone only (git config; nothing added to the repo)
 harness enable --shared   # commit a .harness file so every clone has it
 harness disable
+harness mode              # effective mode and its source
+harness mode lite         # set the mode for this project
+harness mode strict --global   # set your default for every project
+harness mode --unset      # go back to the global default
 harness context           # bounded project instructions, architecture and active handoff
 harness trust             # permit automatic project formatter execution in this clone
 harness trust --revoke     # revoke execution permission without disabling the workflow
@@ -50,16 +54,35 @@ git config --global harness.enabled true   # every repo (a local disable still w
 | No `.env` files or credentials committed | ✔ | ✔ |
 | AI attribution removed from commits | ✔ | ✔ |
 | Conventional Commits enforced | ✔ | — |
-| Full workflow | ✔ | — |
+| Workflow at the configured mode | ✔ | — |
 | Claude Code auto-format | With explicit local trust | — |
 
 Start a new session after switching. Claude Code is told the status at session start; other tools check `harness status` as their instructions say. Projects created with "create a project…" are enabled automatically.
 
+## Workflow modes
+
+The mode decides how much process each task gets. `auto` is the default: before each task the assistant picks a level, states it in one line (for example `Level: standard (bounded bug fix)`) and moves up if the task grows. You can change the level for one task ("do this in strict") or fix it with `harness mode`.
+
+| | lite | standard | strict |
+| --- | --- | --- | --- |
+| Typical task | Question, typo, config tweak, one-line fix, small script | Bounded feature or bug fix in one area | Several modules, architecture, migrations, security, risky or debatable design |
+| Plan | None | Short plan in the task list | Saved in `docs/plans/`; waits for your approval |
+| Tests | For changed logic | TDD | TDD |
+| Docs | Only if they become wrong | What changed behaviour affects | Full checklist and ADRs |
+| Handoff | None | Only for multi-session work or low context | Kept from the start |
+| AI log | None | None | One row per task |
+| Review | Self-review | `code-reviewer` for large or risky diffs | `code-reviewer` before offering to push |
+| Delegation | Suggested, waits for OK | Suggested, waits for OK | Automatic after approval |
+
+In every mode the hooks still enforce Conventional Commits, no AI attribution, no secrets and protected `main` and tags; the assistant works on a branch, asks before anything outward-facing and **asks whenever it has a real doubt** instead of guessing.
+
+A project setting (`harness mode lite`) overrides your global default (`harness mode lite --global`); with neither, the mode is `auto`. Invalid values behave as `auto` and are reported by `harness status` and `harness doctor`. Lighter modes cost fewer tokens and less time; [results](results.md) compares them.
+
 ## Startup context and formatter trust
 
-Claude Code's SessionStart hook supplies the activation status plus bounded excerpts from the project's `AGENTS.md`, `docs/architecture.md` and the newest active or paused handoff. Other tools follow the global instructions to run `harness context` at session start. This is an instruction-driven startup step for tools without a SessionStart hook.
+Claude Code's SessionStart hook supplies the activation status and mode plus bounded excerpts from the project's `AGENTS.md`, `docs/architecture.md` and the newest active or paused handoff. Other tools follow the global instructions to run `harness context` at session start. This is an instruction-driven startup step for tools without a SessionStart hook.
 
-The combined document content is capped at 6,000 bytes, with per-file line limits. Missing files and symlinks outside the checkout are skipped. Read the referenced documents in full when needed. Disable the extra context with `git config harness.context false`; activation messages remain available.
+The combined document content is capped at 6,000 bytes, with per-file line limits; in `lite` mode only `AGENTS.md` is included. Claude Code also receives it again after compacting the conversation. Missing files and symlinks outside the checkout are skipped. Read the referenced documents in full when needed. Disable the extra context with `git config harness.context false`; activation messages remain available.
 
 A shared `.harness` file enables workflow instructions but does not authorise execution of project code. Run `harness trust` only for a checkout whose formatter binaries and configuration you trust. Formatting requires both activation and explicit local trust; global trust settings are ignored. `harness trust --revoke` removes that execution permission.
 
@@ -67,17 +90,18 @@ A shared `.harness` file enables workflow instructions but does not authorise ex
 
 ```text
 enabled
+mode: auto (default)
 formatter trust: trusted
 ```
 
-The first line and exit status describe workflow activation; formatter trust is independent and can remain configured while the workflow is disabled. `harness trusted` checks only trust and prints `trusted` or `untrusted`. Both queries support `--quiet` for scripts. Trust permits Claude Code's formatter hook to run project formatters; it is not a general permission for the AI to execute commands.
+The first line and exit status describe workflow activation; the mode line shows its source (`local`, `global` or `default`); formatter trust is independent and can remain configured while the workflow is disabled. `harness trusted` checks only trust and prints `trusted` or `untrusted`. Both queries support `--quiet` for scripts. Trust permits Claude Code's formatter hook to run project formatters; it is not a general permission for the AI to execute commands.
 
 ## What to ask
 Talk normally, in your language:
 
 | You say | What happens |
 | --- | --- |
-| "Add Google login" | Plan (waits for your OK if large; automatically delegates complex independent work in auto mode) → branch → TDD → Conventional Commits → docs → summary. Asks before pushing. |
+| "Add Google login" | States the level, then plans as that level requires (waits for your OK at strict) → branch → tests → Conventional Commits → docs → summary. Asks before pushing. |
 | "Work on issue #12" | Reads the issue and its acceptance criteria; the PR closes it (after asking). |
 | "Checkout is broken" | Reproduces the bug, writes a failing test, fixes the root cause. |
 | "What would you improve in this module?" | Asks scope and focus, runs read-only reviewers, gives a prioritised report and creates deduplicated GitHub issues for verified findings unless you request no publication. |
@@ -89,7 +113,7 @@ Talk normally, in your language:
 
 ## Automatic delegation and integration choices
 
-In enabled projects, complex work with independent parts is delegated automatically after any required plan approval. Small or tightly coupled tasks stay with the main assistant. The harness recommends available models and effort according to complexity; the actual selection depends on the tool's supported controls. Tools without subagents perform the plan sequentially.
+In enabled projects, complex strict-level work with independent parts is delegated automatically after the plan is approved; at lite and standard the assistant suggests delegation and waits for your OK, because each subagent starts cold and costs extra tokens. Small or tightly coupled tasks stay with the main assistant. The harness recommends available models and effort according to complexity; the actual selection depends on the tool's supported controls. Tools without subagents perform the plan sequentially.
 
 ```bash
 git config --local harness.delegation off    # disable automatic delegation in this clone
@@ -100,6 +124,14 @@ git config --get harness.delegation          # absent means auto
 Explicitly asking for subagents authorises them for that task even when automatic mode is off. Disabling the workflow with `harness disable` also removes automatic delegation from the enabled-project policy. Delegation is driven by instructions, not enforced by a process scheduler, and can consume more tokens. Invalid mode values are treated as off and reported.
 
 The assistant commits coherent verified milestones as it works. Before integrating a PR, it inspects the history, recommends preserving useful milestones with a merge commit or combining temporary intermediate commits with squash, and offers the available methods in the existing integration confirmation. Commits are preserved unless you explicitly choose squash; a choice already given for that integration is respected without asking again.
+
+## Moving between tools and machines
+
+Every supported tool reads the same installed instructions and skills, so you can switch tools mid-task. Before switching, ask for a handoff (or let the strict level keep one); the next tool reads it at session start.
+
+- **Claude Code to Codex:** the installer already configures Codex. Codex's own `/import` can bring recent chats and projects from Claude Code; when it offers configuration, skills, agents or hooks, skip them, because copies would duplicate the harness's symlinked versions and would not update with `git pull` or be recognised by `doctor` and `uninstall.sh`.
+- **Windows:** use WSL2. Clone inside the Linux file system (for example `~/Projects`, not `/mnt/c`), install the AI tools inside WSL and run `./install.sh` there. Native Windows shells are not supported.
+- **Unfinished branches** must be pushed (the assistant asks first) to continue on another machine.
 
 ## Overrides
 | Situation | Command |

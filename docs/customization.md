@@ -9,7 +9,7 @@ Clone it into any directory you choose and install from that checkout, as shown 
 | What you want to change | Where to edit |
 | --- | --- |
 | Conversation language, permissions and global preferences | `global/AGENTS.md` |
-| Planning, testing, commits and documentation workflow | `skills/dev-workflow/` and its references |
+| Planning, testing, commits and documentation workflow, and what each level requires | `skills/dev-workflow/` and its references (default level: `harness mode <mode> --global`) |
 | Task-specific guidance or reusable templates | `skills/<name>/SKILL.md`, `references/` and `assets/` |
 | Automatic delegation, complexity routing and model fallbacks | `skills/orchestrate/` (per-project opt-out: `git config harness.delegation off`) |
 | Agent responsibilities and defaults | `agents/*.md` |

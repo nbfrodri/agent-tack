@@ -15,7 +15,7 @@ One versioned repo that makes any AI assistant work like a disciplined senior en
 - **One way of working:** plan → TDD → small Conventional Commits → docs → review, the same in every supported tool, installed with one command.
 - **Rules that are enforced:** git hooks and Claude Code hooks apply the rules that matter whatever the model does.
 - **Expert knowledge on demand:** 19 skills and 10 agents that load only when a task needs them.
-- **You stay in control:** opt-in per project; it asks before anything outward-facing, and asks scope and focus before reviewing or improving autonomously; automatic delegation has a per-project opt-out.
+- **You stay in control:** opt-in per project, with a workflow mode that scales process to each task; it asks whenever it has a real doubt and before anything outward-facing, and asks scope and focus before reviewing or improving autonomously; automatic delegation has a per-project opt-out.
 
 ## Strengths
 | | What you get |
@@ -37,4 +37,4 @@ One versioned repo that makes any AI assistant work like a disciplined senior en
 - **Against risk:** dangerous mistakes are blocked at the git and tool level, not left to the model's judgement.
 
 ## Limits
-Skills and instructions guide the model; only the hooks guarantee. The command guard reads commands like a shell but is a safety net, not a sandbox. Subagents cost extra tokens; automatic delegation targets complex independent work and can be disabled per project. Tools other than Claude Code get the instructions and skills but not the Claude-specific agents and hooks; git hooks apply to all of them.
+Skills and instructions guide the model; only the hooks guarantee. The command guard reads commands like a shell but is a safety net, not a sandbox. Process costs tokens and time: `auto` mode keeps small tasks light, and `lite` skips plans, handoffs and logs entirely. Subagents cost extra tokens; automatic delegation is limited to strict-level work and can be disabled per project. Tools other than Claude Code get the instructions and skills but not the Claude-specific agents and hooks; git hooks apply to all of them.

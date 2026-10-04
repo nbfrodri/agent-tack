@@ -41,7 +41,7 @@ Safety: existing files are moved to `<name>.bak-<timestamp>`, never overwritten;
 | `commit-msg` | git (global) | Removes AI attribution everywhere; in enabled projects, rejects subjects that aren't Conventional Commits. |
 | `pre-push` | git (global) | Refuses force-pushes and deletions of `main`/`master`. In enabled projects, only annotated `vX.Y.Z` tags, never moved or deleted. |
 | Other git hooks | git (global) | Pass through to each repo's own `.git/hooks/*` (client and server side). |
-| `session-context.sh` | Claude Code `SessionStart` | Supplies activation status and bounded project instructions, architecture and active handoff through `harness context`. |
+| `session-context.sh` | Claude Code `SessionStart` | Supplies activation status, workflow mode and bounded project instructions, architecture and active handoff through `harness context`; runs again after context compaction. |
 | `guard-bash.sh` | Claude Code `PreToolUse` | Performs bounded shell analysis. Blocks recognised catastrophic commands and hook bypasses; asks before destructive operations, unsupported executable constructs or exceeded parsing limits. |
 | `format-file.sh` | Claude Code `PostToolUse` | In enabled, locally trusted projects, formats each edited file with the project's own formatter. |
 
