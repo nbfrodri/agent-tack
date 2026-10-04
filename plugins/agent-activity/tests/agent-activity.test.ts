@@ -1,6 +1,12 @@
 import { expect, test } from 'claude-code/testing'
 
-import { clock, kindOf, statusOf, summarize } from '../hooks/register'
+import { clock, kindOf, paneToggle, statusOf, summarize } from '../hooks/register'
+
+test('/activity closes the pane when it is open and opens it otherwise', () => {
+  expect(paneToggle(['agent-activity'])).toBe('close')
+  expect(paneToggle(['other-pane'])).toBe('open')
+  expect(paneToggle([])).toBe('open')
+})
 
 test('summary picks the most telling field and flattens whitespace', () => {
   expect(summarize({ tool: 'Bash', command: 'git status\n  --short' })).toBe('git status --short')

@@ -55,6 +55,6 @@ Claude Code mods shipped in `plugins/` and installed by `./install.sh` (opt out 
 | Mod | Purpose |
 | --- | --- |
 | `usage-band` | Band above the prompt with the active tack mode, the 5-hour and weekly limits, context fill and session cost; `/usage-band` toggles it |
-| `agent-activity` | Live pane of tool calls, skills, subagents and permission decisions; `/activity` opens it |
+| `agent-activity` | Live pane of tool calls, skills, subagents and permission decisions; `/activity` opens or closes it |
 
 Browser control is built into Claude Code and Codex, so no browser MCP is installed. Read-only database MCP servers are set up per project (`skills/database/references/mcp.md`).
