@@ -59,6 +59,8 @@ source "$REPO/lib/ownership.sh"
 source "$REPO/lib/mods.sh"
 # shellcheck source=lib/vscode.sh
 source "$REPO/lib/vscode.sh"
+# shellcheck source=lib/codex.sh
+source "$REPO/lib/codex.sh"
 
 # Moves an existing file or directory aside instead of overwriting it.
 backup() {
@@ -484,6 +486,7 @@ main() {
   install_plugins
   install_mods
   install_vscode
+  install_codex_agents
 
   section "Summary"
   if [ "$FAILURES" -gt 0 ]; then

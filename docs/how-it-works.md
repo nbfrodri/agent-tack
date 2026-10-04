@@ -10,7 +10,7 @@ Paths come from each tool's documentation and live in `targets.txt` (add a line 
 | Tool | Global instructions | Skills | Agents and hooks |
 | --- | --- | --- | --- |
 | Claude Code | `~/.claude/CLAUDE.md` | `~/.claude/skills` | ✔ |
-| Codex | `~/.codex/AGENTS.md` | `~/.codex/skills` | — |
+| Codex | `~/.codex/AGENTS.md` | `~/.codex/skills` | ✔ (generated `~/.codex/agents/*.toml`, hooks in `~/.codex/hooks.json`) |
 | Gemini CLI | `~/.gemini/GEMINI.md` | `~/.agents/skills` | — |
 | GitHub Copilot (CLI, and Copilot Chat in VS Code) | `~/.copilot/copilot-instructions.md` | `~/.copilot/skills` | — |
 | OpenCode | `~/.config/opencode/AGENTS.md` | `~/.agents/skills` | — |

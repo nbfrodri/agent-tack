@@ -130,7 +130,7 @@ run_smoke() {
   else "$command" "${args[@]}" </dev/null >/dev/null 2>&1; fi
 }
 check_tool_capabilities() {
-  local tool="$1" when="$2" instructions="$3" skills_dir="$4" agents_dir="$5" before="$FAILURES" source
+  local tool="$1" when="$2" instructions="$3" skills_dir="$4" agents_dir="$5" before="$FAILURES" source name
   QUIET=1
   if [ "$instructions" != - ]; then
     if [ -L "$(expand_home "$instructions")" ] || [ "$when" = always ]; then
@@ -140,8 +140,12 @@ check_tool_capabilities() {
   if [ "$skills_dir" != - ] && [ -d "$(expand_home "$skills_dir")" ]; then check_skills "$(expand_home "$skills_dir")"; fi
   if [ "$agents_dir" != - ] && [ -d "$(expand_home "$agents_dir")" ]; then
     check_stale_links "$(expand_home "$agents_dir")"
+    # Agents are symlinked Markdown for Claude Code and generated TOML for Codex.
     for source in "$REPO"/agents/*.md; do
-      [ -f "$source" ] && check_link "$source" "$(expand_home "$agents_dir")/${source##*/}"
+      [ -f "$source" ] || continue
+      name="${source##*/}"
+      [ -f "$(expand_home "$agents_dir")/${name%.md}.toml" ] && continue
+      check_link "$source" "$(expand_home "$agents_dir")/$name"
     done
   fi
   QUIET=0
@@ -315,7 +319,7 @@ check_ownership() {
         case "$target" in "$REPO"|"$REPO"/*) ;; *) fail 'installation ownership source is outside this checkout'; continue ;; esac
         check_link "$target" "$path"
         ;;
-      settings|git|mod|modmarket|vscode) ;;
+      settings|git|mod|modmarket|vscode|generated) ;;
       *) fail 'installation ownership entry type is unsupported' ;;
     esac
   done

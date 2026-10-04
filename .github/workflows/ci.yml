@@ -37,6 +37,7 @@ jobs:
           tests/tools.test.sh
           tests/mods.test.sh
           tests/vscode.test.sh
+          tests/codex.test.sh
           tests/cli.test.sh
           tests/settings.test.sh
           tests/safety.test.sh

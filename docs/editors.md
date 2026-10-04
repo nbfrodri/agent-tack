@@ -12,19 +12,19 @@ Restart the tool or editor after installing or updating so it reloads instructio
 
 ## What each tool receives
 
-| Tool | Global instructions | Skills | Agents | Claude hooks and mods | Git hooks |
-| --- | --- | --- | --- | --- | --- |
-| Claude Code (CLI, VS Code, JetBrains) | ✔ | ✔ | ✔ | ✔ | ✔ |
-| Codex (CLI, VS Code) | ✔ | ✔ | — | — | ✔ |
-| GitHub Copilot (CLI, VS Code Copilot Chat) | ✔ | ✔ | — | — | ✔ |
-| Gemini CLI | ✔ | ✔ | — | — | ✔ |
-| OpenCode | ✔ | ✔ | — | — | ✔ |
-| Crush | ✔ | ✔ | — | — | ✔ |
-| Cursor (editor and `cursor-agent`) | manual, once | ✔ | — | — | ✔ |
+| Tool | Global instructions | Skills | Agents | Agent hooks | Mods | Git hooks |
+| --- | --- | --- | --- | --- | --- | --- |
+| Claude Code (CLI, VS Code, JetBrains) | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
+| Codex (CLI, VS Code) | ✔ | ✔ | ✔ | ✔ (approve once with `/hooks`) | — | ✔ |
+| GitHub Copilot (CLI, VS Code Copilot Chat) | ✔ | ✔ | — | — | — | ✔ |
+| Gemini CLI | ✔ | ✔ | — | — | — | ✔ |
+| OpenCode | ✔ | ✔ | — | — | — | ✔ |
+| Crush | ✔ | ✔ | — | — | — | ✔ |
+| Cursor (editor and `cursor-agent`) | manual, once | ✔ | — | — | — | ✔ |
 
 - **Global instructions** carry your preferences and the workflow for enabled projects, including the mode rules.
 - **Git hooks** enforce Conventional Commits, no AI attribution, no secrets and protected `main` and tags for every tool, because git runs them whoever commits.
-- **Claude hooks and mods** (command guard, startup context, fast check, check before stopping, tool-call limit, usage band, activity pane) exist only in Claude Code. Other tools follow the same rules as instructions, without enforcement.
+- **Agent hooks** (command guard, startup context, fast check, check before stopping, tool-call limit) run in Claude Code and Codex. **Mods** (usage band, activity pane) exist only in Claude Code. Other tools follow the same rules as instructions, without enforcement.
 - **Startup context:** Claude Code receives it automatically. Other tools are told by the global instructions to run `harness status` and `harness context` at the start of a session; if a tool skips it, ask it to ("run harness context").
 
 ## Claude Code
@@ -38,7 +38,9 @@ Restart the tool or editor after installing or updating so it reloads instructio
 
 - **Terminal:** `codex` in the project. Reads `~/.codex/AGENTS.md` and the skills in `~/.codex/skills` and `~/.agents/skills`.
 - **VS Code extension:** shares the CLI configuration (`~/.codex`), so it receives the same instructions and skills.
-- **Not yet:** the harness does not install Codex agents or hooks (Codex supports both; the adapters are pending). Codex's own `/import` can bring chats from Claude Code; skip its configuration import ([usage](usage.md#moving-between-tools-and-machines)).
+- **Agents:** the installer generates one Codex agent per harness agent in `~/.codex/agents/<name>.toml`; review-only agents run in a read-only sandbox. A file you already had with the same name is left alone, and a generated file you edit is kept on reinstall and uninstall.
+- **Hooks:** the installer registers the command guard, startup context, fast check, check before stopping and tool-call limit in `~/.codex/hooks.json`, next to your own hooks. **Codex runs a hook only after you approve it:** open Codex, run `/hooks` and trust the harness hooks once (again after an update changes them). Because Codex cannot ask for confirmation from a hook, everything the guard would ask about is refused with a reason, so the assistant leaves those commands to you.
+- Codex's own `/import` can bring chats from Claude Code; skip its configuration import ([usage](usage.md#moving-between-tools-and-machines)).
 - **Check:** `harness doctor --tools` (runs `codex doctor --summary`).
 
 ## GitHub Copilot

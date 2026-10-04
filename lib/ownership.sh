@@ -145,6 +145,14 @@ ownership_git() {
   )
 }
 
+# Records a file the installer generated, with the checksum it wrote; uninstall removes it
+# only while the checksum still matches, so later edits are preserved.
+ownership_generated() {
+  local path="$1" sha="$2"
+  ownership_begin generated "$path" || return 1
+  (umask 077; printf '%s\n' "$sha" > "$OWN_ENTRY/sha256")
+}
+
 # Records a Claude Code plugin (id@marketplace) this installer installed. The entry path is a
 # stable anchor under ~/.claude/plugins; the owned thing is the plugin registration itself.
 ownership_mod() {

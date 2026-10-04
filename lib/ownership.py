@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Validate private ownership records and conservatively undo installed changes."""
 import copy
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -17,6 +18,8 @@ MISSING = object()
 VSCODE_PRODUCTS = ("Code", "Code - Insiders", "VSCodium")
 MOD_NAME = re.compile(r"[a-z0-9][a-z0-9._-]*")
 MOD_ID = re.compile(r"[a-z0-9][a-z0-9._-]*@[a-z0-9][a-z0-9._-]*")
+GENERATED_NAME = re.compile(r"[a-z0-9][a-z0-9-]*\.toml")
+SHA256 = re.compile(r"[0-9a-f]{64}")
 
 
 def read(path):
@@ -138,6 +141,12 @@ def validate(state, home):
                 raise ValueError("unexpected Git config path")
             if "\n" in (entry / "before").read_text():
                 raise ValueError("unsupported multiline Git baseline")
+        elif kind == "generated":
+            parent, name = os.path.split(path)
+            if parent != home.rstrip("/") + "/.codex/agents" or not GENERATED_NAME.fullmatch(name):
+                raise ValueError("unexpected generated file")
+            if not SHA256.fullmatch(read(entry / "sha256")):
+                raise ValueError("invalid generated file checksum")
         elif kind in ("mod", "modmarket"):
             name = read(entry / ("plugin" if kind == "mod" else "marketplace"))
             pattern = MOD_ID if kind == "mod" else MOD_NAME
@@ -325,6 +334,17 @@ def uninstall_entry(entry, dry_run):
     if not same_parent(entry, path):
         print(f"preserved changed parent: {path}")
         return False
+    if kind == "generated":
+        if not path.is_file() or path.is_symlink():
+            print(f"generated file already removed: {path}")
+            return True
+        if hashlib.sha256(path.read_bytes()).hexdigest() != read(entry / "sha256"):
+            print(f"preserved edited generated file: {path}")
+            return False
+        print(f"{'would remove' if dry_run else 'remove'} generated file: {path}")
+        if not dry_run:
+            path.unlink()
+        return True
     if kind == "link":
         if not path.is_symlink() or os.readlink(path) != read(entry / "target"):
             print(f"preserved changed or missing link: {path}")
