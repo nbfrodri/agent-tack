@@ -144,13 +144,26 @@ tack config merge-requires-green false   # let gh pr merge through without check
 
 ### Activity log
 
-An opt-in log of what the hooks did, for Claude Code and Codex: session starts with their mode, every guard decision (deny or ask) with the command, and the findings of the check before stopping. Lines are tab-separated (UTC time, tool, project, event, detail) in `~/.local/state/agent-tack/activity.log`, kept to the newest few thousand. The file is readable only by you, because logged commands may contain tokens; it never leaves your machine.
+An opt-in log of what the hooks did, for Claude Code and Codex: session starts with their mode, every guard decision (deny or ask) with the command, and the findings of the check before stopping. At each stop it also reads the turn from the tool's transcript and records the tokens used per model, the skills loaded, the subagents started and the workflow level the assistant stated (`level missing` when an `auto` turn edited files without stating one), so you can audit how tasks were classified. Lines are tab-separated (UTC time, tool, project, event, detail) in `~/.local/state/agent-tack/activity.log`, kept to the newest few thousand. The file is readable only by you, because logged commands may contain tokens; it never leaves your machine.
 
 ```bash
 tack config activity-log true --global   # record in every project (or drop --global for one)
 tack log                                 # the last 20 entries
 tack log 100                             # the last 100
+tack log --cost                          # tokens (and USD with your prices) per day, project, tool and model
+tack log --skills --days 90              # how often each skill and agent was used, and which never were
+tack log --levels                        # the level stated per task, per project, and turns without one
+tack log --cost --csv > usage.csv        # any report as CSV
 ```
+
+Transcripts carry tokens, not prices, and tack ships no price list because prices change and differ by provider. To see amounts in USD, list your prices per million tokens in `~/.config/agent-tack/pricing.txt`; models without a line show `-`:
+
+```text
+# model | input | output | cache read | cache write
+claude-sonnet-5-5 | 3 | 15 | 0.3 | 3.75
+```
+
+Tools that do not pass a transcript to their Stop hook, or whose format tack does not recognise, record `turn unknown` instead of guessing.
 
 ## Workflow modes
 

@@ -17,7 +17,7 @@ The goal: every request ends as a small, tested change in a clean git history, w
 
 `tack mode` sets the level: `auto` (the default) picks one per task; `lite`, `standard` or `strict` fix it for every task. A project setting overrides the user's global default (`tack mode --global`). The user can change the level for any task in conversation ("do this in strict"). Each mode's rules live in a file (`modes/<name>.md` in tack, or the user's own in `~/.config/agent-tack/modes/`); SessionStart supplies the active one, and `tack mode show` prints it. A user mode overrides the table below where it differs. Two built-in modes sit outside the table: `lean` (self-contained minimal rules to save tokens; this skill is not loaded) and `unleash` (autonomous, project-only).
 
-In `auto`, classify each request before acting and state it in one line, for example `Level: standard (bounded bug fix in one module)`:
+In `auto`, classify each request before acting and state it in one line, for example `Level: standard (bounded bug fix in one module)`; keep that shape (a one-word label, a colon, the mode name, the reason) in any language, because the activity log records it:
 - **lite:** questions, typos, renames, config tweaks, a one-line fix, small scripts or prototypes.
 - **standard:** a bounded feature or bug fix inside one area, following existing patterns.
 - **strict:** several modules, architecture or public API changes, data migrations, deleting things, auth, payments or security, debatable design, or anything the user calls important or risky.

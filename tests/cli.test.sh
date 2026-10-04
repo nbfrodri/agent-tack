@@ -349,5 +349,49 @@ cd "$HOME" || exit 1
 check "doctor dispatches installation diagnostics outside Git" expect_exit 1 "$CLI" doctor
 check "doctor diagnoses missing installed canonical link" contains "missing managed symlink: $HOME/.agents/harness"
 
+# Reports over the activity log: a fixture with today's turns and one from long ago.
+LOG_FILE="$XDG_STATE_HOME/agent-tack/activity.log"
+rm -f "$LOG_FILE"
+check "reports without a log say how to turn it on" expect_exit 0 "$CLI" log --cost
+check "the missing-log message names the setting" contains 'tack config activity-log true'
+mkdir -p "$(dirname "$LOG_FILE")"
+now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+day="${now%%T*}"
+{
+  printf '%s\tclaude\t/p/app\tturn\tmodel=m1 input=500000 output=500000 cache_read=0 cache_write=0\n' "$now"
+  printf '%s\tclaude\t/p/app\tturn\tmodel=m1 input=500000 output=500000 cache_read=0 cache_write=0\n' "$now"
+  printf '%s\tcodex\t/p/app\tturn\tmodel=g1 input=10 output=20 cache_read=0 cache_write=0\n' "$now"
+  printf '%s\tclaude\t/p/app\tskill\tdev-workflow\n' "$now"
+  printf '%s\tclaude\t/p/app\tskill\tdev-workflow\n' "$now"
+  printf '%s\tclaude\t/p/app\tagent\tcode-reviewer\n' "$now"
+  printf '%s\tclaude\t/p/app\tlevel\tstrict touches auth\n' "$now"
+  printf '%s\tclaude\t/p/app\tlevel\tmissing\n' "$now"
+  printf '%s\tclaude\t/p/app\tguard deny\tgit commit --no-verify\n' "$now"
+  printf '2020-01-01T00:00:00Z\tclaude\t/p/app\tturn\tmodel=m1 input=999 output=0 cache_read=0 cache_write=0\n'
+} > "$LOG_FILE"
+check "cost report runs" expect_exit 0 "$CLI" log --cost
+check "cost report sums tokens per day, project, tool and model" eval 'grep -E "^$day +app +claude +m1 +1000000 +1000000 +0 +0 +-" "$WORK/output" >/dev/null'
+check "cost report keeps other tools and models apart" eval 'grep -E "^$day +app +codex +g1 +10 +20" "$WORK/output" >/dev/null'
+check "cost report covers the last 30 days by default" eval '! grep -q 2020-01-01 "$WORK/output"'
+check "cost report reaches further back with --days" expect_exit 0 "$CLI" log --cost --days 100000
+check "older turns appear with a wider window" contains '2020-01-01'
+mkdir -p "$XDG_CONFIG_HOME/agent-tack"
+printf '# model | input | output | cache read | cache write (USD per million tokens)\nm1 | 1 | 2 | 0.1 | 1.25\n' > "$XDG_CONFIG_HOME/agent-tack/pricing.txt"
+check "cost report with user prices runs" expect_exit 0 "$CLI" log --cost
+check "user prices turn tokens into dollars" eval 'grep -E "^$day +app +claude +m1 .* 3\.00$" "$WORK/output" >/dev/null'
+check "models without a price show no amount" eval 'grep -E "^$day +app +codex +g1 .* -$" "$WORK/output" >/dev/null'
+check "cost report as CSV runs" expect_exit 0 "$CLI" log --cost --csv
+check "CSV starts with its header" eval '[ "$(head -n 1 "$WORK/output")" = "day,project,tool,model,input,output,cache_read,cache_write,usd" ]'
+check "skills report runs" expect_exit 0 "$CLI" log --skills
+check "skills report counts each skill" eval 'grep -E "^skill +dev-workflow +2$" "$WORK/output" >/dev/null'
+check "skills report counts subagents" eval 'grep -E "^agent +code-reviewer +1$" "$WORK/output" >/dev/null'
+check "skills report lists what was never used" eval 'grep "Never used" "$WORK/output" | grep -q testing'
+check "levels report runs" expect_exit 0 "$CLI" log --levels
+check "levels report counts levels per project" eval 'grep -E "^app +strict +1$" "$WORK/output" >/dev/null'
+check "levels report shows turns without a stated level" eval 'grep -E "^app +missing +1$" "$WORK/output" >/dev/null'
+check "reports reject a bad window" expect_exit 2 "$CLI" log --cost --days soon
+check "log rejects unknown options" expect_exit 2 "$CLI" log --bogus
+rm -f "$LOG_FILE" "$XDG_CONFIG_HOME/agent-tack/pricing.txt"
+
 printf '\n%s passed, %s failed\n' "$PASSED" "$FAILED"
 [ "$FAILED" -eq 0 ]

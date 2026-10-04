@@ -81,7 +81,7 @@ Mods are small Claude Code plugins that change its interface; this repo ships tw
 
 The advisory hooks (`session-context`, `fast-check`, `stop-check`, `format-file`) first ask `hooks/claude/lib/hook-control.sh` whether `tack config disabled-hooks` lists them; the guard and `budget.sh` never ask.
 
-With `tack config activity-log true`, `session-context.sh`, `guard-bash.sh` and `stop-check.sh` also append what they did (session start and mode, deny or ask decisions, Stop findings) to `${XDG_STATE_HOME:-~/.local/state}/agent-tack/activity.log` through `hooks/claude/lib/activity-log.sh`, labelled `claude` or `codex` (Codex runs them with `--codex`); `tack log` prints the newest entries.
+With `tack config activity-log true`, `session-context.sh`, `guard-bash.sh` and `stop-check.sh` also append what they did (session start and mode, deny or ask decisions, Stop findings) to `${XDG_STATE_HOME:-~/.local/state}/agent-tack/activity.log` through `hooks/claude/lib/activity-log.sh`, labelled `claude` or `codex` (Codex runs them with `--codex`); `tack log` prints the newest entries. At each stop, `stop-check.sh` also passes the transcript to `hooks/claude/lib/turn-report.py`, which reads only the lines added since the session's last stop (offsets in the state directory's `turns/`) and returns tokens per model, skills, subagents and the stated level for the log; `lib/log-report.py` turns the log into `tack log --cost`, `--skills` and `--levels`.
 
 Repos with their own local `core.hooksPath` (e.g. Husky) use only their hooks; there, Claude's `attribution` setting still prevents its trailers.
 

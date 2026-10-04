@@ -31,6 +31,10 @@ Commands:
   doctor              Diagnose installation and project state without changes
   log [N]             Print the last N (default 20) activity log entries; turn the
                       log on with: tack config activity-log true
+  log --cost|--skills|--levels [--days N] [--csv]
+                      Summarise the last N days (default 30): tokens and USD per
+                      day, project, tool and model; skill and agent use; the
+                      workflow level stated per task
   context             Print project instructions plus an index (or, in strict
                       mode, excerpts) of architecture and the active handoff
   help                Show this help (also works outside a Git repository)
@@ -255,9 +259,21 @@ case "$cmd" in
     exit
     ;;
   log)
-    count="${1:-20}"
-    if [ "$#" -gt 1 ] || ! printf '%s' "$count" | grep -qE '^[1-9][0-9]*$'; then
-      echo "tack: log takes an optional positive number of entries (see --help)" >&2
+    report='' days=30 csv=0 count=20
+    while [ "$#" -gt 0 ]; do
+      case "$1" in
+        --cost) report=cost ;;
+        --skills) report=skills ;;
+        --levels) report=levels ;;
+        --csv) csv=1 ;;
+        --days) days="${2:-}"; shift ;;
+        -*) echo "tack: unknown option for log: $1 (see --help)" >&2; exit 2 ;;
+        *) count="$1" ;;
+      esac
+      shift
+    done
+    if ! printf '%s' "$count" | grep -qE '^[1-9][0-9]*$' || ! printf '%s' "$days" | grep -qE '^[1-9][0-9]*$'; then
+      echo "tack: log takes a positive number of entries, and --days a positive number of days (see --help)" >&2
       exit 2
     fi
     log_file="${XDG_STATE_HOME:-$HOME/.local/state}/agent-tack/activity.log"
@@ -265,7 +281,13 @@ case "$cmd" in
       echo "No activity recorded. Turn the log on with: tack config activity-log true"
       exit 0
     fi
-    tail -n "$count" "$log_file"
+    if [ -z "$report" ]; then
+      tail -n "$count" "$log_file"
+      exit 0
+    fi
+    command -v python3 >/dev/null 2>&1 || fail "log reports need python3"
+    python3 "$HARNESS_ROOT/lib/log-report.py" "$report" "$log_file" "$days" "$csv" \
+      "${XDG_CONFIG_HOME:-$HOME/.config}/agent-tack/pricing.txt" "$HARNESS_ROOT"
     ;;
   doctor)
     allowed_option='--tools'; check_args "$@"
