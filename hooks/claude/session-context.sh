@@ -17,11 +17,13 @@ if (cd "$cwd" && "$cli" status --quiet); then
   mode="$(cd "$cwd" && "$cli" mode)" || mode=auto
   mode="${mode%% *}"
   if [ "$mode" = auto ]; then
-    level="Before each task, pick the workflow level (lite, standard or strict) from dev-workflow and state it in one line; the user can override it."
+    level="Before each task, pick the workflow level from the modes below and dev-workflow, and state it in one line; the user can override it."
   else
     level="Apply the $mode level of dev-workflow to every task unless the user asks for another."
   fi
   context="harness: ENABLED for this project (mode: $mode). $level At every level: work on a branch off main, test the change, and make a Conventional Commit for each verified milestone. Ask the user whenever you have a real doubt."
+  mode_rules="$(cd "$cwd" && "$cli" mode show)" || mode_rules=''
+  [ -z "$mode_rules" ] || context="$context"$'\n'"$mode_rules"
   project_context="$(cd "$cwd" && "$cli" context)" || project_context=''
   [ -z "$project_context" ] || context="$context"$'\n'"$project_context"
 else

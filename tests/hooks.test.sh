@@ -415,6 +415,9 @@ check "every mode: asks the assistant to ask when in doubt" "session '$WORK/repo
 check "every mode: states the core rules without loading the skill" "session '$WORK/repo' | grep -q 'At every level: work on a branch off main, test the change, and make a Conventional Commit for each verified milestone'"
 git -C "$WORK/repo" config harness.mode lite
 check "fixed mode: names the level to apply" "session '$WORK/repo' | grep -q 'mode: lite.*Apply the lite level'"
+check "fixed mode: injects that mode's rules" "session '$WORK/repo' | grep -q 'Plan: none.'"
+git -C "$WORK/repo" config --unset harness.mode
+check "auto mode: lists the modes to choose from" "session '$WORK/repo' | grep -q 'strict: several modules'"
 git -C "$WORK/repo" config harness.mode turbo
 check "invalid mode: falls back to auto" "session '$WORK/repo' | grep -q 'mode: auto'"
 git -C "$WORK/repo" config --unset harness.mode

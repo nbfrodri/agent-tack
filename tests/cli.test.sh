@@ -134,7 +134,30 @@ git config --global --unset harness.mode
 check "help documents mode" expect_exit 0 "$CLI" help
 check "help includes mode syntax" contains 'mode [MODE] [--global]'
 check "help documents config" contains 'config [NAME [VALUE]] [--global]'
+check "help documents user modes" contains 'mode new NAME --from MODE'
 cd "$WORK/project" || exit 1
+
+USER_MODES="$XDG_CONFIG_HOME/agent-harness/modes"
+check "mode list shows built-in modes" expect_exit 0 "$CLI" mode list
+check "mode list shows each mode's purpose" contains 'lite      built-in  questions, typos'
+check "mode list includes auto" contains 'auto      built-in'
+check "a user mode can be created from another" expect_exit 0 "$CLI" mode new spike --from lite
+check "the user mode lives in the user's config" test -f "$USER_MODES/spike.md"
+check "the user mode is renamed" grep -q '^# spike$' "$USER_MODES/spike.md"
+check "the user mode keeps the source rules" grep -q '^- Plan: none.$' "$USER_MODES/spike.md"
+check "mode list includes user modes" expect_exit 0 "$CLI" mode list
+check "user modes are labelled" contains 'spike     user'
+check "a user mode can be selected" expect_exit 0 "$CLI" mode spike
+check "the selected user mode is effective" expect_mode 'spike (local)'
+git config --local --unset harness.mode
+check "built-in names cannot be reused" expect_exit 2 "$CLI" mode new lite --from strict
+check "existing user modes are not overwritten" expect_exit 2 "$CLI" mode new spike --from strict
+check "mode names must be simple words" expect_exit 2 "$CLI" mode new 'bad/name' --from lite
+check "the source mode must exist" expect_exit 2 "$CLI" mode new other --from nowhere
+check "mode new needs --from" expect_exit 2 "$CLI" mode new other
+# shellcheck disable=SC2016 # Expanded by eval inside check.
+check "a deleted user mode falls back to auto" eval 'git config --local harness.mode gone && "$CLI" mode | grep -q "auto (invalid local value: gone)"'
+git config --local --unset harness.mode
 
 check "config lists every registered feature" expect_exit 0 "$CLI" config
 check "config listing shows value, source and enforcement" contains 'conventional-commits  true      default  hook'

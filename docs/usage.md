@@ -109,6 +109,20 @@ In every mode the hooks still enforce Conventional Commits, no AI attribution, n
 
 A project setting (`harness mode lite`) overrides your global default (`harness mode lite --global`); with neither, the mode is `auto`. Invalid values behave as `auto` and are reported by `harness status` and `harness doctor`. Lighter modes cost fewer tokens and less time; [results](results.md) compares them.
 
+### Your own modes
+
+Each mode is a short file of rules: the built-in ones in `modes/`, yours in `~/.config/agent-harness/modes/` (outside the repository, so updates never overwrite them).
+
+```bash
+harness mode list                   # built-in and user modes, with when to use each
+harness mode new spike --from lite  # copy lite into ~/.config/agent-harness/modes/spike.md
+$EDITOR ~/.config/agent-harness/modes/spike.md
+harness mode spike                  # use it in this project (or --global)
+harness mode show                   # the rules the assistant receives at session start
+```
+
+A mode file has a `# name` title, a `When:` line (used by `auto` to choose and by `mode list`), a `Scope:` line and `- ` rule lines. Built-in names cannot be reused. In `auto`, the assistant chooses among all modes, yours included. If a selected user mode is deleted, the mode falls back to `auto` and `status` reports it.
+
 ## Startup context and formatter trust
 
 Claude Code's SessionStart hook supplies the activation status and mode plus the project's `AGENTS.md`. Documents load on demand: `auto` and `standard` add an index with the path of `docs/architecture.md` and the newest active or paused handoff, including its status and next step; `strict` adds bounded excerpts of both; `lite` lists only the handoff. Every mode adds a handoff check: it compares the handoff with git and says whether it is up to date, may be stale (commits after its last update) or names another branch, so a resumed session verifies and refreshes it before continuing. Other tools follow the global instructions to run `harness context` at session start. This is an instruction-driven startup step for tools without a SessionStart hook.

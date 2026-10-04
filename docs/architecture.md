@@ -38,6 +38,7 @@ flowchart LR
 | `lib/doctor.sh` | Diagnose managed links, settings, ownership, Git hooks and project state without writes | Installer data, private metadata, Git and `bin/harness` queries |
 | `lib/settings-merge.py`, `.jq` | Merge settings and replace harness-tagged commands while preserving user commands and group metadata | Python standard library or jq |
 | `bin/harness` | Manage activation, workflow mode and local formatter trust; provide bounded startup context | Git repository root and configuration; `lib/project-context.sh`, `lib/config.sh` and `lib/doctor.sh` |
+| `modes/`, `lib/modes.sh` | Define each workflow mode as data; resolve, list, create and show modes (built-in first, then the user's `~/.config/agent-harness/modes/`) | Sourced by `bin/harness`; read by SessionStart through `harness mode show` |
 | `features.txt`, `lib/config.sh` | Declare feature toggles; list, validate, read and write them for `harness config` (project value, then global, then default) | Git configuration; consumers read each toggle's git key |
 | `git-hooks/` | Check staged secrets, commit messages and pushed refs; delegate local hooks | `bin/harness`, git and `_chain` |
 | `hooks/claude/` | Supply session context, assess Bash commands and format edited files | `bin/harness`; the guard sources `lib/shell-parse.sh`, which uses its Python parser when available |

@@ -16,6 +16,11 @@ Commands:
                       (or as the global default with --global)
   mode --unset [--global]
                       Remove the project (or global) mode setting
+  mode list           List built-in and user modes with when to use each
+  mode show           Print the effective mode's rules (auto: the modes to pick from)
+  mode new NAME --from MODE
+                      Create a user mode in ~/.config/agent-harness/modes/
+                      from an existing one, to edit and select
   config [NAME [VALUE]] [--global]
                       List feature toggles, show one, or set it for this project
                       (or user-wide with --global); config NAME --unset removes it
@@ -102,23 +107,9 @@ is_enabled() {
   [ -f "$root/.harness" ]
 }
 
-is_mode() {
-  case "$1" in auto | lite | standard | strict) return 0 ;; *) return 1 ;; esac
-}
-
-# Prints the effective mode and where it comes from: a project setting wins over the
-# user's global default. Invalid values behave as auto so a typo never blocks work.
-effective_mode() {
-  local scope value
-  [ "$#" -gt 0 ] || set -- local global
-  for scope in "$@"; do
-    value="$(git config "--$scope" --get harness.mode 2>/dev/null)" || continue
-    if is_mode "$value"; then printf '%s (%s)\n' "$value" "$scope"
-    else printf 'auto (invalid %s value: %s)\n' "$scope" "$value"; fi
-    return
-  done
-  echo 'auto (default)'
-}
+HARNESS_ROOT="$(harness_root)" || fail "cannot locate the harness checkout"
+# shellcheck source=SCRIPTDIR/../lib/modes.sh
+. "$HARNESS_ROOT/lib/modes.sh"
 
 is_trusted() {
   [ "$(git config --local --bool --get harness.trusted 2>/dev/null)" = true ]
@@ -169,6 +160,23 @@ case "$cmd" in
     exit "$workflow_exit"
     ;;
   mode)
+    case "${1:-}" in
+      list)
+        [ "$#" -eq 1 ] || { echo "harness: mode list takes no arguments" >&2; exit 2; }
+        list_modes
+        exit 0
+        ;;
+      show)
+        [ "$#" -eq 1 ] || { echo "harness: mode show takes no arguments" >&2; exit 2; }
+        show_mode
+        exit 0
+        ;;
+      new)
+        [ "$#" -eq 4 ] && [ "$3" = --from ] || { echo "harness: usage: harness mode new NAME --from MODE" >&2; exit 2; }
+        new_mode "$2" "$4"
+        exit
+        ;;
+    esac
     scope=local value='' unset=false
     for arg in "$@"; do
       case "$arg" in
@@ -223,18 +231,18 @@ case "$cmd" in
     is_enabled || exit 0
     [ "$(git config --bool --get harness.context 2>/dev/null)" != false ] || exit 0
     root="$(repo_root)" || exit 0
-    source_root="$(harness_root)" || fail "cannot locate installed context renderer"
+    source_root="$HARNESS_ROOT"
     mode="$(effective_mode)"
     bash "$source_root/lib/project-context.sh" "$root" "${mode%% *}"
     ;;
   config)
-    source_root="$(harness_root)" || fail "cannot locate the feature registry"
+    source_root="$HARNESS_ROOT"
     bash "$source_root/lib/config.sh" "$source_root" "$@"
     exit
     ;;
   doctor)
     allowed_option='--tools'; check_args "$@"
-    source_root="$(harness_root)" || fail "cannot locate installed diagnostics"
+    source_root="$HARNESS_ROOT"
     bash "$source_root/lib/doctor.sh" "$source_root" "$@"
     ;;
   -h|--help|help)

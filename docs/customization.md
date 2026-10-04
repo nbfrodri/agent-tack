@@ -9,7 +9,8 @@ Clone it into any directory you choose and install from that checkout, as shown 
 | What you want to change | Where to edit |
 | --- | --- |
 | Conversation language, permissions and global preferences | `global/AGENTS.md` |
-| Planning, testing, commits and documentation workflow, and what each level requires | `skills/dev-workflow/` and its references (default level: `harness mode <mode> --global`) |
+| Planning, testing, commits and documentation workflow, and what each level requires | `skills/dev-workflow/` and its references; each level's rules in `modes/<name>.md` (default level: `harness mode <mode> --global`) |
+| Your own workflow modes, without touching the repository | `harness mode new <name> --from <mode>`, then edit `~/.config/agent-harness/modes/<name>.md` |
 | Task-specific guidance or reusable templates | `skills/<name>/SKILL.md`, `references/` and `assets/` |
 | Automatic delegation, complexity routing and model fallbacks | `skills/orchestrate/` (per-project opt-out: `harness config delegation off`) |
 | Feature toggles shown by `harness config` | `features.txt`: one line per toggle (name, git key, default, allowed values, scope, enforcement, description). Code that honours a new toggle reads its git key; keep safety checks out of the registry |
