@@ -144,3 +144,19 @@ ownership_git() {
     printf '%s\n' "$target" > "$OWN_ENTRY/target"
   )
 }
+
+# Records a Claude Code plugin (id@marketplace) this installer installed. The entry path is a
+# stable anchor under ~/.claude/plugins; the owned thing is the plugin registration itself.
+ownership_mod() {
+  local id="$1" path="$HOME/.claude/plugins/$1"
+  mkdir -p "$HOME/.claude/plugins" || return 1
+  ownership_begin mod "$path" || return 1
+  (umask 077; printf '%s\n' "$id" > "$OWN_ENTRY/plugin")
+}
+
+ownership_modmarket() {
+  local name="$1" path="$HOME/.claude/plugins/$1"
+  mkdir -p "$HOME/.claude/plugins" || return 1
+  ownership_begin modmarket "$path" || return 1
+  (umask 077; printf '%s\n' "$name" > "$OWN_ENTRY/marketplace")
+}
