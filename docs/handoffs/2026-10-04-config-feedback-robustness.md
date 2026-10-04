@@ -13,8 +13,9 @@
   - WS4: `9d4d648` token-efficiency rules (dev-workflow, global line, orchestrate worktree lesson).
 - Verified: full suite green at `df349d0` (797 checks + evals); ShellCheck clean. Installed on the real HOME from this branch (mods `usage-band` 0.2.0, `agent-activity` 0.1.0; doctor OK).
 - Usage note (2026-10-04): the owner's session auto-resumes after a usage reset, so keep working. The benchmark launcher is resumable: `scratchpad/run-final-benchmark.py <frozen> <rev> <out> claude-sonnet-5-5` skips completed sessions and exits 3 on a usage limit; relaunch it after the reset.
+- Review done: findings fixed in `48f141f` (unleash waiver never applies after a directory change or `git -C/--git-dir/--work-tree`; settings writes refused in project-only modes; unleash refused on main; config literal match and `--`; stop-check timeout, no globbing, renames); recorded in `docs/audits/2026-10-04-review-config-feedback-robustness.md` (`845a648`). Full suite running after the fixes.
 - Resume steps, in order:
-  1. Read the `code-reviewer` findings on `main...feat/config-feedback-robustness` (rerun the review if its result is lost); fix verified findings with tests, full suite and full ShellCheck.
+  1. Confirm the full suite is green after `845a648` (rerun `scratchpad/run-all-tests.sh` if the result is lost).
   2. Benchmark: freeze the branch head in a scratchpad worktree; reuse the launcher pattern from the pilot (private HOME and XDG paths per session, `install.sh --skip-plugins`, `EVALS_MODEL=claude-sonnet-5-5`); `bug-fix` ×2 and `new-project` ×1 for baseline, lite, standard, strict, auto; stop on a usage limit. Watch the Stop hook's extra turns.
   3. Grade, update `docs/results.md`, the README results table and the AI log; mark the plan done.
   4. Ask the owner before push and PR.
