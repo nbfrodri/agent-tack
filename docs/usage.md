@@ -80,7 +80,7 @@ A project setting (`harness mode lite`) overrides your global default (`harness 
 
 ## Startup context and formatter trust
 
-Claude Code's SessionStart hook supplies the activation status and mode plus the project's `AGENTS.md`. Documents load on demand: `auto` and `standard` add an index with the path of `docs/architecture.md` and the newest active or paused handoff, including its status and next step; `strict` adds bounded excerpts of both; `lite` adds nothing. Other tools follow the global instructions to run `harness context` at session start. This is an instruction-driven startup step for tools without a SessionStart hook.
+Claude Code's SessionStart hook supplies the activation status and mode plus the project's `AGENTS.md`. Documents load on demand: `auto` and `standard` add an index with the path of `docs/architecture.md` and the newest active or paused handoff, including its status and next step; `strict` adds bounded excerpts of both; `lite` lists only the handoff. Every mode adds a handoff check: it compares the handoff with git and says whether it is up to date, may be stale (commits after its last update) or names another branch, so a resumed session verifies and refreshes it before continuing. Other tools follow the global instructions to run `harness context` at session start. This is an instruction-driven startup step for tools without a SessionStart hook.
 
 The combined document content is capped at 6,000 bytes, with per-file line limits. Claude Code also receives it again after compacting the conversation. Missing files and symlinks outside the checkout are skipped. Read the referenced documents in full when needed. Disable the extra context with `git config harness.context false`; activation messages remain available.
 

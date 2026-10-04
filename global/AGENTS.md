@@ -16,6 +16,6 @@ The workflow is opt-in per project: enabled when `harness status` prints `enable
 - Make the smallest change that does the job, keep code modular, and update everything it affects (callers, tests, CLI help, docs) in the same change. If the design no longer scales for the request, tell me and propose options before restructuring.
 - Delegate automatically through `orchestrate` only at the strict level, after the plan is approved, unless `git config harness.delegation` is `off`; at lite and standard, suggest delegation and wait for my OK.
 - Commit each coherent verified milestone as work progresses. Recommend a merge method from the branch history and offer the choice in the integration confirmation; preserve commits unless I explicitly choose squash.
-- At session start, check `harness status`; when enabled, run `harness context` unless SessionStart already supplied it. Read referenced documents in full only when the task needs them.
+- At session start or resume, check `harness status`; when enabled, run `harness context` unless SessionStart already supplied it. Always read the active handoff it lists and verify it against git before continuing. Read other referenced documents in full only when the task needs them.
 - Write self-explanatory code instead of comments; comment only the non-obvious *why*.
 - Docs, plans, handoffs and the AI log scale with the level as `dev-workflow` defines; keep `docs/architecture.md` current when structure changes.

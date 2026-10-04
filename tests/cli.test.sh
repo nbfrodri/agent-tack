@@ -154,12 +154,31 @@ git config --local harness.mode lite
 check "lite context succeeds" expect_exit 0 "$CLI" context
 check "lite context keeps project instructions" contains 'Project "instructions"'
 check "lite context skips architecture" eval '! contains "Architecture context"'
-check "lite context skips handoffs" eval '! contains "Next: implement feature"'
+check "lite context still indexes the active handoff" contains '- Active handoff: docs/handoffs/2026-10-03-active.md'
+check "lite context skips the handoff body" eval '! contains "# Handoff"'
 git config --local harness.mode strict
 check "strict context includes architecture" expect_exit 0 "$CLI" context
 check "strict context includes architecture text" contains 'Architecture context'
 check "strict context includes the handoff body" contains '# Handoff'
+check "strict context reports handoff freshness" contains 'up to date: no commits since its last update'
 git config --local --unset harness.mode
+check "fresh handoff is reported up to date" expect_exit 0 "$CLI" context
+check "fresh handoff says so" contains 'up to date: no commits since its last update'
+touch -t 202001010000 docs/handoffs/2026-10-03-active.md
+git -c user.name=T -c user.email=t@example.com commit -q --allow-empty -m 'feat: later work'
+check "handoff older than new commits is flagged" expect_exit 0 "$CLI" context
+check "stale handoff names the commit count" contains 'may be stale: 1 commit(s) since its last update'
+touch -t 202001010000 docs/handoffs/2026-10-03-active.md
+git add docs/handoffs/2026-10-03-active.md
+git -c user.name=T -c user.email=t@example.com commit -q -m 'docs(handoffs): refresh'
+check "committing the handoff itself counts as an update" expect_exit 0 "$CLI" context
+check "committed handoff is up to date" contains 'up to date: no commits since its last update'
+touch docs/handoffs/2026-10-03-active.md
+# shellcheck disable=SC2016 # Literal Markdown backticks.
+printf 'Branch: `feat/other`\n' >> docs/handoffs/2026-10-03-active.md
+check "handoff for another branch is flagged" expect_exit 0 "$CLI" context
+check "branch mismatch names both branches" contains "handoff names branch feat/other; current branch is $(git branch --show-current)"
+printf '# Handoff\nStatus: in progress\nNext: implement feature\n' > docs/handoffs/2026-10-03-active.md
 check "SessionStart returns valid JSON with project context" expect_exit 0 session
 check "SessionStart preserves quotes and backslashes" session_has_instructions
 mkdir -p "$HOME/.local/bin"
