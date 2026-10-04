@@ -34,8 +34,26 @@ jobs:
         run: |
           tests/lifecycle.test.sh
           tests/doctor.test.sh
+          tests/mods.test.sh
           tests/cli.test.sh
           tests/settings.test.sh
           tests/safety.test.sh
           tests/guard.test.sh
           tests/evals.test.sh
+
+  mods:
+    # claude plugin validate/test need the Claude Code CLI; the job skips itself when it is not available
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Validate and test the mods
+        run: |
+          if ! command -v claude >/dev/null 2>&1; then
+            echo "claude CLI not available; skipping mod validation"
+            exit 0
+          fi
+          claude plugin validate plugins
+          for mod in plugins/*/; do
+            claude plugin validate "$mod"
+            claude plugin test "$mod"
+          done
