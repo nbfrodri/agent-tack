@@ -143,6 +143,15 @@ check "context includes project instructions" contains 'Project "instructions"'
 check "context includes architecture" contains 'Architecture context'
 check "context includes an active handoff" contains 'Next: implement feature'
 check "context excludes completed handoffs" excludes_completed
+git config --local harness.mode lite
+check "lite context succeeds" expect_exit 0 "$CLI" context
+check "lite context keeps project instructions" contains 'Project "instructions"'
+check "lite context skips architecture" eval '! contains "Architecture context"'
+check "lite context skips handoffs" eval '! contains "Next: implement feature"'
+git config --local harness.mode strict
+check "strict context includes architecture" expect_exit 0 "$CLI" context
+check "strict context includes architecture text" contains 'Architecture context'
+git config --local --unset harness.mode
 check "SessionStart returns valid JSON with project context" expect_exit 0 session
 check "SessionStart preserves quotes and backslashes" session_has_instructions
 mkdir -p "$HOME/.local/bin"

@@ -14,7 +14,14 @@ fi
 
 cli="$(cd "$(dirname "$0")/../../bin" && pwd)/harness"
 if (cd "$cwd" && "$cli" status --quiet); then
-  context="harness: ENABLED for this project. Apply the full workflow from your global instructions (dev-workflow, TDD, conventions, docs, handoffs, AI log)."
+  mode="$(cd "$cwd" && "$cli" mode)" || mode=auto
+  mode="${mode%% *}"
+  if [ "$mode" = auto ]; then
+    level="Before each task, pick the workflow level (lite, standard or strict) from dev-workflow and state it in one line; the user can override it."
+  else
+    level="Apply the $mode level of dev-workflow to every task unless the user asks for another."
+  fi
+  context="harness: ENABLED for this project (mode: $mode). $level Ask the user whenever you have a real doubt."
   project_context="$(cd "$cwd" && "$cli" context)" || project_context=''
   [ -z "$project_context" ] || context="$context"$'\n'"$project_context"
 else

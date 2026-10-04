@@ -3,6 +3,7 @@ set -uo pipefail
 export LC_ALL=C
 
 root="$1"
+mode="${2:-auto}"
 remaining=6000
 
 include() {
@@ -24,6 +25,8 @@ include() {
 }
 
 include AGENTS.md 45
+# Lite tasks rarely need architecture or handoffs; skipping them keeps startup cheap.
+[ "$mode" != lite ] || exit 0
 include docs/architecture.md 45
 active=''
 for file in "$root"/docs/handoffs/*.md; do

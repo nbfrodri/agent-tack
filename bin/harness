@@ -215,7 +215,8 @@ case "$cmd" in
     [ "$(git config --bool --get harness.context 2>/dev/null)" != false ] || exit 0
     root="$(repo_root)" || exit 0
     source_root="$(harness_root)" || fail "cannot locate installed context renderer"
-    bash "$source_root/lib/project-context.sh" "$root"
+    mode="$(effective_mode)"
+    bash "$source_root/lib/project-context.sh" "$root" "${mode%% *}"
     ;;
   doctor)
     allowed_option=''; check_args "$@"
