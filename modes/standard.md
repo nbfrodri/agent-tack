@@ -1,6 +1,7 @@
 # standard
 When: a bounded feature or bug fix inside one area, following existing patterns.
 Scope: any
+Context: index
 
 - Plan: a short plan in the tool's task list; not saved.
 - Tests: TDD (red, green, refactor).

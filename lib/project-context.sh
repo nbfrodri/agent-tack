@@ -3,7 +3,7 @@ set -uo pipefail
 export LC_ALL=C
 
 root="$1"
-mode="${2:-auto}"
+level="${2:-index}"
 remaining=6000
 
 include() {
@@ -59,14 +59,14 @@ for file in "$root"/docs/handoffs/*.md; do
     active="${file#"$root"/}"
   fi
 done
-if [ "$mode" = strict ]; then
+if [ "$level" = full ]; then
   include docs/architecture.md 45
   if [ -n "$active" ]; then include "$active" 40; handoff_freshness "$active"; fi
   exit 0
 fi
-# Other modes load documents on demand: an index costs a few lines instead of full excerpts.
+# The minimal and index levels load documents on demand: an index costs a few lines, not full excerpts.
 printf '\n--- Index: read these in full only when the task needs them ---\n'
-if [ "$mode" != lite ] && safe_file docs/architecture.md; then
+if [ "$level" != minimal ] && safe_file docs/architecture.md; then
   printf -- '- docs/architecture.md (%s lines)\n' "$(wc -l < "$root/docs/architecture.md" | tr -d ' ')"
 fi
 if [ -n "$active" ] && safe_file "$active"; then
