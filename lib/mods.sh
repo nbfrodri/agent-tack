@@ -60,6 +60,21 @@ sys.exit(0 if any(m.get("name") == sys.argv[1] for m in json.load(sys.stdin)) el
   fi
 }
 
+# Prints the directory a marketplace was added from (empty for remote ones or when unknown).
+mods_marketplace_path() {
+  local json
+  json="$(claude plugin marketplace list --json </dev/null 2>/dev/null)" || return 0
+  if mods_has jq; then
+    printf '%s' "$json" | jq -r --arg n "$1" 'map(select(.name == $n)) | first | .path // empty' 2>/dev/null
+  elif mods_has python3; then
+    printf '%s' "$json" | python3 -c '
+import json, sys
+found = [m for m in json.load(sys.stdin) if m.get("name") == sys.argv[1]]
+print(found[0].get("path") or "" if found else "")
+' "$1" 2>/dev/null
+  fi
+}
+
 mods_skip_reason() {
   if [ "$SKIP_MODS" -eq 1 ]; then echo "--skip-mods"; return 0; fi
   if [ "$SKIP_PLUGINS" -eq 1 ]; then echo "--skip-plugins"; return 0; fi
@@ -84,7 +99,7 @@ mods_retire_legacy() {
 
 install_mods() {
   section "Claude Code mods"
-  local reason mod id state rc
+  local reason mod id state rc path
   if reason="$(mods_skip_reason)"; then
     ok "skipped ($reason)"
     return
@@ -104,6 +119,20 @@ install_mods() {
   mods_retire_legacy
   mods_marketplace_exists "$MODS_MARKETPLACE"
   rc=$?
+  # A checkout moved elsewhere leaves the marketplace pointing at a folder that no longer
+  # serves the mods, so refreshes and updates fail; re-add it from this checkout.
+  if [ "$rc" -eq 0 ]; then
+    path="$(mods_marketplace_path "$MODS_MARKETPLACE")"
+    if [ -n "$path" ] && [ "${path%/}" != "$REPO/plugins" ]; then
+      if claude plugin marketplace remove "$MODS_MARKETPLACE" </dev/null >/dev/null 2>&1 \
+        && claude plugin marketplace add "$REPO/plugins" </dev/null >/dev/null 2>&1; then
+        ok "marketplace $MODS_MARKETPLACE re-added from $REPO/plugins (the checkout moved from $path)"
+      else
+        fail "could not re-add marketplace $MODS_MARKETPLACE from $REPO/plugins (it points to $path)"
+        return
+      fi
+    fi
+  fi
   if [ "$rc" -eq 1 ]; then
     if claude plugin marketplace add "$REPO/plugins" </dev/null >/dev/null 2>&1; then
       ownership_modmarket "$MODS_MARKETPLACE" || { fail "cannot record marketplace $MODS_MARKETPLACE"; return; }
