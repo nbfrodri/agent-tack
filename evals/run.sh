@@ -61,7 +61,9 @@ if [ "$condition" = baseline ]; then
   git config --file "$GIT_CONFIG_GLOBAL" init.defaultBranch main
 fi
 
-NEW_PROJECT_PROMPT='Create a small Python library (use uv) to calculate a shopping cart total: price times quantity, a 10% volume discount for 10 or more units of the same product, and 21% VAT on the total. This is a new project in this directory. You do not need to ask me questions; choose reasonable defaults.'
+# Sessions are non-interactive: a question would end them, so every prompt waives questions.
+NO_QUESTIONS='You do not need to ask me questions; choose reasonable defaults.'
+NEW_PROJECT_PROMPT='Create a small Python library (use uv) to calculate a shopping cart total: price times quantity, a 10% volume discount for 10 or more units of the same product, and 21% VAT on the total. This is a new project in this directory. '"$NO_QUESTIONS"
 
 seed_bug_repo() {
   cd "$dir" || exit 1
@@ -164,8 +166,8 @@ fi
 
 case "$name" in
   new-project | codex-new-project) prompt="$NEW_PROJECT_PROMPT" ;;
-  bug-fix) prompt='When the cart is empty, average_price raises ZeroDivisionError. It should return 0. Fix it.' ;;
-  release) prompt='Prepare the next release of the project. No remote is configured yet.' ;;
+  bug-fix) prompt="When the cart is empty, average_price raises ZeroDivisionError. It should return 0. Fix it. $NO_QUESTIONS" ;;
+  release) prompt="Prepare the next release of the project. No remote is configured yet. $NO_QUESTIONS" ;;
 esac
 printf '%s\n' "$prompt" > "$out/prompt.txt"
 
