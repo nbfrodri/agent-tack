@@ -27,8 +27,17 @@ print(data if isinstance(data, str) else "")
   fi
 }
 
+# Codex treats an "ask" answer as a failed hook and runs the command, so for Codex every
+# ask becomes a deny that tells the assistant to leave the command to the user.
+CLIENT=claude
+[ "${1:-}" != --codex ] || CLIENT=codex
+
 emit() {
   local decision="$1" reason="$2"
+  if [ "$CLIENT" = codex ] && [ "$decision" = ask ]; then
+    decision=deny
+    reason="Needs the user's confirmation, which Codex hooks cannot ask for: $reason Ask the user to run it or to approve it."
+  fi
   if command -v jq >/dev/null 2>&1; then
     jq -cn --arg d "$decision" --arg r "$reason" \
       '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: $d, permissionDecisionReason: $r}}'
