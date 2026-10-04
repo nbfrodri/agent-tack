@@ -13,5 +13,5 @@
   - WS4: `9d4d648` token-efficiency rules (dev-workflow, global line, orchestrate worktree lesson).
 - In progress: full suite run and `code-reviewer` on the branch diff.
 - Next: fix review findings; WS7 benchmark (15 sessions, frozen revision, isolated HOME) and `docs/results.md`; then ask for push/PR. Watch the Stop hook's extra turn cost in the benchmark.
-- Pending owner questions: delete the mod prototypes in `~/.claude/dev-mods/<session>/` before installing this branch (they would duplicate the installed mods); delete the merged local branches (`feat/adaptive-workflow-modes`, `feat/installer-robustness`, `feat/harness-mods`, `worktree-agent-*`) and agent worktrees.
+- Cleanup done with the owner's approval: mod prototypes in `~/.claude/dev-mods/<session>/`, agent worktrees and the five merged local branches deleted. Older Codex-era branches and `/tmp` worktrees remain (not yet asked).
 - Process: avoid interpreter heredocs and shell loops in Bash calls; `git add` explicit paths (agent worktrees live in `.claude/worktrees/`, now ignored).
