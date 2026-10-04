@@ -11,7 +11,10 @@ import subprocess
 import sys
 import tempfile
 
+import vscode_settings
+
 MISSING = object()
+VSCODE_PRODUCTS = ("Code", "Code - Insiders", "VSCodium")
 MOD_NAME = re.compile(r"[a-z0-9][a-z0-9._-]*")
 MOD_ID = re.compile(r"[a-z0-9][a-z0-9._-]*@[a-z0-9][a-z0-9._-]*")
 
@@ -58,6 +61,14 @@ def expected_link(path, target, home, repo, declaration):
     if parent == home + "/.claude/agents" and name.endswith(".md"):
         return target == repo + "/agents/" + name
     return False
+
+
+def vscode_settings_paths(home):
+    home = home.rstrip("/")
+    config = os.environ.get("XDG_CONFIG_HOME", home + "/.config")
+    return {base + "/" + product + "/User/settings.json"
+            for base in (config, home + "/Library/Application Support")
+            for product in VSCODE_PRODUCTS}
 
 
 def validate(state, home):
@@ -132,6 +143,9 @@ def validate(state, home):
             pattern = MOD_ID if kind == "mod" else MOD_NAME
             if not pattern.fullmatch(name) or path != home.rstrip("/") + "/.claude/plugins/" + name:
                 raise ValueError("unexpected mod record")
+        elif kind == "vscode":
+            if path not in vscode_settings_paths(home) or read(entry / "created") not in ("0", "1"):
+                raise ValueError("unexpected VS Code settings record")
         else:
             raise ValueError("unknown ownership kind")
     return sorted(entries.iterdir(), key=lambda p: int(p.name))
@@ -332,6 +346,14 @@ def uninstall_entry(entry, dry_run):
     if path.is_symlink() or not path.is_file():
         print(f"preserved changed or missing {kind} file: {path}")
         return False
+    if kind == "vscode":
+        outcome = vscode_settings.remove(str(path), read(entry / "created") == "1", dry_run)
+        if outcome == "preserved":
+            print(f"preserved VS Code settings (value changed or not plain JSON): {path}")
+            return False
+        verb = {"deleted": "delete created file", "removed": "remove chat.useAgentsMdFile from"}[outcome]
+        print(f"{'would ' if dry_run else ''}{verb} {path}")
+        return True
     if kind == "settings":
         with path.open() as stream:
             current = json.load(stream)

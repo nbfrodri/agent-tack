@@ -7,6 +7,8 @@
 #   - Claude Code marketplaces and plugins from plugins.txt (installed or updated to latest)
 #   - Claude Code mods from plugins/ through a local marketplace (opt out with --skip-mods or
 #     git config --global harness.mods false; --skip-plugins skips them too)
+#   - when VS Code is installed, "chat.useAgentsMdFile": true in its user settings so Copilot Chat
+#     loads each project's AGENTS.md (opt out with git config --global harness.vscodeAgentsMd false)
 #
 # Safe to re-run at any time. Existing files are backed up with a timestamp,
 # never overwritten. A failing step is reported and the rest still runs.
@@ -30,7 +32,7 @@ for arg in "$@"; do
     --skip-mods) SKIP_MODS=1 ;;
     --dry-run) DRY_RUN=1 ;;
     -h|--help)
-      sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'
+      sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//'
       exit 0
       ;;
     *)
@@ -55,6 +57,8 @@ has()     { command -v "$1" >/dev/null 2>&1; }
 source "$REPO/lib/ownership.sh"
 # shellcheck source=lib/mods.sh
 source "$REPO/lib/mods.sh"
+# shellcheck source=lib/vscode.sh
+source "$REPO/lib/vscode.sh"
 
 # Moves an existing file or directory aside instead of overwriting it.
 backup() {
@@ -472,6 +476,7 @@ main() {
   install_git_hooks
   install_plugins
   install_mods
+  install_vscode
 
   section "Summary"
   if [ "$FAILURES" -gt 0 ]; then
