@@ -15,7 +15,7 @@ Out of the box, AI assistants forget your conventions every session, skip tests,
 | **Stack skills** | `frontend`, `api-design`, `database`, `auth`, `e2e-testing`, `deployment`, `observability` |
 | **Agents** | `planner`, `implementer`, `code-reviewer`, `test-writer`, `docs-writer`, `evaluator`, `architecture-reviewer`, `security-auditor`, `performance-analyzer`, `ui-reviewer` |
 | **Enforced by hooks** | Conventional Commits, no AI attribution, no secrets or `.env` committed, protected `main` and tags, a guard against dangerous commands, auto-format |
-| **Tools** | Claude Code, Codex, Cursor, GitHub Copilot CLI, Gemini CLI, OpenCode, Crush |
+| **Tools** | Claude Code, Codex, Cursor, GitHub Copilot (CLI and VS Code Copilot Chat), Gemini CLI, OpenCode, Crush; the Claude Code and Codex VS Code extensions share their CLI configuration |
 | **Quality** | 560 automated checks; CI targets Linux and macOS; [measured results](docs/results.md) |
 
 Details: [architecture](docs/architecture.md) · [components](docs/components.md) · [how it works](docs/how-it-works.md) · [conventions](docs/conventions.md).
@@ -67,6 +67,7 @@ Make the harness your own after cloning it: change the rules, workflow, skills, 
 | --- | --- |
 | [Why](docs/why.md) | The problem, the solution, strengths and limits |
 | [Usage](docs/usage.md) | On/off, what to ask, overrides, updating |
+| [Editors and AI tools](docs/editors.md) | Using and enabling it in VS Code, Cursor, JetBrains and each AI tool, including WSL |
 | [How it works](docs/how-it-works.md) | Supported tools, installer, hooks, layout |
 | [Architecture](docs/architecture.md) | Components, dependencies, installation and runtime flows |
 | [Customization](docs/customization.md) | Adapt the harness to your preferences and keep personal changes |

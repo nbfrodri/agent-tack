@@ -12,12 +12,17 @@ Paths come from each tool's documentation and live in `targets.txt` (add a line 
 | Claude Code | `~/.claude/CLAUDE.md` | `~/.claude/skills` | ✔ |
 | Codex | `~/.codex/AGENTS.md` | `~/.codex/skills` | — |
 | Gemini CLI | `~/.gemini/GEMINI.md` | `~/.agents/skills` | — |
-| GitHub Copilot CLI | `~/.copilot/copilot-instructions.md` | `~/.copilot/skills` | — |
+| GitHub Copilot (CLI, and Copilot Chat in VS Code) | `~/.copilot/copilot-instructions.md` | `~/.copilot/skills` | — |
 | OpenCode | `~/.config/opencode/AGENTS.md` | `~/.agents/skills` | — |
 | Crush | `~/.config/AGENTS.md` | `~/.agents/skills` | — |
 | Cursor (editor and CLI) | none on disk: paste `global/AGENTS.md` in *Customize → Rules* once | `~/.agents/skills` | — |
 
-Claude Code and Codex are always configured; the others only when installed. Git hooks apply to every tool.
+Claude Code and Codex are always configured; the others only when installed. The Copilot line is detected through the `copilot` CLI or VS Code (`code`, `code-insiders`, `codium`). Git hooks apply to every tool.
+
+### VS Code
+
+- **Claude Code and Codex extensions** use the same configuration as their CLIs (`~/.claude`, `~/.codex`), so they get the harness's instructions, skills, agents, hooks and mods without extra steps.
+- **GitHub Copilot Chat** reads the user instructions in `~/.copilot/copilot-instructions.md` and the skills in `~/.agents/skills`, `~/.claude/skills` and `~/.copilot/skills`, all installed by the harness. In a project, it also reads `AGENTS.md` when the `chat.useAgentsMdFile` setting is on. Claude Code hooks, mods and subagents do not apply to Copilot; the git hooks still do.
 
 ### `targets.txt` columns
 One line per tool; `-` means unsupported or none. Files with only the first five columns still work.

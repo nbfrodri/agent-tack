@@ -16,7 +16,7 @@
 claude      always    claude                ~/.claude/CLAUDE.md                   ~/.claude/skills    ~/.claude/agents  ~/.claude/settings.json  -            doctor
 codex       always    codex                 ~/.codex/AGENTS.md                    ~/.codex/skills     -                 -                        -            doctor,--summary
 gemini      detect    gemini                ~/.gemini/GEMINI.md                   -                   -                 -                        -            -
-copilot     detect    copilot               ~/.copilot/copilot-instructions.md    ~/.copilot/skills   -                 -                        -            -
+copilot     detect    copilot,code,code-insiders,codium ~/.copilot/copilot-instructions.md    ~/.copilot/skills   -                 -                        -            -
 opencode    detect    opencode              ~/.config/opencode/AGENTS.md          -                   -                 -                        -            -
 crush       detect    crush                 ~/.config/AGENTS.md                   -                   -                 -                        -            -
 cursor      detect    cursor,cursor-agent   -                                     -                   -                 -                        -            -
