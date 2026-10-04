@@ -29,10 +29,11 @@ Details: [architecture](docs/architecture.md) · [components](docs/components.md
    ```
    Keep the repository at that path after installation: the installed files are symlinks to it. If you move it, run `install.sh` again from its new location.
    Preview changes with `./install.sh --dry-run`; add `--skip-plugins` to configure local files without plugin operations. Run `harness doctor` after installation to diagnose links, settings, Git hooks and project state without changing anything, and `harness doctor --tools` to check each installed AI tool (version, capabilities, a non-interactive smoke check). A weekly CI job runs that check against the latest Claude Code and Codex.
+   Two Claude Code mods from `plugins/` are installed by default through a local marketplace: `usage-band` (a band above the prompt with the 5-hour and weekly limits, context fill and cost; `/usage-band` toggles it) and `agent-activity` (a live pane of tool calls, skills, subagents and permission decisions; `/activity` opens it). Opt out with `--skip-mods` or `harness config mods false --global`; `--skip-plugins` skips them too.
 3. Read any warning it prints (e.g. Cursor needs its global rules pasted once), and make sure `~/.local/bin` is in your `PATH`.
 4. Restart your AI tools.
 
-To uninstall, run `./uninstall.sh --dry-run` first, then `./uninstall.sh` from the checkout. Uninstall requires `python3`; it restores only recorded, unchanged harness-owned state and preserves user edits, project files and shared plugins. Existing configuration from installations without ownership records is not automatically claimed. [Installation and removal →](docs/usage.md#installation-diagnostics-and-removal)
+To uninstall, run `./uninstall.sh --dry-run` first, then `./uninstall.sh` from the checkout. Uninstall requires `python3`; it restores only recorded, unchanged harness-owned state and preserves user edits, project files and shared plugins; it removes only the mods and local marketplace the installer added. Existing configuration from installations without ownership records is not automatically claimed. [Installation and removal →](docs/usage.md#installation-diagnostics-and-removal)
 
 ## Use
 ```bash
@@ -69,7 +70,7 @@ Workflow modes are not measured yet (a [pilot](docs/benchmarks/2026-10-04-modes-
 | [How it works](docs/how-it-works.md) | Supported tools, installer, hooks, layout |
 | [Architecture](docs/architecture.md) | Components, dependencies, installation and runtime flows |
 | [Customization](docs/customization.md) | Adapt the harness to your preferences and keep personal changes |
-| [Components](docs/components.md) | Every skill, agent and plugin |
+| [Components](docs/components.md) | Every skill, agent, plugin and mod |
 | [Conventions](docs/conventions.md) | Commits, PRs, releases, code, docs |
 | [Results](docs/results.md) | Measured with vs without the harness |
 | [Sharing](docs/sharing.md) | Using it on someone else's machine |

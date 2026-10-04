@@ -11,22 +11,34 @@ Run `harness help`, `harness --help` or `harness -h` for command syntax, options
 Clone into any directory you choose and run `./install.sh` from that checkout. Installation exposes global configuration through symlinks; you can enable the workflow in any Git project, independently of where the harness repository lives. Keep the checkout available or reinstall after moving it.
 
 ```bash
-./install.sh --dry-run                 # preview links, settings, Git and plugin actions
+./install.sh --dry-run                 # preview links, settings, Git, plugin and mod actions
 ./install.sh --dry-run --skip-plugins  # preview local configuration only
-./install.sh --skip-plugins            # apply local configuration only
+./install.sh --skip-plugins            # apply local configuration only (also skips mods)
+./install.sh --skip-mods               # apply everything except the Claude Code mods
 harness doctor                        # check installation and current project; no writes
 harness doctor --tools                # check each installed AI tool instead of the project
 ./uninstall.sh --dry-run               # preview safe restoration
 ./uninstall.sh                         # restore recorded unchanged state
 ```
 
-Doctor checks required tools, managed links, Claude settings and hook registration, ownership metadata, effective Git hooks, project activation and formatter trust. Missing optional CLIs and deliberate foreign hooks paths produce warnings. Broken managed components produce errors (exit 1); a healthy checked installation exits 0. Doctor works outside Git and never runs plugins or prints restoration snapshots or credentials. It diagnoses configuration rather than proving every external tool works.
+Doctor checks required tools, managed links, Claude settings and hook registration, ownership metadata, effective Git hooks, project activation and formatter trust. Missing optional CLIs and deliberate foreign hooks paths produce warnings. Broken managed components produce errors (exit 1); a healthy checked installation exits 0. Doctor works outside Git and never runs plugins or prints restoration snapshots or credentials. It diagnoses configuration rather than proving every external tool works. Doctor also warns when the claude CLI is missing or a harness mod is not installed or is disabled.
 
 `harness doctor --tools` checks each installed AI tool listed in `targets.txt`: version, configured capabilities, minimum version and a non-interactive smoke check (`claude doctor`, `codex doctor --summary`). It prints no tool output or credentials. A failed smoke check or an old version is a warning; a broken managed link is an error. A weekly CI workflow installs the latest Claude Code and Codex and runs the same check, so breaking changes in either tool surface early.
 
 Installation records changes privately under `${XDG_STATE_HOME:-$HOME/.local/state}/agent-harness/ownership`. Original state and installation-time tool declarations survive reinstallations, so later customization does not invalidate historical ownership. These snapshots may include private settings: do not commit or share them. Uninstall needs Python to validate ownership and selectively restore settings. It removes unchanged recorded links, restores safely displaced original files or links, and reverses unchanged owned settings and Git hooks. Changed links, parent directories, settings and hooks are preserved conservatively; retained records allow a later retry.
 
-Uninstall never deletes project files, project activation/trust configuration or shared plugins. It cannot infer ownership of legacy configuration: paths already identical before recording began are preserved. Installation and uninstall previews make no persistent changes. Installation accepts paths with spaces; use absolute paths without tabs, newlines or dot components, and keep the checkout path free of quotes and backslashes for Claude hook command substitution.
+Uninstall never deletes project files, project activation/trust configuration or shared plugins. It removes only the mods and local marketplace recorded by the installer; plugins from `plugins.txt`, and mods or marketplaces you already had, are kept.
+
+## Claude Code mods
+
+The installer adds two mods to Claude Code (other tools do not support mods):
+
+| Mod | What it shows | Command |
+| --- | --- | --- |
+| `usage-band` | A band above the prompt: 5-hour and weekly usage with reset times, context fill and session cost; toasts at 80% and 90%. Limits appear after the first response and only on a subscription | `/usage-band` hides or shows it |
+| `agent-activity` | A live pane of tool calls, skills, subagents (with their model) and permission prompts or denials; subagent actions are marked `↳` | `/activity` opens it (it opens by itself on terminals at least 144 columns wide) |
+
+Opt out with `./install.sh --skip-mods` or `harness config mods false --global`, then rerun the installer; `./uninstall.sh` removes them. To change a mod, edit it under `plugins/`, bump `version` in its `plugin.json` and rerun `./install.sh` (Claude Code caches installed plugins). It cannot infer ownership of legacy configuration: paths already identical before recording began are preserved. Installation and uninstall previews make no persistent changes. Installation accepts paths with spaces; use absolute paths without tabs, newlines or dot components, and keep the checkout path free of quotes and backslashes for Claude hook command substitution.
 
 ## On/off per project
 The workflow (planning, TDD, conventions, docs, Conventional Commits, auto-format) is opt-in per project, and its weight follows the [workflow mode](#workflow-modes). Everywhere else the AI works normally and only the safety net stays on.
