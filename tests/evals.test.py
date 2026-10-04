@@ -70,6 +70,16 @@ class Metrics(unittest.TestCase):
         self.assertFalse(self.measure_with_bodies('fix: handle empty carts\n')['red_evidence_recorded'])
         self.assertIsNone(self.measure_with_bodies(bodies, scenario='release')['red_evidence_recorded'])
 
+    def test_measurable_criteria_before_code(self):
+        def text(words):
+            return {'type': 'assistant', 'message': {'content': [{'type': 'text', 'text': words}]}}
+        stated = [text('Acceptance criteria:\n- R1: total() of 10,000 lines runs in under 50 ms'),
+                  use('Write', file_path='src/cart/__init__.py', content='x = 1')]
+        self.assertTrue(self.measure(stated, scenario='vague-requirement')['criteria_before_code'])
+        skipped = [use('Write', file_path='src/cart/__init__.py', content='x = 1'), text('R1: it is faster now')]
+        self.assertFalse(self.measure(skipped, scenario='vague-requirement')['criteria_before_code'])
+        self.assertIsNone(self.measure(stated, scenario='bug-fix')['criteria_before_code'])
+
     def test_missing_evidence_is_unknown(self):
         m = self.measure([])
         for key in ('test_written_before_code', 'red_green_verified', 'cost_usd', 'input_tokens', 'planned', 'pushed_or_bypassed'):
@@ -242,7 +252,7 @@ class Runner(unittest.TestCase):
 
     def test_successful_claude_scenarios_have_baseline_flags(self):
         self.stub('claude', 'printf "%s\\n" "$@"; exit 0')
-        for scenario in ('new-project', 'bug-fix', 'release'):
+        for scenario in ('new-project', 'bug-fix', 'release', 'vague-requirement'):
             with self.subTest(scenario=scenario):
                 outcome = self.run_eval(scenario)
                 self.assertEqual(outcome.returncode, 0, outcome.stderr)

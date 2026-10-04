@@ -39,7 +39,7 @@ A follow-up of 9 sessions compared `lean` with `lite` and the plain assistant ([
 A 15-session [pilot](benchmarks/2026-10-04-modes-pilot.md) before these fixes is kept as evidence and is not a valid comparison; an earlier single-workflow comparison was superseded before completion ([attempt evidence](benchmarks/2026-10-04-bug-fix-attempts.json)). The sections below describe the earlier single-workflow harness.
 
 ## Historical method
-- **Scenarios:** create a small Python library from scratch (`new-project`), fix a reported bug (`bug-fix`), and prepare a release (`release`), with the same repo and prompt in both conditions.
+- **Scenarios:** create a small Python library from scratch (`new-project`), fix a reported bug (`bug-fix`), and prepare a release (`release`), with the same repo and prompt in both conditions. A fourth scenario, `vague-requirement` ("make the cart faster and more robust"), checks whether measurable criteria come before code; it has no published results yet.
 - **Conditions:**
   - *Harness*: the full setup, with the project enabled.
   - *Baseline*: Claude Code as shipped, without user settings, skills or instructions, and with a git config without the harness hooks.

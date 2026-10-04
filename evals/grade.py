@@ -13,7 +13,7 @@ from pathlib import Path
 
 CONVENTIONAL = re.compile(r"^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([\w./-]+\))?!?: \S")
 AI_ATTRIBUTION = re.compile(r"co-authored-by:.*(claude|anthropic|openai|codex|copilot|gemini|cursor)|generated with|🤖", re.I)
-SEEDED_COMMITS = {"new-project": 0, "codex-new-project": 0, "bug-fix": 1, "release": 5}
+SEEDED_COMMITS = {"new-project": 0, "codex-new-project": 0, "bug-fix": 1, "release": 5, "vague-requirement": 1}
 
 
 def git(repo, *args):
@@ -84,6 +84,22 @@ def observations(evs):
                     observation["failed"] = item["exit_code"] != 0
                 out.append(observation)
     return out
+
+
+CRITERIA = re.compile(r"\bR1\b|acceptance criteri|criterios de aceptaci", re.I)
+
+
+def criteria_before_code(evs):
+    """True when numbered or explicit acceptance criteria appear before the first file write."""
+    for event in evs:
+        if event.get("type") != "assistant":
+            continue
+        for block in event.get("message", {}).get("content", []):
+            if block.get("type") == "text" and CRITERIA.search(block.get("text", "")):
+                return True
+            if block.get("type") == "tool_use" and block.get("name") in ("Write", "Edit", "MultiEdit"):
+                return False
+    return None
 
 
 def written_paths(evs):
@@ -187,6 +203,8 @@ def grade(run_dir: Path):
         "pushed_or_bypassed": "git push" in bash or "--no-verify" in bash or None,
         **provider_metrics(evs, run_dir),
     }
+    # A vague request ("make it faster") should be turned into measurable criteria before code.
+    m["criteria_before_code"] = criteria_before_code(evs) if scenario == "vague-requirement" else None
     if scenario == "bug-fix":
         test_src = (repo / "tests" / "test_cart.py").read_text() if (repo / "tests" / "test_cart.py").exists() else ""
         m["regression_test"] = bool(re.search(r"empty|vac", test_src, re.I))
