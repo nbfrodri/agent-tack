@@ -45,6 +45,16 @@ ASK_REASON=""
 deny() { emit deny "$1"; exit 0; }
 # Remember the first reason to ask; a later deny in the same command still wins
 ask() { [ -n "$ASK_REASON" ] || ASK_REASON="$1"; }
+# Explicit local data loss inside the project: the only asks a project-only mode such as
+# unleash may waive. Opaque syntax and analysis limits keep asking, so the deny rules hold.
+LOCAL_ASK_REASON=""
+ask_local() { [ -n "$LOCAL_ASK_REASON" ] || LOCAL_ASK_REASON="$1"; }
+# A command that changes directory or points git elsewhere may act outside the project,
+# so its local asks are never waived.
+ACTS_ELSEWHERE=0
+# Writes to the harness's own settings; refused in project-only modes so an autonomous
+# agent cannot lift its limits or leave its mode.
+SETTINGS_WRITE=""
 
 command="$(json_field .tool_input.command)"
 cwd="$(json_field .cwd)"
@@ -79,7 +89,9 @@ check_git() {
     fi
     if [ -z "$sub" ]; then
       case "$a" in
-        -C | -c | --git-dir | --work-tree | --namespace | --config-env) prev="$a"; skip_next=1 ;;
+        -C | --git-dir | --work-tree) ACTS_ELSEWHERE=1; prev="$a"; skip_next=1 ;;
+        --git-dir=* | --work-tree=*) ACTS_ELSEWHERE=1 ;;
+        -c | --namespace | --config-env) prev="$a"; skip_next=1 ;;
         -c?* | --config-env=*) case "$(printf '%s' "$a" | tr '[:upper:]' '[:lower:]')" in
                           -ccore.hookspath=* | --config-env=core.hookspath=*) deny "Overriding core.hooksPath disables the git hooks that enforce the user's rules." ;;
                         esac ;;
@@ -102,51 +114,59 @@ check_git() {
             *" --get"* | *" -l "* | *" --list "*) ;;
             *) deny "Changing core.hooksPath disables the git hooks that enforce the user's rules." ;;
           esac ;;
+        *" harness."*)
+          case "$joined" in
+            *" --get"* | *" -l "* | *" --list "*) ;;
+            *) SETTINGS_WRITE="Changing the harness's settings is the user's decision in this mode." ;;
+          esac ;;
       esac
       ;;
     reset)
-      case "$joined" in *" --hard"*) ask "git reset --hard discards uncommitted changes permanently." ;; esac
+      case "$joined" in *" --hard"*) ask_local "git reset --hard discards uncommitted changes permanently." ;; esac
       ;;
     clean)
       for r in "${rest[@]+"${rest[@]}"}"; do
         case "$r" in
-          --force) ask "git clean -f deletes untracked files permanently." ;;
+          --force) ask_local "git clean -f deletes untracked files permanently." ;;
           --*) ;;
-          -*f*) ask "git clean -f deletes untracked files permanently." ;;
+          -*f*) ask_local "git clean -f deletes untracked files permanently." ;;
         esac
       done
       ;;
     restore)
       case "$joined" in
-        *" --worktree "* | *" -W "*) ask "git restore discards uncommitted changes in the working tree." ;;
+        *" --worktree "* | *" -W "*) ask_local "git restore discards uncommitted changes in the working tree." ;;
         *" --staged "* | *" -S "*) ;;
-        *) ask "git restore discards uncommitted changes in the working tree." ;;
+        *) ask_local "git restore discards uncommitted changes in the working tree." ;;
       esac
       ;;
     checkout)
       case "$joined" in
-        *" -- "* | *" . "* | *" -f "* | *" --force "*) ask "This checkout discards uncommitted changes." ;;
+        *" -- "* | *" . "* | *" -f "* | *" --force "*) ask_local "This checkout discards uncommitted changes." ;;
       esac
       ;;
     switch)
       case "$joined" in
-        *" -f "* | *" --force "* | *" --discard-changes "*) ask "This switch discards uncommitted changes." ;;
+        *" -f "* | *" --force "* | *" --discard-changes "*) ask_local "This switch discards uncommitted changes." ;;
       esac
       ;;
     branch)
       for r in "${rest[@]+"${rest[@]}"}"; do
         case "$r" in
           --*) ;;
-          -*D*) ask "Force-deleting a branch can lose unmerged commits." ;;
+          -*D*) ask_local "Force-deleting a branch can lose unmerged commits." ;;
         esac
       done
       case "$joined" in
         *" --delete "*" --force "* | *" --force "*" --delete "* | *" -d "*" -f "* | *" -d --force "*)
-          ask "Force-deleting a branch can lose unmerged commits." ;;
+          ask_local "Force-deleting a branch can lose unmerged commits." ;;
       esac
+      for r in "${rest[@]+"${rest[@]}"}"; do
+        if is_main "$r" && [ -n "$LOCAL_ASK_REASON" ]; then ask "Force-deleting the main branch."; fi
+      done
       ;;
     stash)
-      case "$joined" in *" clear "* | *" drop "*) ask "This permanently deletes stashed changes." ;; esac
+      case "$joined" in *" clear "* | *" drop "*) ask_local "This permanently deletes stashed changes." ;; esac
       ;;
     filter-branch | filter-repo)
       ask "This rewrites the whole repository history."
@@ -226,6 +246,23 @@ check_git_push() {
   fi
 }
 
+# Flags harness subcommands that change settings; reads (status, show, list, a lone name) pass.
+check_harness() {
+  local positional=0 a
+  case "${1:-}" in
+    trust | enable | disable) SETTINGS_WRITE="Changing the harness's settings is the user's decision in this mode."; return ;;
+    mode)
+      case "${2:-}" in '' | list | show | new) return ;; esac
+      SETTINGS_WRITE="Changing the workflow mode is the user's decision in this mode." ;;
+    config)
+      shift
+      for a in "$@"; do
+        case "$a" in --unset) positional=2 ;; --global) ;; *) positional=$((positional + 1)) ;; esac
+      done
+      [ "$positional" -lt 2 ] || SETTINGS_WRITE="Changing the harness's settings is the user's decision in this mode." ;;
+  esac
+}
+
 check_rm() {
   local recursive=0 after_dashdash=0 targets=() a t real
   for a in "$@"; do
@@ -247,7 +284,7 @@ check_rm() {
     case "$t" in
       '/' | '/*' | '/.' | '~' | '~/' | '~/*' | '$HOME' | '$HOME/' | '$HOME/*' | '${HOME}' | '${HOME}/' | '${HOME}/*' | '..' | '../' | '../*' | "$HOME" | "$HOME/")
         deny "Recursive delete of '$t' is too broad. Delete specific paths instead." ;;
-      '.' | './' | '*' | './*') ask "Recursive delete of everything in the current directory ($t)." ;;
+      '.' | './' | '*' | './*') ask_local "Recursive delete of everything in the current directory ($t)." ;;
       /*)
         real="${t%/}"
         case "$real" in
@@ -261,17 +298,49 @@ check_rm() {
   done
 }
 
-check_database() {
-  local joined="$1" upper
+POLICY_SCOPES=() POLICY_DECISIONS=() POLICY_PATTERNS=() POLICY_REASONS=()
+trim() { local value="$1"; value="${value#"${value%%[![:space:]]*}"}"; printf '%s' "${value%"${value##*[![:space:]]}"}"; }
+
+# Loads "scope | decision | pattern | reason" rules; malformed lines and relaxing rules are skipped.
+load_policy() {
+  local file="$1" scope decision pattern reason
+  while IFS='|' read -r scope decision pattern reason; do
+    scope="$(trim "$scope")" decision="$(trim "$decision")" pattern="$(trim "$pattern")" reason="$(trim "$reason")"
+    case "$scope" in client) ;; sql | data | command) case "$decision" in ask | deny) ;; *) continue ;; esac ;; *) continue ;; esac
+    [ -n "$pattern" ] || continue
+    POLICY_SCOPES+=("$scope") POLICY_DECISIONS+=("$decision") POLICY_PATTERNS+=("$pattern") POLICY_REASONS+=("${reason:-Matches a guard policy rule: $pattern}")
+  done < "$file"
+}
+
+POLICY_FILE="$(dirname "$0")/guard-policy.txt"
+if [ -f "$POLICY_FILE" ]; then load_policy "$POLICY_FILE"
+else ask "The guard policy file is missing; review the command."; fi
+USER_POLICY="${XDG_CONFIG_HOME:-$HOME/.config}/agent-harness/guard-policy.txt"
+[ ! -f "$USER_POLICY" ] || load_policy "$USER_POLICY"
+
+apply_rule() {
+  if [ "${POLICY_DECISIONS[$1]}" = deny ]; then deny "${POLICY_REASONS[$1]}"; fi
+  ask "${POLICY_REASONS[$1]}"
+}
+
+check_policy() {
+  local joined="$1" upper i has_client=0
+  # bash 3.2 treats expanding an empty array under set -u as an unbound variable
+  [ "${#POLICY_SCOPES[@]}" -gt 0 ] || return 0
+  for i in "${!POLICY_SCOPES[@]}"; do
+    [ "${POLICY_SCOPES[$i]}" = client ] || continue
+    case " $joined " in *" ${POLICY_PATTERNS[$i]} "* | */"${POLICY_PATTERNS[$i]} "*) has_client=1; break ;; esac
+  done
   upper="$(printf '%s' "$joined" | tr '[:lower:]' '[:upper:]')"
-  case "$upper" in
-    *"DROP DATABASE"* | *"DROP SCHEMA"* | *"DROP TABLE"* | *"TRUNCATE "*)
-      ask "This drops or truncates database objects. Confirm it targets a local/dev database." ;;
-  esac
-  case "$joined" in
-    *dropDatabase* | *"deleteMany({})"*)
-      ask "This deletes database data. Confirm it targets a local/dev database." ;;
-  esac
+  for i in "${!POLICY_SCOPES[@]}"; do
+    case "${POLICY_SCOPES[$i]}" in
+      command) case "$joined" in *"${POLICY_PATTERNS[$i]}"*) apply_rule "$i" ;; esac ;;
+      data) [ "$has_client" -eq 0 ] || case "$joined" in *"${POLICY_PATTERNS[$i]}"*) apply_rule "$i" ;; esac ;;
+      sql)
+        [ "$has_client" -eq 1 ] || continue
+        case "$upper" in *"$(printf '%s' "${POLICY_PATTERNS[$i]}" | tr '[:lower:]' '[:upper:]')"*) apply_rule "$i" ;; esac ;;
+    esac
+  done
 }
 
 # Checks one simple command given as words
@@ -387,6 +456,8 @@ check_command() {
     *'__subst__'* | *'$'* | *'`'*) ask "Dynamic executable name requires review." ;;
     git) check_git "${args[@]+"${args[@]}"}" ;;
     rm) check_rm "${args[@]+"${args[@]}"}" ;;
+    cd | pushd | popd) ACTS_ELSEWHERE=1 ;;
+    harness) check_harness "${args[@]+"${args[@]}"}" ;;
     bash | sh | zsh | dash | ksh)
       local k=0 shell_string=0
       while [ "$k" -lt "${#args[@]}" ]; do
@@ -411,15 +482,7 @@ check_command() {
     eval) analyze "${args[*]+"${args[*]}"}" ;;
   esac
 
-  local joined="${words[*]}"
-  case " $joined " in
-    *" psql "* | *" mysql "* | *" mariadb "* | *" sqlite3 "* | *" sqlcmd "* | *" mongosh "* | *" mongo "* | *" pgcli "* | *" mycli "* | */psql\ * | */mysql\ *)
-      check_database "$joined" ;;
-  esac
-  case "$joined" in
-    *migrate:fresh* | *migrate:reset* | *db:wipe* | *"db:drop"* | *"prisma migrate reset"* | *"prisma db push --force-reset"* | *"alembic downgrade base"* | *"manage.py flush"*)
-      ask "This wipes or resets a database. Confirm it targets a local/dev database." ;;
-  esac
+  check_policy "${words[*]}"
 }
 
 check_env_split() {
@@ -486,6 +549,21 @@ analyze() {
   DEPTH=$((DEPTH - 1))
 }
 
+waives_local_asks() {
+  local cli mode
+  cli="$(dirname "$0")/../../bin/harness"
+  (cd "$cwd" && "$cli" status --quiet) || return 1
+  mode="$(cd "$cwd" && "$cli" mode show 2>/dev/null)" || return 1
+  [ -z "${mode##WARNING:*}" ]
+}
+
 analyze "$command"
-[ -n "$ASK_REASON" ] && emit ask "$ASK_REASON"
+if [ -n "$SETTINGS_WRITE" ] && waives_local_asks; then
+  deny "$SETTINGS_WRITE"
+fi
+if [ -n "$ASK_REASON" ]; then
+  emit ask "$ASK_REASON"
+elif [ -n "$LOCAL_ASK_REASON" ]; then
+  if [ "$ACTS_ELSEWHERE" -eq 1 ] || ! waives_local_asks; then emit ask "$LOCAL_ASK_REASON"; fi
+fi
 exit 0

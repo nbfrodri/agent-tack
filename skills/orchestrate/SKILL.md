@@ -41,7 +41,7 @@ Pick the agent for each task:
 | Docs | `docs-writer` |
 | Research, read-only analysis | `architecture-reviewer`, `security-auditor`, `performance-analyzer`, `ui-reviewer`, or a general-purpose/Explore agent |
 
-Every implementing agent works in its own Git worktree and branch `type/<slug>`. Use native worktree isolation when supported; otherwise create the worktree before delegation and explicitly pass its path. Shared working directories require disjoint read-only tasks; do not run overlapping writers.
+Every implementing agent works in its own Git worktree and branch `type/<slug>`. Use native worktree isolation when supported; otherwise create the worktree before delegation and explicitly pass its path. Shared working directories require disjoint read-only tasks; do not run overlapping writers. Worktrees created inside the repository (such as `.claude/worktrees/`) must be in `.gitignore` before delegating, and the integrating agent stages explicit paths rather than `git add -A`. Tell each agent which branch to start from and give it the approved plan's path.
 
 Regardless of whether the tool inherits conversation context, make each task prompt self-contained:
 - the goal and the acceptance criteria of its task;

@@ -25,7 +25,7 @@ assert 'echo user-hook' in commands
 assert 'echo old #harness' not in commands
 assert any(g.get('matcher') == 'Bash' and any(h['command'] == 'echo user-hook' for h in g['hooks']) for g in groups)
 assert d['theme'] == 'dark'
-assert sum('#harness' in c for c in commands) == 1
+assert sum('#harness' in c for c in commands) == 2  # guard and budget
 PY
   then PASSED=$((PASSED + 1)); printf '  ✔ %s preserves mixed user hook groups\n' "$backend"
   else FAILED=$((FAILED + 1)); printf '  ✘ %s preserves mixed user hook groups\n' "$backend"; fi

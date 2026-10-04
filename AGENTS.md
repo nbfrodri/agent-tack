@@ -7,7 +7,7 @@ Architecture and execution flows: `docs/architecture.md`; keep it current when c
 - Lint: `shellcheck -x install.sh uninstall.sh bin/harness lib/*.sh tests/*.sh evals/run.sh git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push git-hooks/pre-commit hooks/claude/*.sh hooks/claude/lib/*.sh`
 - Validate skills, agents and cross-references: `tests/validate.sh` (its own tests: `tests/validate.test.sh`)
 - Test lifecycle and diagnostics: `tests/lifecycle.test.sh && tests/doctor.test.sh`
-- Test installer and hooks: `tests/install.test.sh && tests/hooks.test.sh`
+- Test installer, tools and hooks: `tests/install.test.sh && tests/tools.test.sh && tests/hooks.test.sh`
 - Audit regressions and context: `tests/cli.test.sh && tests/settings.test.sh && tests/safety.test.sh && tests/guard.test.sh && tests/evals.test.sh`
 - Apply locally: `./install.sh` (idempotent)
 
@@ -20,6 +20,6 @@ Architecture and execution flows: `docs/architecture.md`; keep it current when c
 - Every change to the installer or hooks needs a test in `tests/`.
 
 ## Design
-- One responsibility per file: `install.sh` orchestrates steps; JSON merging lives in `lib/settings-merge.{py,jq}`; command parsing in `hooks/claude/lib/shell-parse.{py,sh}` and the guard's policy in `guard-bash.sh`; startup rendering in `lib/project-context.sh`.
-- Extend through data, not code: AI tools in `targets.txt`, plugins in `plugins.txt`, skills and agents as folders and files.
+- One responsibility per file: `install.sh` orchestrates steps; JSON merging lives in `lib/settings-merge.{py,jq}`; command parsing in `hooks/claude/lib/shell-parse.{py,sh}` and the guard's policy in `guard-bash.sh` (structural rules) and `guard-policy.txt` (pattern rules); startup rendering in `lib/project-context.sh`.
+- Extend through data, not code: AI tools in `targets.txt`, plugins in `plugins.txt`, feature toggles in `features.txt`, workflow modes in `modes/`, skills and agents as folders and files.
 - Hooks ask `bin/harness status` whether a project is enabled and `bin/harness mode` for its workflow mode; nothing else reads the markers or `harness.mode` directly.

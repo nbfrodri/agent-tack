@@ -1,0 +1,7 @@
+{
+  "name": "agent-activity",
+  "version": "0.1.0",
+  "description": "Live pane of what the agent does behind the scenes: tool calls, skills, subagents and permission decisions",
+  "author": { "name": "agent-harness" },
+  "types": "./types/index.d.ts"
+}

@@ -1,13 +1,22 @@
 # AI tools the installer configures. Paths come from each tool's documentation.
-# Columns: tool, when (always | if the tool is installed), commands to detect it (comma-separated),
-#          global instructions file (- if the tool has none), extra skills dir (- if it reads ~/.agents/skills).
-# Every tool also gets the skills in ~/.agents/skills, the open standard location.
+# Columns (- means unsupported or none):
+#   tool          name
+#   when          always | detect (configure only if the tool is installed)
+#   commands      commands that detect the tool (comma-separated)
+#   instructions  global instructions file
+#   skills        extra skills dir (the tool also reads ~/.agents/skills)
+#   agents        subagents dir the installer fills
+#   hooks         hooks file the installer fills
+#   min_version   oldest supported version (x.y.z)
+#   smoke         non-interactive diagnostic arguments run by 'harness doctor --tools' (comma-separated)
+# Older files with only the first five columns are still read. Every tool also gets the skills
+# in ~/.agents/skills, the open standard location.
 #
-# tool      when      commands              instructions                          skills
-claude      always    claude                ~/.claude/CLAUDE.md                   ~/.claude/skills
-codex       always    codex                 ~/.codex/AGENTS.md                    ~/.codex/skills
-gemini      detect    gemini                ~/.gemini/GEMINI.md                   -
-copilot     detect    copilot               ~/.copilot/copilot-instructions.md    ~/.copilot/skills
-opencode    detect    opencode              ~/.config/opencode/AGENTS.md          -
-crush       detect    crush                 ~/.config/AGENTS.md                   -
-cursor      detect    cursor,cursor-agent   -                                     -
+# tool      when      commands              instructions                          skills              agents            hooks                    min_version  smoke
+claude      always    claude                ~/.claude/CLAUDE.md                   ~/.claude/skills    ~/.claude/agents  ~/.claude/settings.json  -            doctor
+codex       always    codex                 ~/.codex/AGENTS.md                    ~/.codex/skills     -                 -                        -            doctor,--summary
+gemini      detect    gemini                ~/.gemini/GEMINI.md                   -                   -                 -                        -            -
+copilot     detect    copilot               ~/.copilot/copilot-instructions.md    ~/.copilot/skills   -                 -                        -            -
+opencode    detect    opencode              ~/.config/opencode/AGENTS.md          -                   -                 -                        -            -
+crush       detect    crush                 ~/.config/AGENTS.md                   -                   -                 -                        -            -
+cursor      detect    cursor,cursor-agent   -                                     -                   -                 -                        -            -

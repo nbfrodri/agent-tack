@@ -26,15 +26,15 @@ guard = repo / "hooks/claude/guard-bash.sh"
 failed = 0
 passed = 0
 
-def expect(expected, command, name=None, path=None, reason=None):
+def expect(expected, command, name=None, path=None, reason=None, script=None, cwd=None):
     global failed, passed
     environment = dict(os.environ)
     if path is not None:
         environment["PATH"] = str(path)
     try:
         result = subprocess.run(
-            ["bash", str(guard)],
-            input=json.dumps({"tool_input": {"command": command}, "cwd": str(work)}),
+            ["bash", str(script or guard)],
+            input=json.dumps({"tool_input": {"command": command}, "cwd": str(cwd or work)}),
             text=True, capture_output=True, env=environment, timeout=8,
         )
         assert result.returncode == 0, result.stderr
@@ -106,6 +106,74 @@ if (work / "no-python/jq").exists():
     expect("deny", "sudo -n rm -rf /", "jq-only fallback still denies", path=work / "no-python")
     expect("ask", "cat <<EOF\n$(rm -rf /)\nEOF", "jq-only unsupported syntax asks", path=work / "no-python")
     expect("ask", "printf '%s' '" + "x" * 50000 + "'", "jq-only long input asks promptly", path=work / "no-python", reason="size")
+
+# Policy as data: the shipped table keeps the database rules; a user file can only add rules.
+expect("ask", "psql -c 'drop table orders'", "shipped policy: destructive SQL is case-insensitive", reason="database")
+expect("ask", "mongosh --eval 'db.dropDatabase()'", "shipped policy: data deletion in a database client")
+expect("ask", "bin/rails db:drop", "shipped policy: database reset commands")
+user_policy = Path(os.environ["XDG_CONFIG_HOME"]) / "agent-harness/guard-policy.txt"
+user_policy.parent.mkdir(parents=True, exist_ok=True)
+user_policy.write_text(
+    "# user rules\n"
+    "command | ask | terraform destroy | Terraform destroy deletes infrastructure.\n"
+    "command | deny | kubectl delete namespace prod | Never delete the production namespace.\n"
+    "command | allow | git commit --no-verify | users cannot relax the guard\n"
+    "sql | allow | DROP TABLE | users cannot relax shipped asks\n"
+    "nowhere | deny | echo hi | unknown scopes are skipped\n"
+    "this line is malformed\n"
+)
+expect("ask", "psql -c 'DROP TABLE orders'", "user policy cannot relax a shipped ask")
+expect("ask", "terraform destroy -auto-approve", "user policy adds an ask rule", reason="infrastructure")
+expect("deny", "kubectl delete namespace prod", "user policy adds a deny rule", reason="production")
+expect("allow", "terraform plan", "user rules match only their pattern")
+expect("deny", "git commit --no-verify", "user policy cannot allow what the guard denies")
+expect("allow", "echo hi", "malformed user lines are ignored")
+user_policy.unlink()
+
+# Unleash relaxes only explicit local asks; deny rules and opaque or outside-project asks stay.
+project = work / "unleashed"
+subprocess.run(["git", "init", "-q", str(project)], check=True)
+subprocess.run(["git", "-C", str(project), "config", "harness.enabled", "true"], check=True)
+subprocess.run(["git", "-C", str(project), "config", "harness.mode", "unleash"], check=True)
+expect("allow", "git reset --hard HEAD~1", "unleash: local discard is allowed", cwd=project)
+expect("allow", "git branch -D old-idea", "unleash: branch force-delete is allowed", cwd=project)
+expect("allow", "git stash drop", "unleash: stash drop is allowed", cwd=project)
+expect("allow", "rm -rf .", "unleash: deleting inside the project is allowed", cwd=project)
+expect("ask", "rm -rf /etc/app", "unleash: deleting outside the project still asks", cwd=project)
+expect("ask", "git push --force origin feat/x", "unleash: rewriting the remote still asks", cwd=project)
+expect("ask", "psql -c 'DROP TABLE orders'", "unleash: database rules still ask", cwd=project)
+expect("ask", "cat <<'EOF' | python3\nprint(1)\nEOF", "unleash: opaque commands still ask", cwd=project)
+expect("deny", "git commit --no-verify -m 'fix: x'", "unleash: deny rules stay", cwd=project)
+expect("deny", "git push origin main --force", "unleash: force-push to main stays denied", cwd=project)
+expect("ask", "cd ~ && rm -rf *", "unleash: a directory change before a local discard still asks", cwd=project)
+expect("ask", "cd / && rm -rf ./*", "unleash: deleting after cd to root still asks", cwd=project)
+expect("ask", "pushd /tmp && git clean -fdx", "unleash: pushd counts as a directory change", cwd=project)
+expect("ask", "git -C /home/someone/other reset --hard", "unleash: git -C targets another repository", cwd=project)
+expect("ask", "git --git-dir=/x --work-tree=/y clean -fdx", "unleash: git-dir and work-tree target another repository", cwd=project)
+expect("ask", "git branch -D main", "unleash: deleting the main branch still asks", cwd=project)
+expect("deny", "harness config unleash-max-tool-calls 999999", "unleash: the agent cannot raise its own limit", cwd=project)
+expect("deny", "harness config unleash-max-tool-calls --unset", "unleash: the agent cannot remove its own limit", cwd=project)
+expect("deny", "harness mode standard", "unleash: the agent cannot change its own mode", cwd=project)
+expect("deny", "harness trust", "unleash: the agent cannot grant itself formatter trust", cwd=project)
+expect("deny", "git config harness.unleashMaxToolCalls 999999", "unleash: raw git config writes to harness keys are refused", cwd=project)
+expect("allow", "harness config unleash-max-tool-calls", "unleash: reading a setting is allowed", cwd=project)
+expect("allow", "harness status", "unleash: status is allowed", cwd=project)
+subprocess.run(["git", "-C", str(project), "config", "harness.mode", "lite"], check=True)
+expect("ask", "git reset --hard HEAD~1", "other modes keep asking about local discards", cwd=project)
+expect("allow", "harness config delegation off", "other modes let the assistant change settings", cwd=project)
+subprocess.run(["git", "-C", str(project), "config", "harness.mode", "no-such-mode"], check=True)
+expect("ask", "git reset --hard HEAD~1", "an invalid mode keeps asking", cwd=project)
+subprocess.run(["git", "-C", str(project), "config", "harness.enabled", "false"], check=True)
+subprocess.run(["git", "-C", str(project), "config", "harness.mode", "unleash"], check=True)
+expect("ask", "git reset --hard HEAD~1", "unleash needs the workflow enabled", cwd=project)
+bare = work / "bare-guard"
+(bare / "lib").mkdir(parents=True)
+(bare / "guard-bash.sh").write_text(guard.read_text())
+for name in ("shell-parse.sh", "shell-parse.py"):
+    source = repo / "hooks/claude/lib" / name
+    if source.exists():
+        (bare / "lib" / name).write_text(source.read_text())
+expect("ask", "echo hi", "missing shipped policy asks for review", reason="policy", script=bare / "guard-bash.sh")
 print(f"\n{passed} passed, {failed} failed")
 sys.exit(bool(failed))
 PY

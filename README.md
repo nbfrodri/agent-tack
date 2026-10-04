@@ -28,11 +28,12 @@ Details: [architecture](docs/architecture.md) · [components](docs/components.md
    ~/Projects/agent-harness/install.sh
    ```
    Keep the repository at that path after installation: the installed files are symlinks to it. If you move it, run `install.sh` again from its new location.
-   Preview changes with `./install.sh --dry-run`; add `--skip-plugins` to configure local files without plugin operations. Run `harness doctor` after installation to diagnose links, settings, Git hooks and project state without changing anything.
+   Preview changes with `./install.sh --dry-run`; add `--skip-plugins` to configure local files without plugin operations. Run `harness doctor` after installation to diagnose links, settings, Git hooks and project state without changing anything, and `harness doctor --tools` to check each installed AI tool (version, capabilities, a non-interactive smoke check). A weekly CI job runs that check against the latest Claude Code and Codex.
+   Two Claude Code mods from `plugins/` are installed by default through a local marketplace: `usage-band` (a band above the prompt with the 5-hour and weekly limits, context fill and cost; `/usage-band` toggles it) and `agent-activity` (a live pane of tool calls, skills, subagents and permission decisions; `/activity` opens it). Opt out with `--skip-mods` or `harness config mods false --global`; `--skip-plugins` skips them too.
 3. Read any warning it prints (e.g. Cursor needs its global rules pasted once), and make sure `~/.local/bin` is in your `PATH`.
 4. Restart your AI tools.
 
-To uninstall, run `./uninstall.sh --dry-run` first, then `./uninstall.sh` from the checkout. Uninstall requires `python3`; it restores only recorded, unchanged harness-owned state and preserves user edits, project files and shared plugins. Existing configuration from installations without ownership records is not automatically claimed. [Installation and removal →](docs/usage.md#installation-diagnostics-and-removal)
+To uninstall, run `./uninstall.sh --dry-run` first, then `./uninstall.sh` from the checkout. Uninstall requires `python3`; it restores only recorded, unchanged harness-owned state and preserves user edits, project files and shared plugins; it removes only the mods and local marketplace the installer added. Existing configuration from installations without ownership records is not automatically claimed. [Installation and removal →](docs/usage.md#installation-diagnostics-and-removal)
 
 ## Use
 ```bash
@@ -40,9 +41,9 @@ cd ~/Projects/my-app
 harness enable      # turn the workflow on for this project (off by default)
 harness mode        # auto by default; also lite, standard or strict
 ```
-**Workflow modes:** in `auto` the assistant picks a level per task (lite for small changes, standard for bounded features and fixes, strict for risky or multi-module work) and says which. Lighter levels skip plans, handoffs, logs and subagents to save tokens and time; hooks enforce the same safety rules in every mode. Set your default with `harness mode lite --global` and override it per project with `harness mode strict`. [Modes →](docs/usage.md#workflow-modes)
+**Workflow modes:** in `auto` the assistant picks a level per task (lite for small changes, standard for bounded features and fixes, strict for risky or multi-module work) and says which. Lighter levels skip plans, handoffs, logs and subagents to save tokens and time; hooks enforce the same safety rules in every mode. Set your default with `harness mode lite --global` and override it per project with `harness mode strict`. Create your own with `harness mode new <name> --from <mode>`. `harness mode unleash` (project-only) works autonomously without confirmations while keeping the guard's deny rules; read its [risks](docs/usage.md#unleash-autonomous-work) first. [Modes →](docs/usage.md#workflow-modes)
 Project instructions load at startup; architecture and an active handoff are indexed and read only when a task needs them (strict mode loads excerpts). Automatic formatting also needs `harness trust` for the local checkout; `harness status` shows both activation and formatter trust. Run `harness help` for commands and examples. [Context and trust →](docs/usage.md#startup-context-and-formatter-trust)
-Complex independent strict-level tasks are delegated automatically after plan approval; lighter levels suggest delegation and ask. Disable it with `git config harness.delegation off`. [Delegation and integration choices →](docs/usage.md#automatic-delegation-and-integration-choices)
+Complex independent strict-level tasks are delegated automatically after plan approval; lighter levels suggest delegation and ask. Disable it with `harness config delegation off`; `harness config` lists every feature toggle. [Feature toggles →](docs/usage.md#feature-toggles) [Delegation and integration choices →](docs/usage.md#automatic-delegation-and-integration-choices)
 Then work as usual: "Add Google login", "Work on issue #12", "What would you improve?", "Improve it autonomously until it scores 8/10", "Prepare a release". `harness disable` turns it off. [Usage →](docs/usage.md)
 
 Update with `git pull && ./install.sh`. Sharing it with someone else: [sharing](docs/sharing.md).
@@ -51,15 +52,15 @@ Update with `git pull && ./install.sh`. Sharing it with someone else: [sharing](
 Make the harness your own after cloning it: change the rules, workflow, skills, agents, supported tools, plugins and hooks to fit your preferences. Keep personal changes in your own clone or fork. [Customization guide →](docs/customization.md)
 
 ## Results
-Workflow modes are not measured yet (a [pilot](docs/benchmarks/2026-10-04-modes-pilot.md) found defects, since fixed). Historical results of the earlier single workflow, from 12 real sessions with the original grading heuristics (including a test-order metric since corrected) ([method, full tables and limitations](docs/results.md)):
+15 real sessions per workflow mode, plain assistant versus the harness ([method, full tables and limitations](docs/results.md)):
 
-| | Plain assistant | With the harness |
-| --- | --- | --- |
-| Committed its work | 2/6 runs | 6/6 |
-| Test written before the code | 0/4 | 4/4 |
-| AI attribution left in history | 2/6 | 0/6 |
-| New project with CI, docs for humans and AIs, release setup | 0/2 | 2/2 |
-| Cost and time | 1× | ~2× focused tasks, ~6× a new project |
+| | Plain assistant | Lite / Auto | Strict |
+| --- | --- | --- | --- |
+| Bug fix on a branch with a `fix:` commit | 0/2 | 2/2 | 2/2 |
+| Regression test for the bug | 1/2 | 2/2 | 2/2 |
+| Plan, docs and AI log | – | – | 2/2 |
+| Cost of a bug fix | 1× | ~2× | 3.5× |
+| Cost of a new project | 1× | ~2.2× (was 6.6× with the earlier single workflow) | waits for plan approval |
 
 ## Documentation
 | Doc | |
@@ -69,7 +70,7 @@ Workflow modes are not measured yet (a [pilot](docs/benchmarks/2026-10-04-modes-
 | [How it works](docs/how-it-works.md) | Supported tools, installer, hooks, layout |
 | [Architecture](docs/architecture.md) | Components, dependencies, installation and runtime flows |
 | [Customization](docs/customization.md) | Adapt the harness to your preferences and keep personal changes |
-| [Components](docs/components.md) | Every skill, agent and plugin |
+| [Components](docs/components.md) | Every skill, agent, plugin and mod |
 | [Conventions](docs/conventions.md) | Commits, PRs, releases, code, docs |
 | [Results](docs/results.md) | Measured with vs without the harness |
 | [Sharing](docs/sharing.md) | Using it on someone else's machine |

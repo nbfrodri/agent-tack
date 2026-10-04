@@ -17,9 +17,12 @@ flowchart LR
   merge --> settings[Claude Code settings]
   installer --> gitconfig[Global git core.hooksPath]
   installer --> plugins[Claude plugin CLI]
+  installer --> mods[lib/mods.sh]
+  mods --> plugins
+  mods --> modsrc[plugins/ local marketplace]
 ```
 
-`install.sh` configures tools, links content, merges settings, installs git hooks and updates plugins in that order. It counts failures while continuing other steps, then exits non-zero if any step failed. Links point to the checkout, so its location must remain available; re-running the installer repairs links after a move.
+`install.sh` configures tools, links content, merges settings, installs git hooks, updates plugins and installs mods in that order. It counts failures while continuing other steps, then exits non-zero if any step failed. Links point to the checkout, so its location must remain available; re-running the installer repairs links after a move.
 
 ## Components and dependency direction
 
@@ -29,17 +32,20 @@ flowchart LR
 | `skills/` | Task-specific procedures, references and reusable assets | Global preferences and project conventions |
 | `agents/` | Role-specific instructions for planning, implementation and review | Skills; native definitions where supported, otherwise role instructions for the current runtime |
 | `targets.txt`, `plugins.txt` | Declare supported tools and Claude plugins | Read by the installer |
+| `plugins/`, `lib/mods.sh` | Claude Code mods (`usage-band`, `agent-activity`) in a local marketplace; the installer step adds the marketplace, installs each mod and records only what it installed; doctor reports their state | Claude CLI (`claude plugin ...`), `lib/ownership.sh`; opt-outs `--skip-mods` and `harness.mods` |
 | `install.sh` | Orchestrate installation and migration | Data files, settings merge, git and Claude CLI |
 | `lib/ownership.sh`, `lib/ownership.py`, `uninstall.sh` | Record private installation ownership and restore unchanged managed state without removing project files or shared plugins | Bash records and Python standard library validation/restoration |
 | `lib/doctor.sh` | Diagnose managed links, settings, ownership, Git hooks and project state without writes | Installer data, private metadata, Git and `bin/harness` queries |
 | `lib/settings-merge.py`, `.jq` | Merge settings and replace harness-tagged commands while preserving user commands and group metadata | Python standard library or jq |
-| `bin/harness` | Manage activation, workflow mode and local formatter trust; provide bounded startup context | Git repository root and configuration; `lib/project-context.sh` and `lib/doctor.sh` |
+| `bin/harness` | Manage activation, workflow mode and local formatter trust; provide bounded startup context | Git repository root and configuration; `lib/project-context.sh`, `lib/config.sh` and `lib/doctor.sh` |
+| `modes/`, `lib/modes.sh` | Define each workflow mode as data; resolve, list, create and show modes (built-in first, then the user's `~/.config/agent-harness/modes/`) | Sourced by `bin/harness`; read by SessionStart through `harness mode show` |
+| `features.txt`, `lib/config.sh` | Declare feature toggles; list, validate, read and write them for `harness config` (project value, then global, then default) | Git configuration; consumers read each toggle's git key |
 | `git-hooks/` | Check staged secrets, commit messages and pushed refs; delegate local hooks | `bin/harness`, git and `_chain` |
-| `hooks/claude/` | Supply session context, assess Bash commands and format edited files | `bin/harness`; the guard sources `lib/shell-parse.sh`, which uses its Python parser when available |
+| `hooks/claude/` | Supply session context, assess Bash commands, limit autonomous tool calls, format edited files, run the opt-in fast check and review unfinished work before stopping | `bin/harness`; the guard sources `lib/shell-parse.sh`, which uses its Python parser when available |
 | `tests/`, `.github/workflows/ci.yml` | Validate content and exercise installation and hooks in temporary environments | Bash, git, Python, jq and ShellCheck |
 | `evals/` | Run agent scenarios, grade artifacts and transcripts, and aggregate results | Claude or Codex CLI; grading also runs `uv run pytest` |
 
-The installer does not implement hook policy. Git hooks share only their local-hook delegation library; Claude's shell parser tokenizes commands and its guard decides what to deny or ask about.
+The installer does not implement hook policy. Git hooks share only their local-hook delegation library; Claude's shell parser tokenizes commands and its guard decides what to deny or ask about: structural rules in `guard-bash.sh`, pattern rules as data in `hooks/claude/guard-policy.txt`, plus optional user rules in `${XDG_CONFIG_HOME:-~/.config}/agent-harness/guard-policy.txt` that can only add ask or deny decisions. A missing shipped policy makes every command ask for review. Explicit local data-loss asks are recorded separately (`ask_local`); only an enabled project in a project-only mode (`Scope: project`, such as `unleash`) waives them, which the guard learns from `harness mode show`, and never for a command that changes directory or points git at another repository. In that mode the guard also refuses writes to the harness's own settings (`harness config`, `mode`, `trust`, `enable`, `disable`, `git config harness.*`). Every deny rule and every other ask applies in all modes.
 
 The shell parser uses Python's standard library for bounded lexical analysis and communicates with Bash through NUL-delimited records. A conservative Bash fallback handles short commands when Python is unavailable. Unsupported executable constructs and exceeded limits request review rather than being silently skipped.
 
@@ -47,7 +53,9 @@ The shell parser uses Python's standard library for bounded lexical analysis and
 
 `install.sh --dry-run` reports intended operations without changing HOME, Git configuration, checkout permissions or plugin state. Applying changes records private versioned ownership evidence through `lib/ownership.sh`: destination, installed target/value, original state, installation-time tool declarations and physical parent path/device/inode identity. Private declaration snapshots keep historical destinations valid after customization; missing Git paths migrate only with recorded or canonical-link evidence. The first baseline survives reinstallations; already-identical legacy configuration is not newly claimed.
 
-`uninstall.sh` delegates validation and selective restoration to `lib/ownership.py`. It checks the manifest before mutation, restores only unchanged recorded state, preserves user edits and changed parents, and retains incomplete records for retry. JSON snapshots remain local and private. It requires Python even when installation used the jq merge fallback. Neither uninstall nor doctor removes project data or invokes plugin removal.
+`uninstall.sh` delegates validation and selective restoration to `lib/ownership.py`. It checks the manifest before mutation, restores only unchanged recorded state, preserves user edits and changed parents, and retains incomplete records for retry. JSON snapshots remain local and private. It requires Python even when installation used the jq merge fallback. Neither uninstall nor doctor removes project data. Uninstall invokes `claude plugin uninstall` and `claude plugin marketplace remove` only for the mods and local marketplace the installer recorded (`mod` and `modmarket` ownership entries, which hold a plugin id or marketplace name instead of a snapshot); the marketplace is kept if any of its mods could not be removed. Plugins from `plugins.txt` are never removed.
+
+`harness doctor --tools` runs the same script in tools mode: for each tool in `targets.txt` it detects the version, lists declared capabilities, compares the minimum version and runs the optional smoke check, discarding the tool's output. `.github/workflows/tools-compat.yml` runs it weekly against the latest Claude Code and Codex.
 
 `harness doctor` delegates to `lib/doctor.sh` and uses `targets.txt`, installed configuration and ownership metadata to diagnose managed components. Deliberate foreign Git hooks and missing optional tools are warnings; broken managed components are errors. Project checks query the CLI's existing activation/trust predicates. Diagnostics read metadata structure, not private restoration snapshot contents for display.
 

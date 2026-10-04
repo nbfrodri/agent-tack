@@ -48,6 +48,7 @@ echo "commit-msg: Conventional Commits"
 R="$WORK/repo"
 new_repo "$R"
 check "accepts 'feat(auth): add login'" "commit 'feat(auth): add login'"
+check "rejection points to the config command" "{ git -C '$R' commit -q --allow-empty -m 'bad subject' 2>&1 || true; } | grep -q 'harness config conventional-commits false'"
 check "accepts breaking change 'feat!: drop v1 API'" "commit 'feat!: drop v1 API'"
 check "accepts 'fix: handle empty cart'" "commit 'fix: handle empty cart'"
 check "rejects 'added login'" "! commit 'added login'"
@@ -414,9 +415,106 @@ check "every mode: asks the assistant to ask when in doubt" "session '$WORK/repo
 check "every mode: states the core rules without loading the skill" "session '$WORK/repo' | grep -q 'At every level: work on a branch off main, test the change, and make a Conventional Commit for each verified milestone'"
 git -C "$WORK/repo" config harness.mode lite
 check "fixed mode: names the level to apply" "session '$WORK/repo' | grep -q 'mode: lite.*Apply the lite level'"
+check "fixed mode: injects that mode's rules" "session '$WORK/repo' | grep -q 'Plan: none.'"
+git -C "$WORK/repo" config --unset harness.mode
+check "auto mode: lists the modes to choose from" "session '$WORK/repo' | grep -q 'strict: several modules'"
+git -C "$WORK/repo" config harness.mode unleash
+check "unleash mode: warns loudly at session start" "session '$WORK/repo' | grep -q 'WARNING: unleash mode is active'"
 git -C "$WORK/repo" config harness.mode turbo
 check "invalid mode: falls back to auto" "session '$WORK/repo' | grep -q 'mode: auto'"
 git -C "$WORK/repo" config --unset harness.mode
+
+echo "Claude hook: budget"
+BUDGET="$REPO/hooks/claude/budget.sh"
+export XDG_STATE_HOME="$WORK/state"
+budget() { printf '{"session_id":"%s","cwd":"%s","tool_name":"Read"}' "$1" "$2" | bash "$BUDGET"; }
+B="$WORK/budget-repo"
+git init -q "$B"
+git -C "$B" config harness.enabled true
+git -C "$B" config harness.mode unleash
+git -C "$B" config harness.unleashMaxToolCalls 2
+check "budget: calls under the limit pass" "[ -z \"\$(budget s1 '$B')\" ] && [ -z \"\$(budget s1 '$B')\" ]"
+check "budget: the call past the limit is denied" "budget s1 '$B' | grep -q '\"permissionDecision\":\"deny\"'"
+check "budget: the reason names the limit" "budget s1 '$B' | grep -q 'limit of 2 tool calls'"
+check "budget: each session has its own count" "[ -z \"\$(budget s2 '$B')\" ]"
+check "budget: the count lives in the state directory" "[ -f '$WORK/state/agent-harness/budget/s1' ]"
+check "budget: unsafe session ids are ignored" "[ -z \"\$(budget '../escape' '$B')\" ] && [ ! -e '$WORK/state/agent-harness/escape' ]"
+git -C "$B" config harness.mode lite
+check "budget: other modes are never limited" "[ -z \"\$(budget s1 '$B')\" ]"
+git -C "$B" config harness.mode unleash
+git -C "$B" config --unset harness.unleashMaxToolCalls
+check "budget: no limit configured means no limit" "[ -z \"\$(budget s1 '$B')\" ]"
+check "budget: malformed input is ignored" "[ -z \"\$(printf 'not json' | bash '$BUDGET')\" ]"
+check "budget: registered for every tool" "grep -q 'budget.sh' '$REPO/claude/settings.json'"
+
+echo "Claude hook: fast-check"
+FAST="$REPO/hooks/claude/fast-check.sh"
+F="$WORK/fast-repo"
+git init -q "$F"
+git -C "$F" config harness.enabled true
+git -C "$F" config harness.trusted true
+edited() { printf '{"cwd":"%s","tool_name":"Edit","tool_input":{"file_path":"%s/a.py"}}' "$F" "$F" | bash "$FAST"; }
+check "fast-check: silent when no check is configured" "[ -z \"\$(edited)\" ]"
+git -C "$F" config harness.checkFast "true"
+check "fast-check: silent when the check passes" "[ -z \"\$(edited)\" ]"
+git -C "$F" config harness.checkFast "echo 'tests/test_a.py::test_x FAILED'; exit 1"
+check "fast-check: a failing check is reported to the assistant" "edited | grep -q '\"decision\":\"block\"'"
+check "fast-check: the report includes the check output" "edited | grep -q 'test_x FAILED'"
+git -C "$F" config harness.trusted false
+check "fast-check: untrusted projects never run the check" "[ -z \"\$(edited)\" ]"
+git -C "$F" config harness.trusted true
+git -C "$F" config harness.enabled false
+check "fast-check: disabled projects never run the check" "[ -z \"\$(edited)\" ]"
+git -C "$F" config harness.enabled true
+check "fast-check: malformed input is ignored" "[ -z \"\$(printf 'not json' | bash '$FAST')\" ]"
+check "fast-check: registered after edits" "grep -q 'fast-check.sh' '$REPO/claude/settings.json'"
+
+echo "Claude hook: stop-check"
+STOP="$REPO/hooks/claude/stop-check.sh"
+P2="$WORK/stop-repo"
+git init -q -b main "$P2"
+git -C "$P2" config harness.enabled true
+mkdir -p "$P2/bin" "$P2/docs/handoffs"
+printf 'bin/* | docs/usage.md\n' > "$P2/docs-map.txt"
+printf 'usage\n' > "$P2/docs/usage.md"
+git -C "$P2" add -A && git -C "$P2" commit -q -m "chore: initial commit"
+git -C "$P2" switch -q -c feat/x
+stopping() { printf '{"cwd":"%s","stop_hook_active":%s}' "$P2" "${1:-false}" | bash "$STOP"; }
+check "stop-check: silent when everything is in order" "[ -z \"\$(stopping)\" ]"
+printf 'x\n' > "$P2/notes.txt"
+check "stop-check: uncommitted work is reported" "stopping | grep -q 'uncommitted'"
+check "stop-check: the report asks the assistant to continue" "stopping | grep -q '\"decision\":\"block\"'"
+check "stop-check: a second stop is never blocked" "[ -z \"\$(stopping true)\" ]"
+rm "$P2/notes.txt"
+printf 'tool\n' > "$P2/bin/tool"
+git -C "$P2" add bin/tool && git -C "$P2" commit -q -m "feat: add tool"
+check "stop-check: code changed without its mapped docs is reported" "stopping | grep -q 'bin/tool changed but docs/usage.md did not'"
+printf 'usage of tool\n' > "$P2/docs/usage.md"
+git -C "$P2" add docs/usage.md && git -C "$P2" commit -q -m "docs: describe tool"
+check "stop-check: mapped docs updated on the branch satisfy the map" "[ -z \"\$(stopping)\" ]"
+git -C "$P2" mv bin/tool bin/renamed
+printf 'bin/renamed | docs/other.md\n' > "$P2/docs-map.txt"
+check "stop-check: an uncommitted rename counts under its new name" "stopping | grep -q 'bin/renamed changed but docs/other.md did not'"
+git -C "$P2" mv bin/renamed bin/tool
+printf 'bin/* | *\n' > "$P2/docs-map.txt"
+git -C "$P2" add docs-map.txt && git -C "$P2" commit -q -m "chore: wildcard docs entry"
+check "stop-check: docs entries are not expanded as globs" "stopping | grep -q 'changed but \\* did not'"
+printf 'bin/* | docs/usage.md\n' > "$P2/docs-map.txt"
+git -C "$P2" add docs-map.txt && git -C "$P2" commit -q -m "chore: restore docs map"
+printf 'more usage\n' >> "$P2/docs/usage.md"
+git -C "$P2" add docs/usage.md && git -C "$P2" commit -q -m "docs: refresh usage"
+printf '# Handoff\nStatus: in progress\n' > "$P2/docs/handoffs/2026-10-04-x.md"
+git -C "$P2" add docs/handoffs && git -C "$P2" commit -q -m "docs(handoffs): start"
+touch -t 202001010000 "$P2/docs/handoffs/2026-10-04-x.md"
+GIT_COMMITTER_DATE="2030-01-01T00:00:00" git -C "$P2" commit -q --allow-empty -m "feat: later work"
+check "stop-check: a stale handoff is reported" "stopping | grep -q 'handoff may be stale'"
+git -C "$P2" config harness.stopCheck false
+check "stop-check: can be turned off" "[ -z \"\$(stopping)\" ]"
+git -C "$P2" config --unset harness.stopCheck
+git -C "$P2" config harness.enabled false
+check "stop-check: disabled projects are left alone" "[ -z \"\$(stopping)\" ]"
+check "stop-check: malformed input is ignored" "[ -z \"\$(printf 'not json' | bash '$STOP')\" ]"
+check "stop-check: registered for Stop" "grep -q 'stop-check.sh' '$REPO/claude/settings.json'"
 
 echo "Claude hook: format-file"
 FORMAT="$REPO/hooks/claude/format-file.sh"

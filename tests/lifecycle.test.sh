@@ -182,23 +182,23 @@ check 'recorded moved Git hooks migrate to the current checkout' "[ \"\$(HOME='$
 for edit in theme added-hook modified-command; do
   H="$WORK/retired-event-$edit"
   mkdir -p "$H/.claude"
-  printf '{"theme":"dark","hooks":{"Stop":[{"matcher":"original","hooks":[{"type":"command","command":"echo retired-original #harness","timeout":12}]}]}}\n' > "$H/.claude/settings.json"
+  printf '{"theme":"dark","hooks":{"Notification":[{"matcher":"original","hooks":[{"type":"command","command":"echo retired-original #harness","timeout":12}]}]}}\n' > "$H/.claude/settings.json"
   check "install retires original event ($edit)" 'run install.sh --skip-plugins'
   python3 - "$H/.claude/settings.json" "$edit" <<'PYTEST'
 import json,sys
 p=sys.argv[1]; settings=json.load(open(p))
-assert 'Stop' not in settings['hooks']
+assert 'Notification' not in settings['hooks']
 settings['theme']='light'
 if sys.argv[2] == 'added-hook':
-    settings['hooks']['Stop']=[{'matcher':'user','hooks':[{'type':'command','command':'echo new-stop-user-hook'}]}]
+    settings['hooks']['Notification']=[{'matcher':'user','hooks':[{'type':'command','command':'echo new-stop-user-hook'}]}]
 if sys.argv[2] == 'modified-command':
     settings['hooks']['SessionStart'][0]['hooks'][0]['command']='echo modified-by-user #harness'
 json.dump(settings,open(p,'w'))
 PYTEST
   check "uninstall restores retired event ($edit)" 'run uninstall.sh'
-  check "original hook metadata and theme edit survive ($edit)" "python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); assert d[\"theme\"] == \"light\" and {\"matcher\":\"original\",\"hooks\":[{\"type\":\"command\",\"command\":\"echo retired-original #harness\",\"timeout\":12}]} in d.get(\"hooks\",{}).get(\"Stop\",[])' '$H/.claude/settings.json'"
+  check "original hook metadata and theme edit survive ($edit)" "python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); assert d[\"theme\"] == \"light\" and {\"matcher\":\"original\",\"hooks\":[{\"type\":\"command\",\"command\":\"echo retired-original #harness\",\"timeout\":12}]} in d.get(\"hooks\",{}).get(\"Notification\",[])' '$H/.claude/settings.json'"
   if [ "$edit" = added-hook ]; then
-    check 'later user Stop hook remains intact' "grep -q 'echo new-stop-user-hook' '$H/.claude/settings.json'"
+    check 'later user Notification hook remains intact' "grep -q 'echo new-stop-user-hook' '$H/.claude/settings.json'"
   elif [ "$edit" = modified-command ]; then
     check 'modified installed command remains intact' "grep -q 'echo modified-by-user #harness' '$H/.claude/settings.json'"
   fi

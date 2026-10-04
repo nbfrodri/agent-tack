@@ -1,16 +1,20 @@
 #!/usr/bin/env bash
 # Diagnose the current installation without changing files, Git config or plugins.
 set -uo pipefail
+TOOLS_MODE=0
+if [ "$#" -eq 2 ] && [ "$2" = --tools ]; then TOOLS_MODE=1; set -- "$1"; fi
 if [ "$#" -ne 1 ] || [ ! -d "$1" ]; then
-  echo 'Usage: doctor.sh CHECKOUT_ROOT' >&2
+  echo 'Usage: doctor.sh CHECKOUT_ROOT [--tools]' >&2
   exit 2
 fi
 REPO="$(cd "$1" && pwd)" || exit 2
-FAILURES=0 WARNINGS=0 OWNERSHIP_VALID=0
-ok() { printf 'OK   %s\n' "$1"; }
-warn() { printf 'WARN %s\n' "$1"; WARNINGS=$((WARNINGS + 1)); }
-fail() { printf 'FAIL %s\n' "$1"; FAILURES=$((FAILURES + 1)); }
+FAILURES=0 WARNINGS=0 OWNERSHIP_VALID=0 QUIET=0
+ok() { [ "$QUIET" -eq 1 ] || printf 'OK   %s\n' "$1"; }
+warn() { [ "$QUIET" -eq 1 ] || printf 'WARN %s\n' "$1"; WARNINGS=$((WARNINGS + 1)); }
+fail() { [ "$QUIET" -eq 1 ] || printf 'FAIL %s\n' "$1"; FAILURES=$((FAILURES + 1)); }
 has() { command -v "$1" >/dev/null 2>&1; }
+# shellcheck source=lib/mods.sh
+source "$REPO/lib/mods.sh"
 expand_home() {
   case "$1" in '~'/*) printf '%s/%s' "$HOME" "${1#\~/}" ;; *) printf '%s' "$1" ;; esac
 }
@@ -94,6 +98,86 @@ check_tools_and_links() {
     [ -f "$source" ] || continue
     check_link "$source" "$HOME/.claude/agents/${source##*/}"
   done
+}
+# Returns 0 when version $1 is at least version $2 (both x.y.z)
+version_at_least() {
+  local a="$1" b="$2" i x y
+  for i in 1 2 3; do
+    x="$(printf '%s' "$a" | cut -d. -f"$i")"
+    y="$(printf '%s' "$b" | cut -d. -f"$i")"
+    [ "${x:-0}" -gt "${y:-0}" ] && return 0
+    [ "${x:-0}" -lt "${y:-0}" ] && return 1
+  done
+  return 0
+}
+first_command() {
+  local command
+  local IFS=,
+  for command in $1; do has "$command" && { printf '%s' "$command"; return 0; }; done
+  return 1
+}
+tool_version() {
+  "$1" --version 2>/dev/null </dev/null | head -1 |
+    sed -n 's/.*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/p'
+}
+run_smoke() {
+  local command="$1" smoke="$2"
+  local -a args
+  IFS=, read -r -a args <<< "$smoke"
+  if has timeout; then timeout 60 "$command" "${args[@]}" </dev/null >/dev/null 2>&1
+  else "$command" "${args[@]}" </dev/null >/dev/null 2>&1; fi
+}
+check_tool_capabilities() {
+  local tool="$1" when="$2" instructions="$3" skills_dir="$4" agents_dir="$5" before="$FAILURES" source
+  QUIET=1
+  if [ "$instructions" != - ]; then
+    if [ -L "$(expand_home "$instructions")" ] || [ "$when" = always ]; then
+      check_link "$REPO/global/AGENTS.md" "$(expand_home "$instructions")"
+    fi
+  fi
+  if [ "$skills_dir" != - ] && [ -d "$(expand_home "$skills_dir")" ]; then check_skills "$(expand_home "$skills_dir")"; fi
+  if [ "$agents_dir" != - ] && [ -d "$(expand_home "$agents_dir")" ]; then
+    check_stale_links "$(expand_home "$agents_dir")"
+    for source in "$REPO"/agents/*.md; do
+      [ -f "$source" ] && check_link "$source" "$(expand_home "$agents_dir")/${source##*/}"
+    done
+  fi
+  QUIET=0
+  if [ "$FAILURES" -gt "$before" ]; then
+    printf 'FAIL %s: a managed capability is broken (run harness doctor for details)\n' "$tool"
+  else
+    ok "$tool: managed links intact"
+  fi
+}
+check_tools() {
+  local tool when commands instructions skills_dir agents_dir hooks min_version smoke
+  local command version caps
+  while read -r tool when commands instructions skills_dir agents_dir hooks min_version smoke _ <&3; do
+    case "$tool" in ''|'#'*) continue ;; esac
+    if ! command="$(first_command "$commands")"; then
+      ok "$tool: not installed, skipped"
+      continue
+    fi
+    : "${skills_dir:=-}" "${agents_dir:=-}" "${hooks:=-}" "${min_version:=-}" "${smoke:=-}"
+    version="$(tool_version "$command")"
+    if [ -z "$version" ]; then warn "$tool: version could not be detected"
+    else ok "$tool: version $version"; fi
+    caps=''
+    [ "$instructions" = - ] || caps="$caps instructions"
+    [ "$skills_dir" = - ] || caps="$caps skills"
+    [ "$agents_dir" = - ] || caps="$caps agents"
+    [ "$hooks" = - ] || caps="$caps hooks"
+    ok "$tool: capabilities${caps:- none}"
+    if [ "$min_version" != - ] && [ -n "$version" ]; then
+      if version_at_least "$version" "$min_version"; then ok "$tool: version $version meets the minimum $min_version"
+      else warn "$tool: version $version is older than the minimum $min_version"; fi
+    fi
+    check_tool_capabilities "$tool" "$when" "$instructions" "$skills_dir" "$agents_dir"
+    if [ "$smoke" != - ]; then
+      if run_smoke "$command" "$smoke"; then ok "$tool: smoke check passed"
+      else warn "$tool: smoke check failed ($command ${smoke//,/ })"; fi
+    fi
+  done 3< "$REPO/targets.txt"
 }
 check_settings() {
   local dest="$HOME/.claude/settings.json" rc source
@@ -229,11 +313,26 @@ check_ownership() {
         case "$target" in "$REPO"|"$REPO"/*) ;; *) fail 'installation ownership source is outside this checkout'; continue ;; esac
         check_link "$target" "$path"
         ;;
-      settings|git) ;;
+      settings|git|mod|modmarket) ;;
       *) fail 'installation ownership entry type is unsupported' ;;
     esac
   done
   ok 'installation ownership metadata checked; restoration snapshots remain private'
+}
+check_mods() {
+  local mod id state
+  if ! mods_enabled; then ok 'mods disabled (git config harness.mods is false)'; return; fi
+  if ! has claude; then warn 'mods: claude CLI not found; the mods in plugins/ cannot be installed or checked'; return; fi
+  for mod in $(mods_list "$REPO"); do
+    id="$mod@$MODS_MARKETPLACE"
+    state="$(mods_plugin_state "$id")"
+    case "$state" in
+      enabled) ok "mod installed: $mod" ;;
+      disabled) warn "mod disabled: $mod (claude plugin enable $id)" ;;
+      missing) warn "mod not installed: $mod (run ./install.sh, or skip mods on purpose)" ;;
+      *) warn "mod state unknown: $mod (claude plugin list failed)" ;;
+    esac
+  done
 }
 check_project() {
   has git || return
@@ -244,20 +343,30 @@ check_project() {
   if "$REPO/bin/harness" status --quiet; then ok 'current project workflow: enabled'
   else ok 'current project workflow: disabled'; fi
   mode="$("$REPO/bin/harness" mode)"
-  case "$mode" in
-    *invalid*) warn "current project mode: $mode" ;;
-    *) ok "current project mode: $mode" ;;
-  esac
+  if [ -z "${mode##*invalid*}" ] || [ -z "${mode##*ignored*}" ]; then
+    warn "current project mode: $mode"
+  elif "$REPO/bin/harness" mode show | grep -q '^WARNING:'; then
+    warn "current project mode: $mode; autonomous mode without confirmations is active"
+    case "$(git branch --show-current 2>/dev/null)" in
+      main | master) warn "current branch is $(git branch --show-current) in a project-only mode; switch to a branch or worktree" ;;
+    esac
+  else
+    ok "current project mode: $mode"
+  fi
   if "$REPO/bin/harness" trusted --quiet; then ok 'current project formatter: trusted'
   else ok 'current project formatter: untrusted'; fi
 }
-if [ ! -f "$REPO/targets.txt" ] || [ ! -f "$REPO/bin/harness" ]; then
+if [ "$TOOLS_MODE" -eq 1 ]; then
+  [ -f "$REPO/targets.txt" ] || { echo 'doctor: targets.txt is missing' >&2; exit 1; }
+  check_tools
+elif [ ! -f "$REPO/targets.txt" ] || [ ! -f "$REPO/bin/harness" ]; then
   fail 'checkout is missing required harness files'
 else
   check_tools_and_links
   check_ownership
   check_settings
   check_git_hooks
+  check_mods
   check_project
 fi
 printf 'Summary: %s error(s), %s warning(s); only checked installation components are reported.\n' "$FAILURES" "$WARNINGS"

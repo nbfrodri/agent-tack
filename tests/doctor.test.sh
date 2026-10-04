@@ -110,6 +110,10 @@ git -C "$WORK/outside" config harness.mode turbo
 run_doctor
 check 'invalid workflow mode is a warning' [ "$RC" -eq 0 ]
 check 'invalid workflow mode warning names the value' grep -q 'WARN current project mode: auto (invalid local value: turbo)' "$WORK/report"
+git -C "$WORK/outside" config harness.mode unleash
+run_doctor
+check 'unleash mode is a visible warning' grep -q 'WARN current project mode: unleash (local); autonomous' "$WORK/report"
+check 'unleash on the main branch is flagged' grep -q 'WARN current branch is .* in a project-only mode' "$WORK/report"
 git -C "$WORK/outside" config --unset harness.mode
 git -C "$WORK/outside" config core.hooksPath /project/deliberate/hooks
 run_doctor
