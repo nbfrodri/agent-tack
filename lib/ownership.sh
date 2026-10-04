@@ -160,3 +160,11 @@ ownership_modmarket() {
   ownership_begin modmarket "$path" || return 1
   (umask 077; printf '%s\n' "$name" > "$OWN_ENTRY/marketplace")
 }
+
+# Records a VS Code user settings file where the installer added chat.useAgentsMdFile (created=1
+# when the installer created the file). Call it only after the write succeeded.
+ownership_vscode() {
+  local path="$1" created="$2"
+  ownership_begin vscode "$path" || return 1
+  (umask 077; printf '%s\n' "$created" > "$OWN_ENTRY/created")
+}

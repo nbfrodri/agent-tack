@@ -12,7 +12,8 @@ context               harness.context              true     bool      any     in
 conventional-commits  harness.conventionalCommits  true     bool      any     hook         Enforce Conventional Commits in enabled projects
 delegation            harness.delegation           auto     auto|off  any     instruction  Delegate separable strict-level work to subagents automatically
 mods                  harness.mods                 true     bool      global  installer    Install the harness's Claude Code mods (usage band, activity pane)
-stop-check            harness.stopCheck            true     bool      any     hook         Before the assistant stops, report uncommitted work, a failing fast check, a stale handoff or docs the docs map expects
+vscode-agents-md      harness.vscodeAgentsMd       true     bool      global  installer    Turn on VS Code's chat.useAgentsMdFile so Copilot Chat loads each project's AGENTS.md
+stop-check          harness.stopCheck            true     bool      any     hook         Before the assistant stops, report uncommitted work, a failing fast check, a stale handoff or docs the docs map expects
 reply-style           harness.replyStyle           normal   normal|terse      any  instruction  Ask the assistant for terse replies to save output tokens
 skill-loading         harness.skillLoading         normal   normal|minimal    any  instruction  Load skills only when a task cannot be done without them, to save input tokens
 subagent-model        harness.subagentModel        inherit  inherit|economical any instruction  Delegate to the most economical capable model instead of inheriting the main one
