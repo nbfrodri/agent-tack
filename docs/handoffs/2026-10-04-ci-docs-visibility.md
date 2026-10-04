@@ -14,5 +14,6 @@
   7. `code-reviewer` findings fixed: `bf98a6d` closes a pre-existing guard bypass (an assignment with a slash, `X=a/b cmd`, hid the command) and hardens the merge check (enabled projects only, `--auto` may wait, `--disable-auto` skipped, asks after `cd` or with `GH_REPO`, watchdog without `timeout(1)`); `506e590` makes the activity log private (600), rotates it per process, keeps the mode chip in an atom and realigns `tack help`.
   8. `61e368e` docs gaps closed at the owner's request: README feature lists, editors, why and the docs delegation note in usage.
 - Issues opened at the owner's request from a review of affaan-m/ECC: #41–#53 (enhancements; #53 covers support for any editor through thin adapters). #54: screenshots of visual changes in `.tack/screenshots/` (git-ignored) scored by a fresh-context subagent (owner's choices).
-- Next: full suite was running on the final tree; then push, PR, wait for CI, merge with a merge commit (owner authorised), delete the branch, mark this handoff done.
+- Verified: full ShellCheck and all 15 suites pass locally on the final tree. Pushed; PR #55 open.
+- Next: wait for CI on #55 (fix failures from the log), merge with a merge commit (owner authorised), delete the branch locally and remotely, mark this handoff done.
 - Follow-ups noted: rename the repo's own `.harness` marker to `.tack`; the `harness` alias will be removed in a later release; the owner asked about shipping tack as a Claude Code plugin (proposed: a plugin for the Claude part next to `install.sh`; no issue yet).
