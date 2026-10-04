@@ -1,6 +1,6 @@
 # Adaptive workflow modes
 
-- Status: approved, in progress
+- Status: implemented; the owner chose to run the benchmark once, after the next phase (pilot results in `docs/benchmarks/2026-10-04-modes-pilot.md`)
 - Approval: owner approved on 2026-10-04 after reviewing the cost data in `docs/results.md` (2× focused tasks, 6.6× a new project).
 - Goal: scale the workflow's ceremony to each task so small work costs less, with an automatic level as the default.
 

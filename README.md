@@ -51,7 +51,7 @@ Update with `git pull && ./install.sh`. Sharing it with someone else: [sharing](
 Make the harness your own after cloning it: change the rules, workflow, skills, agents, supported tools, plugins and hooks to fit your preferences. Keep personal changes in your own clone or fork. [Customization guide →](docs/customization.md)
 
 ## Results
-Historical results from 12 real sessions with the original grading heuristics (including a test-order metric since corrected) ([method, full tables and limitations](docs/results.md)):
+Workflow modes are not measured yet (a [pilot](docs/benchmarks/2026-10-04-modes-pilot.md) found defects, since fixed). Historical results of the earlier single workflow, from 12 real sessions with the original grading heuristics (including a test-order metric since corrected) ([method, full tables and limitations](docs/results.md)):
 
 | | Plain assistant | With the harness |
 | --- | --- | --- |
