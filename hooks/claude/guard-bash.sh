@@ -276,18 +276,19 @@ check_harness() {
   esac
 }
 
-# Prints the PR's check buckets, or nothing when gh fails or takes over 6 seconds. Without
-# timeout(1) (stock macOS), a background watchdog stops gh before the hook's own timeout.
+# Prints the PR's check buckets, or nothing when gh fails or takes over about 4 seconds, which
+# leaves room within the hook's 10-second timeout on slower machines. Without timeout(1)
+# (stock macOS), a background watchdog stops gh instead.
 pr_buckets() {
   local out pid n=0
   if command -v timeout >/dev/null 2>&1; then
-    (cd "$cwd" && timeout 6 gh pr checks "$@" --json bucket --jq '.[].bucket' 2>/dev/null)
+    (cd "$cwd" && timeout 4 gh pr checks "$@" --json bucket --jq '.[].bucket' 2>/dev/null)
     return 0
   fi
   out="$(mktemp "${TMPDIR:-/tmp}/tack-guard.XXXXXX")" || return 0
   (cd "$cwd" && exec gh pr checks "$@" --json bucket --jq '.[].bucket' >"$out" 2>/dev/null) &
   pid=$!
-  while kill -0 "$pid" 2>/dev/null && [ "$n" -lt 60 ]; do sleep 0.1; n=$((n + 1)); done
+  while kill -0 "$pid" 2>/dev/null && [ "$n" -lt 20 ]; do sleep 0.2; n=$((n + 1)); done
   if kill -0 "$pid" 2>/dev/null; then
     kill "$pid" 2>/dev/null
   else
@@ -320,7 +321,8 @@ check_gh() {
       *) [ "${#selector[@]}" -gt 0 ] || selector=("$a") ;;
     esac
   done
-  cli="$(dirname "$0")/../../bin/tack"
+  # Absolute, because it runs after cd "$cwd" and the hook may be started with a relative path.
+  cli="$(cd "$(dirname "$0")/../../bin" && pwd)/tack"
   (cd "$cwd" && "$cli" status --quiet) 2>/dev/null || return 0
   setting="$(cd "$cwd" && "$cli" config merge-requires-green 2>/dev/null)"
   [ "${setting%% *}" != false ] || return 0

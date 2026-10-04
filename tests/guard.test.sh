@@ -216,6 +216,8 @@ expect("allow", "gh pr merge --merge --delete-branch", "merge: green checks allo
 expect("deny", "gh pr merge 42 --squash", "merge: failing checks deny the merge", path=red, reason="failing", cwd=merging)
 expect("deny", "gh pr merge --merge", "merge: pending checks deny until CI finishes", path=pending, reason="still running", cwd=merging)
 expect("ask", "gh pr merge --merge", "merge: checks gh cannot report ask", path=unknown, reason="cannot confirm", cwd=merging)
+expect("deny", "gh pr merge --merge", "merge: a guard started by a relative path still finds tack", path=red, reason="failing",
+       cwd=merging, script=os.path.relpath(guard))
 expect("ask", "gh pr merge --merge", "merge: without gh the guard asks", path=bin_without("no-gh", ("gh",)), reason="cannot confirm", cwd=merging)
 expect("allow", "gh pr merge 42 -R o/r --merge --body 'x y'", "merge: the PR and repository are forwarded", path=selector, cwd=merging)
 expect("ask", "gh pr merge $(gh pr list -q .[0].number) --merge", "merge: a dynamic PR selector asks", path=green, cwd=merging)
