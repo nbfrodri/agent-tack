@@ -159,7 +159,7 @@ class Runner(unittest.TestCase):
         self.stub('claude', 'if [ "$1" = --version ]; then echo fixture-cli; exit; fi\n'
                   '{ harness status --quiet && echo enabled; git config --local --get harness.mode; } > "' + str(self.root / 'state') + '"')
         (self.root / 'bin/harness').symlink_to(ROOT / 'bin/harness')
-        for condition, mode in (('lite', 'lite'), ('standard', 'standard'), ('strict', 'strict'), ('auto', 'auto'), ('harness', 'auto')):
+        for condition, mode in (('lite', 'lite'), ('lean', 'lean'), ('standard', 'standard'), ('strict', 'strict'), ('auto', 'auto'), ('harness', 'auto')):
             with self.subTest(condition=condition):
                 outcome = self.run_eval('bug-fix', condition)
                 self.assertEqual(outcome.returncode, 0, outcome.stderr)

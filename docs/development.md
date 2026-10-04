@@ -33,7 +33,7 @@ CI runs ShellCheck and content validation on Linux, the installer and hook regre
 ## Behaviour evals
 Real sessions on throwaway repos, comparing the harness with a plain assistant. They use tokens, so run them by hand after changing skills.
 ```bash
-evals/run.sh <new-project|bug-fix|release> <baseline|auto|lite|standard|strict> [repetition]   # harness = auto
+evals/run.sh <new-project|bug-fix|release> <baseline|auto|lean|lite|standard|strict> [repetition]   # harness = auto
 evals/grade.py $EVALS_OUT/<scenario>/<condition>-<rep>    # writes metrics.json
 evals/report.py                                          # Markdown tables
 ```

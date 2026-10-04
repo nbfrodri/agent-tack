@@ -38,7 +38,7 @@ ROWS = [
 ]
 
 
-CONDITION_ORDER = ["baseline", "harness", "auto", "lite", "standard", "strict"]
+CONDITION_ORDER = ["baseline", "harness", "auto", "lean", "lite", "standard", "strict"]
 
 
 def fmt(values, kind):
