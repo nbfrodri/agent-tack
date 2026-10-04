@@ -78,7 +78,7 @@ At standard and strict, red → green → refactor for all logic with behaviour.
 Commit each coherent verified milestone immediately in Conventional Commits. Recommend an integration method from the branch history in the existing merge confirmation; preserve commits unless the user explicitly chooses squash. Details: `references/git-github.md`.
 
 ### 8. Document
-Update everything on the impact list, plus what the level requires, following `project-docs`. Every enabled project should have `docs/architecture.md`; if it is missing, add it during the first strict task after reading the code.
+Update everything on the impact list, plus what the level requires, following `project-docs`. When a committed change leaves docs pending in 3 or more files, delegate them to `docs-writer` (it runs on an economical model) with the diff range and the list of files; keep smaller updates, ADRs and design decisions yourself, and review its result before committing. Every enabled project should have `docs/architecture.md`; if it is missing, add it during the first strict task after reading the code.
 
 ### 9. Verify
 Run the project's tests, linter, formatter and type checker. Re-run the impact search on the final diff to catch help text, docs or callers that still describe the old behaviour. Never say something works without having checked it; if something fails or couldn't run, say so clearly, with the output.
