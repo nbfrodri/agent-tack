@@ -24,7 +24,7 @@ Commands:
   config [NAME [VALUE]] [--global]
                       List feature toggles, show one, or set it for this project
                       (or user-wide with --global); config NAME --unset removes it
-  enable [--shared]    Enable this clone, or use a shareable .harness marker
+  enable [--shared]    Enable this clone, or use a shareable .tack marker
   disable             Disable this clone and remove the shared marker
   trust [--revoke]     Allow or revoke project formatter execution in this clone
   trusted [--quiet]    Query local formatter trust independently of activation
@@ -38,7 +38,7 @@ Global options:
 
 Command options:
   --quiet             Suppress output for status or trusted; preserve exit codes
-  --shared            Enable with a .harness file you can commit and share
+  --shared            Enable with a .tack file you can commit and share
   --revoke            Revoke local formatter trust without disabling the workflow
   --tools             With doctor: check each installed AI tool (version, capabilities, smoke check)
   --global            Read or write the user's default instead of the project's
@@ -95,24 +95,26 @@ harness_root() {
   cd "$(dirname "$script")/.." && pwd
 }
 
-# Enabled when the repo has a .harness file, or git config harness.enabled is true
+# Enabled when the repo has a .tack (or legacy .harness) file, or tack.enabled is true.
 # (local, or global to enable it everywhere). An explicit local false wins over the file.
 is_enabled() {
   local root setting
   root="$(repo_root)" || return 1
   [ -n "$root" ] || return 1
-  setting="$(git config --bool --get harness.enabled 2>/dev/null || true)"
+  setting="$(key_get --bool enabled || true)"
   [ "$setting" = "false" ] && return 1
   [ "$setting" = "true" ] && return 0
-  [ -f "$root/.harness" ]
+  [ -f "$root/.tack" ] || [ -f "$root/.harness" ]
 }
 
 HARNESS_ROOT="$(harness_root)" || fail "cannot locate the harness checkout"
+# shellcheck source=SCRIPTDIR/../lib/keys.sh
+. "$HARNESS_ROOT/lib/keys.sh"
 # shellcheck source=SCRIPTDIR/../lib/modes.sh
 . "$HARNESS_ROOT/lib/modes.sh"
 
 is_trusted() {
-  [ "$(git config --local --bool --get harness.trusted 2>/dev/null)" = true ]
+  [ "$(key_get --bool local trusted)" = true ]
 }
 
 cmd="${1:-status}"
@@ -123,25 +125,26 @@ case "$cmd" in
     allowed_option=--shared; check_args "$@"
     require_repo
     if [ "${1:-}" = "--shared" ]; then
-      printf '# This project uses the agent-harness workflow (https://github.com/nbfrodri/agent-harness).\n' > "$root/.harness" \
+      printf '# This project uses the tack workflow (https://github.com/nbfrodri/agent-tack).\n' > "$root/.tack" \
         || fail "cannot write the shared marker"
-      if git config --local --get harness.enabled >/dev/null 2>&1; then
-        git config --local --unset-all harness.enabled || fail "cannot clear local activation"
+      if key_scope local enabled; then
+        key_unset local enabled || fail "cannot clear local activation"
       fi
-      echo "Enabled through $root/.harness — commit it to share it."
+      echo "Enabled through $root/.tack — commit it to share it."
     else
-      git config --local harness.enabled true || fail "cannot enable this clone"
-      echo "Enabled for this clone (git config harness.enabled true)."
+      key_set local enabled true || fail "cannot enable this clone"
+      echo "Enabled for this clone (git config tack.enabled true)."
     fi
     ;;
   disable)
     allowed_option=''; check_args "$@"
     require_repo
-    git config --local harness.enabled false || fail "cannot disable this clone"
-    if [ -f "$root/.harness" ]; then
-      rm -f "$root/.harness" || fail "cannot remove the shared marker"
-      echo "Removed $root/.harness — commit the removal to share it."
-    fi
+    key_set local enabled false || fail "cannot disable this clone"
+    for marker in .tack .harness; do
+      [ -f "$root/$marker" ] || continue
+      rm -f "$root/$marker" || fail "cannot remove the shared marker"
+      echo "Removed $root/$marker — commit the removal to share it."
+    done
     echo "Disabled for this clone."
     ;;
   status)
@@ -207,12 +210,12 @@ case "$cmd" in
       esac
     fi
     if [ "$unset" = true ]; then
-      if git config "--$scope" --get harness.mode >/dev/null 2>&1; then
-        git config "--$scope" --unset-all harness.mode || fail "cannot unset the $scope mode"
+      if key_scope "$scope" mode; then
+        key_unset "$scope" mode || fail "cannot unset the $scope mode"
       fi
       echo "Removed the $scope mode; effective mode: $(effective_mode)."
     else
-      git config "--$scope" harness.mode "$value" || fail "cannot set the $scope mode"
+      key_set "$scope" mode "$value" || fail "cannot set the $scope mode"
       echo "Mode set to $value ($scope); effective mode: $(effective_mode)."
     fi
     ;;
@@ -220,10 +223,10 @@ case "$cmd" in
     allowed_option=--revoke; check_args "$@"
     require_repo
     if [ "${1:-}" = --revoke ]; then
-      git config --local harness.trusted false || fail "cannot revoke local trust"
+      key_set local trusted false || fail "cannot revoke local trust"
       echo "Project formatter execution trust revoked for this clone."
     else
-      git config --local harness.trusted true || fail "cannot trust this clone"
+      key_set local trusted true || fail "cannot trust this clone"
       echo "Project formatter execution trusted for this clone."
     fi
     ;;
@@ -239,7 +242,7 @@ case "$cmd" in
   context)
     allowed_option=''; check_args "$@"
     is_enabled || exit 0
-    [ "$(git config --bool --get harness.context 2>/dev/null)" != false ] || exit 0
+    [ "$(key_get --bool context)" != false ] || exit 0
     root="$(repo_root)" || exit 0
     source_root="$HARNESS_ROOT"
     bash "$source_root/lib/project-context.sh" "$root" "$(context_level)"

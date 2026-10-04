@@ -157,7 +157,7 @@ class Runner(unittest.TestCase):
 
     def test_mode_conditions_enable_the_project_at_that_mode(self):
         self.stub('claude', 'if [ "$1" = --version ]; then echo fixture-cli; exit; fi\n'
-                  '{ harness status --quiet && echo enabled; git config --local --get harness.mode; } > "' + str(self.root / 'state') + '"')
+                  '{ harness status --quiet && echo enabled; git config --local --get tack.mode; } > "' + str(self.root / 'state') + '"')
         (self.root / 'bin/harness').symlink_to(ROOT / 'bin/harness')
         for condition, mode in (('lite', 'lite'), ('lean', 'lean'), ('standard', 'standard'), ('strict', 'strict'), ('auto', 'auto'), ('harness', 'auto')):
             with self.subTest(condition=condition):

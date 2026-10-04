@@ -6,11 +6,11 @@ MODS_MARKETPLACE=agent-harness-mods
 
 mods_has() { command -v "$1" >/dev/null 2>&1; }
 
-# Success unless global git config sets harness.mods to false.
+# Success unless the global tack.mods (or legacy harness.mods) is false.
 mods_enabled() {
   local value
   mods_has git || return 0
-  value="$(git config --global --bool --get harness.mods 2>/dev/null || true)"
+  value="$(key_get --bool global mods || true)"
   [ "$value" != false ]
 }
 

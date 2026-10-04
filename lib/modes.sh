@@ -29,7 +29,7 @@ effective_mode() {
   local scope value
   [ "$#" -gt 0 ] || set -- local global
   for scope in "$@"; do
-    value="$(git config "--$scope" --get harness.mode 2>/dev/null)" || continue
+    value="$(key_get "$scope" mode)" || continue
     if [ "$scope" = global ] && is_project_only "$value"; then
       printf 'auto (%s is project-only; global value ignored)\n' "$value"
     elif is_mode "$value"; then printf '%s (%s)\n' "$value" "$scope"

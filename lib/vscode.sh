@@ -6,11 +6,11 @@ VSCODE_KEY=chat.useAgentsMdFile
 
 vscode_has() { command -v "$1" >/dev/null 2>&1; }
 
-# Success unless global git config sets harness.vscodeAgentsMd to false.
+# Success unless the global tack.vscodeAgentsMd (or legacy harness.vscodeAgentsMd) is false.
 vscode_enabled() {
   local value
   vscode_has git || return 0
-  value="$(git config --global --bool --get harness.vscodeAgentsMd 2>/dev/null || true)"
+  value="$(key_get --bool global vscodeAgentsMd || true)"
   [ "$value" != false ]
 }
 

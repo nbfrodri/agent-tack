@@ -3,6 +3,8 @@
 set -u
 
 registry="$1/features.txt"
+# shellcheck source=SCRIPTDIR/keys.sh
+. "$1/lib/keys.sh"
 shift
 
 usage_error() { printf 'harness: %s (see --help)\n' "$1" >&2; exit 2; }
@@ -22,9 +24,9 @@ EOF
 # Prints "value (source)": a project setting wins over the global one, then the default.
 current() {
   local value
-  if [ "$scope" != global ] && in_repo && value="$(git config --local --get "$key" 2>/dev/null)"; then
+  if [ "$scope" != global ] && in_repo && value="$(key_get local "${key#tack.}")"; then
     printf '%s (local)\n' "$value"
-  elif value="$(git config --global --get "$key" 2>/dev/null)"; then
+  elif value="$(key_get global "${key#tack.}")"; then
     printf '%s (global)\n' "$value"
   else
     printf '%s (default)\n' "$default"
@@ -98,12 +100,12 @@ if [ "$target_scope" = local ] && ! in_repo; then
 fi
 
 if [ "$unset" = true ]; then
-  if git config "--$target_scope" --get "$key" >/dev/null 2>&1; then
-    git config "--$target_scope" --unset-all "$key" || fail "cannot unset $name"
+  if key_scope "$target_scope" "${key#tack.}"; then
+    key_unset "$target_scope" "${key#tack.}" || fail "cannot unset $name"
   fi
   printf 'Removed the %s setting for %s; now %s.\n' "$target_scope" "$name" "$(current)"
   exit 0
 fi
 is_allowed "$value" || usage_error "invalid value for $name: $value (allowed: $(allowed_text))"
-git config "--$target_scope" "$key" "$value" || fail "cannot set $name"
+key_set "$target_scope" "${key#tack.}" "$value" || fail "cannot set $name"
 printf 'Set %s to %s (%s).\n' "$name" "$value" "$target_scope"

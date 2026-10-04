@@ -55,6 +55,8 @@ has()     { command -v "$1" >/dev/null 2>&1; }
 
 # shellcheck source=lib/ownership.sh
 source "$REPO/lib/ownership.sh"
+# shellcheck source=lib/keys.sh
+source "$REPO/lib/keys.sh"
 # shellcheck source=lib/mods.sh
 source "$REPO/lib/mods.sh"
 # shellcheck source=lib/vscode.sh

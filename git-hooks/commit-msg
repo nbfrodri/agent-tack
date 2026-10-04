@@ -45,7 +45,7 @@ rm -f "$tmp"
 
 # 2. Conventional Commits check on the subject (first non-comment, non-empty line)
 if "$HOOK_DIR/../bin/harness" status --quiet \
-  && [ "$(git config --bool harness.conventionalCommits 2>/dev/null)" != "false" ]; then
+  && [ "$("$HOOK_DIR/../bin/harness" config conventional-commits 2>/dev/null | cut -d" " -f1)" != "false" ]; then
   subject="$(grep -vE '^[[:space:]]*(#|$)' "$msg_file" | head -n 1)"
   CC_PATTERN='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-zA-Z0-9._/-]+\))?!?: [^[:space:]].*'
   # Messages git or tools generate (merges, reverts, autosquash) are always accepted

@@ -388,14 +388,16 @@ setup_commit "$(printf 'wip\n\nCo-Authored-By: Claude <noreply@anthropic.com>\n'
 check "AI attribution still removed when disabled" "! last_message | grep -qi claude"
 (cd "$R" && "$CLI" enable >/dev/null)
 check "enable (local) turns it on" "[ \"\$(status_of)\" = enabled ]"
-check "local enable leaves the repo untouched" "[ ! -e '$R/.harness' ]"
+check "local enable leaves the repo untouched" "[ ! -e '$R/.tack' ] && [ ! -e '$R/.harness' ]"
 check "Conventional Commits enforced once enabled" "! commit 'quick fix'"
 (cd "$R" && "$CLI" disable >/dev/null)
 check "disable turns it off" "[ \"\$(status_of)\" = disabled ]"
 (cd "$R" && "$CLI" enable --shared >/dev/null)
-check "enable --shared creates .harness" "[ -f '$R/.harness' ]"
-git -C "$R" config --unset harness.enabled
-check "the .harness file alone enables it" "[ \"\$(status_of)\" = enabled ]"
+check "enable --shared creates .tack" "[ -f '$R/.tack' ]"
+git -C "$R" config --unset tack.enabled
+check "the .tack file alone enables it" "[ \"\$(status_of)\" = enabled ]"
+mv "$R/.tack" "$R/.harness"
+check "a legacy .harness file still enables it" "[ \"\$(status_of)\" = enabled ]"
 (cd "$R" && "$CLI" disable >/dev/null)
 check "disable removes the file" "[ ! -e '$R/.harness' ] && [ \"\$(status_of)\" = disabled ]"
 git config --global harness.enabled true

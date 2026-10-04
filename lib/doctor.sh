@@ -13,6 +13,8 @@ ok() { [ "$QUIET" -eq 1 ] || printf 'OK   %s\n' "$1"; }
 warn() { [ "$QUIET" -eq 1 ] || printf 'WARN %s\n' "$1"; WARNINGS=$((WARNINGS + 1)); }
 fail() { [ "$QUIET" -eq 1 ] || printf 'FAIL %s\n' "$1"; FAILURES=$((FAILURES + 1)); }
 has() { command -v "$1" >/dev/null 2>&1; }
+# shellcheck source=lib/keys.sh
+source "$REPO/lib/keys.sh"
 # shellcheck source=lib/mods.sh
 source "$REPO/lib/mods.sh"
 # shellcheck source=lib/vscode.sh
