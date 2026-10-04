@@ -59,6 +59,8 @@ tack help              # CLI reference; aliases: --help and -h
 tack status            # workflow activation, mode and local formatter trust
 tack status --quiet    # no output; exit 0 when enabled, 1 when disabled
 tack enable            # this clone only (git config; nothing added to the repo)
+tack enable --scaffold # also add the missing AGENTS.md, CLAUDE.md, docs/architecture.md, docs-map.txt,
+                       # and plan, handoff and AI-log templates, never overwriting a file
 tack enable --shared   # commit a .tack file so every clone has it
 tack disable
 tack mode              # effective mode and its source

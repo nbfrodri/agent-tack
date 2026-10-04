@@ -24,7 +24,9 @@ Commands:
   config [NAME [VALUE]] [--global]
                       List feature toggles, show one, or set it for this project
                       (or user-wide with --global); config NAME --unset removes it
-  enable [--shared]    Enable this clone, or use a shareable .tack marker
+  enable [--shared] [--scaffold]
+                      Enable this clone, or use a shareable .tack marker;
+                      --scaffold adds the missing docs structure (never overwrites)
   disable             Disable this clone and remove the shared marker
   trust [--revoke]     Allow or revoke project formatter execution in this clone
   trusted [--quiet]    Query local formatter trust independently of activation
@@ -136,9 +138,19 @@ cmd="${1:-status}"
 
 case "$cmd" in
   enable)
-    allowed_option=--shared; check_args "$@"
+    shared=0 scaffold=0
+    for arg in "$@"; do
+      case "$arg" in
+        --shared) shared=1 ;;
+        --scaffold) scaffold=1 ;;
+        *) echo "tack: unsupported arguments for enable (see --help)" >&2; exit 2 ;;
+      esac
+    done
     require_repo
-    if [ "${1:-}" = "--shared" ]; then
+    if [ "$scaffold" -eq 1 ]; then
+      bash "$HARNESS_ROOT/lib/scaffold.sh" "$HARNESS_ROOT" "$root" || fail "cannot create the docs structure"
+    fi
+    if [ "$shared" -eq 1 ]; then
       printf '# This project uses the tack workflow (https://github.com/nbfrodri/agent-tack).\n' > "$root/.tack" \
         || fail "cannot write the shared marker"
       if key_scope local enabled; then

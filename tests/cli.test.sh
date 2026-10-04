@@ -401,6 +401,31 @@ printf 'm1 | \377 | 2 | 0 | 0\n' > "$XDG_CONFIG_HOME/agent-tack/pricing.txt"
 check "a price file in another encoding never crashes the report" expect_exit 0 "$CLI" log --cost
 rm -f "$LOG_FILE" "$XDG_CONFIG_HOME/agent-tack/pricing.txt"
 
+# tack enable --scaffold: the minimal docs structure, never overwriting.
+SCAF="$WORK/scaffold-repo"
+git init -q "$SCAF"
+printf '# Mine\n' > "$SCAF/AGENTS.md"
+scaffold() { (cd "$SCAF" && "$CLI" enable "$@"); }
+check "enable --scaffold succeeds" expect_exit 0 scaffold --scaffold
+files_exist() { local file; for file in "$@"; do [ -f "$file" ] || return 1; done; }
+file_is() { [ "$(cat "$1")" = "$2" ]; }
+git_value_is() { [ "$(git -C "$1" config --get "$2")" = "$3" ]; }
+plain_enable_creates_nothing() { (cd "$PLAIN" && "$CLI" enable >/dev/null) && [ ! -e "$PLAIN/docs" ] && [ ! -e "$PLAIN/AGENTS.md" ]; }
+check "scaffold creates the architecture doc, docs map and plan and handoff templates" files_exist "$SCAF/docs/architecture.md" "$SCAF/docs-map.txt" "$SCAF/docs/plans/template.md" "$SCAF/docs/handoffs/template.md" "$SCAF/docs/ai/log.md" "$SCAF/CLAUDE.md"
+check "scaffold never overwrites an existing file" file_is "$SCAF/AGENTS.md" "# Mine"
+check "scaffold says what it created" contains 'created docs/architecture.md'
+check "scaffold says what it kept" contains 'kept AGENTS.md'
+check "scaffold points to filling the docs from the code" contains 'fill AGENTS.md and docs/architecture.md'
+check "scaffold still enables the project" git_value_is "$SCAF" tack.enabled true
+check "a second scaffold keeps everything" expect_exit 0 scaffold --scaffold
+check "the second scaffold creates nothing" out_lacks "created"
+check "scaffold combines with --shared" expect_exit 0 scaffold --shared --scaffold
+check "the shared marker exists after a shared scaffold" files_exist "$SCAF/.tack"
+PLAIN="$WORK/plain-enable"
+git init -q "$PLAIN"
+check "plain enable creates no docs" plain_enable_creates_nothing
+check "enable rejects unknown options" expect_exit 2 scaffold --everything
+
 # tack models: provider-neutral tiers mapped to each tool's models (model-tiers.txt).
 check "models lists every tier for each tool" expect_exit 0 "$CLI" models
 check "Claude Code's tiers are mapped" out_matches "^claude +economical +haiku"
