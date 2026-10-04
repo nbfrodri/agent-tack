@@ -64,6 +64,11 @@ for agent in "$REPO"/agents/*.md; do
   check_file "$agent" "$(basename "$agent" .md)" "$AGENT_DESC_MAX"
   echo "  ✔ $(basename "$agent" .md)"
 done
+# Large doc updates are delegated to docs-writer to save tokens, so it must not inherit the main model.
+case "$(sed -n 's/^model: *//p' "$REPO/agents/docs-writer.md")" in
+  sonnet | haiku) ;;
+  *) err "agents/docs-writer.md: docs-writer must pin an economical model (sonnet or haiku)" ;;
+esac
 
 echo "Cross-references and components list"
 # Paths like ~/.agents/skills/<skill>/... and ~/.agents/tack/... (or the former ~/.agents/harness/...) are what agents and skills

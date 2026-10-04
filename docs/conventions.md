@@ -5,7 +5,7 @@ The conventions tack applies, at a glance. Source of truth: [`skills/dev-workflo
 | | |
 | --- | --- |
 | Commits | Conventional Commits, English, no AI attribution (enforced by hooks) |
-| PRs | Squash merge; the PR title becomes the commit on `main` |
+| PRs | Merge commit to keep verified milestones (squash only when you choose it); the merged branch is deleted locally and on the remote |
 | Releases | SemVer, annotated `vX.Y.Z` tags, release-please, `CHANGELOG.md` + GitHub Release |
 | Code | English; formatter defaults; functional first; no unnecessary comments |
 | JS/TS | pnpm, TypeScript strict, kebab-case files, named exports |

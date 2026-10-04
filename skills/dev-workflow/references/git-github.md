@@ -59,7 +59,7 @@ This is the single, detailed list; the global instructions summarise it.
 - creating or editing PRs and issues, or commenting on them (the `improve` audit workflow already authorises creation of verified finding issues unless the user requests no publication);
 - `merge`;
 - rebasing or amending published commits;
-- deleting branches;
+- deleting unmerged branches (a branch whose PR is merged is deleted locally and on the remote without asking);
 - creating tags and releases;
 - any force-push. Never to `main`/`master` (the `pre-push` hook and the GitHub ruleset block it); on other branches, only `--force-with-lease`.
 

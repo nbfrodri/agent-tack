@@ -430,6 +430,19 @@ check "token toggles: economical subagents are requested" "session '$WORK/repo' 
 git -C "$WORK/repo" config --unset harness.replyStyle
 git -C "$WORK/repo" config --unset harness.skillLoading
 git -C "$WORK/repo" config --unset harness.subagentModel
+check "ci-watch: the default adds no setting line" "! session '$WORK/repo' | grep -q 'Workflow settings'"
+git -C "$WORK/repo" config tack.ciWatch false
+check "ci-watch: turning it off tells the assistant not to wait for CI" "session '$WORK/repo' | grep -q 'Workflow settings:.*Do not wait for CI'"
+git -C "$WORK/repo" config --unset tack.ciWatch
+for ci_mode in standard strict unleash; do
+  git -C "$WORK/repo" config tack.mode "$ci_mode"
+  check "ci-watch: $ci_mode mode waits for CI after a push" "session '$WORK/repo' | grep -q 'CI: after a push'"
+done
+for ci_mode in lite lean; do
+  git -C "$WORK/repo" config tack.mode "$ci_mode"
+  check "ci-watch: $ci_mode mode does not wait for CI" "! session '$WORK/repo' | grep -q 'CI: after a push'"
+done
+git -C "$WORK/repo" config --unset tack.mode
 git -C "$WORK/repo" config harness.mode lean
 check "lean mode: the rules say not to load dev-workflow" "session '$WORK/repo' | grep -q 'do not load the \`dev-workflow\` skill'"
 check "lean mode: the message points to the mode's own rules" "session '$WORK/repo' | grep -q 'Apply the lean mode rules below'"
@@ -530,6 +543,35 @@ git -C "$P2" config harness.enabled false
 check "stop-check: disabled projects are left alone" "[ -z \"\$(stopping)\" ]"
 check "stop-check: malformed input is ignored" "[ -z \"\$(printf 'not json' | bash '$STOP')\" ]"
 check "stop-check: registered for Stop" "grep -q 'stop-check.sh' '$REPO/claude/settings.json'"
+
+echo "Activity log (tack config activity-log, tack log)"
+LOG="$WORK/state/agent-tack/activity.log"
+A="$WORK/activity-repo"
+git init -q -b main "$A"
+git -C "$A" config tack.enabled true
+deny_in() { printf '{"cwd":"%s","tool_input":{"command":"git commit --no-verify"}}' "$A" | bash "$GUARD" "$@" >/dev/null; }
+log_cmd() { (cd "$A" && "$CLI" log "$@"); }
+deny_in
+check "activity log: off by default" "[ ! -e '$LOG' ]"
+check "activity log: tack log explains how to turn it on" "log_cmd | grep -q 'tack config activity-log true'"
+git -C "$A" config tack.activityLog true
+deny_in
+check "activity log: guard decisions are recorded" "grep -q 'claude.*guard deny.*no-verify' '$LOG'"
+deny_in --codex
+check "activity log: only the user can read it (it may hold commands)" "[ \"\$(ls -l '$LOG' | cut -c1-10)\" = '-rw-------' ]"
+check "activity log: Codex runs are labelled" "grep -q 'codex.*guard deny' '$LOG'"
+printf '{"cwd":"%s"}' "$A" | bash "$SESSION" >/dev/null
+check "activity log: session starts are recorded with the mode" "grep -q 'session-start.*mode=auto' '$LOG'"
+printf 'x\n' > "$A/dirty.txt"
+printf '{"cwd":"%s","stop_hook_active":false}' "$A" | bash "$STOP" >/dev/null
+check "activity log: Stop findings are recorded" "grep -q 'stop-check.*uncommitted' '$LOG'"
+check "activity log: each line starts with a UTC timestamp" "grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:]{8}Z' '$LOG'"
+check "activity log: tack log prints the recent entries" "log_cmd | grep -q 'guard deny'"
+check "activity log: tack log N limits the entries" "[ \"\$(log_cmd 1 | wc -l | tr -d ' ')\" = 1 ] && log_cmd 1 | grep -q stop-check"
+check "activity log: tack log rejects a bad count" "log_cmd nope >/dev/null 2>&1; [ \$? -eq 2 ]"
+git -C "$A" config tack.activityLog false
+deny_in
+check "activity log: turning it off stops recording" "[ \"\$(grep -c 'guard deny' '$LOG')\" = 2 ]"
 
 echo "Claude hook: format-file"
 FORMAT="$REPO/hooks/claude/format-file.sh"

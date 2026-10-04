@@ -38,6 +38,7 @@ emit() {
     decision=deny
     reason="Needs the user's confirmation, which Codex hooks cannot ask for: $reason Ask the user to run it or to approve it."
   fi
+  activity_log "$cwd" "$CLIENT" "guard $decision" "${command:0:120} -- $reason"
   if command -v jq >/dev/null 2>&1; then
     jq -cn --arg d "$decision" --arg r "$reason" \
       '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: $d, permissionDecisionReason: $r}}'
@@ -72,6 +73,9 @@ cwd="$(json_field .cwd)"
 
 # shellcheck source=SCRIPTDIR/lib/shell-parse.sh
 . "$(dirname "$0")/lib/shell-parse.sh"
+# The bare-script copy in the guard tests has no log library; logging is optional.
+# shellcheck source=SCRIPTDIR/lib/activity-log.sh
+. "$(dirname "$0")/lib/activity-log.sh" 2>/dev/null || activity_log() { :; }
 
 current_branch() {
   git -C "$cwd" branch --show-current 2>/dev/null
@@ -272,6 +276,76 @@ check_harness() {
   esac
 }
 
+# Prints the PR's check buckets, or nothing when gh fails or takes over about 4 seconds, which
+# leaves room within the hook's 10-second timeout on slower machines. Without timeout(1)
+# (stock macOS), a background watchdog stops gh instead.
+pr_buckets() {
+  local out pid n=0
+  if command -v timeout >/dev/null 2>&1; then
+    (cd "$cwd" && timeout 4 gh pr checks "$@" --json bucket --jq '.[].bucket' 2>/dev/null)
+    return 0
+  fi
+  out="$(mktemp "${TMPDIR:-/tmp}/tack-guard.XXXXXX")" || return 0
+  (cd "$cwd" && exec gh pr checks "$@" --json bucket --jq '.[].bucket' >"$out" 2>/dev/null) &
+  pid=$!
+  while kill -0 "$pid" 2>/dev/null && [ "$n" -lt 20 ]; do sleep 0.2; n=$((n + 1)); done
+  if kill -0 "$pid" 2>/dev/null; then
+    kill "$pid" 2>/dev/null
+  else
+    cat "$out"
+  fi
+  rm -f "$out"
+}
+
+# merge-requires-green: in enabled projects `gh pr merge` waits for green CI. Failing or pending
+# checks deny, so the assistant fixes or waits and retries; when the checks cannot be read for
+# the pull request being merged, the user decides. --auto lets GitHub wait for pending checks.
+GH_REPO_FROM_ENV=0
+check_gh() {
+  [ "${1:-}" = pr ] && [ "${2:-}" = merge ] || return 0
+  shift 2
+  local selector=() repo=() skip_next=0 prev="" a setting buckets auto=0 cli
+  for a in "$@"; do
+    if [ "$skip_next" -eq 1 ]; then
+      skip_next=0
+      case "$prev" in -R | --repo) repo=(--repo "$a") ;; esac
+      continue
+    fi
+    case "$a" in
+      -R | --repo | -b | --body | -F | --body-file | -t | --subject | -A | --author-email | --match-head-commit)
+        prev="$a"; skip_next=1 ;;
+      --repo=*) repo=(--repo "${a#--repo=}") ;;
+      --disable-auto) return 0 ;;
+      --auto) auto=1 ;;
+      -*) ;;
+      *) [ "${#selector[@]}" -gt 0 ] || selector=("$a") ;;
+    esac
+  done
+  # Absolute, because it runs after cd "$cwd" and the hook may be started with a relative path.
+  cli="$(cd "$(dirname "$0")/../../bin" && pwd)/tack"
+  (cd "$cwd" && "$cli" status --quiet) 2>/dev/null || return 0
+  setting="$(cd "$cwd" && "$cli" config merge-requires-green 2>/dev/null)"
+  [ "${setting%% *}" != false ] || return 0
+  case "${selector[*]-} ${repo[*]-}" in
+    *'__subst__'* | *'$'* | *'`'*) ask "Cannot confirm CI for a pull request chosen at run time; check that its checks passed before merging."; return 0 ;;
+  esac
+  if [ "$ACTS_ELSEWHERE" -eq 1 ] || [ "$GH_REPO_FROM_ENV" -eq 1 ]; then
+    ask "Cannot confirm the CI checks of a pull request in another directory or repository; check them before merging."
+    return 0
+  fi
+  if ! command -v gh >/dev/null 2>&1; then
+    ask "Cannot confirm the pull request's CI checks passed (gh is not available); check them before merging."
+    return 0
+  fi
+  buckets="$(pr_buckets ${selector[@]+"${selector[@]}"} ${repo[@]+"${repo[@]}"})"
+  case "$buckets" in
+    '') ask "Cannot confirm the pull request's CI checks passed (gh reported none or timed out); check them before merging." ;;
+    *fail* | *cancel*) deny "The pull request's CI checks are failing. Read the failed job's log (gh run view --log-failed), fix it and push before merging." ;;
+    *pending*)
+      [ "$auto" -eq 1 ] || deny "The pull request's CI checks are still running. Wait for them (gh pr checks --watch) and merge once they pass." ;;
+  esac
+}
+
 check_rm() {
   local recursive=0 after_dashdash=0 targets=() a t real
   for a in "$@"; do
@@ -372,6 +446,17 @@ check_command() {
   # Skip env assignments and wrappers that run the rest as a command
   while [ "$i" -lt "${#words[@]}" ]; do
     w="${words[$i]}"
+    # An assignment is recognised by its name: its value may hold slashes (X=a/b).
+    case "$w" in
+      [A-Za-z_]*=*)
+        case "${w%%=*}" in
+          *[!A-Za-z0-9_]*) ;;
+          *)
+            case "${w%%=*}" in GH_REPO | GH_HOST) GH_REPO_FROM_ENV=1 ;; esac
+            i=$((i + 1))
+            continue ;;
+        esac ;;
+    esac
     case "${w##*/}" in
       *=*) case "$w" in -*) break ;; esac; i=$((i + 1)) ;;
       sudo | doas)
@@ -467,6 +552,7 @@ check_command() {
     *'__subst__'* | *'$'* | *'`'*) ask "Dynamic executable name requires review." ;;
     git) check_git "${args[@]+"${args[@]}"}" ;;
     rm) check_rm "${args[@]+"${args[@]}"}" ;;
+    gh) check_gh "${args[@]+"${args[@]}"}" ;;
     cd | pushd | popd) ACTS_ELSEWHERE=1 ;;
     harness | tack) check_harness "${args[@]+"${args[@]}"}" ;;
     bash | sh | zsh | dash | ksh)

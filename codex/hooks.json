@@ -39,7 +39,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash '__REPO__/hooks/claude/stop-check.sh' #tack",
+            "command": "bash '__REPO__/hooks/claude/stop-check.sh' --codex #tack",
             "timeout": 90
           }
         ]
@@ -50,7 +50,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash '__REPO__/hooks/claude/session-context.sh' #tack",
+            "command": "bash '__REPO__/hooks/claude/session-context.sh' --codex #tack",
             "timeout": 10
           }
         ]

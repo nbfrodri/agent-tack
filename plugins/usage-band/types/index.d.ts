@@ -8,6 +8,6 @@ export type Usage = {
 
 declare module 'claude-code' {
   interface PluginState {
-    'usage-band': { usage: Usage; isHidden: boolean }
+    'usage-band': { usage: Usage; isHidden: boolean; chip: string }
   }
 }

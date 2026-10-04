@@ -10,13 +10,13 @@ Defaults for every project. **A project's existing conventions win**: follow its
 | Branches | `type/short-description`, or `type/123-short-description` when there's an issue. Short-lived. |
 | Merging PRs | Recommend merge commit for coherent verified milestones, or squash for one change with temporary intermediate commits. Offer available methods in the integration confirmation; preserve commits unless the user explicitly chooses squash. The PR title and every commit follow Conventional Commits. |
 | Commits inside a PR branch | Commit coherent verified milestones while working. A passing test and its implementation usually share a commit. Resolve temporary fixup commits before publication, without rewriting published history unless authorised. |
-| After merge | Delete branches only when authorised by the user. |
+| After merge | Delete the merged branch locally and on the remote right away; repos enable automatic deletion on merge. Unmerged branches are deleted only with the user's approval. |
 | Attribution | No AI attribution anywhere (see `git-github.md`). |
 
 Repository settings to match (new repos, or existing ones with the user's permission):
 ```bash
 gh repo edit --enable-merge-commit --enable-squash-merge \
-  --enable-rebase-merge=false --delete-branch-on-merge=false
+  --enable-rebase-merge=false --delete-branch-on-merge
 ```
 
 ## Releases and tags

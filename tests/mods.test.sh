@@ -42,8 +42,11 @@ json_list() {
 }
 case "$*" in
   "plugin list --json") json_list "$FAKE_STATE/plugins" '{"id":"%s","enabled":true}' ;;
-  "plugin marketplace list --json") json_list "$FAKE_STATE/markets" '{"name":"%s"}' ;;
-  "plugin marketplace add "*/plugins) echo agent-tack-mods >> "$FAKE_STATE/markets" ;;
+  "plugin marketplace list --json")
+    # The local marketplace reports the directory it was added from, like the real CLI.
+    path="$(cat "$FAKE_STATE/market-path" 2>/dev/null)"
+    json_list "$FAKE_STATE/markets" '{"name":"%s"}' | sed "s#{\"name\":\"agent-tack-mods\"}#{\"name\":\"agent-tack-mods\",\"source\":\"directory\",\"path\":\"$path\"}#" ;;
+  "plugin marketplace add "*/plugins) echo agent-tack-mods >> "$FAKE_STATE/markets"; printf '%s\n' "$4" > "$FAKE_STATE/market-path" ;;
   "plugin marketplace add "*) echo claude-plugins-official >> "$FAKE_STATE/markets" ;;
   "plugin marketplace remove "*) grep -vxF "${4}" "$FAKE_STATE/markets" > "$FAKE_STATE/markets.new"; mv "$FAKE_STATE/markets.new" "$FAKE_STATE/markets" ;;
   "plugin install "*)
@@ -166,6 +169,20 @@ check "install over the former marketplace succeeds" "install"
 check "mods from the former marketplace are uninstalled" "! grep -q '@agent-harness-mods' '$STATE/plugins'"
 check "the former marketplace is removed" "! grep -qx 'agent-harness-mods' '$STATE/markets'"
 check "the mods come from the new marketplace" "grep -qx 'usage-band@agent-tack-mods' '$STATE/plugins'"
+
+echo "Moved checkout"
+fresh_home moved
+install
+check "a fresh install registers this checkout's plugins folder" "grep -qxF '$REPO/plugins' '$STATE/market-path'"
+: > "$STATE/calls"
+install
+check "a reinstall from the same checkout keeps the marketplace" "! called 'plugin marketplace remove $MARKET'"
+printf '%s\n' "$WORK/old-checkout/plugins" > "$STATE/market-path"
+: > "$STATE/calls"
+check "install after moving the checkout succeeds" "install"
+check "the marketplace registered at the old path is removed" "called 'plugin marketplace remove $MARKET'"
+check "the marketplace is re-added from the new checkout" "grep -qxF '$REPO/plugins' '$STATE/market-path' && grep -qx '$MARKET' '$STATE/markets'"
+check "the install reports the move" "grep -q 'the checkout moved' '$H.log'"
 
 echo
 echo "$PASSED passed, $FAILED failed"

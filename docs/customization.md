@@ -15,7 +15,8 @@ Clone it into any directory you choose and install from that checkout, as shown 
 | Task-specific guidance or reusable templates | `skills/<name>/SKILL.md`, `references/` and `assets/` |
 | Automatic delegation, complexity routing and model fallbacks | `skills/orchestrate/` (per-project opt-out: `tack config delegation off`) |
 | Feature toggles shown by `tack config` | `features.txt`: one line per toggle (name, git key, default, allowed values, scope, enforcement, description). Code that honours a new toggle reads its git key; keep safety checks out of the registry |
-| Agent responsibilities and defaults | `agents/*.md` |
+| Agent responsibilities and defaults | `agents/*.md` (`docs-writer` must keep an economical `model:`, `sonnet` or `haiku`, because large doc updates are delegated to it) |
+| CI after a push, green-only merges and the activity log | `tack config ci-watch`, `merge-requires-green` and `activity-log` ([usage](usage.md#ci-wait-for-it-merge-only-when-green)) |
 | Supported tools and installation paths | `targets.txt` |
 | Claude Code settings and registered hooks | `claude/settings.json` |
 | Installed marketplaces and plugins | `plugins.txt` |

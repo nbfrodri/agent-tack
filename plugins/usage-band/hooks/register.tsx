@@ -5,6 +5,8 @@ import type { Usage, UsageWindow } from '../types'
 
 const usage = atom({ plugin: 'usage-band', key: 'usage' } as const, { windows: [] } as Usage)
 const isHidden = atom({ plugin: 'usage-band', key: 'isHidden' } as const, false)
+// An atom, not a local, so setting it re-renders the band as soon as the mode is known.
+const chip = atom({ plugin: 'usage-band', key: 'chip' } as const, 'tack · off')
 
 const LABELS: Record<string, string> = { five_hour: '5h', seven_day: '7d', spend_limit: 'spend' }
 const WARN_AT = [80, 90]
@@ -60,6 +62,12 @@ export function costLimit(modeShow: string, configValue: string): number | undef
   return Number.isFinite(amount) && amount > 0 ? amount : undefined
 }
 
+// `tack mode` prints "<mode> (<source>)"; a failing `tack status --quiet` means the project is not enabled.
+export function modeChip(statusExit: number, modeOutput: string): string {
+  const mode = modeOutput.trim().split(' ')[0]
+  return statusExit === 0 && mode ? `tack · ${mode}` : 'tack · off'
+}
+
 export function overBudget(costUsd: number | undefined, limitUsd: number | undefined): boolean {
   return limitUsd !== undefined && costUsd !== undefined && costUsd >= limitUsd
 }
@@ -77,6 +85,14 @@ export const register: Register = on => {
       limitUsd = mode.exitCode === 0 && config.exitCode === 0 ? costLimit(mode.stdout, config.stdout) : undefined
     } catch {
       limitUsd = undefined
+    }
+    try {
+      const status = await $.process.run(['tack', 'status', '--quiet'], { timeoutMs: 5000 })
+      const mode = await $.process.run(['tack', 'mode'], { timeoutMs: 5000 })
+      const label = modeChip(status.exitCode, mode.exitCode === 0 ? mode.stdout : '')
+      await update($, chip, () => label)
+    } catch {
+      await update($, chip, () => 'tack · off')
     }
     return next(e)
   })
@@ -115,6 +131,7 @@ export const register: Register = on => {
 
     return (
       <Box flexDirection="row" gap={3}>
+        <Text color="cyan">{await read($, chip)}</Text>
         {!hasData && <Text dimColor>usage: waiting for the first response</Text>}
         {current.windows.map(window => (
           <Box key={window.kind} flexDirection="row" gap={1}>

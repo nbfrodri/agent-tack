@@ -35,7 +35,7 @@ The installer adds two mods to Claude Code (other tools do not support mods):
 
 | Mod | What it shows | Command |
 | --- | --- | --- |
-| `usage-band` | A band above the prompt: 5-hour and weekly usage with reset times, context fill and session cost; toasts at 80% and 90%. Limits appear after the first response and only on a subscription | `/usage-band` hides or shows it |
+| `usage-band` | A band above the prompt: the active tack mode (`tack · <mode>`, or `tack · off`), 5-hour and weekly usage with reset times, context fill and session cost; toasts at 80% and 90%. Limits appear after the first response and only on a subscription | `/usage-band` hides or shows it |
 | `agent-activity` | A live pane of tool calls, skills, subagents (with their model) and permission prompts or denials; subagent actions are marked `↳` | `/activity` opens it (it opens by itself on terminals at least 144 columns wide) |
 
 Opt out with `./install.sh --skip-mods` or `tack config mods false --global`, then rerun the installer; `./uninstall.sh` removes them. To change a mod, edit it under `plugins/`, bump `version` in its `plugin.json` and rerun `./install.sh` (Claude Code caches installed plugins). It cannot infer ownership of legacy configuration: paths already identical before recording began are preserved. Installation and uninstall previews make no persistent changes. Installation accepts paths with spaces; use absolute paths without tabs, newlines or dot components, and keep the checkout path free of quotes and backslashes for Claude hook command substitution.
@@ -112,6 +112,25 @@ bin/mycli | docs/usage.md
 ```
 
 A rule is satisfied when any of its docs changed on the branch or in the working tree.
+
+### CI: wait for it, merge only when green
+
+In `standard`, `strict` and `unleash`, after a push or a new pull request the assistant waits for CI in the background, reports the result and fixes failures from the failed job's log before continuing (`ci-watch`, default `true`; `lite` and `lean` skip it). Independently, in enabled projects the command guard refuses `gh pr merge` while the pull request's checks fail or are still running, so the assistant waits and retries. `--auto` may go ahead with pending checks, because GitHub then waits for them, and `--disable-auto` is never checked. When the checks cannot be read (no `gh`, no checks reported, a slow `gh`, or a merge after `cd` or with `GH_REPO`), it asks you; in Codex that becomes a refusal. A project without CI therefore asks on every merge: turn the rule off there (`merge-requires-green`, default `true`):
+
+```bash
+tack config ci-watch false               # do not wait for CI after a push in this project
+tack config merge-requires-green false   # let gh pr merge through without checking CI
+```
+
+### Activity log
+
+An opt-in log of what the hooks did, for Claude Code and Codex: session starts with their mode, every guard decision (deny or ask) with the command, and the findings of the check before stopping. Lines are tab-separated (UTC time, tool, project, event, detail) in `~/.local/state/agent-tack/activity.log`, kept to the newest few thousand. The file is readable only by you, because logged commands may contain tokens; it never leaves your machine.
+
+```bash
+tack config activity-log true --global   # record in every project (or drop --global for one)
+tack log                                 # the last 20 entries
+tack log 100                             # the last 100
+```
 
 ## Workflow modes
 
@@ -227,6 +246,8 @@ tack config delegation off     # disable automatic delegation in this project
 tack config delegation --unset # restore the default automatic policy
 tack config delegation         # shows auto (default) when unset
 ```
+
+Documentation is delegated separately, at every level: when a committed change leaves docs pending in 3 or more files, the assistant hands them to the `docs-writer` agent, which runs on an economical model, then reviews its result. Smaller updates, ADRs and design decisions stay with the main assistant.
 
 Explicitly asking for subagents authorises them for that task even when automatic mode is off. Disabling the workflow with `tack disable` also removes automatic delegation from the enabled-project policy. Delegation is driven by instructions, not enforced by a process scheduler, and can consume more tokens. Values set directly in git config that are neither `auto` nor `off` are treated as off and reported.
 

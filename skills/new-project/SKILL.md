@@ -67,5 +67,5 @@ Build the scaffold in a few logical commits, for example:
 Run lint and tests before finishing. Ask the user before creating the GitHub repo and pushing, and ask whether it should be public or private (`gh repo create <name> --private --source . --push`). With permission, enable both merge methods so the user can choose from a contextual recommendation, as in `conventions.md`:
 ```bash
 gh repo edit --enable-merge-commit --enable-squash-merge \
-  --enable-rebase-merge=false --delete-branch-on-merge=false
+  --enable-rebase-merge=false --delete-branch-on-merge
 ```
