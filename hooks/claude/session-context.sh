@@ -16,19 +16,20 @@ client=claude
 [ "${1:-}" != --codex ] || client=codex
 # shellcheck source=SCRIPTDIR/lib/activity-log.sh
 . "$(dirname "$0")/lib/activity-log.sh"
-# shellcheck source=SCRIPTDIR/lib/hook-control.sh
-. "$(dirname "$0")/lib/hook-control.sh"
-! hook_disabled "$cwd" session-context || exit 0
-
 cli="$(cd "$(dirname "$0")/../../bin" && pwd)/tack"
 
 # Per-session state (tool-call counters) is pruned here: SessionStart is the one hook every
-# tool runs, whether or not the project is enabled.
+# tool runs, whether or not the project is enabled. It is maintenance, so it runs even when
+# the session-context hook is turned off, and its period is user-wide because the state is.
 retention="$(cd "$cwd" && "$cli" config state-retention-days 2>/dev/null)"
 retention="${retention%% *}"
 case "$retention" in '' | *[!0-9]*) retention=30 ;; esac
 state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/agent-tack/budget"
 [ ! -d "$state_dir" ] || find "$state_dir" -type f -mtime +"$retention" -exec rm -f {} + 2>/dev/null
+
+# shellcheck source=SCRIPTDIR/lib/hook-control.sh
+. "$(dirname "$0")/lib/hook-control.sh"
+! hook_disabled "$cwd" session-context || exit 0
 
 if (cd "$cwd" && "$cli" status --quiet); then
   mode="$(cd "$cwd" && "$cli" mode)" || mode=auto
@@ -57,12 +58,14 @@ if (cd "$cwd" && "$cli" status --quiet); then
   for part in "$mode_rules" "$settings" "$project_context"; do
     [ -z "$part" ] || context="$context"$'\n'"$part"
   done
-  # session-context-max-chars: past the cap, keep parts by priority (activation line, settings,
-  # mode rules, project context), trim the first that does not fit and say where the rest is.
-  cap="$(setting session-context-max-chars)"
+  # context-max-chars: past the cap, keep parts by priority (activation line, settings, mode
+  # rules, project context), trim the first that does not fit and say where the rest is. The
+  # activation line always stays; the pointer is dropped when even it does not fit.
+  cap="$(setting context-max-chars)"
   case "$cap" in '' | *[!0-9]*) cap=0 ;; esac
   if [ "$cap" -gt 0 ] && [ "${#context}" -gt "$cap" ]; then
-    pointer="[Context capped at $cap characters by tack config session-context-max-chars; run 'tack mode show' and 'tack context' for the rest.]"
+    pointer="[Context capped at $cap characters by tack config context-max-chars; run 'tack mode show' and 'tack context' for the rest.]"
+    [ $((${#head} + ${#pointer} + 1)) -le "$cap" ] || pointer=''
     remaining=$((cap - ${#head} - ${#pointer} - 1))
     context="$head"
     for part in "$settings" "$mode_rules" "$project_context"; do
@@ -75,7 +78,7 @@ if (cd "$cwd" && "$cli" status --quiet); then
         remaining=0
       fi
     done
-    context="$context"$'\n'"$pointer"
+    [ -z "$pointer" ] || context="$context"$'\n'"$pointer"
   fi
 else
   context="tack: NOT enabled for this project. Work normally without the workflow ceremony; only the always-on rules apply (no AI attribution, safety). The user can enable it with 'tack enable'."

@@ -434,16 +434,23 @@ context_of() { session "$1" | python3 -c 'import json,sys; print(json.load(sys.s
 printf '# AGENTS.md\n%s\n' "$(printf 'project rule %.0s' $(seq 1 60))" > "$WORK/repo/AGENTS.md"
 # shellcheck disable=SC2034 # Read inside check's eval strings.
 uncapped="$(context_of "$WORK/repo")"
-git -C "$WORK/repo" config tack.sessionContextMaxChars 100000
+git -C "$WORK/repo" config tack.contextMaxChars 100000
 check "context cap: a generous cap leaves the context unchanged" "[ \"\$(context_of '$WORK/repo')\" = \"\$uncapped\" ]"
-git -C "$WORK/repo" config tack.sessionContextMaxChars 600
+git -C "$WORK/repo" config tack.contextMaxChars 600
 # shellcheck disable=SC2034 # Read inside check's eval strings.
 capped="$(context_of "$WORK/repo")"
 check "context cap: the context stays within the cap" "[ \${#capped} -le 600 ]"
 check "context cap: the activation line is always kept" "printf '%s' \"\$capped\" | grep -q 'ENABLED for this project'"
 check "context cap: the project context goes first" "! printf '%s' \"\$capped\" | grep -q 'project rule'"
 check "context cap: it says where to read the rest" "printf '%s' \"\$capped\" | grep -q 'tack context'"
-git -C "$WORK/repo" config --unset tack.sessionContextMaxChars
+git -C "$WORK/repo" config tack.contextMaxChars 50
+check "context cap: a cap below the activation line drops the pointer, never the line" "[ \"\$(context_of '$WORK/repo')\" = \"\$(context_of '$WORK/repo' | head -n 1)\" ] && context_of '$WORK/repo' | grep -q 'ENABLED'"
+git -C "$WORK/repo" config --unset tack.contextMaxChars
+git -C "$WORK/repo" config tack.replyStyle terse
+git -C "$WORK/repo" config tack.ciWatch false
+check "settings: token and workflow settings sit on separate lines" "context_of '$WORK/repo' | grep -q '^Token settings:' && context_of '$WORK/repo' | grep -q '^Workflow settings:'"
+git -C "$WORK/repo" config --unset tack.replyStyle
+git -C "$WORK/repo" config --unset tack.ciWatch
 rm "$WORK/repo/AGENTS.md"
 check "ci-watch: the default adds no setting line" "! session '$WORK/repo' | grep -q 'Workflow settings'"
 git -C "$WORK/repo" config tack.ciWatch false
@@ -501,8 +508,17 @@ check "retention: recent session state is kept" "[ -e '$BUDGET_DIR/recent-sessio
 touch -t "$(date -d '-3 days' +%Y%m%d%H%M 2>/dev/null || date -v-3d +%Y%m%d%H%M)" "$BUDGET_DIR/recent-session"
 git -C "$B" config tack.stateRetentionDays 2
 session "$B" >/dev/null
-check "retention: the period follows tack config state-retention-days" "[ ! -e '$BUDGET_DIR/recent-session' ]"
+check "retention: a project value cannot shorten the user-wide period" "[ -e '$BUDGET_DIR/recent-session' ]"
 git -C "$B" config --unset tack.stateRetentionDays
+git config --global tack.stateRetentionDays 2
+session "$B" >/dev/null
+check "retention: the period follows tack config state-retention-days --global" "[ ! -e '$BUDGET_DIR/recent-session' ]"
+git config --global --unset tack.stateRetentionDays
+touch -t 202001010000 "$BUDGET_DIR/old-again"
+git -C "$B" config tack.disabledHooks session-context
+session "$B" >/dev/null
+check "retention: pruning still runs when session-context is turned off" "[ ! -e '$BUDGET_DIR/old-again' ]"
+git -C "$B" config --unset tack.disabledHooks
 session "$WORK" >/dev/null
 check "retention: pruning never fails the session outside a repository" "session '$WORK' | grep -q 'NOT enabled'"
 
