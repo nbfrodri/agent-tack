@@ -14,7 +14,7 @@ tests/tools.test.sh      # targets.txt columns, `doctor --tools` and the weekly 
 tests/mods.test.sh       # mods step: install, opt-outs, dry run, uninstall and doctor (fake claude CLI)
 claude plugin validate plugins && claude plugin test plugins/usage-band && claude plugin test plugins/agent-activity   # the mods themselves (needs the claude CLI)
 tests/hooks.test.sh      # git and Claude Code hooks, in throwaway repos
-tests/cli.test.sh        # activation errors, local trust and bounded startup context
+tests/cli.test.sh        # activation, modes, config, startup context and the help-vs-docs drift check
 tests/settings.test.sh   # mixed user and harness hook groups in Python and jq
 tests/safety.test.sh     # final index scanning, exact paths and formatter trust
 tests/guard.test.sh      # executable shell syntax, boundaries and long inputs

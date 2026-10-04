@@ -163,6 +163,7 @@ check "the refused global default is not stored" test -z "$(git config --global 
 git config --global harness.mode unleash
 check "an unleash default set by hand is ignored" expect_mode 'auto (unleash is project-only; global value ignored)'
 git config --global --unset harness.mode
+# shellcheck disable=SC2016 # Expanded by eval inside check.
 check "user modes copied from unleash stay project-only" eval '"$CLI" mode new wild --from unleash >/dev/null && ! "$CLI" mode wild --global >/dev/null 2>&1'
 # shellcheck disable=SC2016 # Expanded by eval inside check.
 check "a deleted user mode falls back to auto" eval 'git config --local harness.mode gone && "$CLI" mode | grep -q "auto (invalid local value: gone)"'
@@ -279,6 +280,15 @@ check "missing documents are accepted" expect_exit 0 "$CLI" context
 check "disabled project succeeds with no context" expect_exit 0 "$CLI" disable
 check "disabled context succeeds" expect_exit 0 "$CLI" context
 check "disabled context is empty" test ! -s "$WORK/output"
+
+# Drift: every command the help lists must be documented, so docs cannot fall behind the CLI.
+"$CLI" help | awk '/^Commands:/ { listing = 1; next } /^Global options:/ { listing = 0 }
+  listing && /^  [a-z]/ { name = $1; if ($2 ~ /^(list|show|new|--[a-z]+)$/) name = name " " $2; print name }' > "$WORK/help-commands"
+check "help lists commands for the drift check" test -s "$WORK/help-commands"
+while IFS= read -r help_command; do
+  check "usage docs cover 'harness $help_command'" grep -qF "harness $help_command" "$REPO/docs/usage.md"
+done < "$WORK/help-commands"
+check "usage docs cover 'harness doctor --tools'" grep -qF "harness doctor --tools" "$REPO/docs/usage.md"
 
 check "doctor rejects unsupported arguments" expect_exit 2 "$CLI" doctor --quiet
 check "help documents doctor" expect_exit 0 "$CLI" help
