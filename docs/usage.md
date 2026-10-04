@@ -323,6 +323,13 @@ tack config delegation --unset # restore the default automatic policy
 tack config delegation         # shows auto (default) when unset
 ```
 
+Delegation picks a tier, never a vendor's model: `economical` for mechanical work, `balanced` for standard implementation, `strongest` for design-heavy or risky work. `tack models` shows the model each tool uses for each tier, from `model-tiers.txt`; Codex tiers say `inherit` until you name your account's models in `~/.config/agent-tack/model-tiers.txt` (same columns; your lines win):
+
+```bash
+tack models              # every tool and tier
+tack models economical   # one tier
+```
+
 Documentation is delegated separately, at every level: when a committed change leaves docs pending in 3 or more files, the assistant hands them to the `docs-writer` agent, which runs on an economical model, then reviews its result. Smaller updates, ADRs and design decisions stay with the main assistant.
 
 Explicitly asking for subagents authorises them for that task even when automatic mode is off. Disabling the workflow with `tack disable` also removes automatic delegation from the enabled-project policy. Delegation is driven by instructions, not enforced by a process scheduler, and can consume more tokens. Values set directly in git config that are neither `auto` nor `off` are treated as off and reported.

@@ -64,10 +64,25 @@ for agent in "$REPO"/agents/*.md; do
   check_file "$agent" "$(basename "$agent" .md)" "$AGENT_DESC_MAX"
   echo "  ✔ $(basename "$agent" .md)"
 done
+# Every tool that gets agents maps all three tiers, and agents name only inherit or a mapped model.
+while read -r tool _ _ _ _ agents_dir _; do
+  case "$tool" in '' | '#'*) continue ;; esac
+  [ "${agents_dir:--}" != - ] || continue
+  for tier in economical balanced strongest; do
+    grep -qE "^${tool}[[:space:]]+${tier}[[:space:]]+[^[:space:]]" "$REPO/model-tiers.txt" \
+      || err "model-tiers.txt: $tool has no '$tier' tier"
+  done
+done < "$REPO/targets.txt"
+for agent in "$REPO"/agents/*.md; do
+  agent_model="$(sed -n 's/^model: *//p' "$agent" | head -n 1)"
+  [ -z "$agent_model" ] || [ "$agent_model" = inherit ] \
+    || grep -qE "^claude[[:space:]]+[a-z]+[[:space:]]+$agent_model$" "$REPO/model-tiers.txt" \
+    || err "agents/$(basename "$agent"): model '$agent_model' is not a Claude Code tier model (model-tiers.txt)"
+done
 # Every skill belongs to a group the installer knows; the core workflow can never be left out.
 for skill_dir in "$REPO"/skills/*/; do
   skill_name="$(basename "$skill_dir")"
-  skill_group="$(sed -n "s/^$skill_name[[:space:]][[:space:]]*\([a-z]*\).*/\1/p" "$REPO/skill-groups.txt")"
+  skill_group="$(sed -n "s/^${skill_name}[[:space:]][[:space:]]*\([a-z]*\).*/\1/p" "$REPO/skill-groups.txt")"
   case "$skill_group" in
     core | process | stack) ;;
     '') err "skill-groups.txt: skill '$skill_name' has no group" ;;

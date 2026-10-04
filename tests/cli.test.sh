@@ -401,6 +401,19 @@ printf 'm1 | \377 | 2 | 0 | 0\n' > "$XDG_CONFIG_HOME/agent-tack/pricing.txt"
 check "a price file in another encoding never crashes the report" expect_exit 0 "$CLI" log --cost
 rm -f "$LOG_FILE" "$XDG_CONFIG_HOME/agent-tack/pricing.txt"
 
+# tack models: provider-neutral tiers mapped to each tool's models (model-tiers.txt).
+check "models lists every tier for each tool" expect_exit 0 "$CLI" models
+check "Claude Code's tiers are mapped" out_matches "^claude +economical +haiku"
+check "Codex tiers inherit until the user names them" out_matches "^codex +strongest +inherit"
+check "models narrows to one tier" expect_exit 0 "$CLI" models balanced
+check "one tier leaves the others out" out_lacks "economical"
+mkdir -p "$XDG_CONFIG_HOME/agent-tack"
+printf 'codex strongest my-big-model\n' > "$XDG_CONFIG_HOME/agent-tack/model-tiers.txt"
+check "user tiers win over the shipped ones" expect_exit 0 "$CLI" models strongest
+check "a user-named Codex model is shown" out_matches "^codex +strongest +my-big-model"
+rm -f "$XDG_CONFIG_HOME/agent-tack/model-tiers.txt"
+check "an unknown tier is rejected" expect_exit 2 "$CLI" models fastest
+
 # tack lesson: candidate lessons counted across sessions (docs/adr/0001-candidate-lessons.md).
 LESSONS="$XDG_STATE_HOME/agent-tack/lessons.tsv"
 is_private() { [ -n "$(find "$1" -perm 600 2>/dev/null)" ]; }
