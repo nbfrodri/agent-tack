@@ -18,6 +18,7 @@ python3 - "$REPO" "$WORK" <<'PY'
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 
@@ -188,26 +189,53 @@ def gh_stub(name, body):
     (stub / "gh").chmod(0o755)
     return f"{stub}:{os.environ['PATH']}"
 
+def bin_without(name, missing, extra=None):
+    """A PATH holding the usual tools except `missing`, plus an optional gh stub body."""
+    folder = work / name
+    folder.mkdir()
+    for tool in ("bash", "env", "cat", "dirname", "tr", "jq", "python3", "git", "awk", "grep", "sed",
+                 "head", "readlink", "basename", "sleep", "mktemp", "rm", "wc", "cut", "timeout", "kill"):
+        executable = shutil.which(tool)
+        if tool not in missing and executable:
+            (folder / tool).symlink_to(executable)
+    if extra is not None:
+        (folder / "gh").write_text("#!/usr/bin/env bash\n" + extra + "\n")
+        (folder / "gh").chmod(0o755)
+    return str(folder)
+
+# The rule is part of the workflow, so it applies only in enabled projects.
+merging = work / "merging"
+subprocess.run(["git", "init", "-q", str(merging)], check=True)
+subprocess.run(["git", "-C", str(merging), "config", "tack.enabled", "true"], check=True)
 green = gh_stub("green", "printf 'pass\\nskipping\\npass\\n'")
 red = gh_stub("red", "printf 'pass\\nfail\\n'")
 pending = gh_stub("pending", "printf 'pass\\npending\\n'; exit 8")
 unknown = gh_stub("unknown", "echo 'no checks reported' >&2; exit 1")
 selector = gh_stub("selector", '[ "$*" = "pr checks 42 --repo o/r --json bucket --jq .[].bucket" ] || exit 1; echo pass')
-expect("allow", "gh pr merge --merge --delete-branch", "merge: green checks allow the merge", path=green)
-expect("deny", "gh pr merge 42 --squash", "merge: failing checks deny the merge", path=red, reason="failing")
-expect("deny", "gh pr merge --merge", "merge: pending checks deny until CI finishes", path=pending, reason="still running")
-expect("ask", "gh pr merge --merge", "merge: checks gh cannot report ask", path=unknown, reason="cannot confirm")
-expect("ask", "gh pr merge --merge", "merge: without gh the guard asks", path=work / "no-python", reason="cannot confirm")
-expect("allow", "gh pr merge 42 -R o/r --merge --body 'x y'", "merge: the PR and repository are forwarded", path=selector)
-expect("ask", "gh pr merge $(gh pr list -q .[0].number) --merge", "merge: a dynamic PR selector asks", path=green)
-expect("allow", "gh pr view 42", "merge: other gh commands pass", path=red)
-expect("allow", "echo 'gh pr merge 42'", "merge: quoted text stays data", path=red)
-expect("deny", "gh pr merge --merge", "codex: pending checks deny", path=pending, reason="still running", args=("--codex",))
-expect("deny", "gh pr merge --merge", "codex: unknown checks deny and leave it to the user", path=unknown, reason="confirmation", args=("--codex",))
-relaxed = work / "relaxed"
-subprocess.run(["git", "init", "-q", str(relaxed)], check=True)
-subprocess.run(["git", "-C", str(relaxed), "config", "tack.mergeRequiresGreen", "false"], check=True)
-expect("allow", "gh pr merge --merge", "merge: the toggle off skips the check", path=red, cwd=relaxed)
+expect("allow", "gh pr merge --merge --delete-branch", "merge: green checks allow the merge", path=green, cwd=merging)
+expect("deny", "gh pr merge 42 --squash", "merge: failing checks deny the merge", path=red, reason="failing", cwd=merging)
+expect("deny", "gh pr merge --merge", "merge: pending checks deny until CI finishes", path=pending, reason="still running", cwd=merging)
+expect("ask", "gh pr merge --merge", "merge: checks gh cannot report ask", path=unknown, reason="cannot confirm", cwd=merging)
+expect("ask", "gh pr merge --merge", "merge: without gh the guard asks", path=bin_without("no-gh", ("gh",)), reason="cannot confirm", cwd=merging)
+expect("allow", "gh pr merge 42 -R o/r --merge --body 'x y'", "merge: the PR and repository are forwarded", path=selector, cwd=merging)
+expect("ask", "gh pr merge $(gh pr list -q .[0].number) --merge", "merge: a dynamic PR selector asks", path=green, cwd=merging)
+expect("ask", "cd ../other && gh pr merge --merge", "merge: after a directory change the checks cannot be read here", path=green, reason="cannot confirm", cwd=merging)
+expect("ask", "GH_REPO=o/r gh pr merge 5", "merge: a repository chosen through the environment asks", path=green, reason="cannot confirm", cwd=merging)
+expect("allow", "gh pr merge 5 --auto --squash", "merge: --auto may wait for pending checks", path=pending, cwd=merging)
+expect("deny", "gh pr merge 5 --auto --squash", "merge: --auto still refuses failing checks", path=red, reason="failing", cwd=merging)
+expect("allow", "gh pr merge 5 --disable-auto", "merge: turning auto-merge off needs no checks", path=red, cwd=merging)
+slow = bin_without("no-timeout", ("timeout",), "sleep 30; echo pass")
+expect("ask", "gh pr merge --merge", "merge: without timeout a slow gh is cut off and asks", path=slow, reason="cannot confirm", cwd=merging)
+expect("allow", "gh pr view 42", "merge: other gh commands pass", path=red, cwd=merging)
+expect("allow", "echo 'gh pr merge 42'", "merge: quoted text stays data", path=red, cwd=merging)
+expect("deny", "gh pr merge --merge", "codex: pending checks deny", path=pending, reason="still running", args=("--codex",), cwd=merging)
+expect("deny", "gh pr merge --merge", "codex: unknown checks deny and leave it to the user", path=unknown, reason="confirmation", args=("--codex",), cwd=merging)
+expect("allow", "gh pr merge --merge", "merge: projects without tack enabled are left alone", path=red)
+subprocess.run(["git", "-C", str(merging), "config", "tack.mergeRequiresGreen", "false"], check=True)
+expect("allow", "gh pr merge --merge", "merge: the toggle off skips the check", path=red, cwd=merging)
+# Environment assignments are skipped by their name, whatever their value holds.
+expect("deny", "X=a/b git commit --no-verify -m x", "an assignment with a slash still reaches the command")
+expect("deny", "/usr/bin/env X=a/b git commit --no-verify -m x", "env with a slash assignment still reaches the command")
 bare = work / "bare-guard"
 (bare / "lib").mkdir(parents=True)
 (bare / "guard-bash.sh").write_text(guard.read_text())

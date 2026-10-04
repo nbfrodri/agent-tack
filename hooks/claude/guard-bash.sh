@@ -276,12 +276,34 @@ check_harness() {
   esac
 }
 
-# merge-requires-green: `gh pr merge` waits for green CI. Failing or pending checks deny, so the
-# assistant fixes or waits and retries; when gh cannot report the checks, the user decides.
+# Prints the PR's check buckets, or nothing when gh fails or takes over 6 seconds. Without
+# timeout(1) (stock macOS), a background watchdog stops gh before the hook's own timeout.
+pr_buckets() {
+  local out pid n=0
+  if command -v timeout >/dev/null 2>&1; then
+    (cd "$cwd" && timeout 6 gh pr checks "$@" --json bucket --jq '.[].bucket' 2>/dev/null)
+    return 0
+  fi
+  out="$(mktemp "${TMPDIR:-/tmp}/tack-guard.XXXXXX")" || return 0
+  (cd "$cwd" && exec gh pr checks "$@" --json bucket --jq '.[].bucket' >"$out" 2>/dev/null) &
+  pid=$!
+  while kill -0 "$pid" 2>/dev/null && [ "$n" -lt 60 ]; do sleep 0.1; n=$((n + 1)); done
+  if kill -0 "$pid" 2>/dev/null; then
+    kill "$pid" 2>/dev/null
+  else
+    cat "$out"
+  fi
+  rm -f "$out"
+}
+
+# merge-requires-green: in enabled projects `gh pr merge` waits for green CI. Failing or pending
+# checks deny, so the assistant fixes or waits and retries; when the checks cannot be read for
+# the pull request being merged, the user decides. --auto lets GitHub wait for pending checks.
+GH_REPO_FROM_ENV=0
 check_gh() {
   [ "${1:-}" = pr ] && [ "${2:-}" = merge ] || return 0
   shift 2
-  local selector=() repo=() skip_next=0 prev="" a setting buckets limit=()
+  local selector=() repo=() skip_next=0 prev="" a setting buckets auto=0 cli
   for a in "$@"; do
     if [ "$skip_next" -eq 1 ]; then
       skip_next=0
@@ -292,26 +314,33 @@ check_gh() {
       -R | --repo | -b | --body | -F | --body-file | -t | --subject | -A | --author-email | --match-head-commit)
         prev="$a"; skip_next=1 ;;
       --repo=*) repo=(--repo "${a#--repo=}") ;;
+      --disable-auto) return 0 ;;
+      --auto) auto=1 ;;
       -*) ;;
       *) [ "${#selector[@]}" -gt 0 ] || selector=("$a") ;;
     esac
   done
-  setting="$(cd "$cwd" && "$(dirname "$0")/../../bin/tack" config merge-requires-green 2>/dev/null)"
+  cli="$(dirname "$0")/../../bin/tack"
+  (cd "$cwd" && "$cli" status --quiet) 2>/dev/null || return 0
+  setting="$(cd "$cwd" && "$cli" config merge-requires-green 2>/dev/null)"
   [ "${setting%% *}" != false ] || return 0
   case "${selector[*]-} ${repo[*]-}" in
     *'__subst__'* | *'$'* | *'`'*) ask "Cannot confirm CI for a pull request chosen at run time; check that its checks passed before merging."; return 0 ;;
   esac
+  if [ "$ACTS_ELSEWHERE" -eq 1 ] || [ "$GH_REPO_FROM_ENV" -eq 1 ]; then
+    ask "Cannot confirm the CI checks of a pull request in another directory or repository; check them before merging."
+    return 0
+  fi
   if ! command -v gh >/dev/null 2>&1; then
     ask "Cannot confirm the pull request's CI checks passed (gh is not available); check them before merging."
     return 0
   fi
-  command -v timeout >/dev/null 2>&1 && limit=(timeout 6)
-  buckets="$(cd "$cwd" && ${limit[@]+"${limit[@]}"} gh pr checks ${selector[@]+"${selector[@]}"} ${repo[@]+"${repo[@]}"} \
-    --json bucket --jq '.[].bucket' 2>/dev/null)"
+  buckets="$(pr_buckets ${selector[@]+"${selector[@]}"} ${repo[@]+"${repo[@]}"})"
   case "$buckets" in
-    '') ask "Cannot confirm the pull request's CI checks passed (gh reported none); check them before merging." ;;
+    '') ask "Cannot confirm the pull request's CI checks passed (gh reported none or timed out); check them before merging." ;;
     *fail* | *cancel*) deny "The pull request's CI checks are failing. Read the failed job's log (gh run view --log-failed), fix it and push before merging." ;;
-    *pending*) deny "The pull request's CI checks are still running. Wait for them (gh pr checks --watch) and merge once they pass." ;;
+    *pending*)
+      [ "$auto" -eq 1 ] || deny "The pull request's CI checks are still running. Wait for them (gh pr checks --watch) and merge once they pass." ;;
   esac
 }
 
@@ -415,6 +444,17 @@ check_command() {
   # Skip env assignments and wrappers that run the rest as a command
   while [ "$i" -lt "${#words[@]}" ]; do
     w="${words[$i]}"
+    # An assignment is recognised by its name: its value may hold slashes (X=a/b).
+    case "$w" in
+      [A-Za-z_]*=*)
+        case "${w%%=*}" in
+          *[!A-Za-z0-9_]*) ;;
+          *)
+            case "${w%%=*}" in GH_REPO | GH_HOST) GH_REPO_FROM_ENV=1 ;; esac
+            i=$((i + 1))
+            continue ;;
+        esac ;;
+    esac
     case "${w##*/}" in
       *=*) case "$w" in -*) break ;; esac; i=$((i + 1)) ;;
       sudo | doas)

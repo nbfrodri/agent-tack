@@ -115,7 +115,7 @@ A rule is satisfied when any of its docs changed on the branch or in the working
 
 ### CI: wait for it, merge only when green
 
-In `standard`, `strict` and `unleash`, after a push or a new pull request the assistant waits for CI in the background, reports the result and fixes failures from the failed job's log before continuing (`ci-watch`, default `true`; `lite` and `lean` skip it). Independently, the command guard refuses `gh pr merge` while the pull request's checks fail or are still running, so the assistant waits and retries; when `gh` is missing or reports no checks, it asks you (`merge-requires-green`, default `true`):
+In `standard`, `strict` and `unleash`, after a push or a new pull request the assistant waits for CI in the background, reports the result and fixes failures from the failed job's log before continuing (`ci-watch`, default `true`; `lite` and `lean` skip it). Independently, in enabled projects the command guard refuses `gh pr merge` while the pull request's checks fail or are still running, so the assistant waits and retries. `--auto` may go ahead with pending checks, because GitHub then waits for them, and `--disable-auto` is never checked. When the checks cannot be read (no `gh`, no checks reported, a slow `gh`, or a merge after `cd` or with `GH_REPO`), it asks you; in Codex that becomes a refusal. A project without CI therefore asks on every merge: turn the rule off there (`merge-requires-green`, default `true`):
 
 ```bash
 tack config ci-watch false               # do not wait for CI after a push in this project
@@ -124,7 +124,7 @@ tack config merge-requires-green false   # let gh pr merge through without check
 
 ### Activity log
 
-An opt-in log of what the hooks did, for Claude Code and Codex: session starts with their mode, every guard decision (deny or ask) with the command, and the findings of the check before stopping. Lines are tab-separated (UTC time, tool, project, event, detail) in `~/.local/state/agent-tack/activity.log`, kept to the newest few thousand.
+An opt-in log of what the hooks did, for Claude Code and Codex: session starts with their mode, every guard decision (deny or ask) with the command, and the findings of the check before stopping. Lines are tab-separated (UTC time, tool, project, event, detail) in `~/.local/state/agent-tack/activity.log`, kept to the newest few thousand. The file is readable only by you, because logged commands may contain tokens; it never leaves your machine.
 
 ```bash
 tack config activity-log true --global   # record in every project (or drop --global for one)
