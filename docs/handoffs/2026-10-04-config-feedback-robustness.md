@@ -12,7 +12,7 @@
   - WS3: `574f484` help-vs-docs drift test; `d73b1b5` opt-in fast check after edits; `043c2d8` Stop hook (uncommitted work, failing check, stale handoff, docs map) with `docs-map.txt`.
   - WS4: `9d4d648` token-efficiency rules (dev-workflow, global line, orchestrate worktree lesson).
 - Verified: full suite green at `df349d0` (797 checks + evals); ShellCheck clean. Installed on the real HOME from this branch (mods `usage-band` 0.2.0, `agent-activity` 0.1.0; doctor OK).
-- Paused 2026-10-04 at the owner's request: 5-hour usage at 85%. Do not start the benchmark until usage resets.
+- Usage note (2026-10-04): the owner's session auto-resumes after a usage reset, so keep working. The benchmark launcher is resumable: `scratchpad/run-final-benchmark.py <frozen> <rev> <out> claude-sonnet-5-5` skips completed sessions and exits 3 on a usage limit; relaunch it after the reset.
 - Resume steps, in order:
   1. Read the `code-reviewer` findings on `main...feat/config-feedback-robustness` (rerun the review if its result is lost); fix verified findings with tests, full suite and full ShellCheck.
   2. Benchmark: freeze the branch head in a scratchpad worktree; reuse the launcher pattern from the pilot (private HOME and XDG paths per session, `install.sh --skip-plugins`, `EVALS_MODEL=claude-sonnet-5-5`); `bug-fix` ×2 and `new-project` ×1 for baseline, lite, standard, strict, auto; stop on a usage limit. Watch the Stop hook's extra turns.
