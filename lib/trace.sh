@@ -33,7 +33,7 @@ ID_AFTER='([^A-Za-z0-9]|$)'
 files_naming() {
   local id="$1" file found=''
   while IFS= read -r file; do
-    [ -n "$file" ] && [ -f "$file" ] || continue
+    if [ -z "$file" ] || [ ! -f "$file" ]; then continue; fi
     if grep -qE -- "$ID_BEFORE$id$ID_AFTER" "$file"; then found="${found:+$found, }$file"; fi
   done <<EOF
 $tests
@@ -58,7 +58,7 @@ EOF
 # Tests that name a requirement the plan does not define, for example one that was dropped.
 defined="$(printf '%s\n' "$definitions" | cut -d'|' -f1)"
 while IFS= read -r file; do
-  [ -n "$file" ] && [ -f "$file" ] || continue
+  if [ -z "$file" ] || [ ! -f "$file" ]; then continue; fi
   grep -oE "${ID_BEFORE}R[0-9]+" "$file" | sed 's/^[^R]*//' | sort -u | while IFS= read -r id; do
     if ! printf '%s\n' "$defined" | grep -qx -- "$id"; then
       echo "Warning: $id is named in $file but not in the plan"
