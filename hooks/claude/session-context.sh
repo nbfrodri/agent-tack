@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Claude Code SessionStart hook: tells the model whether the full agent-harness workflow is
+# Claude Code SessionStart hook: tells the model whether the tack workflow is
 # enabled for the project it starts in. Never fails the session.
 set -u
 

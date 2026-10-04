@@ -12,7 +12,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash '__REPO__/hooks/claude/guard-bash.sh' #harness",
+            "command": "bash '__REPO__/hooks/claude/guard-bash.sh' #tack",
             "timeout": 10
           }
         ]
@@ -22,7 +22,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash '__REPO__/hooks/claude/budget.sh' #harness",
+            "command": "bash '__REPO__/hooks/claude/budget.sh' #tack",
             "timeout": 10
           }
         ]
@@ -34,7 +34,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash '__REPO__/hooks/claude/format-file.sh' #harness",
+            "command": "bash '__REPO__/hooks/claude/format-file.sh' #tack",
             "timeout": 60,
             "statusMessage": "Formatting"
           }
@@ -45,7 +45,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash '__REPO__/hooks/claude/fast-check.sh' #harness",
+            "command": "bash '__REPO__/hooks/claude/fast-check.sh' #tack",
             "timeout": 90,
             "statusMessage": "Running the fast check"
           }
@@ -57,7 +57,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash '__REPO__/hooks/claude/stop-check.sh' #harness",
+            "command": "bash '__REPO__/hooks/claude/stop-check.sh' #tack",
             "timeout": 90
           }
         ]
@@ -68,7 +68,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash '__REPO__/hooks/claude/session-context.sh' #harness",
+            "command": "bash '__REPO__/hooks/claude/session-context.sh' #tack",
             "timeout": 10
           }
         ]

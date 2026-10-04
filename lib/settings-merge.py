@@ -3,13 +3,13 @@
 
 Usage: lib/settings-merge.py <current settings.json> <harness settings.json>   (prints the result)
 Objects are deep-merged and the harness values win; the user's other keys are kept. Hook groups
-tagged "#harness" (or "#agent-config", the old name) are replaced; the user's own hooks are kept.
+tagged "#tack" (or "#harness" and "#agent-config", the former names) are replaced; the user's own hooks are kept.
 Same behaviour as lib/settings-merge.jq, which install.sh uses when python3 is missing.
 """
 import json, sys
 
 # Hooks this repo installs; "#agent-config" is the tag of older versions
-TAGS = ("#harness", "#agent-config")
+TAGS = ("#tack", "#harness", "#agent-config")
 
 def merge(base, extra):
     for key, value in extra.items():

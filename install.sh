@@ -18,7 +18,7 @@ set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 STAMP="$(date +%Y%m%d-%H%M%S)"
-WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/agent-harness.XXXXXX")" || { echo "cannot create a temp dir" >&2; exit 1; }
+WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/agent-tack.XXXXXX")" || { echo "cannot create a temp dir" >&2; exit 1; }
 trap 'rm -rf "$WORKDIR"' EXIT
 SKIP_PLUGINS=0
 SKIP_MODS=0
@@ -222,7 +222,7 @@ EOF
 
 # Merges claude/settings.json into ~/.claude/settings.json:
 #   - objects are deep-merged and the repo's values win; your other keys are kept
-#   - hooks: entries tagged "#harness" are replaced by the repo's, your own hooks are kept
+#   - hooks: entries tagged "#tack" (or the former "#harness") are replaced by the repo's, your own hooks are kept
 #   - __REPO__ in the repo file is replaced with this repo's path
 merge_settings() {
   merge_json "Claude Code settings" "$REPO/claude/settings.json" "$HOME/.claude/settings.json"
@@ -482,7 +482,7 @@ install_plugins() {
 }
 
 main() {
-  printf '%sInstalling agent-harness from %s%s\n' "$C_HEAD" "$REPO" "$C_OFF"
+  printf '%sInstalling tack from %s%s\n' "$C_HEAD" "$REPO" "$C_OFF"
   ownership_init || exit 1
   capture_harness_hooks
   install_links

@@ -28,13 +28,13 @@ git_global() {
   HOME="$1" XDG_CONFIG_HOME="$1/.config" GIT_CONFIG_NOSYSTEM=1 git config --global "${@:2}"
 }
 
-# Counts hook groups tagged #harness for an event
+# Counts hook groups tagged #tack for an event
 count_ours() {
   python3 -c '
 import json, sys
 d = json.load(open(sys.argv[1]))
-print(sum(1 for g in d.get("hooks", {}).get(sys.argv[2], []) if any("#harness" in h.get("command", "") for h in g.get("hooks", []))))
-' "$1" "$2" 2>/dev/null || jq --arg e "$2" '[.hooks[$e][]? | select(any(.hooks[]?; .command | contains("#harness")))] | length' "$1"
+print(sum(1 for g in d.get("hooks", {}).get(sys.argv[2], []) if any("#tack" in h.get("command", "") for h in g.get("hooks", []))))
+' "$1" "$2" 2>/dev/null || jq --arg e "$2" '[.hooks[$e][]? | select(any(.hooks[]?; .command | contains("#tack")))] | length' "$1"
 }
 
 # Reads a JSON value with python3 or jq.
@@ -131,7 +131,7 @@ check "repo path substituted (no __REPO__ left)" "! grep -q __REPO__ '$S'"
 check "guard hook points at this repo" "grep -q \"$REPO/hooks/claude/guard-bash.sh\" '$S'"
 C="$H/.codex/hooks.json"
 check "codex: hooks are registered in ~/.codex/hooks.json" "[ -f '$C' ] && ! grep -q __REPO__ '$C'"
-check "codex: the guard runs in Codex mode" "grep -q \"guard-bash.sh' --codex #harness\" '$C'"
+check "codex: the guard runs in Codex mode" "grep -q \"guard-bash.sh' --codex #tack\" '$C'"
 check "codex: session context and stop check are registered" "grep -q 'session-context.sh' '$C' && grep -q 'stop-check.sh' '$C'"
 check "your own hooks are kept" "grep -q my-own-hook '$S'"
 check "outdated tagged hooks are replaced" "! grep -q /old/path '$S'"
