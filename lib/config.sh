@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+# `harness config`: list, read and write the feature toggles declared in features.txt.
+set -u
+
+registry="$1/features.txt"
+shift
+
+usage_error() { printf 'harness: %s (see --help)\n' "$1" >&2; exit 2; }
+fail() { printf 'harness: %s\n' "$1" >&2; exit 1; }
+in_repo() { git rev-parse --show-toplevel >/dev/null 2>&1; }
+
+# Sets name, key, default, values, scope, enforcement and description for one feature.
+load_feature() {
+  local line
+  line="$(grep -E "^$1[[:space:]]" "$registry")" || return 1
+  read -r name key default values scope enforcement description <<EOF
+$line
+EOF
+}
+
+# Prints "value (source)": a project setting wins over the global one, then the default.
+current() {
+  local value
+  if [ "$scope" != global ] && in_repo && value="$(git config --local --get "$key" 2>/dev/null)"; then
+    printf '%s (local)\n' "$value"
+  elif value="$(git config --global --get "$key" 2>/dev/null)"; then
+    printf '%s (global)\n' "$value"
+  else
+    printf '%s (default)\n' "$default"
+  fi
+}
+
+is_allowed() {
+  if [ "$values" = bool ]; then
+    case "$1" in true | false) return 0 ;; *) return 1 ;; esac
+  fi
+  case "|$values|" in *"|$1|"*) return 0 ;; *) return 1 ;; esac
+}
+
+list() {
+  local shown source name key default values scope enforcement description
+  printf '%-22s%-10s%-9s%-12s%s\n' NAME VALUE SOURCE ENFORCEMENT DESCRIPTION
+  while read -r name key default values scope enforcement description; do
+    case "$name" in '' | '#'*) continue ;; esac
+    shown="$(current)"
+    source="${shown##*(}"
+    printf '%-22s%-10s%-9s%-12s%s\n' "$name" "${shown% (*}" "${source%)}" "$enforcement" "$description"
+  done < "$registry"
+}
+
+target_scope=local unset=false feature='' value=''
+for arg in "$@"; do
+  case "$arg" in
+    --global) target_scope=global ;;
+    --unset) unset=true ;;
+    -*) usage_error "unknown option for config: $arg" ;;
+    *)
+      if [ -z "$feature" ]; then feature="$arg"
+      elif [ -z "$value" ]; then value="$arg"
+      else usage_error 'too many arguments for config'; fi
+      ;;
+  esac
+done
+
+if [ -z "$feature" ]; then
+  [ "$unset" = false ] && [ "$target_scope" = local ] || usage_error 'config needs a feature name'
+  list
+  exit 0
+fi
+load_feature "$feature" || usage_error "unknown feature: $feature (run 'harness config' to list them)"
+[ "$unset" = false ] || [ -z "$value" ] || usage_error '--unset takes no value'
+
+if [ "$unset" = false ] && [ -z "$value" ]; then
+  current
+  exit 0
+fi
+if [ "$scope" = global ] && [ "$target_scope" = local ]; then
+  usage_error "$name is a user-wide setting; add --global"
+fi
+if [ "$target_scope" = local ] && ! in_repo; then
+  echo "harness: not inside a git repository" >&2
+  exit 2
+fi
+
+if [ "$unset" = true ]; then
+  if git config "--$target_scope" --get "$key" >/dev/null 2>&1; then
+    git config "--$target_scope" --unset-all "$key" || fail "cannot unset $name"
+  fi
+  printf 'Removed the %s setting for %s; now %s.\n' "$target_scope" "$name" "$(current)"
+  exit 0
+fi
+is_allowed "$value" || usage_error "invalid value for $name: $value (allowed: ${values/bool/true|false})"
+git config "--$target_scope" "$key" "$value" || fail "cannot set $name"
+printf 'Set %s to %s (%s).\n' "$name" "$value" "$target_scope"

@@ -11,7 +11,8 @@ Clone it into any directory you choose and install from that checkout, as shown 
 | Conversation language, permissions and global preferences | `global/AGENTS.md` |
 | Planning, testing, commits and documentation workflow, and what each level requires | `skills/dev-workflow/` and its references (default level: `harness mode <mode> --global`) |
 | Task-specific guidance or reusable templates | `skills/<name>/SKILL.md`, `references/` and `assets/` |
-| Automatic delegation, complexity routing and model fallbacks | `skills/orchestrate/` (per-project opt-out: `git config harness.delegation off`) |
+| Automatic delegation, complexity routing and model fallbacks | `skills/orchestrate/` (per-project opt-out: `harness config delegation off`) |
+| Feature toggles shown by `harness config` | `features.txt`: one line per toggle (name, git key, default, allowed values, scope, enforcement, description). Code that honours a new toggle reads its git key; keep safety checks out of the registry |
 | Agent responsibilities and defaults | `agents/*.md` |
 | Supported tools and installation paths | `targets.txt` |
 | Claude Code settings and registered hooks | `claude/settings.json` |

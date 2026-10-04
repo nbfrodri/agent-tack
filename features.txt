@@ -1,0 +1,13 @@
+# Feature toggles that `harness config` lists, reads and writes. Add a feature by adding a line.
+# Columns: name, git config key, default, allowed values (bool, or alternatives such as auto|off),
+#          scope (any: project or global; global: user-wide only), enforcement (hook: a hook
+#          guarantees it; instruction: the assistant follows it; installer: install.sh reads it),
+#          description.
+# Safety checks (secret scanning, the command guard, protected main and tags) are deliberately
+# absent: they keep their one-off overrides, described in docs/usage.md.
+#
+# name                key                          default  values    scope   enforcement  description
+context               harness.context              true     bool      any     instruction  Load project instructions, the docs index and the handoff check at session start
+conventional-commits  harness.conventionalCommits  true     bool      any     hook         Enforce Conventional Commits in enabled projects
+delegation            harness.delegation           auto     auto|off  any     instruction  Delegate separable strict-level work to subagents automatically
+mods                  harness.mods                 true     bool      global  installer    Install the harness's Claude Code mods (usage band, activity pane)

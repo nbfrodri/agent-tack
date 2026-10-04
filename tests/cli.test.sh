@@ -26,6 +26,7 @@ expect_exit() {
 contains() { grep -qF -- "$1" "$WORK/output"; }
 output_is() { [ "$(cat "$WORK/output")" = "$1" ]; }
 expect_mode() { expect_exit 0 "$CLI" mode && output_is "$1"; }
+expect_mode_like() { local expected="$1"; shift; expect_exit 0 "$@" && output_is "$expected"; }
 expect_status() {
   local expected_exit="$1" workflow="$2" trust="$3" expected
   shift 3
@@ -132,6 +133,35 @@ check "mode outside a repository shows the global default" expect_mode 'strict (
 git config --global --unset harness.mode
 check "help documents mode" expect_exit 0 "$CLI" help
 check "help includes mode syntax" contains 'mode [MODE] [--global]'
+check "help documents config" contains 'config [NAME [VALUE]] [--global]'
+cd "$WORK/project" || exit 1
+
+check "config lists every registered feature" expect_exit 0 "$CLI" config
+check "config listing shows value, source and enforcement" contains 'conventional-commits  true      default  hook'
+check "config listing includes instruction toggles" contains 'delegation            auto      default  instruction'
+check "config listing includes installer toggles" contains 'mods                  true      default  installer'
+check "config shows one feature" expect_exit 0 "$CLI" config delegation
+check "config shows the default value and source" output_is 'auto (default)'
+check "config sets a project value" expect_exit 0 "$CLI" config delegation off
+check "config stores the project value under its git key" test "$(git config --local --get harness.delegation)" = off
+check "config reports the project value" expect_mode_like 'off (local)' "$CLI" config delegation
+check "config sets a global value" expect_exit 0 "$CLI" config context false --global
+check "config stores the global value" test "$(git config --global --get harness.context)" = false
+check "config reports the global source" expect_mode_like 'false (global)' "$CLI" config context
+check "config unsets a project value" expect_exit 0 "$CLI" config delegation --unset
+check "unset project value falls back to the default" expect_mode_like 'auto (default)' "$CLI" config delegation
+check "config unsets a global value" expect_exit 0 "$CLI" config context --unset --global
+check "config rejects unknown features" expect_exit 2 "$CLI" config turbo
+check "config rejects invalid values" expect_exit 2 "$CLI" config delegation sometimes
+check "rejected value is not stored" test -z "$(git config --get harness.delegation)"
+check "config rejects non-boolean values for boolean features" expect_exit 2 "$CLI" config context maybe
+check "global-only features refuse a project value" expect_exit 2 "$CLI" config mods false
+check "global-only features accept a global value" expect_exit 0 "$CLI" config mods false --global
+git config --global --unset harness.mods
+# shellcheck disable=SC2016 # Expanded by eval inside check.
+check "config does not expose safety checks as toggles" eval '! "$CLI" config | grep -qi "secret\|guard"'
+cd "$WORK" || exit 1
+check "project config requires a repository" expect_exit 2 "$CLI" config delegation off
 cd "$WORK/project" || exit 1
 
 printf 'Project "instructions"\\path\n' > AGENTS.md

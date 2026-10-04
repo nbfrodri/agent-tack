@@ -16,6 +16,9 @@ Commands:
                       (or as the global default with --global)
   mode --unset [--global]
                       Remove the project (or global) mode setting
+  config [NAME [VALUE]] [--global]
+                      List feature toggles, show one, or set it for this project
+                      (or user-wide with --global); config NAME --unset removes it
   enable [--shared]    Enable this clone, or use a shareable .harness marker
   disable             Disable this clone and remove the shared marker
   trust [--revoke]     Allow or revoke project formatter execution in this clone
@@ -32,7 +35,8 @@ Command options:
   --quiet             Suppress output for status or trusted; preserve exit codes
   --shared            Enable with a .harness file you can commit and share
   --revoke            Revoke local formatter trust without disabling the workflow
-  --global            Read or write the user's default mode instead of the project's
+  --global            Read or write the user's default instead of the project's
+  --unset             Remove a mode or config setting so the next level applies
 
 Modes:
   auto                Default: the assistant picks lite, standard or strict per task
@@ -51,6 +55,8 @@ Examples:
   harness status
   harness mode lite --global
   harness mode strict
+  harness config
+  harness config delegation off
   harness trust
   harness trusted --quiet
   harness trust --revoke
@@ -218,6 +224,11 @@ case "$cmd" in
     source_root="$(harness_root)" || fail "cannot locate installed context renderer"
     mode="$(effective_mode)"
     bash "$source_root/lib/project-context.sh" "$root" "${mode%% *}"
+    ;;
+  config)
+    source_root="$(harness_root)" || fail "cannot locate the feature registry"
+    bash "$source_root/lib/config.sh" "$source_root" "$@"
+    exit
     ;;
   doctor)
     allowed_option=''; check_args "$@"

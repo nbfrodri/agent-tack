@@ -40,6 +40,10 @@ harness mode              # effective mode and its source
 harness mode lite         # set the mode for this project
 harness mode strict --global   # set your default for every project
 harness mode --unset      # go back to the global default
+harness config            # feature toggles with value, source and enforcement
+harness config delegation off            # set a toggle for this project
+harness config context false --global    # set it for every project
+harness config delegation --unset        # go back to the global value or default
 harness context           # project instructions plus an index of architecture and active handoff
 harness trust             # permit automatic project formatter execution in this clone
 harness trust --revoke     # revoke execution permission without disabling the workflow
@@ -58,6 +62,18 @@ git config --global harness.enabled true   # every repo (a local disable still w
 | Claude Code auto-format | With explicit local trust | — |
 
 Start a new session after switching. Claude Code is told the status at session start; other tools check `harness status` as their instructions say. Projects created with "create a project…" are enabled automatically.
+
+## Feature toggles
+
+`harness config` turns individual features on or off without editing files. It lists every toggle declared in `features.txt` with its current value, where that value comes from (`local`, `global` or `default`) and how it is enforced:
+
+| Enforcement | Meaning |
+| --- | --- |
+| `hook` | A hook guarantees it (for example `conventional-commits`) |
+| `instruction` | The assistant follows it; guided, not forced (for example `delegation`, `context`) |
+| `installer` | `install.sh` reads it; user-wide only (for example `mods`) |
+
+A project value wins over the global one, which wins over the default. Values are validated: booleans take `true` or `false`, others list their alternatives. User-wide features refuse a project value. Secret scanning, the command guard and the protection of `main` and tags are not toggles; they keep their [one-off overrides](#overrides). Add a toggle by adding a line to `features.txt` ([customization](customization.md)).
 
 ## Workflow modes
 
@@ -116,12 +132,12 @@ Talk normally, in your language:
 In enabled projects, complex strict-level work with independent parts is delegated automatically after the plan is approved; at lite and standard the assistant suggests delegation and waits for your OK, because each subagent starts cold and costs extra tokens. Small or tightly coupled tasks stay with the main assistant. The harness recommends available models and effort according to complexity; the actual selection depends on the tool's supported controls. Tools without subagents perform the plan sequentially.
 
 ```bash
-git config --local harness.delegation off    # disable automatic delegation in this clone
-git config --local harness.delegation auto   # restore the default automatic policy
-git config --get harness.delegation          # absent means auto
+harness config delegation off     # disable automatic delegation in this project
+harness config delegation --unset # restore the default automatic policy
+harness config delegation         # shows auto (default) when unset
 ```
 
-Explicitly asking for subagents authorises them for that task even when automatic mode is off. Disabling the workflow with `harness disable` also removes automatic delegation from the enabled-project policy. Delegation is driven by instructions, not enforced by a process scheduler, and can consume more tokens. Invalid mode values are treated as off and reported.
+Explicitly asking for subagents authorises them for that task even when automatic mode is off. Disabling the workflow with `harness disable` also removes automatic delegation from the enabled-project policy. Delegation is driven by instructions, not enforced by a process scheduler, and can consume more tokens. Values set directly in git config that are neither `auto` nor `off` are treated as off and reported.
 
 The assistant commits coherent verified milestones as it works. Before integrating a PR, it inspects the history, recommends preserving useful milestones with a merge commit or combining temporary intermediate commits with squash, and offers the available methods in the existing integration confirmation. Commits are preserved unless you explicitly choose squash; a choice already given for that integration is respected without asking again.
 
@@ -136,7 +152,7 @@ Every supported tool reads the same installed instructions and skills, so you ca
 ## Overrides
 | Situation | Command |
 | --- | --- |
-| A repo with other commit conventions | `git config harness.conventionalCommits false` |
+| A repo with other commit conventions | `harness config conventional-commits false` |
 | A deliberate force-push to `main` | `HARNESS_ALLOW_FORCE_PUSH=1 git push --force …` |
 | A deliberate tag change | `HARNESS_ALLOW_TAG=1 git push …` |
 | A false positive in the secrets check | `HARNESS_ALLOW_SECRETS=1 git commit …` |
