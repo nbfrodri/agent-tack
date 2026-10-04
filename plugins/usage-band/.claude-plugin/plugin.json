@@ -1,0 +1,7 @@
+{
+  "name": "usage-band",
+  "version": "0.1.0",
+  "description": "Always-visible band above the prompt with the 5-hour and weekly usage limits, context fill and session cost",
+  "author": { "name": "agent-harness" },
+  "types": "./types/index.d.ts"
+}
