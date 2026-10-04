@@ -62,7 +62,8 @@ for dir in .agents/skills .claude/skills .codex/skills; do
 done
 check "all $agent_count agents linked" "[ \"\$(find '$H/.claude/agents' -maxdepth 1 -type l | wc -l | tr -d ' ')\" = '$agent_count' ]"
 check "canonical ~/.agents/harness link to the repo" "[ \"\$(readlink '$H/.agents/harness')\" = '$REPO' ]"
-check "harness command linked into ~/.local/bin" "[ \"\$(readlink '$H/.local/bin/harness')\" = '$REPO/bin/harness' ]"
+check "tack command linked into ~/.local/bin" "[ \"\$(readlink '$H/.local/bin/tack')\" = '$REPO/bin/tack' ]"
+check "legacy harness alias linked into ~/.local/bin" "[ \"\$(readlink '$H/.local/bin/harness')\" = '$REPO/bin/harness' ]"
 check "settings.json disables AI attribution" "[ \"\$(json_get '$H/.claude/settings.json' attribution.commit)\" = '\"\"' ]"
 
 check "fresh install creates no backups" "! find '$H' -name '*.bak-*' | grep -q ."

@@ -92,9 +92,9 @@ check 'broken managed capability is an error' test "$RC" -eq 1
 check 'broken capability names the tool' grep -q 'FAIL claude' "$WORK/report"
 ln -s "$REPO/global/AGENTS.md" "$HOME/.claude/CLAUDE.md"
 
-check 'harness doctor --tools is wired' bash -c "'$REPO/bin/harness' doctor --tools | grep -q 'claude: version'"
-check 'help documents --tools' bash -c "'$REPO/bin/harness' help | grep -q -- '--tools'"
-check 'doctor rejects unknown options' bash -c "'$REPO/bin/harness' doctor --nope >/dev/null 2>&1; [ \$? -eq 2 ]"
+check 'harness doctor --tools is wired' bash -c "'$REPO/bin/tack' doctor --tools | grep -q 'claude: version'"
+check 'help documents --tools' bash -c "'$REPO/bin/tack' help | grep -q -- '--tools'"
+check 'doctor rejects unknown options' bash -c "'$REPO/bin/tack' doctor --nope >/dev/null 2>&1; [ \$? -eq 2 ]"
 
 echo "weekly compatibility workflow"
 WF="$REPO/.github/workflows/tools-compat.yml"

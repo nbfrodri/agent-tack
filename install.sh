@@ -198,10 +198,13 @@ EOF
 
   section "Config repo link"
   # Canonical path skills and agents use to reach this repo, wherever it is cloned
+  link "$REPO" "$HOME/.agents/tack"
+  # Former canonical path, kept for skills and settings written before the rename
   link "$REPO" "$HOME/.agents/harness"
 
   section "Command"
-  [ "$DRY_RUN" -eq 1 ] || chmod +x "$REPO/bin/harness" 2>/dev/null
+  [ "$DRY_RUN" -eq 1 ] || chmod +x "$REPO/bin/tack" "$REPO/bin/harness" 2>/dev/null
+  link "$REPO/bin/tack" "$HOME/.local/bin/tack"
   link "$REPO/bin/harness" "$HOME/.local/bin/harness"
   case ":$PATH:" in
     *":$HOME/.local/bin:"*) ;;
@@ -287,8 +290,8 @@ merge_json() {
 capture_harness_hooks() {
   local link_path root target entry
   : > "$WORKDIR/prior-harness-hooks"
-  for link_path in "$HOME/.agents/harness" "$HOME/.agents/agent-config" \
-    "$HOME/.local/bin/harness" "$HOME/.local/bin/agent-config"; do
+  for link_path in "$HOME/.agents/tack" "$HOME/.agents/harness" "$HOME/.agents/agent-config" \
+    "$HOME/.local/bin/tack" "$HOME/.local/bin/harness" "$HOME/.local/bin/agent-config"; do
     [ -L "$link_path" ] || continue
     target="$(readlink "$link_path")"
     ownership_plain_path "$target" || continue
@@ -296,7 +299,7 @@ capture_harness_hooks() {
       "$HOME/.agents/"*) root="${target%/}" ;;
       *)
         case "$target" in
-          */bin/harness|*/bin/agent-config) root="$(dirname "$(dirname "$target")")" ;;
+          */bin/tack|*/bin/harness|*/bin/agent-config) root="$(dirname "$(dirname "$target")")" ;;
           *) continue ;;
         esac
         ;;
@@ -314,7 +317,7 @@ capture_harness_hooks() {
 is_harness_hooks() {
   local path="$1" known
   if [ -d "$path" ]; then
-    [ -e "$path/_chain" ] && { [ -e "$path/../bin/harness" ] || [ -e "$path/../bin/agent-config" ]; }
+    [ -e "$path/_chain" ] && { [ -e "$path/../bin/tack" ] || [ -e "$path/../bin/harness" ] || [ -e "$path/../bin/agent-config" ]; }
     return
   fi
   while IFS= read -r known; do

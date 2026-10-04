@@ -1,0 +1,269 @@
+#!/usr/bin/env bash
+# tack: manage the workflow, its mode and formatter trust for Git projects.
+set -u
+
+usage() {
+  cat <<'HELP'
+Usage: tack [command] [options]
+
+Manage the workflow, its mode and local formatter trust for the current Git project.
+Default command: status
+
+Commands:
+  status [--quiet]     Show workflow activation, mode and local formatter trust
+  mode [MODE] [--global]
+                      Show the effective mode, or set it for this project
+                      (or as the global default with --global)
+  mode --unset [--global]
+                      Remove the project (or global) mode setting
+  mode list           List built-in and user modes with when to use each
+  mode show           Print the effective mode's rules (auto: the modes to pick from)
+  mode new NAME --from MODE
+                      Create a user mode in ~/.config/agent-harness/modes/
+                      from an existing one, to edit and select
+  config [NAME [VALUE]] [--global]
+                      List feature toggles, show one, or set it for this project
+                      (or user-wide with --global); config NAME --unset removes it
+  enable [--shared]    Enable this clone, or use a shareable .tack marker
+  disable             Disable this clone and remove the shared marker
+  trust [--revoke]     Allow or revoke project formatter execution in this clone
+  trusted [--quiet]    Query local formatter trust independently of activation
+  doctor              Diagnose installation and project state without changes
+  context             Print project instructions plus an index (or, in strict
+                      mode, excerpts) of architecture and the active handoff
+  help                Show this help (also works outside a Git repository)
+
+Global options:
+  -h, --help          Show this help
+
+Command options:
+  --quiet             Suppress output for status or trusted; preserve exit codes
+  --shared            Enable with a .tack file you can commit and share
+  --revoke            Revoke local formatter trust without disabling the workflow
+  --tools             With doctor: check each installed AI tool (version, capabilities, smoke check)
+  --global            Read or write the user's default instead of the project's
+  --unset             Remove a mode or config setting so the next level applies
+
+Modes:
+  auto                Default: the assistant picks lite, standard or strict per task
+  lite                Branch, Conventional Commits and tests; no plans, handoffs or logs
+  standard            Adds TDD, a short plan and docs when behaviour changes
+  strict              The full workflow: plans, handoffs, AI log, reviews, delegation
+
+Exit codes:
+  status              0 if enabled, 1 if disabled; independent of formatter trust
+  trusted             0 if locally trusted, 1 otherwise
+  doctor              0 if checked components are healthy, 1 if broken
+  help                0; invalid commands or arguments return 2
+
+Examples:
+  tack enable
+  tack status
+  tack mode lite --global
+  tack mode strict
+  tack config
+  tack config delegation off
+  tack trust
+  tack trusted --quiet
+  tack trust --revoke
+  tack doctor
+  tack doctor --tools
+  tack help
+
+Formatter execution requires both activation and local trust. Trust applies only
+to Claude Code's automatic formatter hook; it is not a general command permission.
+HELP
+}
+
+repo_root() { git rev-parse --show-toplevel 2>/dev/null; }
+
+fail() { printf 'tack: %s\n' "$1" >&2; exit 1; }
+require_repo() { root="$(repo_root)" || { echo "tack: not inside a git repository" >&2; exit 2; }; }
+check_args() {
+  [ "$#" -eq 0 ] && return 0
+  [ "$#" -eq 1 ] && [ "$1" = "$allowed_option" ] && return 0
+  echo "tack: unsupported arguments for $cmd (see --help)" >&2
+  exit 2
+}
+harness_root() {
+  local script="${BASH_SOURCE[0]}" dir target
+  while [ -L "$script" ]; do
+    dir="$(cd "$(dirname "$script")" && pwd)" || return 1
+    target="$(readlink "$script")" || return 1
+    case "$target" in /*) script="$target" ;; *) script="$dir/$target" ;; esac
+  done
+  cd "$(dirname "$script")/.." && pwd
+}
+
+# Enabled when the repo has a .tack (or legacy .harness) file, or tack.enabled is true.
+# (local, or global to enable it everywhere). An explicit local false wins over the file.
+is_enabled() {
+  local root setting
+  root="$(repo_root)" || return 1
+  [ -n "$root" ] || return 1
+  setting="$(key_get --bool enabled || true)"
+  [ "$setting" = "false" ] && return 1
+  [ "$setting" = "true" ] && return 0
+  [ -f "$root/.tack" ] || [ -f "$root/.harness" ]
+}
+
+HARNESS_ROOT="$(harness_root)" || fail "cannot locate the harness checkout"
+# shellcheck source=SCRIPTDIR/../lib/keys.sh
+. "$HARNESS_ROOT/lib/keys.sh"
+# shellcheck source=SCRIPTDIR/../lib/modes.sh
+. "$HARNESS_ROOT/lib/modes.sh"
+
+is_trusted() {
+  [ "$(key_get --bool local trusted)" = true ]
+}
+
+cmd="${1:-status}"
+[ $# -gt 0 ] && shift
+
+case "$cmd" in
+  enable)
+    allowed_option=--shared; check_args "$@"
+    require_repo
+    if [ "${1:-}" = "--shared" ]; then
+      printf '# This project uses the tack workflow (https://github.com/nbfrodri/agent-tack).\n' > "$root/.tack" \
+        || fail "cannot write the shared marker"
+      if key_scope local enabled; then
+        key_unset local enabled || fail "cannot clear local activation"
+      fi
+      echo "Enabled through $root/.tack — commit it to share it."
+    else
+      key_set local enabled true || fail "cannot enable this clone"
+      echo "Enabled for this clone (git config tack.enabled true)."
+    fi
+    ;;
+  disable)
+    allowed_option=''; check_args "$@"
+    require_repo
+    key_set local enabled false || fail "cannot disable this clone"
+    for marker in .tack .harness; do
+      [ -f "$root/$marker" ] || continue
+      rm -f "$root/$marker" || fail "cannot remove the shared marker"
+      echo "Removed $root/$marker — commit the removal to share it."
+    done
+    echo "Disabled for this clone."
+    ;;
+  status)
+    allowed_option=--quiet; check_args "$@"
+    if is_enabled; then
+      workflow_state=enabled; workflow_exit=0
+    else
+      workflow_state=disabled; workflow_exit=1
+    fi
+    if [ "${1:-}" != --quiet ]; then
+      printf '%s\n' "$workflow_state"
+      printf 'mode: %s\n' "$(effective_mode)"
+      if is_trusted; then echo 'formatter trust: trusted'
+      else echo 'formatter trust: untrusted'; fi
+    fi
+    exit "$workflow_exit"
+    ;;
+  mode)
+    case "${1:-}" in
+      list)
+        [ "$#" -eq 1 ] || { echo "tack: mode list takes no arguments" >&2; exit 2; }
+        list_modes
+        exit 0
+        ;;
+      show)
+        [ "$#" -eq 1 ] || { echo "tack: mode show takes no arguments" >&2; exit 2; }
+        show_mode
+        exit 0
+        ;;
+      new)
+        if [ "$#" -ne 4 ] || [ "$3" != --from ]; then
+          echo "tack: usage: tack mode new NAME --from MODE" >&2; exit 2
+        fi
+        new_mode "$2" "$4"
+        exit
+        ;;
+    esac
+    scope=local value='' unset=false
+    for arg in "$@"; do
+      case "$arg" in
+        --global) scope=global ;;
+        --unset) unset=true ;;
+        *)
+          if [ -z "$value" ] && is_mode "$arg"; then value="$arg"
+          else echo "tack: unsupported arguments for mode (see --help)" >&2; exit 2; fi
+          ;;
+      esac
+    done
+    if [ "$unset" = true ] && [ -n "$value" ]; then
+      echo "tack: --unset takes no mode (see --help)" >&2; exit 2
+    fi
+    if [ "$unset" = false ] && [ -z "$value" ]; then
+      if [ "$scope" = global ]; then effective_mode global; else effective_mode; fi
+      exit 0
+    fi
+    if [ "$scope" = global ] && [ -n "$value" ] && is_project_only "$value"; then
+      echo "tack: $value is project-only; select it inside each project instead" >&2; exit 2
+    fi
+    [ "$scope" = global ] || require_repo
+    if [ "$scope" = local ] && [ -n "$value" ] && is_project_only "$value"; then
+      case "$(git branch --show-current 2>/dev/null)" in
+        main | master) echo "tack: $value runs without confirmations; switch to a branch or worktree first" >&2; exit 2 ;;
+      esac
+    fi
+    if [ "$unset" = true ]; then
+      if key_scope "$scope" mode; then
+        key_unset "$scope" mode || fail "cannot unset the $scope mode"
+      fi
+      echo "Removed the $scope mode; effective mode: $(effective_mode)."
+    else
+      key_set "$scope" mode "$value" || fail "cannot set the $scope mode"
+      echo "Mode set to $value ($scope); effective mode: $(effective_mode)."
+    fi
+    ;;
+  trust)
+    allowed_option=--revoke; check_args "$@"
+    require_repo
+    if [ "${1:-}" = --revoke ]; then
+      key_set local trusted false || fail "cannot revoke local trust"
+      echo "Project formatter execution trust revoked for this clone."
+    else
+      key_set local trusted true || fail "cannot trust this clone"
+      echo "Project formatter execution trusted for this clone."
+    fi
+    ;;
+  trusted)
+    allowed_option=--quiet; check_args "$@"
+    if is_trusted; then
+      [ "${1:-}" = --quiet ] || echo trusted
+      exit 0
+    fi
+    [ "${1:-}" = --quiet ] || echo untrusted
+    exit 1
+    ;;
+  context)
+    allowed_option=''; check_args "$@"
+    is_enabled || exit 0
+    [ "$(key_get --bool context)" != false ] || exit 0
+    root="$(repo_root)" || exit 0
+    source_root="$HARNESS_ROOT"
+    bash "$source_root/lib/project-context.sh" "$root" "$(context_level)"
+    ;;
+  config)
+    source_root="$HARNESS_ROOT"
+    bash "$source_root/lib/config.sh" "$source_root" "$@"
+    exit
+    ;;
+  doctor)
+    allowed_option='--tools'; check_args "$@"
+    source_root="$HARNESS_ROOT"
+    bash "$source_root/lib/doctor.sh" "$source_root" "$@"
+    ;;
+  -h|--help|help)
+    allowed_option=''; check_args "$@"
+    usage
+    ;;
+  *)
+    echo "tack: unknown command '$cmd'" >&2
+    usage >&2
+    exit 2
+    ;;
+esac

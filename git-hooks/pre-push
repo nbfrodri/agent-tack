@@ -22,7 +22,7 @@ cat > "$stdin_file"
 is_zero() { case "$1" in *[!0]*) return 1 ;; *) return 0 ;; esac; }
 
 check_tags=0
-if [ "${HARNESS_ALLOW_TAG:-}" != "1" ] && "$HOOK_DIR/../bin/harness" status --quiet; then
+if [ "${HARNESS_ALLOW_TAG:-}" != "1" ] && "$HOOK_DIR/../bin/tack" status --quiet; then
   check_tags=1
 fi
 

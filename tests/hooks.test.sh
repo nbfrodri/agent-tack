@@ -24,7 +24,7 @@ git config --global core.hooksPath "$REPO/git-hooks"
 git config --global commit.gpgsign false
 # Test repos behave as harness-enabled projects unless a test disables them
 git config --global harness.enabled true
-CLI="$REPO/bin/harness"
+CLI="$REPO/bin/tack"
 
 new_repo() {
   rm -rf "$1"
@@ -48,7 +48,7 @@ echo "commit-msg: Conventional Commits"
 R="$WORK/repo"
 new_repo "$R"
 check "accepts 'feat(auth): add login'" "commit 'feat(auth): add login'"
-check "rejection points to the config command" "{ git -C '$R' commit -q --allow-empty -m 'bad subject' 2>&1 || true; } | grep -q 'harness config conventional-commits false'"
+check "rejection points to the config command" "{ git -C '$R' commit -q --allow-empty -m 'bad subject' 2>&1 || true; } | grep -q 'tack config conventional-commits false'"
 check "accepts breaking change 'feat!: drop v1 API'" "commit 'feat!: drop v1 API'"
 check "accepts 'fix: handle empty cart'" "commit 'fix: handle empty cart'"
 check "rejects 'added login'" "! commit 'added login'"

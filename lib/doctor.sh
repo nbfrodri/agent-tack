@@ -77,9 +77,11 @@ check_tools_and_links() {
     else fail "required tool unavailable: $tool"; fi
   done
   has readlink || return
+  check_link "$REPO" "$HOME/.agents/tack"
   check_link "$REPO" "$HOME/.agents/harness"
+  check_link "$REPO/bin/tack" "$HOME/.local/bin/tack"
   check_link "$REPO/bin/harness" "$HOME/.local/bin/harness"
-  [ -x "$REPO/bin/harness" ] || fail 'harness CLI is not executable'
+  [ -x "$REPO/bin/tack" ] || fail 'tack CLI is not executable'
   check_skills "$HOME/.agents/skills"
   while read -r tool when commands instructions skills_dir _ <&3; do
     case "$tool" in ''|'#'*) continue ;; esac
@@ -366,12 +368,12 @@ check_project() {
     ok 'current directory: outside a Git repository (project checks not applicable)'
     return
   fi
-  if "$REPO/bin/harness" status --quiet; then ok 'current project workflow: enabled'
+  if "$REPO/bin/tack" status --quiet; then ok 'current project workflow: enabled'
   else ok 'current project workflow: disabled'; fi
-  mode="$("$REPO/bin/harness" mode)"
+  mode="$("$REPO/bin/tack" mode)"
   if [ -z "${mode##*invalid*}" ] || [ -z "${mode##*ignored*}" ]; then
     warn "current project mode: $mode"
-  elif "$REPO/bin/harness" mode show | grep -q '^WARNING:'; then
+  elif "$REPO/bin/tack" mode show | grep -q '^WARNING:'; then
     warn "current project mode: $mode; autonomous mode without confirmations is active"
     case "$(git branch --show-current 2>/dev/null)" in
       main | master) warn "current branch is $(git branch --show-current) in a project-only mode; switch to a branch or worktree" ;;
@@ -379,13 +381,13 @@ check_project() {
   else
     ok "current project mode: $mode"
   fi
-  if "$REPO/bin/harness" trusted --quiet; then ok 'current project formatter: trusted'
+  if "$REPO/bin/tack" trusted --quiet; then ok 'current project formatter: trusted'
   else ok 'current project formatter: untrusted'; fi
 }
 if [ "$TOOLS_MODE" -eq 1 ]; then
   [ -f "$REPO/targets.txt" ] || { echo 'doctor: targets.txt is missing' >&2; exit 1; }
   check_tools
-elif [ ! -f "$REPO/targets.txt" ] || [ ! -f "$REPO/bin/harness" ]; then
+elif [ ! -f "$REPO/targets.txt" ] || [ ! -f "$REPO/bin/tack" ]; then
   fail 'checkout is missing required harness files'
 else
   check_tools_and_links

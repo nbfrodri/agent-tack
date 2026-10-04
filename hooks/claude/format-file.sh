@@ -20,7 +20,7 @@ print((d.get("tool_input") or {}).get("file_path") or (d.get("tool_response") or
 fi
 [ -n "$file" ] && [ -f "$file" ] || exit 0
 
-cli="$(cd "$(dirname "$0")/../../bin" && pwd)/harness"
+cli="$(cd "$(dirname "$0")/../../bin" && pwd)/tack"
 dir="$(cd "$(dirname "$file")" && pwd)" || exit 0
 root="$(git -C "$dir" rev-parse --show-toplevel 2>/dev/null)" || exit 0
 (cd "$root" && "$cli" status --quiet && "$cli" trusted --quiet) || exit 0

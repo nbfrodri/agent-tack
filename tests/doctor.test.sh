@@ -96,11 +96,11 @@ run_doctor
 check 'unrecorded missing git-hooks path is an optional warning' [ "$RC" -eq 0 ]
 git config --global core.hooksPath "$REPO/git-hooks"
 git -C "$WORK/outside" init -q
-(cd "$WORK/outside" && "$REPO/bin/harness" enable >/dev/null && "$REPO/bin/harness" trust >/dev/null)
+(cd "$WORK/outside" && "$REPO/bin/tack" enable >/dev/null && "$REPO/bin/tack" trust >/dev/null)
 run_doctor
 check 'project enabled state is reported' grep -q 'workflow: enabled' "$WORK/report"
 check 'project local trust is reported' grep -q 'formatter: trusted' "$WORK/report"
-(cd "$WORK/outside" && "$REPO/bin/harness" disable >/dev/null && "$REPO/bin/harness" trust --revoke >/dev/null)
+(cd "$WORK/outside" && "$REPO/bin/tack" disable >/dev/null && "$REPO/bin/tack" trust --revoke >/dev/null)
 run_doctor
 check 'disabled untrusted project is healthy' [ "$RC" -eq 0 ]
 check 'disabled state is reported' grep -q 'workflow: disabled' "$WORK/report"

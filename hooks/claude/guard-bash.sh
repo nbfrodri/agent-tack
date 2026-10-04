@@ -123,10 +123,10 @@ check_git() {
             *" --get"* | *" -l "* | *" --list "*) ;;
             *) deny "Changing core.hooksPath disables the git hooks that enforce the user's rules." ;;
           esac ;;
-        *" harness."*)
+        *" harness."* | *" tack."*)
           case "$joined" in
             *" --get"* | *" -l "* | *" --list "*) ;;
-            *) SETTINGS_WRITE="Changing the harness's settings is the user's decision in this mode." ;;
+            *) SETTINGS_WRITE="Changing tack's settings is the user's decision in this mode." ;;
           esac ;;
       esac
       ;;
@@ -259,7 +259,7 @@ check_git_push() {
 check_harness() {
   local positional=0 a
   case "${1:-}" in
-    trust | enable | disable) SETTINGS_WRITE="Changing the harness's settings is the user's decision in this mode."; return ;;
+    trust | enable | disable) SETTINGS_WRITE="Changing tack's settings is the user's decision in this mode."; return ;;
     mode)
       case "${2:-}" in '' | list | show | new) return ;; esac
       SETTINGS_WRITE="Changing the workflow mode is the user's decision in this mode." ;;
@@ -268,7 +268,7 @@ check_harness() {
       for a in "$@"; do
         case "$a" in --unset) positional=2 ;; --global) ;; *) positional=$((positional + 1)) ;; esac
       done
-      [ "$positional" -lt 2 ] || SETTINGS_WRITE="Changing the harness's settings is the user's decision in this mode." ;;
+      [ "$positional" -lt 2 ] || SETTINGS_WRITE="Changing tack's settings is the user's decision in this mode." ;;
   esac
 }
 
@@ -466,7 +466,7 @@ check_command() {
     git) check_git "${args[@]+"${args[@]}"}" ;;
     rm) check_rm "${args[@]+"${args[@]}"}" ;;
     cd | pushd | popd) ACTS_ELSEWHERE=1 ;;
-    harness) check_harness "${args[@]+"${args[@]}"}" ;;
+    harness | tack) check_harness "${args[@]+"${args[@]}"}" ;;
     bash | sh | zsh | dash | ksh)
       local k=0 shell_string=0
       while [ "$k" -lt "${#args[@]}" ]; do
@@ -560,7 +560,7 @@ analyze() {
 
 waives_local_asks() {
   local cli mode
-  cli="$(dirname "$0")/../../bin/harness"
+  cli="$(dirname "$0")/../../bin/tack"
   (cd "$cwd" && "$cli" status --quiet) || return 1
   mode="$(cd "$cwd" && "$cli" mode show 2>/dev/null)" || return 1
   [ -z "${mode##WARNING:*}" ]

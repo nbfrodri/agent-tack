@@ -8,7 +8,7 @@ export HOME="$WORK/home" XDG_CONFIG_HOME="$WORK/home/.config" XDG_STATE_HOME="$W
 mkdir -p "$HOME" "$WORK/project/docs/handoffs"
 git init -q "$WORK/project"
 cd "$WORK/project" || exit 1
-CLI="$REPO/bin/harness"
+CLI="$REPO/bin/tack"
 PASSED=0 FAILED=0
 check() {
   local label="$1"
@@ -60,7 +60,7 @@ git config --local --unset tack.trusted
 cd "$WORK" || exit 1
 check "outside a repository status is disabled and untrusted" expect_status 1 disabled untrusted status
 check "help works outside a Git repository" expect_exit 0 "$CLI" help
-check "help shows CLI invocation syntax" contains 'Usage: harness [command] [options]'
+check "help shows CLI invocation syntax" contains 'Usage: tack [command] [options]'
 check "help documents the default command" contains 'Default command: status'
 check "help lists both global help flags" contains '-h, --help'
 cp "$WORK/output" "$WORK/help-output"
@@ -70,7 +70,7 @@ check "short help flag succeeds outside Git" expect_exit 0 "$CLI" -h
 check "short help flag matches the help command" cmp -s "$WORK/output" "$WORK/help-output"
 check "help rejects unsupported arguments" expect_exit 2 "$CLI" help unexpected
 check "unknown command fails with a usage error" expect_exit 2 "$CLI" unknown-command
-check "unknown command includes CLI invocation syntax" contains 'Usage: harness [command] [options]'
+check "unknown command includes CLI invocation syntax" contains 'Usage: tack [command] [options]'
 cd "$WORK/project" || exit 1
 
 : > .git/config.lock
@@ -283,6 +283,8 @@ check "SessionStart preserves quotes and backslashes" session_has_instructions
 mkdir -p "$HOME/.local/bin"
 ln -s "$CLI" "$HOME/.local/bin/harness"
 check "context works through the installed symlink" expect_exit 0 "$HOME/.local/bin/harness" context
+check "the legacy harness alias runs tack" expect_exit 0 "$REPO/bin/harness" status --quiet
+check "the alias stays silent when not run by a person" test ! -s "$WORK/output"
 mkdir nested
 cd nested || exit 1
 check "context finds root from a nested directory" expect_exit 0 "$CLI" context

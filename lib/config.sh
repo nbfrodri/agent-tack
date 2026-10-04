@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# `harness config`: list, read and write the feature toggles declared in features.txt.
+# `tack config`: list, read and write the feature toggles declared in features.txt.
 set -u
 
 registry="$1/features.txt"
@@ -7,8 +7,8 @@ registry="$1/features.txt"
 . "$1/lib/keys.sh"
 shift
 
-usage_error() { printf 'harness: %s (see --help)\n' "$1" >&2; exit 2; }
-fail() { printf 'harness: %s\n' "$1" >&2; exit 1; }
+usage_error() { printf 'tack: %s (see --help)\n' "$1" >&2; exit 2; }
+fail() { printf 'tack: %s\n' "$1" >&2; exit 1; }
 in_repo() { git rev-parse --show-toplevel >/dev/null 2>&1; }
 
 # Sets name, key, default, values, scope, enforcement and description for one feature.
@@ -84,7 +84,7 @@ if [ -z "$feature" ]; then
   list
   exit 0
 fi
-load_feature "$feature" || usage_error "unknown feature: $feature (run 'harness config' to list them)"
+load_feature "$feature" || usage_error "unknown feature: $feature (run 'tack config' to list them)"
 [ "$unset" = false ] || [ -z "$value" ] || usage_error '--unset takes no value'
 
 if [ "$unset" = false ] && [ -z "$value" ]; then
@@ -95,7 +95,7 @@ if [ "$scope" = global ] && [ "$target_scope" = local ]; then
   usage_error "$name is a user-wide setting; add --global"
 fi
 if [ "$target_scope" = local ] && ! in_repo; then
-  echo "harness: not inside a git repository" >&2
+  echo "tack: not inside a git repository" >&2
   exit 2
 fi
 

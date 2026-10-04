@@ -42,7 +42,8 @@ def no_symlink_ancestors(path, floor):
 
 
 def expected_link(path, target, home, repo, declaration):
-    fixed = {home + "/.agents/harness": repo,
+    fixed = {home + "/.agents/harness": repo, home + "/.agents/tack": repo,
+             home + "/.local/bin/tack": repo + "/bin/tack",
              home + "/.local/bin/harness": repo + "/bin/harness"}
     skill_dirs = {home + "/.agents/skills"}
     for line in declaration.read_text().splitlines():

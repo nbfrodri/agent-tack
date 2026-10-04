@@ -4,7 +4,7 @@ This repo is the user's AI configuration (skills, agents, hooks, installer). Hum
 Architecture and execution flows: `docs/architecture.md`; keep it current when components, dependencies or flows change.
 
 ## Commands
-- Lint: `shellcheck -x install.sh uninstall.sh bin/harness lib/*.sh tests/*.sh evals/run.sh git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push git-hooks/pre-commit hooks/claude/*.sh hooks/claude/lib/*.sh`
+- Lint: `shellcheck -x install.sh uninstall.sh bin/tack bin/harness lib/*.sh tests/*.sh evals/run.sh git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push git-hooks/pre-commit hooks/claude/*.sh hooks/claude/lib/*.sh`
 - Validate skills, agents and cross-references: `tests/validate.sh` (its own tests: `tests/validate.test.sh`)
 - Test lifecycle and diagnostics: `tests/lifecycle.test.sh && tests/doctor.test.sh`
 - Test installer, tools and hooks: `tests/install.test.sh && tests/tools.test.sh && tests/hooks.test.sh && tests/mods.test.sh && tests/vscode.test.sh && tests/codex.test.sh`

@@ -21,7 +21,7 @@ print("true" if value is True else value if isinstance(value, str) else "")' "$1
 cwd="$(field .cwd)"
 [ "$(field .stop_hook_active)" = true ] && exit 0
 [ -n "$cwd" ] && [ -d "$cwd" ] || exit 0
-cli="$(cd "$(dirname "$0")/../../bin" && pwd)/harness"
+cli="$(cd "$(dirname "$0")/../../bin" && pwd)/tack"
 cd "$cwd" || exit 0
 "$cli" status --quiet || exit 0
 [ "$("$cli" config stop-check 2>/dev/null)" != "false (local)" ] || exit 0

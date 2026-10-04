@@ -159,9 +159,9 @@ case "$name" in
 esac
 cd "$dir" || exit 1
 if [ -n "$mode" ]; then
-  "$HARNESS_REPO/bin/harness" enable >/dev/null
+  "$HARNESS_REPO/bin/tack" enable >/dev/null
   # Set locally so the user's global default mode cannot leak into the comparison.
-  "$HARNESS_REPO/bin/harness" mode "$mode" >/dev/null
+  "$HARNESS_REPO/bin/tack" mode "$mode" >/dev/null
 fi
 
 case "$name" in
