@@ -21,7 +21,7 @@ harness doctor --tools                # check each installed AI tool instead of 
 ./uninstall.sh                         # restore recorded unchanged state
 ```
 
-Doctor checks required tools, managed links, Claude settings and hook registration, ownership metadata, effective Git hooks, project activation and formatter trust. Missing optional CLIs and deliberate foreign hooks paths produce warnings. Broken managed components produce errors (exit 1); a healthy checked installation exits 0. Doctor works outside Git and never runs plugins or prints restoration snapshots or credentials. It diagnoses configuration rather than proving every external tool works. Doctor also warns when the claude CLI is missing or a harness mod is not installed or is disabled.
+Doctor checks required tools, managed links, Claude settings and hook registration, ownership metadata, effective Git hooks, project activation and formatter trust. Missing optional CLIs and deliberate foreign hooks paths produce warnings. Broken managed components produce errors (exit 1); a healthy checked installation exits 0. Doctor works outside Git and never runs plugins or prints restoration snapshots or credentials. It diagnoses configuration rather than proving every external tool works. Doctor also warns when the claude CLI is missing or a harness mod is not installed or is disabled, and reports `chat.useAgentsMdFile` for each VS Code install it finds.
 
 `harness doctor --tools` checks each installed AI tool listed in `targets.txt`: version, configured capabilities, minimum version and a non-interactive smoke check (`claude doctor`, `codex doctor --summary`). It prints no tool output or credentials. A failed smoke check or an old version is a warning; a broken managed link is an error. A weekly CI workflow installs the latest Claude Code and Codex and runs the same check, so breaking changes in either tool surface early.
 
@@ -86,7 +86,7 @@ Start a new session after switching. Claude Code is told the status at session s
 | --- | --- |
 | `hook` | A hook guarantees it (for example `conventional-commits`) |
 | `instruction` | The assistant follows it; guided, not forced (for example `delegation`, `context`) |
-| `installer` | `install.sh` reads it; user-wide only (for example `mods`) |
+| `installer` | `install.sh` reads it; user-wide only (for example `mods`, `vscode-agents-md`) |
 
 A project value wins over the global one, which wins over the default. Values are validated: booleans take `true` or `false`, others list their alternatives. User-wide features refuse a project value. Secret scanning, the command guard and the protection of `main` and tags are not toggles; they keep their [one-off overrides](#overrides). Add a toggle by adding a line to `features.txt` ([customization](customization.md)).
 

@@ -45,7 +45,7 @@ Restart the tool or editor after installing or updating so it reloads instructio
 
 - **Copilot CLI:** `copilot` in the project. Reads `~/.copilot/copilot-instructions.md` and the skills.
 - **Copilot Chat in VS Code:** configured whenever VS Code is installed (`code`, `code-insiders` or `codium`), even without the Copilot CLI. It reads the user instructions in `~/.copilot/copilot-instructions.md` and the skills in `~/.agents/skills`, `~/.claude/skills` and `~/.copilot/skills`.
-  - To also load each project's `AGENTS.md`, turn on the VS Code setting `chat.useAgentsMdFile` (Settings → search "agents md").
+  - The installer turns on the VS Code setting `chat.useAgentsMdFile` in your user settings, so each project's `AGENTS.md` loads too. It only adds the key when it is absent: an existing value (even `false`) is kept, and a `settings.json` with comments or trailing commas is left untouched with a warning (add `"chat.useAgentsMdFile": true` yourself). Opt out with `harness config vscode-agents-md false --global`; `./uninstall.sh` removes the key only if it still holds the installed value.
   - Use agent mode for tasks that edit files and run commands; the instructions tell it to follow `dev-workflow` in enabled projects.
 - **Check:** in Copilot Chat, ask "which instructions are you following?"; the answer should mention the harness workflow.
 

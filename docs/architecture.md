@@ -20,9 +20,11 @@ flowchart LR
   installer --> mods[lib/mods.sh]
   mods --> plugins
   mods --> modsrc[plugins/ local marketplace]
+  installer --> vscode[lib/vscode.sh]
+  vscode --> vscodesettings[VS Code user settings.json]
 ```
 
-`install.sh` configures tools, links content, merges settings, installs git hooks, updates plugins and installs mods in that order. It counts failures while continuing other steps, then exits non-zero if any step failed. Links point to the checkout, so its location must remain available; re-running the installer repairs links after a move.
+`install.sh` configures tools, links content, merges settings, installs git hooks, updates plugins, installs mods and enables VS Code's AGENTS.md loading in that order. It counts failures while continuing other steps, then exits non-zero if any step failed. Links point to the checkout, so its location must remain available; re-running the installer repairs links after a move.
 
 ## Components and dependency direction
 
@@ -33,6 +35,7 @@ flowchart LR
 | `agents/` | Role-specific instructions for planning, implementation and review | Skills; native definitions where supported, otherwise role instructions for the current runtime |
 | `targets.txt`, `plugins.txt` | Declare supported tools and Claude plugins | Read by the installer |
 | `plugins/`, `lib/mods.sh` | Claude Code mods (`usage-band`, `agent-activity`) in a local marketplace; the installer step adds the marketplace, installs each mod and records only what it installed; doctor reports their state | Claude CLI (`claude plugin ...`), `lib/ownership.sh`; opt-outs `--skip-mods` and `harness.mods` |
+| `lib/vscode.sh`, `lib/vscode_settings.py` | Detect VS Code (`code`, `code-insiders`, `codium`), add `chat.useAgentsMdFile: true` to its user settings only when the file is absent or plain JSON and the key is unset, and record that (`vscode` ownership entry holding whether the file was created); doctor reports the state; `ownership.py` removes the key on uninstall only while it still holds the installed value | Python standard library, `lib/ownership.sh`; opt-out `harness.vscodeAgentsMd` |
 | `install.sh` | Orchestrate installation and migration | Data files, settings merge, git and Claude CLI |
 | `lib/ownership.sh`, `lib/ownership.py`, `uninstall.sh` | Record private installation ownership and restore unchanged managed state without removing project files or shared plugins | Bash records and Python standard library validation/restoration |
 | `lib/doctor.sh` | Diagnose managed links, settings, ownership, Git hooks and project state without writes | Installer data, private metadata, Git and `bin/harness` queries |
