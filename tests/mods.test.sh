@@ -10,7 +10,7 @@ WORK="$(mktemp -d "${TMPDIR:-/tmp}/agent-harness-mods-test.XXXXXX")"
 trap 'rm -rf "$WORK"' EXIT
 PASSED=0
 FAILED=0
-MARKET=agent-harness-mods
+MARKET=agent-tack-mods
 
 check() {
   if eval "$2"; then printf '  ✔ %s\n' "$1"; PASSED=$((PASSED + 1)); else printf '  ✘ %s\n' "$1"; FAILED=$((FAILED + 1)); fi
@@ -43,7 +43,7 @@ json_list() {
 case "$*" in
   "plugin list --json") json_list "$FAKE_STATE/plugins" '{"id":"%s","enabled":true}' ;;
   "plugin marketplace list --json") json_list "$FAKE_STATE/markets" '{"name":"%s"}' ;;
-  "plugin marketplace add "*/plugins) echo agent-harness-mods >> "$FAKE_STATE/markets" ;;
+  "plugin marketplace add "*/plugins) echo agent-tack-mods >> "$FAKE_STATE/markets" ;;
   "plugin marketplace add "*) echo claude-plugins-official >> "$FAKE_STATE/markets" ;;
   "plugin marketplace remove "*) grep -vxF "${4}" "$FAKE_STATE/markets" > "$FAKE_STATE/markets.new"; mv "$FAKE_STATE/markets.new" "$FAKE_STATE/markets" ;;
   "plugin install "*)
@@ -157,6 +157,15 @@ echo "" > "$STATE/plugins"
 check "missing mods are a warning" "doctor; grep -q 'WARN mod not installed: usage-band' '$H.log'"
 git_global harness.mods false
 check "disabled mods are reported as such" "doctor; grep -q 'mods disabled' '$H.log'"
+
+echo "Former marketplace name"
+fresh_home legacy
+printf 'agent-harness-mods\n' > "$STATE/markets"
+printf 'usage-band@agent-harness-mods\nagent-activity@agent-harness-mods\n' > "$STATE/plugins"
+check "install over the former marketplace succeeds" "install"
+check "mods from the former marketplace are uninstalled" "! grep -q '@agent-harness-mods' '$STATE/plugins'"
+check "the former marketplace is removed" "! grep -qx 'agent-harness-mods' '$STATE/markets'"
+check "the mods come from the new marketplace" "grep -qx 'usage-band@agent-tack-mods' '$STATE/plugins'"
 
 echo
 echo "$PASSED passed, $FAILED failed"
