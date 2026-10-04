@@ -28,6 +28,8 @@ Instructions, skills, agents and hook scripts are installed through symlinks to 
 
 Re-run `./install.sh` after changing tool paths, registered hooks, Claude settings or plugins, or after adding or removing skills or agents. Use `./install.sh --skip-plugins` when you only need local configuration changes.
 
+To support another AI tool, add one line to `targets.txt` (columns are documented in its header and in [how it works](how-it-works.md#targetstxt-columns)); optionally set a minimum version and a smoke check, then run `harness doctor --tools`.
+
 Run `tests/validate.sh` after changing skills, agents or their references. Changes to installer or hook behaviour also need regression tests and the relevant checks in [development](development.md).
 
 ## Keep personal changes when updating

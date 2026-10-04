@@ -19,6 +19,22 @@ Paths come from each tool's documentation and live in `targets.txt` (add a line 
 
 Claude Code and Codex are always configured; the others only when installed. Git hooks apply to every tool.
 
+### `targets.txt` columns
+One line per tool; `-` means unsupported or none. Files with only the first five columns still work.
+
+| Column | Meaning |
+| --- | --- |
+| `tool`, `when`, `commands` | Name, `always` or `detect`, and the commands that detect it |
+| `instructions`, `skills` | Global instructions file and extra skills directory |
+| `agents`, `hooks` | Subagents directory and hooks file the installer fills (Claude Code only today) |
+| `min_version` | Oldest supported version; older ones only produce a warning |
+| `smoke` | Arguments of a non-interactive diagnostic (`doctor`, `doctor,--summary`) |
+
+`harness doctor --tools` reads these columns: for each installed tool it prints the version, the configured capabilities, whether the minimum is met and the result of the smoke check. Missing tools are skipped; a failed smoke check or an old version is a warning; a broken managed link is an error. Tool output is never printed, so credentials and config values stay out of reports.
+
+### Codex agents and hooks
+Codex 0.160.0 supports both (`codex features list`: `hooks` and `multi_agent` stable). Per its official documentation, agents are TOML files in `~/.codex/agents/` (`name`, `description`, `developer_instructions`) and hooks live in `~/.codex/hooks.json` or `config.toml`. The harness agents are Markdown with Claude frontmatter and the hook scripts expect Claude Code's payload, so the installer does not write either for Codex yet; the `agents` and `hooks` columns stay `-` until a converter and a payload check exist.
+
 **Platforms:** Linux and macOS (tested in CI). On Windows, use it inside WSL, where it works as on Linux; native Windows (PowerShell/CMD) isn't supported yet.
 
 ## What the installer does

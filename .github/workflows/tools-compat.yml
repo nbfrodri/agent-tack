@@ -1,0 +1,36 @@
+name: Tools compatibility
+
+# Weekly check that the installer still works with the latest Claude Code and Codex.
+# No credentials: only installation, config discovery and non-interactive diagnostics run.
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  latest-tools:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install the latest Claude Code and Codex
+        run: npm install -g @anthropic-ai/claude-code@latest @openai/codex@latest
+      - name: Report tool versions
+        run: |
+          claude --version
+          codex --version
+      - name: Install into a throwaway HOME
+        run: |
+          export HOME="$RUNNER_TEMP/home"
+          mkdir -p "$HOME"
+          ./install.sh --skip-plugins
+      - name: Check the installed tools
+        run: |
+          export HOME="$RUNNER_TEMP/home"
+          export PATH="$HOME/.local/bin:$PATH"
+          harness doctor --tools
