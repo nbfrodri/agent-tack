@@ -15,8 +15,10 @@
 - Usage note (2026-10-04): the owner's session auto-resumes after a usage reset, so keep working. The benchmark launcher is resumable: `scratchpad/run-final-benchmark.py <frozen> <rev> <out> claude-sonnet-5-5` skips completed sessions and exits 3 on a usage limit; relaunch it after the reset.
 - Review done: findings fixed in `48f141f` (unleash waiver never applies after a directory change or `git -C/--git-dir/--work-tree`; settings writes refused in project-only modes; unleash refused on main; config literal match and `--`; stop-check timeout, no globbing, renames); recorded in `docs/audits/2026-10-04-review-config-feedback-robustness.md` (`845a648`). Full suite running after the fixes.
 - Resume steps, in order:
-  1. Confirm the full suite is green after `845a648` (rerun `scratchpad/run-all-tests.sh` if the result is lost).
-  2. Benchmark: freeze the branch head in a scratchpad worktree; reuse the launcher pattern from the pilot (private HOME and XDG paths per session, `install.sh --skip-plugins`, `EVALS_MODEL=claude-sonnet-5-5`); `bug-fix` ×2 and `new-project` ×1 for baseline, lite, standard, strict, auto; stop on a usage limit. Watch the Stop hook's extra turns.
+  1. Done: full suite green at `93dc7ef` (820 checks + evals).
+  2. Running: benchmark from frozen worktree `scratchpad/frozen-final` (`93dc7ef`), output `scratchpad/bench-final/` (log `launcher.log`). If it stopped (exit 3 or interrupted), relaunch the same command; completed sessions are skipped:
+     `python3 scratchpad/run-final-benchmark.py scratchpad/frozen-final 93dc7ef scratchpad/bench-final claude-sonnet-5-5`
+     Protocol: freeze the branch head in a scratchpad worktree; reuse the launcher pattern from the pilot (private HOME and XDG paths per session, `install.sh --skip-plugins`, `EVALS_MODEL=claude-sonnet-5-5`); `bug-fix` ×2 and `new-project` ×1 for baseline, lite, standard, strict, auto; stop on a usage limit. Watch the Stop hook's extra turns.
   3. Grade, update `docs/results.md`, the README results table and the AI log; mark the plan done.
   4. Ask the owner before push and PR.
 - Avoid commands the guard asks about (interpreter heredocs, shell loops, chained opaque commands); the owner wants no confirmations.
