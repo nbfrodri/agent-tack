@@ -132,6 +132,22 @@ In every mode the hooks still enforce Conventional Commits, no AI attribution, n
 
 A project setting (`harness mode lite`) overrides your global default (`harness mode lite --global`); with neither, the mode is `auto`. Invalid values behave as `auto` and are reported by `harness status` and `harness doctor`. Lighter modes cost fewer tokens and less time; [results](results.md) compares them.
 
+### Lean: save tokens
+
+`harness mode lean` is for small, well-defined tasks when tokens matter more than process. Its rules are self-contained, so the assistant does not load `dev-workflow`; it starts with only `AGENTS.md` as context, reads only the lines it needs, runs only the affected tests and replies in a few lines. It still branches, adds a test for changed logic and makes a Conventional Commit, and the hooks apply as in every mode. It skips plans, handoffs, the AI log, review agents and delegation, and suggests `standard` or `strict` when a task turns out risky.
+
+The same savings are available one by one in any mode:
+
+```bash
+harness config reply-style terse          # short replies (output tokens)
+harness config skill-loading minimal      # load skills only when needed (input tokens)
+harness config subagent-model economical  # cheapest capable model when delegating
+harness config context false              # no startup context at all
+harness config stop-check false           # no extra turn before stopping
+```
+
+Add `--global` to make any of them your default. [Results](results.md) compares `lean` with `lite` and the plain assistant.
+
 ### Unleash: autonomous work
 
 `harness mode unleash` lets the assistant work without asking: it follows its plan without waiting for approval, decides instead of asking (recording every assumption in the handoff and final summary), may push its branch and open a pull request, and the command guard stops asking about explicit local data loss in the current project (`git reset --hard`, `clean -f`, `restore`, discarding checkouts, `branch -D`, `stash drop`, `rm -rf .`). That waiver never applies to a command that changes directory (`cd`, `pushd`, `popd`) or points git elsewhere (`-C`, `--git-dir`, `--work-tree`), nor to deleting `main` or `master`. The assistant also cannot change the harness's settings in this mode: `harness config` writes, `harness mode`, `trust`, `enable`, `disable` and `git config harness.*` writes are refused, so it cannot lift its own limits or leave the mode.

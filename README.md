@@ -33,6 +33,7 @@ The mode decides how much process each task gets. `auto` is the default and pick
 
 | Mode | For | What the assistant does |
 | --- | --- | --- |
+| `lean` | Small tasks when tokens matter most | Minimal self-contained rules, terse replies; still branch, commit and test ([savings](docs/usage.md#lean-save-tokens)) |
 | `lite` | Typos, config, one-line fixes | Branch, commit, a test when logic changes |
 | `standard` | A bounded feature or bug fix | Adds TDD, a short plan and the affected docs |
 | `strict` | Risky or multi-module work | Adds a saved plan you approve, handoffs, review and delegation |
