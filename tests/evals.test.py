@@ -202,6 +202,10 @@ class Runner(unittest.TestCase):
         self.assertEqual(metadata['metrics_version'], 2)
         self.assertEqual(metadata['permission_mode'], 'acceptEdits')
         self.assertIn('Bash(uv *)', metadata['allowed_tools'])
+        # Agents often run `python -m pytest`, sometimes with an environment prefix; a blocked test
+        # command makes the workflow stop before committing, which skews every comparison.
+        for rule in ('Bash(python *)', 'Bash(PYTHONPATH=*)', 'Bash(tail *)'):
+            self.assertIn(rule, metadata['allowed_tools'])
         self.assertIn('Agent', metadata['allowed_tools'])
         self.assertEqual(metadata['condition'], 'baseline')
         self.assertEqual(metadata['provider'], 'claude')
