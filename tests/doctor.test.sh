@@ -105,6 +105,12 @@ run_doctor
 check 'disabled untrusted project is healthy' [ "$RC" -eq 0 ]
 check 'disabled state is reported' grep -q 'workflow: disabled' "$WORK/report"
 check 'untrusted state is reported' grep -q 'formatter: untrusted' "$WORK/report"
+check 'project workflow mode is reported' grep -q 'OK   current project mode: auto (default)' "$WORK/report"
+git -C "$WORK/outside" config harness.mode turbo
+run_doctor
+check 'invalid workflow mode is a warning' [ "$RC" -eq 0 ]
+check 'invalid workflow mode warning names the value' grep -q 'WARN current project mode: auto (invalid local value: turbo)' "$WORK/report"
+git -C "$WORK/outside" config --unset harness.mode
 git -C "$WORK/outside" config core.hooksPath /project/deliberate/hooks
 run_doctor
 check 'local unrelated hooksPath is a warning' [ "$RC" -eq 0 ]

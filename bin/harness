@@ -1,16 +1,21 @@
 #!/usr/bin/env bash
-# Manage the agent-harness workflow and formatter trust for Git projects.
+# Manage the agent-harness workflow, its mode and formatter trust for Git projects.
 set -u
 
 usage() {
   cat <<'HELP'
 Usage: harness [command] [options]
 
-Manage the workflow and local formatter trust for the current Git project.
+Manage the workflow, its mode and local formatter trust for the current Git project.
 Default command: status
 
 Commands:
-  status [--quiet]     Show workflow activation and local formatter trust
+  status [--quiet]     Show workflow activation, mode and local formatter trust
+  mode [MODE] [--global]
+                      Show the effective mode, or set it for this project
+                      (or as the global default with --global)
+  mode --unset [--global]
+                      Remove the project (or global) mode setting
   enable [--shared]    Enable this clone, or use a shareable .harness marker
   disable             Disable this clone and remove the shared marker
   trust [--revoke]     Allow or revoke project formatter execution in this clone
@@ -26,6 +31,13 @@ Command options:
   --quiet             Suppress output for status or trusted; preserve exit codes
   --shared            Enable with a .harness file you can commit and share
   --revoke            Revoke local formatter trust without disabling the workflow
+  --global            Read or write the user's default mode instead of the project's
+
+Modes:
+  auto                Default: the assistant picks lite, standard or strict per task
+  lite                Branch, Conventional Commits and tests; no plans, handoffs or logs
+  standard            Adds TDD, a short plan and docs when behaviour changes
+  strict              The full workflow: plans, handoffs, AI log, reviews, delegation
 
 Exit codes:
   status              0 if enabled, 1 if disabled; independent of formatter trust
@@ -36,6 +48,8 @@ Exit codes:
 Examples:
   harness enable
   harness status
+  harness mode lite --global
+  harness mode strict
   harness trust
   harness trusted --quiet
   harness trust --revoke
@@ -77,6 +91,24 @@ is_enabled() {
   [ "$setting" = "false" ] && return 1
   [ "$setting" = "true" ] && return 0
   [ -f "$root/.harness" ]
+}
+
+is_mode() {
+  case "$1" in auto | lite | standard | strict) return 0 ;; *) return 1 ;; esac
+}
+
+# Prints the effective mode and where it comes from: a project setting wins over the
+# user's global default. Invalid values behave as auto so a typo never blocks work.
+effective_mode() {
+  local scope value
+  [ "$#" -gt 0 ] || set -- local global
+  for scope in "$@"; do
+    value="$(git config "--$scope" --get harness.mode 2>/dev/null)" || continue
+    if is_mode "$value"; then printf '%s (%s)\n' "$value" "$scope"
+    else printf 'auto (invalid %s value: %s)\n' "$scope" "$value"; fi
+    return
+  done
+  echo 'auto (default)'
 }
 
 is_trusted() {
@@ -121,10 +153,41 @@ case "$cmd" in
     fi
     if [ "${1:-}" != --quiet ]; then
       printf '%s\n' "$workflow_state"
+      printf 'mode: %s\n' "$(effective_mode)"
       if is_trusted; then echo 'formatter trust: trusted'
       else echo 'formatter trust: untrusted'; fi
     fi
     exit "$workflow_exit"
+    ;;
+  mode)
+    scope=local value='' unset=false
+    for arg in "$@"; do
+      case "$arg" in
+        --global) scope=global ;;
+        --unset) unset=true ;;
+        *)
+          if [ -z "$value" ] && is_mode "$arg"; then value="$arg"
+          else echo "harness: unsupported arguments for mode (see --help)" >&2; exit 2; fi
+          ;;
+      esac
+    done
+    if [ "$unset" = true ] && [ -n "$value" ]; then
+      echo "harness: --unset takes no mode (see --help)" >&2; exit 2
+    fi
+    if [ "$unset" = false ] && [ -z "$value" ]; then
+      if [ "$scope" = global ]; then effective_mode global; else effective_mode; fi
+      exit 0
+    fi
+    [ "$scope" = global ] || require_repo
+    if [ "$unset" = true ]; then
+      if git config "--$scope" --get harness.mode >/dev/null 2>&1; then
+        git config "--$scope" --unset-all harness.mode || fail "cannot unset the $scope mode"
+      fi
+      echo "Removed the $scope mode; effective mode: $(effective_mode)."
+    else
+      git config "--$scope" harness.mode "$value" || fail "cannot set the $scope mode"
+      echo "Mode set to $value ($scope); effective mode: $(effective_mode)."
+    fi
     ;;
   trust)
     allowed_option=--revoke; check_args "$@"

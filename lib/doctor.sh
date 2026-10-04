@@ -243,6 +243,11 @@ check_project() {
   fi
   if "$REPO/bin/harness" status --quiet; then ok 'current project workflow: enabled'
   else ok 'current project workflow: disabled'; fi
+  mode="$("$REPO/bin/harness" mode)"
+  case "$mode" in
+    *invalid*) warn "current project mode: $mode" ;;
+    *) ok "current project mode: $mode" ;;
+  esac
   if "$REPO/bin/harness" trusted --quiet; then ok 'current project formatter: trusted'
   else ok 'current project formatter: untrusted'; fi
 }

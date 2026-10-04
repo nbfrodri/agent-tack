@@ -24,11 +24,13 @@ expect_exit() {
   [ "$actual" -eq "$expected" ]
 }
 contains() { grep -qF -- "$1" "$WORK/output"; }
+output_is() { [ "$(cat "$WORK/output")" = "$1" ]; }
+expect_mode() { expect_exit 0 "$CLI" mode && output_is "$1"; }
 expect_status() {
   local expected_exit="$1" workflow="$2" trust="$3" expected
   shift 3
   expect_exit "$expected_exit" "$CLI" "$@" || return 1
-  expected="$(printf '%s\nformatter trust: %s' "$workflow" "$trust")"
+  expected="$(printf '%s\nmode: %s\nformatter trust: %s' "$workflow" "${EXPECTED_MODE:-auto (default)}" "$trust")"
   [ "$(cat "$WORK/output")" = "$expected" ]
 }
 excludes_completed() { ! grep -qF 'Do not include completed work' "$WORK/output"; }
@@ -95,6 +97,42 @@ check "standalone trusted query keeps its output and exit code" expect_exit 0 "$
 check "standalone trusted query prints trusted" test "$(cat "$WORK/output")" = trusted
 check "trust can be revoked" expect_exit 0 "$CLI" trust --revoke
 check "revoked trust refuses execution" expect_exit 1 "$CLI" trusted --quiet
+
+check "mode defaults to auto" expect_mode 'auto (default)'
+check "global mode can be set" expect_exit 0 "$CLI" mode lite --global
+check "global mode applies to the project" expect_mode 'lite (global)'
+check "project mode can be set" expect_exit 0 "$CLI" mode strict
+check "project mode is stored locally" test "$(git config --local --get harness.mode)" = strict
+check "project mode overrides the global default" expect_mode 'strict (local)'
+check "global query ignores the project mode" expect_exit 0 "$CLI" mode --global
+check "global query shows the global default" output_is 'lite (global)'
+EXPECTED_MODE='strict (local)'
+check "status shows the effective mode and its source" expect_status 0 enabled untrusted status
+unset EXPECTED_MODE
+check "project mode can be unset" expect_exit 0 "$CLI" mode --unset
+check "unset project mode falls back to the global default" expect_mode 'lite (global)'
+check "global option may come first" expect_exit 0 "$CLI" mode --global standard
+check "global mode can be changed" expect_mode 'standard (global)'
+check "global mode can be unset" expect_exit 0 "$CLI" mode --unset --global
+check "unset global mode falls back to auto" expect_mode 'auto (default)'
+check "unknown modes are rejected" expect_exit 2 "$CLI" mode turbo
+check "rejected mode is not stored" test -z "$(git config --get harness.mode)"
+check "extra mode arguments are rejected" expect_exit 2 "$CLI" mode lite strict
+check "unknown mode options are rejected" expect_exit 2 "$CLI" mode --typo
+git config --local harness.mode turbo
+check "invalid stored mode behaves as auto and is reported" expect_mode "auto (invalid local value: turbo)"
+git config --local --unset harness.mode
+: > .git/config.lock
+check "mode reports config write failure" expect_exit 1 "$CLI" mode lite
+rm .git/config.lock
+cd "$WORK" || exit 1
+check "project mode requires a repository" expect_exit 2 "$CLI" mode lite
+check "global mode works outside a repository" expect_exit 0 "$CLI" mode strict --global
+check "mode outside a repository shows the global default" expect_mode 'strict (global)'
+git config --global --unset harness.mode
+check "help documents mode" expect_exit 0 "$CLI" help
+check "help includes mode syntax" contains 'mode [MODE] [--global]'
+cd "$WORK/project" || exit 1
 
 printf 'Project "instructions"\\path\n' > AGENTS.md
 printf 'Architecture context\n' > docs/architecture.md
