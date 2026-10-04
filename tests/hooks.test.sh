@@ -430,6 +430,19 @@ check "token toggles: economical subagents are requested" "session '$WORK/repo' 
 git -C "$WORK/repo" config --unset harness.replyStyle
 git -C "$WORK/repo" config --unset harness.skillLoading
 git -C "$WORK/repo" config --unset harness.subagentModel
+check "ci-watch: the default adds no setting line" "! session '$WORK/repo' | grep -q 'Workflow settings'"
+git -C "$WORK/repo" config tack.ciWatch false
+check "ci-watch: turning it off tells the assistant not to wait for CI" "session '$WORK/repo' | grep -q 'Workflow settings:.*Do not wait for CI'"
+git -C "$WORK/repo" config --unset tack.ciWatch
+for ci_mode in standard strict unleash; do
+  git -C "$WORK/repo" config tack.mode "$ci_mode"
+  check "ci-watch: $ci_mode mode waits for CI after a push" "session '$WORK/repo' | grep -q 'CI: after a push'"
+done
+for ci_mode in lite lean; do
+  git -C "$WORK/repo" config tack.mode "$ci_mode"
+  check "ci-watch: $ci_mode mode does not wait for CI" "! session '$WORK/repo' | grep -q 'CI: after a push'"
+done
+git -C "$WORK/repo" config --unset tack.mode
 git -C "$WORK/repo" config harness.mode lean
 check "lean mode: the rules say not to load dev-workflow" "session '$WORK/repo' | grep -q 'do not load the \`dev-workflow\` skill'"
 check "lean mode: the message points to the mode's own rules" "session '$WORK/repo' | grep -q 'Apply the lean mode rules below'"

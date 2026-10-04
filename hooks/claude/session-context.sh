@@ -30,6 +30,9 @@ if (cd "$cwd" && "$cli" status --quiet); then
   [ "$(setting skill-loading)" != minimal ] || tokens="$tokens Load a skill only when the task cannot be done without it; prefer the rules already in context."
   [ "$(setting subagent-model)" != economical ] || tokens="$tokens When delegating, use the most economical model that can do the task."
   [ -z "$tokens" ] || context="$context"$'\n'"Token settings:$tokens"
+  workflow=''
+  [ "$(setting ci-watch)" != false ] || workflow="$workflow Do not wait for CI after a push unless the user asks; merges still need green checks."
+  [ -z "$workflow" ] || context="$context"$'\n'"Workflow settings:$workflow"
   project_context="$(cd "$cwd" && "$cli" context)" || project_context=''
   [ -z "$project_context" ] || context="$context"$'\n'"$project_context"
 else

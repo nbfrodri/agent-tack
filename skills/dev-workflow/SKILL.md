@@ -34,6 +34,7 @@ If a task turns out larger or riskier than its level, say so and move up before 
 | Handoff | none | only if work spans sessions or context or usage looks low | from the start, updated every milestone |
 | AI log | none | none | one row in `docs/ai/log.md` |
 | Review | read your own diff | `code-reviewer` for large or risky diffs | `code-reviewer` before offering to push |
+| CI | none | after a push or new PR, wait for CI in the background, report it and fix failures from the log | same |
 | Delegation | suggest and wait | suggest and wait | automatic after approval unless `tack.delegation` is `off` |
 
 Every level keeps the hooks' guarantees (Conventional Commits, no AI attribution, no secrets, protected `main` and tags) and the rules on what to ask before doing.
@@ -83,7 +84,7 @@ Update everything on the impact list, plus what the level requires, following `p
 Run the project's tests, linter, formatter and type checker. Re-run the impact search on the final diff to catch help text, docs or callers that still describe the old behaviour. Never say something works without having checked it; if something fails or couldn't run, say so clearly, with the output.
 
 ### 10. Close
-Summarise briefly: what changed, the commits, what else the change affected and how it was covered, how it was verified and what's pending. Offer to push or open the PR where it applies.
+Summarise briefly: what changed, the commits, what else the change affected and how it was covered, how it was verified and what's pending. Offer to push or open the PR where it applies. After a push, follow the CI row unless `tack config ci-watch` is `false`; the guard refuses `gh pr merge` while checks fail or are pending (`merge-requires-green`).
 
 ## Related skills and agents
 Use them when the current tool has them:
