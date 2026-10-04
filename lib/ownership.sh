@@ -21,7 +21,7 @@ ownership_init() {
   local entry state_base="${XDG_STATE_HOME:-$HOME}"
   OWN_PATHS=() OWN_KINDS=() OWN_ENTRIES=()
   OWN_COUNT=0
-  OWNERSHIP="${XDG_STATE_HOME:-$HOME/.local/state}/agent-harness/ownership"
+  OWNERSHIP="$(tool_dir "${XDG_STATE_HOME:-$HOME/.local/state}")/ownership"
   if ! ownership_plain_path "$HOME" || ! ownership_plain_path "$REPO" || ! ownership_plain_path "$OWNERSHIP"; then
     fail 'ownership requires absolute paths without tabs, newlines or dot components'; return 1
   fi

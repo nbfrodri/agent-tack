@@ -11,7 +11,10 @@ for arg in "$@"; do
     *) printf 'Unknown option: %s (see --help)\n' "$arg" >&2; exit 2 ;;
   esac
 done
-STATE="${XDG_STATE_HOME:-$HOME/.local/state}/agent-harness/ownership"
+# The directory was agent-harness before the rename; use it while it is the only one.
+STATE_BASE="${XDG_STATE_HOME:-$HOME/.local/state}"
+if [ -d "$STATE_BASE/agent-tack" ] || [ ! -d "$STATE_BASE/agent-harness" ]; then STATE="$STATE_BASE/agent-tack/ownership"
+else STATE="$STATE_BASE/agent-harness/ownership"; fi
 if [ ! -e "$STATE" ] && [ ! -L "$STATE" ]; then
   echo 'No ownership record; nothing removed. Pre-existing configuration is never inferred to be owned.'
   exit 0

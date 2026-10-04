@@ -1,6 +1,6 @@
 # Conventions
 
-The conventions the harness applies, at a glance. Source of truth: [`skills/dev-workflow/references/conventions.md`](../skills/dev-workflow/references/conventions.md).
+The conventions tack applies, at a glance. Source of truth: [`skills/dev-workflow/references/conventions.md`](../skills/dev-workflow/references/conventions.md).
 
 | | |
 | --- | --- |

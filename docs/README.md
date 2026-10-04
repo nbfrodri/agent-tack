@@ -10,7 +10,7 @@
 | [customization.md](customization.md) | Personal rules, skills, agents, tools, plugins and hooks |
 | [components.md](components.md) | Every skill, agent and plugin |
 | [conventions.md](conventions.md) | Commits, PRs, releases, code and docs conventions |
-| [results.md](results.md) | Measured behaviour with vs without the harness |
+| [results.md](results.md) | Measured behaviour with vs without tack |
 | [sharing.md](sharing.md) | Using it on someone else's machine |
 | [development.md](development.md) | Tests, evals, adding skills, agents and tools |
 | [audits/](audits/) | Improvement and review reports |

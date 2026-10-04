@@ -12,5 +12,5 @@ Context: full
 - Docs: everything the change affects.
 - Handoff: from the start, updated at every milestone, listing assumptions. AI log: one row.
 - Review: run `code-reviewer` on the final diff and fix its findings before opening the pull request.
-- Delegation: automatic for separable work, unless `harness config delegation` is `off`.
-- Limits: respect `harness config unleash-max-tool-calls` and `unleash-max-cost`; stop with a summary when one is reached.
+- Delegation: automatic for separable work, unless `tack config delegation` is `off`.
+- Limits: respect `tack config unleash-max-tool-calls` and `unleash-max-cost`; stop with a summary when one is reached.

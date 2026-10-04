@@ -13,6 +13,8 @@ ok() { [ "$QUIET" -eq 1 ] || printf 'OK   %s\n' "$1"; }
 warn() { [ "$QUIET" -eq 1 ] || printf 'WARN %s\n' "$1"; WARNINGS=$((WARNINGS + 1)); }
 fail() { [ "$QUIET" -eq 1 ] || printf 'FAIL %s\n' "$1"; FAILURES=$((FAILURES + 1)); }
 has() { command -v "$1" >/dev/null 2>&1; }
+# shellcheck source=lib/keys.sh
+source "$REPO/lib/keys.sh"
 # shellcheck source=lib/mods.sh
 source "$REPO/lib/mods.sh"
 # shellcheck source=lib/vscode.sh
@@ -75,9 +77,11 @@ check_tools_and_links() {
     else fail "required tool unavailable: $tool"; fi
   done
   has readlink || return
+  check_link "$REPO" "$HOME/.agents/tack"
   check_link "$REPO" "$HOME/.agents/harness"
+  check_link "$REPO/bin/tack" "$HOME/.local/bin/tack"
   check_link "$REPO/bin/harness" "$HOME/.local/bin/harness"
-  [ -x "$REPO/bin/harness" ] || fail 'harness CLI is not executable'
+  [ -x "$REPO/bin/tack" ] || fail 'tack CLI is not executable'
   check_skills "$HOME/.agents/skills"
   while read -r tool when commands instructions skills_dir _ <&3; do
     case "$tool" in ''|'#'*) continue ;; esac
@@ -242,7 +246,8 @@ PYTHON
   esac
 }
 recorded_git_hooks_path() {
-  local path="$1" state="${XDG_STATE_HOME:-$HOME/.local/state}/agent-harness/ownership" entry
+  local path="$1" state entry
+  state="$(tool_dir "${XDG_STATE_HOME:-$HOME/.local/state}")/ownership"
   [ "$OWNERSHIP_VALID" -eq 1 ] || return 1
   for entry in "$state"/entries/*; do
     if [ ! -f "$entry/kind" ] || [ ! -f "$entry/target" ]; then continue; fi
@@ -278,7 +283,8 @@ check_git_hooks() {
   fi
 }
 check_ownership() {
-  local state="${XDG_STATE_HOME:-$HOME/.local/state}/agent-harness/ownership" field entry kind path target
+  local state field entry kind path target
+  state="$(tool_dir "${XDG_STATE_HOME:-$HOME/.local/state}")/ownership"
   if [ ! -e "$state" ] && [ ! -L "$state" ]; then
     warn 'installation ownership is unrecorded (legacy install); uninstall restoration is not verified'
     return
@@ -364,12 +370,12 @@ check_project() {
     ok 'current directory: outside a Git repository (project checks not applicable)'
     return
   fi
-  if "$REPO/bin/harness" status --quiet; then ok 'current project workflow: enabled'
+  if "$REPO/bin/tack" status --quiet; then ok 'current project workflow: enabled'
   else ok 'current project workflow: disabled'; fi
-  mode="$("$REPO/bin/harness" mode)"
+  mode="$("$REPO/bin/tack" mode)"
   if [ -z "${mode##*invalid*}" ] || [ -z "${mode##*ignored*}" ]; then
     warn "current project mode: $mode"
-  elif "$REPO/bin/harness" mode show | grep -q '^WARNING:'; then
+  elif "$REPO/bin/tack" mode show | grep -q '^WARNING:'; then
     warn "current project mode: $mode; autonomous mode without confirmations is active"
     case "$(git branch --show-current 2>/dev/null)" in
       main | master) warn "current branch is $(git branch --show-current) in a project-only mode; switch to a branch or worktree" ;;
@@ -377,13 +383,13 @@ check_project() {
   else
     ok "current project mode: $mode"
   fi
-  if "$REPO/bin/harness" trusted --quiet; then ok 'current project formatter: trusted'
+  if "$REPO/bin/tack" trusted --quiet; then ok 'current project formatter: trusted'
   else ok 'current project formatter: untrusted'; fi
 }
 if [ "$TOOLS_MODE" -eq 1 ]; then
   [ -f "$REPO/targets.txt" ] || { echo 'doctor: targets.txt is missing' >&2; exit 1; }
   check_tools
-elif [ ! -f "$REPO/targets.txt" ] || [ ! -f "$REPO/bin/harness" ]; then
+elif [ ! -f "$REPO/targets.txt" ] || [ ! -f "$REPO/bin/tack" ]; then
   fail 'checkout is missing required harness files'
 else
   check_tools_and_links

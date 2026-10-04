@@ -8,7 +8,7 @@ description: Autonomous improvement loop: an evaluator scores the project, you a
 You are the team lead. The `evaluator` agent scores the project; you turn its findings into tasks, delegate them, verify the result and repeat. The user gets a better project on a separate branch and a report showing how the score changed, and decides what to keep.
 
 ## 1. Set up (ask once, in one question round)
-- **Scope and focus areas:** as in `improve`: whole project, a module, recent work or a screen; and which rubric dimensions (see `~/.agents/harness/agents/evaluator.md`).
+- **Scope and focus areas:** as in `improve`: whole project, a module, recent work or a screen; and which rubric dimensions (see `~/.agents/tack/agents/evaluator.md`).
 - **Stop criteria**, proposing the defaults: overall score **≥ 8.0** with **no dimension under 6**; at most **5 iterations**; stop early if an iteration doesn't raise the overall score.
 - **Model policy:** the evaluator runs on the most capable model; each task gets a model and effort by complexity (`orchestrate` table). The user confirms the policy once; don't ask again every round.
 - Mention the cost: each iteration runs one evaluation plus several agents.

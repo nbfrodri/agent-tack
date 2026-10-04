@@ -52,7 +52,7 @@ doctor() { run "$EDITORS:$MINBIN" bash "$REPO/lib/doctor.sh" "$REPO"; }
 git_global() { HOME="$H" XDG_CONFIG_HOME="$H/.config" GIT_CONFIG_NOSYSTEM=1 git config --global "$@"; }
 value() { python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get(sys.argv[2], "MISSING"))' "$1" "$2"; }
 key_count() { python3 -c 'import json,sys; print(len(json.load(open(sys.argv[1]))))' "$1"; }
-owned() { grep -rlxF -- "$SETTINGS" "$H"/.local/state/agent-harness/ownership/entries/*/path >/dev/null 2>&1; }
+owned() { grep -rlxF -- "$SETTINGS" "$H"/.local/state/agent-tack/ownership/entries/*/path >/dev/null 2>&1; }
 prepare() { mkdir -p "$(dirname "$SETTINGS")"; printf '%s\n' "$1" > "$SETTINGS"; }
 
 echo "Absent file"

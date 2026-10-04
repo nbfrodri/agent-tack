@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Claude Code PostToolUse hook after edits: runs the project's fast check
-# (`harness config check-fast`) and shows its failures to the assistant.
+# (`tack config check-fast`) and shows its failures to the assistant.
 # Runs project code, so it needs both activation and local trust, like the formatter.
 set -u
 
@@ -17,7 +17,7 @@ except Exception:
 fi
 [ -n "$cwd" ] && [ -d "$cwd" ] || exit 0
 
-cli="$(cd "$(dirname "$0")/../../bin" && pwd)/harness"
+cli="$(cd "$(dirname "$0")/../../bin" && pwd)/tack"
 cd "$cwd" || exit 0
 "$cli" status --quiet && "$cli" trusted --quiet || exit 0
 check="$("$cli" config check-fast 2>/dev/null)"

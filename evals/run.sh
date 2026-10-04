@@ -8,12 +8,12 @@
 #               that workflow mode; harness (default) is an alias for auto
 #   baseline:   Claude Code as shipped: no user settings, skills or instructions, and git
 #               without the global hooks (same repo and prompt)
-# Results go to $EVALS_OUT (default: $TMPDIR/agent-harness-evals)/<scenario>/<condition>-<rep>;
+# Results go to $EVALS_OUT (default: $TMPDIR/agent-tack-evals)/<scenario>/<condition>-<rep>;
 # grade them with evals/grade.py and summarise them with evals/report.py.
 set -eEuo pipefail
 
 HARNESS_REPO="$(cd "$(dirname "$0")/.." && pwd)"
-EVALS="${EVALS_OUT:-${TMPDIR:-/tmp}/agent-harness-evals}"
+EVALS="${EVALS_OUT:-${TMPDIR:-/tmp}/agent-tack-evals}"
 name="${1:?scenario name required}"
 condition="${2:-harness}"
 rep="${3:-1}"
@@ -159,9 +159,9 @@ case "$name" in
 esac
 cd "$dir" || exit 1
 if [ -n "$mode" ]; then
-  "$HARNESS_REPO/bin/harness" enable >/dev/null
+  "$HARNESS_REPO/bin/tack" enable >/dev/null
   # Set locally so the user's global default mode cannot leak into the comparison.
-  "$HARNESS_REPO/bin/harness" mode "$mode" >/dev/null
+  "$HARNESS_REPO/bin/tack" mode "$mode" >/dev/null
 fi
 
 case "$name" in

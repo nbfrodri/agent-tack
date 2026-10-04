@@ -1,8 +1,8 @@
-# agent-harness
+# agent-tack
 
-**Dotfiles for AI coding agents.** One install gives Claude Code, Codex, Copilot, Cursor, Gemini, OpenCode and Crush the same instructions, skills and safety rules, so they work like a disciplined senior engineer in every project.
+**Dotfiles for AI coding agents** (formerly agent-harness). One install gives Claude Code, Codex, Copilot, Cursor, Gemini, OpenCode and Crush the same instructions, skills and safety rules, so they work like a disciplined senior engineer in every project.
 
-[![CI](https://github.com/nbfrodri/agent-harness/actions/workflows/ci.yml/badge.svg)](https://github.com/nbfrodri/agent-harness/actions/workflows/ci.yml)
+[![CI](https://github.com/nbfrodri/agent-tack/actions/workflows/ci.yml/badge.svg)](https://github.com/nbfrodri/agent-tack/actions/workflows/ci.yml)
 
 ## What it does
 
@@ -16,16 +16,16 @@
 Requirements: Linux, macOS or Windows with WSL2; `git`, `bash`, `python3` or `jq`; at least one supported AI tool.
 
 ```bash
-git clone https://github.com/nbfrodri/agent-harness.git ~/Projects/agent-harness
-~/Projects/agent-harness/install.sh      # keep the checkout there: installed files link to it
+git clone https://github.com/nbfrodri/agent-tack.git ~/Projects/agent-tack
+~/Projects/agent-tack/install.sh      # keep the checkout there: installed files link to it
 
 cd ~/Projects/my-app
-harness enable                           # turn the workflow on for this project
+tack enable                           # turn the workflow on for this project
 ```
 
 Restart your AI tools, then work as usual: *"Add Google login"*, *"Fix issue #12"*, *"What would you improve?"*, *"Prepare a release"*.
 
-Preview with `./install.sh --dry-run`, check with `harness doctor`, update with `git pull && ./install.sh`, remove with `./uninstall.sh`. [Installation details →](docs/usage.md#installation-diagnostics-and-removal) · [Editors and WSL →](docs/editors.md)
+Preview with `./install.sh --dry-run`, check with `tack doctor`, update with `git pull && ./install.sh`, remove with `./uninstall.sh`. [Installation details →](docs/usage.md#installation-diagnostics-and-removal) · [Editors and WSL →](docs/editors.md)
 
 ## Modes
 
@@ -40,9 +40,9 @@ The mode decides how much process each task gets. `auto` is the default and pick
 | `unleash` | Unattended work on a branch | Works without asking; the guard still blocks dangerous commands ([risks](docs/usage.md#unleash-autonomous-work)) |
 
 ```bash
-harness mode strict            # this project
-harness mode lite --global     # your default everywhere
-harness mode new spike --from lite   # your own mode, in ~/.config/agent-harness/modes/
+tack mode strict            # this project
+tack mode lite --global     # your default everywhere
+tack mode new spike --from lite   # your own mode, in ~/.config/agent-tack/modes/
 ```
 
 [Modes in detail →](docs/usage.md#workflow-modes)
@@ -51,13 +51,13 @@ harness mode new spike --from lite   # your own mode, in ~/.config/agent-harness
 
 | Command | What it does |
 | --- | --- |
-| `harness status` | Is the workflow on, which mode, is the formatter trusted |
-| `harness config` | List and change feature toggles (delegation, fast check, limits…) |
-| `harness doctor` / `--tools` | Diagnose the installation / each installed AI tool |
-| `harness trust` | Allow automatic formatting and the fast check in this checkout |
-| `harness disable` | Turn the workflow off for this project |
+| `tack status` | Is the workflow on, which mode, is the formatter trusted |
+| `tack config` | List and change feature toggles (delegation, fast check, limits…) |
+| `tack doctor` / `--tools` | Diagnose the installation / each installed AI tool |
+| `tack trust` | Allow automatic formatting and the fast check in this checkout |
+| `tack disable` | Turn the workflow off for this project |
 
-Run `harness help` for everything. [Usage →](docs/usage.md)
+Run `tack help` for everything. [Usage →](docs/usage.md)
 
 ## What's included
 
@@ -70,7 +70,7 @@ Run `harness help` for everything. [Usage →](docs/usage.md)
 
 ## Results
 
-Measured on real sessions with Claude Sonnet 5.5 in Claude Code, plain assistant versus the harness. Other models and tools can give different numbers ([method and limits](docs/results.md)):
+Measured on real sessions with Claude Sonnet 5.5 in Claude Code, plain assistant versus tack. Other models and tools can give different numbers ([method and limits](docs/results.md)):
 
 | | Plain assistant | Lite / Auto | Strict |
 | --- | --- | --- | --- |

@@ -24,7 +24,7 @@ git config --global core.hooksPath "$REPO/git-hooks"
 git config --global commit.gpgsign false
 # Test repos behave as harness-enabled projects unless a test disables them
 git config --global harness.enabled true
-CLI="$REPO/bin/harness"
+CLI="$REPO/bin/tack"
 
 new_repo() {
   rm -rf "$1"
@@ -48,7 +48,7 @@ echo "commit-msg: Conventional Commits"
 R="$WORK/repo"
 new_repo "$R"
 check "accepts 'feat(auth): add login'" "commit 'feat(auth): add login'"
-check "rejection points to the config command" "{ git -C '$R' commit -q --allow-empty -m 'bad subject' 2>&1 || true; } | grep -q 'harness config conventional-commits false'"
+check "rejection points to the config command" "{ git -C '$R' commit -q --allow-empty -m 'bad subject' 2>&1 || true; } | grep -q 'tack config conventional-commits false'"
 check "accepts breaking change 'feat!: drop v1 API'" "commit 'feat!: drop v1 API'"
 check "accepts 'fix: handle empty cart'" "commit 'fix: handle empty cart'"
 check "rejects 'added login'" "! commit 'added login'"
@@ -388,14 +388,16 @@ setup_commit "$(printf 'wip\n\nCo-Authored-By: Claude <noreply@anthropic.com>\n'
 check "AI attribution still removed when disabled" "! last_message | grep -qi claude"
 (cd "$R" && "$CLI" enable >/dev/null)
 check "enable (local) turns it on" "[ \"\$(status_of)\" = enabled ]"
-check "local enable leaves the repo untouched" "[ ! -e '$R/.harness' ]"
+check "local enable leaves the repo untouched" "[ ! -e '$R/.tack' ] && [ ! -e '$R/.harness' ]"
 check "Conventional Commits enforced once enabled" "! commit 'quick fix'"
 (cd "$R" && "$CLI" disable >/dev/null)
 check "disable turns it off" "[ \"\$(status_of)\" = disabled ]"
 (cd "$R" && "$CLI" enable --shared >/dev/null)
-check "enable --shared creates .harness" "[ -f '$R/.harness' ]"
-git -C "$R" config --unset harness.enabled
-check "the .harness file alone enables it" "[ \"\$(status_of)\" = enabled ]"
+check "enable --shared creates .tack" "[ -f '$R/.tack' ]"
+git -C "$R" config --unset tack.enabled
+check "the .tack file alone enables it" "[ \"\$(status_of)\" = enabled ]"
+mv "$R/.tack" "$R/.harness"
+check "a legacy .harness file still enables it" "[ \"\$(status_of)\" = enabled ]"
 (cd "$R" && "$CLI" disable >/dev/null)
 check "disable removes the file" "[ ! -e '$R/.harness' ] && [ \"\$(status_of)\" = disabled ]"
 git config --global harness.enabled true
@@ -450,8 +452,8 @@ check "budget: calls under the limit pass" "[ -z \"\$(budget s1 '$B')\" ] && [ -
 check "budget: the call past the limit is denied" "budget s1 '$B' | grep -q '\"permissionDecision\":\"deny\"'"
 check "budget: the reason names the limit" "budget s1 '$B' | grep -q 'limit of 2 tool calls'"
 check "budget: each session has its own count" "[ -z \"\$(budget s2 '$B')\" ]"
-check "budget: the count lives in the state directory" "[ -f '$WORK/state/agent-harness/budget/s1' ]"
-check "budget: unsafe session ids are ignored" "[ -z \"\$(budget '../escape' '$B')\" ] && [ ! -e '$WORK/state/agent-harness/escape' ]"
+check "budget: the count lives in the state directory" "[ -f '$WORK/state/agent-tack/budget/s1' ]"
+check "budget: unsafe session ids are ignored" "[ -z \"\$(budget '../escape' '$B')\" ] && [ ! -e '$WORK/state/agent-tack/escape' ]"
 git -C "$B" config harness.mode lite
 check "budget: other modes are never limited" "[ -z \"\$(budget s1 '$B')\" ]"
 git -C "$B" config harness.mode unleash

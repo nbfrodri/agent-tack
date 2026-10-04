@@ -8,7 +8,7 @@ export HOME="$WORK/home" XDG_CONFIG_HOME="$WORK/home/.config" XDG_STATE_HOME="$W
 mkdir -p "$HOME" "$WORK/project/docs/handoffs"
 git init -q "$WORK/project"
 cd "$WORK/project" || exit 1
-CLI="$REPO/bin/harness"
+CLI="$REPO/bin/tack"
 PASSED=0 FAILED=0
 check() {
   local label="$1"
@@ -47,20 +47,20 @@ check "status shows disabled and untrusted independently" expect_status 1 disabl
 check "default command shows combined status" expect_status 1 disabled untrusted
 check "disabled quiet status keeps its activation exit code" expect_exit 1 "$CLI" status --quiet
 check "disabled quiet status emits no output" test ! -s "$WORK/output"
-git config --local harness.enabled true
+git config --local tack.enabled true
 check "status shows enabled without formatter trust" expect_status 0 enabled untrusted status
 check "enabled quiet status keeps its activation exit code" expect_exit 0 "$CLI" status --quiet
 check "enabled quiet status emits no output" test ! -s "$WORK/output"
-git config --local harness.trusted true
+git config --local tack.trusted true
 check "status shows enabled and locally trusted" expect_status 0 enabled trusted status
-git config --local harness.enabled false
+git config --local tack.enabled false
 check "disabled workflow can retain local formatter trust" expect_status 1 disabled trusted status
-git config --local --unset harness.enabled
-git config --local --unset harness.trusted
+git config --local --unset tack.enabled
+git config --local --unset tack.trusted
 cd "$WORK" || exit 1
 check "outside a repository status is disabled and untrusted" expect_status 1 disabled untrusted status
 check "help works outside a Git repository" expect_exit 0 "$CLI" help
-check "help shows CLI invocation syntax" contains 'Usage: harness [command] [options]'
+check "help shows CLI invocation syntax" contains 'Usage: tack [command] [options]'
 check "help documents the default command" contains 'Default command: status'
 check "help lists both global help flags" contains '-h, --help'
 cp "$WORK/output" "$WORK/help-output"
@@ -70,26 +70,26 @@ check "short help flag succeeds outside Git" expect_exit 0 "$CLI" -h
 check "short help flag matches the help command" cmp -s "$WORK/output" "$WORK/help-output"
 check "help rejects unsupported arguments" expect_exit 2 "$CLI" help unexpected
 check "unknown command fails with a usage error" expect_exit 2 "$CLI" unknown-command
-check "unknown command includes CLI invocation syntax" contains 'Usage: harness [command] [options]'
+check "unknown command includes CLI invocation syntax" contains 'Usage: tack [command] [options]'
 cd "$WORK/project" || exit 1
 
 : > .git/config.lock
 check "enable reports config write failure" expect_exit 1 "$CLI" enable
 check "disable reports config write failure" expect_exit 1 "$CLI" disable
 rm .git/config.lock
-mkdir .harness
-git config --global harness.enabled true
-git config --local harness.enabled false
+mkdir .tack
+git config --global tack.enabled true
+git config --local tack.enabled false
 check "local opt-out overrides global activation" expect_exit 1 "$CLI" status --quiet
 check "shared marker write failure is reported" expect_exit 1 "$CLI" enable --shared
 check "failed shared enable preserves disabled status" expect_exit 1 "$CLI" status --quiet
-check "failed shared enable preserves local opt-out" test "$(git config --local --get harness.enabled)" = false
-git config --global --unset harness.enabled
-rmdir .harness
+check "failed shared enable preserves local opt-out" test "$(git config --local --get tack.enabled)" = false
+git config --global --unset tack.enabled
+rmdir .tack
 check "unknown enable options are rejected" expect_exit 2 "$CLI" enable --typo
 check "shared enable succeeds" expect_exit 0 "$CLI" enable --shared
 check "shared marker grants no execution trust" expect_exit 1 "$CLI" trusted --quiet
-git config --global harness.trusted true
+git config --global tack.trusted true
 check "global trust grants no execution trust" expect_exit 1 "$CLI" trusted --quiet
 check "status ignores global formatter trust" expect_status 0 enabled untrusted status
 check "local trust can be granted" expect_exit 0 "$CLI" trust
@@ -103,7 +103,7 @@ check "mode defaults to auto" expect_mode 'auto (default)'
 check "global mode can be set" expect_exit 0 "$CLI" mode lite --global
 check "global mode applies to the project" expect_mode 'lite (global)'
 check "project mode can be set" expect_exit 0 "$CLI" mode strict
-check "project mode is stored locally" test "$(git config --local --get harness.mode)" = strict
+check "project mode is stored locally" test "$(git config --local --get tack.mode)" = strict
 check "project mode overrides the global default" expect_mode 'strict (local)'
 check "global query ignores the project mode" expect_exit 0 "$CLI" mode --global
 check "global query shows the global default" output_is 'lite (global)'
@@ -117,12 +117,12 @@ check "global mode can be changed" expect_mode 'standard (global)'
 check "global mode can be unset" expect_exit 0 "$CLI" mode --unset --global
 check "unset global mode falls back to auto" expect_mode 'auto (default)'
 check "unknown modes are rejected" expect_exit 2 "$CLI" mode turbo
-check "rejected mode is not stored" test -z "$(git config --get harness.mode)"
+check "rejected mode is not stored" test -z "$(git config --get tack.mode)"
 check "extra mode arguments are rejected" expect_exit 2 "$CLI" mode lite strict
 check "unknown mode options are rejected" expect_exit 2 "$CLI" mode --typo
-git config --local harness.mode turbo
+git config --local tack.mode turbo
 check "invalid stored mode behaves as auto and is reported" expect_mode "auto (invalid local value: turbo)"
-git config --local --unset harness.mode
+git config --local --unset tack.mode
 : > .git/config.lock
 check "mode reports config write failure" expect_exit 1 "$CLI" mode lite
 rm .git/config.lock
@@ -130,14 +130,30 @@ cd "$WORK" || exit 1
 check "project mode requires a repository" expect_exit 2 "$CLI" mode lite
 check "global mode works outside a repository" expect_exit 0 "$CLI" mode strict --global
 check "mode outside a repository shows the global default" expect_mode 'strict (global)'
-git config --global --unset harness.mode
+git config --global --unset tack.mode
 check "help documents mode" expect_exit 0 "$CLI" help
 check "help includes mode syntax" contains 'mode [MODE] [--global]'
 check "help documents config" contains 'config [NAME [VALUE]] [--global]'
 check "help documents user modes" contains 'mode new NAME --from MODE'
 cd "$WORK/project" || exit 1
 
-USER_MODES="$XDG_CONFIG_HOME/agent-harness/modes"
+USER_MODES="$XDG_CONFIG_HOME/agent-tack/modes"
+git config --local harness.mode strict
+check "legacy harness.* keys are still honoured" expect_mode 'strict (local)'
+git config --local tack.mode lite
+check "tack.* keys win over legacy harness.* keys" expect_mode 'lite (local)'
+check "setting a value succeeds" expect_exit 0 "$CLI" mode standard
+check "writes go to the tack.* key" test "$(git config --local --get tack.mode)" = standard
+check "writes remove the legacy key in that scope" test -z "$(git config --local --get harness.mode)"
+git config --local --unset tack.mode
+git config --local harness.delegation off
+check "config reads legacy keys" expect_mode_like 'off (local)' "$CLI" config delegation
+git config --local --unset harness.delegation
+mkdir -p "$XDG_CONFIG_HOME/agent-harness/modes"
+printf '# legacy\nWhen: an old user mode\nScope: any\n\n- Plan: none.\n' > "$XDG_CONFIG_HOME/agent-harness/modes/legacy.md"
+check "user modes in the former config directory are still found" expect_exit 0 "$CLI" mode legacy
+git config --local --unset tack.mode
+rm -rf "$XDG_CONFIG_HOME/agent-harness"
 check "mode list shows built-in modes" expect_exit 0 "$CLI" mode list
 check "mode list shows each mode's purpose" contains 'lite      built-in  questions, typos'
 check "mode list includes auto" contains 'auto      built-in'
@@ -149,7 +165,7 @@ check "mode list includes user modes" expect_exit 0 "$CLI" mode list
 check "user modes are labelled" contains 'spike     user'
 check "a user mode can be selected" expect_exit 0 "$CLI" mode spike
 check "the selected user mode is effective" expect_mode 'spike (local)'
-git config --local --unset harness.mode
+git config --local --unset tack.mode
 check "built-in names cannot be reused" expect_exit 2 "$CLI" mode new lite --from strict
 check "existing user modes are not overwritten" expect_exit 2 "$CLI" mode new spike --from strict
 check "mode names must be simple words" expect_exit 2 "$CLI" mode new 'bad/name' --from lite
@@ -160,17 +176,17 @@ check "unleash is refused on the main branch" expect_exit 2 "$CLI" mode unleash
 git switch -q -c feat/autonomous
 check "unleash can be selected for a project" expect_exit 0 "$CLI" mode unleash
 check "unleash is effective locally" expect_mode 'unleash (local)'
-git config --local --unset harness.mode
+git config --local --unset tack.mode
 check "unleash refuses to become the global default" expect_exit 2 "$CLI" mode unleash --global
-check "the refused global default is not stored" test -z "$(git config --global --get harness.mode)"
-git config --global harness.mode unleash
+check "the refused global default is not stored" test -z "$(git config --global --get tack.mode)"
+git config --global tack.mode unleash
 check "an unleash default set by hand is ignored" expect_mode 'auto (unleash is project-only; global value ignored)'
-git config --global --unset harness.mode
+git config --global --unset tack.mode
 # shellcheck disable=SC2016 # Expanded by eval inside check.
 check "user modes copied from unleash stay project-only" eval '"$CLI" mode new wild --from unleash >/dev/null && ! "$CLI" mode wild --global >/dev/null 2>&1'
 # shellcheck disable=SC2016 # Expanded by eval inside check.
-check "a deleted user mode falls back to auto" eval 'git config --local harness.mode gone && "$CLI" mode | grep -q "auto (invalid local value: gone)"'
-git config --local --unset harness.mode
+check "a deleted user mode falls back to auto" eval 'git config --local tack.mode gone && "$CLI" mode | grep -q "auto (invalid local value: gone)"'
+git config --local --unset tack.mode
 
 check "config lists every registered feature" expect_exit 0 "$CLI" config
 check "config listing shows value, source and enforcement" contains 'conventional-commits    true      default  hook'
@@ -179,10 +195,10 @@ check "config listing includes installer toggles" contains 'mods                
 check "config shows one feature" expect_exit 0 "$CLI" config delegation
 check "config shows the default value and source" output_is 'auto (default)'
 check "config sets a project value" expect_exit 0 "$CLI" config delegation off
-check "config stores the project value under its git key" test "$(git config --local --get harness.delegation)" = off
+check "config stores the project value under its git key" test "$(git config --local --get tack.delegation)" = off
 check "config reports the project value" expect_mode_like 'off (local)' "$CLI" config delegation
 check "config sets a global value" expect_exit 0 "$CLI" config context false --global
-check "config stores the global value" test "$(git config --global --get harness.context)" = false
+check "config stores the global value" test "$(git config --global --get tack.context)" = false
 check "config reports the global source" expect_mode_like 'false (global)' "$CLI" config context
 check "config unsets a project value" expect_exit 0 "$CLI" config delegation --unset
 check "unset project value falls back to the default" expect_mode_like 'auto (default)' "$CLI" config delegation
@@ -190,10 +206,10 @@ check "config unsets a global value" expect_exit 0 "$CLI" config context --unset
 check "config rejects unknown features" expect_exit 2 "$CLI" config turbo
 check "feature names are matched literally, not as patterns" expect_exit 2 "$CLI" config '.*'
 check "values may start with a dash after --" expect_exit 0 "$CLI" config check-fast -- "-x test"
-check "the dash value is stored" test "$(git config --local --get harness.checkFast)" = "-x test"
-git config --local --unset harness.checkFast
+check "the dash value is stored" test "$(git config --local --get tack.checkFast)" = "-x test"
+git config --local --unset tack.checkFast
 check "config rejects invalid values" expect_exit 2 "$CLI" config delegation sometimes
-check "rejected value is not stored" test -z "$(git config --get harness.delegation)"
+check "rejected value is not stored" test -z "$(git config --get tack.delegation)"
 check "config rejects non-boolean values for boolean features" expect_exit 2 "$CLI" config context maybe
 check "limits default to none" expect_mode_like 'none (default)' "$CLI" config unleash-max-tool-calls
 check "number features accept positive integers" expect_exit 0 "$CLI" config unleash-max-tool-calls 200
@@ -202,11 +218,11 @@ check "number features reject zero" expect_exit 2 "$CLI" config unleash-max-tool
 check "decimal features accept amounts" expect_exit 0 "$CLI" config unleash-max-cost 4.50
 check "decimal features reject text" expect_exit 2 "$CLI" config unleash-max-cost cheap
 check "decimal features reject zero" expect_exit 2 "$CLI" config unleash-max-cost 0.0
-git config --local --unset harness.unleashMaxToolCalls
-git config --local --unset harness.unleashMaxCost
+git config --local --unset tack.unleashMaxToolCalls
+git config --local --unset tack.unleashMaxCost
 check "global-only features refuse a project value" expect_exit 2 "$CLI" config mods false
 check "global-only features accept a global value" expect_exit 0 "$CLI" config mods false --global
-git config --global --unset harness.mods
+git config --global --unset tack.mods
 # shellcheck disable=SC2016 # Expanded by eval inside check.
 check "config does not expose safety checks as toggles" eval '! "$CLI" config | grep -qi "secret\|guard"'
 cd "$WORK" || exit 1
@@ -225,31 +241,31 @@ check "auto context indexes the active handoff" contains '- Active handoff: docs
 check "auto context shows the handoff's next step" contains 'Next: implement feature'
 check "auto context omits the handoff body" eval '! contains "# Handoff"'
 check "context excludes completed handoffs" excludes_completed
-git config --local harness.mode standard
+git config --local tack.mode standard
 check "standard context succeeds" expect_exit 0 "$CLI" context
 check "standard context is an index too" contains '- docs/architecture.md (1 lines)'
-git config --local --unset harness.mode
-git config --local harness.mode lite
+git config --local --unset tack.mode
+git config --local tack.mode lite
 check "lite context succeeds" expect_exit 0 "$CLI" context
 check "lite context keeps project instructions" contains 'Project "instructions"'
 check "lite context skips architecture" eval '! contains "Architecture context"'
 check "lite context still indexes the active handoff" contains '- Active handoff: docs/handoffs/2026-10-03-active.md'
 check "lite context skips the handoff body" eval '! contains "# Handoff"'
-git config --local harness.mode strict
+git config --local tack.mode strict
 check "strict context includes architecture" expect_exit 0 "$CLI" context
 check "strict context includes architecture text" contains 'Architecture context'
 check "strict context includes the handoff body" contains '# Handoff'
 check "strict context reports handoff freshness" contains 'up to date: no commits since its last update'
-git config --local --unset harness.mode
+git config --local --unset tack.mode
 "$CLI" mode new deep --from lite >/dev/null
-sed 's/^Context: minimal$/Context: full/' "$XDG_CONFIG_HOME/agent-harness/modes/deep.md" > "$WORK/deep.md" && mv "$WORK/deep.md" "$XDG_CONFIG_HOME/agent-harness/modes/deep.md"
-git config --local harness.mode deep
+sed 's/^Context: minimal$/Context: full/' "$XDG_CONFIG_HOME/agent-tack/modes/deep.md" > "$WORK/deep.md" && mv "$WORK/deep.md" "$XDG_CONFIG_HOME/agent-tack/modes/deep.md"
+git config --local tack.mode deep
 check "a mode file's Context line decides the startup context" expect_exit 0 "$CLI" context
 check "a user mode asking for full context gets excerpts" contains 'Architecture context'
-git config --local harness.mode lean
+git config --local tack.mode lean
 check "lean context succeeds" expect_exit 0 "$CLI" context
 check "lean context skips architecture" eval '! contains "Architecture context"'
-git config --local --unset harness.mode
+git config --local --unset tack.mode
 check "fresh handoff is reported up to date" expect_exit 0 "$CLI" context
 check "fresh handoff says so" contains 'up to date: no commits since its last update'
 touch -t 202001010000 docs/handoffs/2026-10-03-active.md
@@ -272,15 +288,17 @@ check "SessionStart preserves quotes and backslashes" session_has_instructions
 mkdir -p "$HOME/.local/bin"
 ln -s "$CLI" "$HOME/.local/bin/harness"
 check "context works through the installed symlink" expect_exit 0 "$HOME/.local/bin/harness" context
+check "the legacy harness alias runs tack" expect_exit 0 "$REPO/bin/harness" status --quiet
+check "the alias stays silent when not run by a person" test ! -s "$WORK/output"
 mkdir nested
 cd nested || exit 1
 check "context finds root from a nested directory" expect_exit 0 "$CLI" context
 check "nested context indexes architecture" contains '- docs/architecture.md'
 cd .. || exit 1
-git config harness.context false
+git config tack.context false
 check "context can be disabled independently" expect_exit 0 "$CLI" context
 check "opt-out emits no context" test ! -s "$WORK/output"
-git config --unset harness.context
+git config --unset tack.context
 python3 - <<'PY' > AGENTS.md
 print('x' * 20000)
 PY
@@ -302,9 +320,9 @@ check "disabled context is empty" test ! -s "$WORK/output"
   listing && /^  [a-z]/ { name = $1; if ($2 ~ /^(list|show|new|--[a-z]+)$/) name = name " " $2; print name }' > "$WORK/help-commands"
 check "help lists commands for the drift check" test -s "$WORK/help-commands"
 while IFS= read -r help_command; do
-  check "usage docs cover 'harness $help_command'" grep -qF "harness $help_command" "$REPO/docs/usage.md"
+  check "usage docs cover 'tack $help_command'" grep -qF "tack $help_command" "$REPO/docs/usage.md"
 done < "$WORK/help-commands"
-check "usage docs cover 'harness doctor --tools'" grep -qF "harness doctor --tools" "$REPO/docs/usage.md"
+check "usage docs cover 'tack doctor --tools'" grep -qF "tack doctor --tools" "$REPO/docs/usage.md"
 
 check "doctor rejects unsupported arguments" expect_exit 2 "$CLI" doctor --quiet
 check "help documents doctor" expect_exit 0 "$CLI" help

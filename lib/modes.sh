@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Workflow modes as data: built-in files in modes/, user files in the user's config directory.
-# Sourced by bin/harness, which sets HARNESS_ROOT to the checkout.
+# Sourced by bin/tack, which sets HARNESS_ROOT to the checkout.
 
-user_modes_dir() { printf '%s/agent-harness/modes\n' "${XDG_CONFIG_HOME:-$HOME/.config}"; }
+user_modes_dir() { printf '%s/modes\n' "$(tool_dir "${XDG_CONFIG_HOME:-$HOME/.config}")"; }
 
 # Prints the file that defines a mode; built-in names cannot be shadowed by user files.
 mode_file() {
@@ -29,7 +29,7 @@ effective_mode() {
   local scope value
   [ "$#" -gt 0 ] || set -- local global
   for scope in "$@"; do
-    value="$(git config "--$scope" --get harness.mode 2>/dev/null)" || continue
+    value="$(key_get "$scope" mode)" || continue
     if [ "$scope" = global ] && is_project_only "$value"; then
       printf 'auto (%s is project-only; global value ignored)\n' "$value"
     elif is_mode "$value"; then printf '%s (%s)\n' "$value" "$scope"
@@ -83,11 +83,11 @@ show_mode() {
 
 new_mode() {
   local name="$1" from="$2" source target
-  case "$name" in '' | auto | *[!a-z0-9-]*) echo "harness: mode names use lowercase letters, digits and dashes" >&2; return 2 ;; esac
-  if mode_file "$name" >/dev/null; then echo "harness: mode '$name' already exists" >&2; return 2; fi
-  source="$(mode_file "$from")" || { echo "harness: unknown source mode '$from'" >&2; return 2; }
+  case "$name" in '' | auto | *[!a-z0-9-]*) echo "tack: mode names use lowercase letters, digits and dashes" >&2; return 2 ;; esac
+  if mode_file "$name" >/dev/null; then echo "tack: mode '$name' already exists" >&2; return 2; fi
+  source="$(mode_file "$from")" || { echo "tack: unknown source mode '$from'" >&2; return 2; }
   mkdir -p "$(user_modes_dir)" || return 1
   target="$(user_modes_dir)/$name.md"
   { printf '# %s\n' "$name"; sed '1d' "$source"; } > "$target" || return 1
-  echo "Created $target from $from; edit it, then run 'harness mode $name'."
+  echo "Created $target from $from; edit it, then run 'tack mode $name'."
 }

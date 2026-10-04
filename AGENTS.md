@@ -4,7 +4,7 @@ This repo is the user's AI configuration (skills, agents, hooks, installer). Hum
 Architecture and execution flows: `docs/architecture.md`; keep it current when components, dependencies or flows change.
 
 ## Commands
-- Lint: `shellcheck -x install.sh uninstall.sh bin/harness lib/*.sh tests/*.sh evals/run.sh git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push git-hooks/pre-commit hooks/claude/*.sh hooks/claude/lib/*.sh`
+- Lint: `shellcheck -x install.sh uninstall.sh bin/tack bin/tack lib/*.sh tests/*.sh evals/run.sh git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push git-hooks/pre-commit hooks/claude/*.sh hooks/claude/lib/*.sh`
 - Validate skills, agents and cross-references: `tests/validate.sh` (its own tests: `tests/validate.test.sh`)
 - Test lifecycle and diagnostics: `tests/lifecycle.test.sh && tests/doctor.test.sh`
 - Test installer, tools and hooks: `tests/install.test.sh && tests/tools.test.sh && tests/hooks.test.sh && tests/mods.test.sh && tests/vscode.test.sh && tests/codex.test.sh`
@@ -22,4 +22,4 @@ Architecture and execution flows: `docs/architecture.md`; keep it current when c
 ## Design
 - One responsibility per file: `install.sh` orchestrates steps; JSON merging lives in `lib/settings-merge.{py,jq}`; command parsing in `hooks/claude/lib/shell-parse.{py,sh}` and the guard's policy in `guard-bash.sh` (structural rules) and `guard-policy.txt` (pattern rules); startup rendering in `lib/project-context.sh`.
 - Extend through data, not code: AI tools in `targets.txt`, plugins in `plugins.txt`, feature toggles in `features.txt`, workflow modes in `modes/`, skills and agents as folders and files.
-- Hooks ask `bin/harness status` whether a project is enabled and `bin/harness mode` for its workflow mode; nothing else reads the markers or `harness.mode` directly.
+- Hooks ask `bin/tack status` whether a project is enabled and `bin/tack mode` for its workflow mode; nothing else reads the markers or `tack.mode` directly.

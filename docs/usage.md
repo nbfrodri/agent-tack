@@ -1,31 +1,31 @@
 # Usage
 
-Day-to-day use: switching the harness on and off, what to ask, and keeping it up to date.
+Day-to-day use: switching tack on and off, what to ask, and keeping it up to date.
 
 ## CLI help
 
-Run `harness help`, `harness --help` or `harness -h` for command syntax, options, exit codes and examples. Help also works outside a Git repository. Running `harness` without a command displays project status.
+Run `tack help`, `tack --help` or `tack -h` for command syntax, options, exit codes and examples. Help also works outside a Git repository. Running `tack` without a command displays project status.
 
 ## Installation, diagnostics and removal
 
-Clone into any directory you choose and run `./install.sh` from that checkout. Installation exposes global configuration through symlinks; you can enable the workflow in any Git project, independently of where the harness repository lives. Keep the checkout available or reinstall after moving it.
+Clone into any directory you choose and run `./install.sh` from that checkout. Installation exposes global configuration through symlinks; you can enable the workflow in any Git project, independently of where tack repository lives. Keep the checkout available or reinstall after moving it.
 
 ```bash
 ./install.sh --dry-run                 # preview links, settings, Git, plugin and mod actions
 ./install.sh --dry-run --skip-plugins  # preview local configuration only
 ./install.sh --skip-plugins            # apply local configuration only (also skips mods)
 ./install.sh --skip-mods               # apply everything except the Claude Code mods
-harness doctor                        # check installation and current project; no writes
-harness doctor --tools                # check each installed AI tool instead of the project
+tack doctor                        # check installation and current project; no writes
+tack doctor --tools                # check each installed AI tool instead of the project
 ./uninstall.sh --dry-run               # preview safe restoration
 ./uninstall.sh                         # restore recorded unchanged state
 ```
 
-Doctor checks required tools, managed links, Claude settings and hook registration, ownership metadata, effective Git hooks, project activation and formatter trust. Missing optional CLIs and deliberate foreign hooks paths produce warnings. Broken managed components produce errors (exit 1); a healthy checked installation exits 0. Doctor works outside Git and never runs plugins or prints restoration snapshots or credentials. It diagnoses configuration rather than proving every external tool works. Doctor also warns when the claude CLI is missing or a harness mod is not installed or is disabled, and reports `chat.useAgentsMdFile` for each VS Code install it finds.
+Doctor checks required tools, managed links, Claude settings and hook registration, ownership metadata, effective Git hooks, project activation and formatter trust. Missing optional CLIs and deliberate foreign hooks paths produce warnings. Broken managed components produce errors (exit 1); a healthy checked installation exits 0. Doctor works outside Git and never runs plugins or prints restoration snapshots or credentials. It diagnoses configuration rather than proving every external tool works. Doctor also warns when the claude CLI is missing or a tack mod is not installed or is disabled, and reports `chat.useAgentsMdFile` for each VS Code install it finds.
 
-`harness doctor --tools` checks each installed AI tool listed in `targets.txt`: version, configured capabilities, minimum version and a non-interactive smoke check (`claude doctor`, `codex doctor --summary`). It prints no tool output or credentials. A failed smoke check or an old version is a warning; a broken managed link is an error. A weekly CI workflow installs the latest Claude Code and Codex and runs the same check, so breaking changes in either tool surface early.
+`tack doctor --tools` checks each installed AI tool listed in `targets.txt`: version, configured capabilities, minimum version and a non-interactive smoke check (`claude doctor`, `codex doctor --summary`). It prints no tool output or credentials. A failed smoke check or an old version is a warning; a broken managed link is an error. A weekly CI workflow installs the latest Claude Code and Codex and runs the same check, so breaking changes in either tool surface early.
 
-Installation records changes privately under `${XDG_STATE_HOME:-$HOME/.local/state}/agent-harness/ownership`. Original state and installation-time tool declarations survive reinstallations, so later customization does not invalidate historical ownership. These snapshots may include private settings: do not commit or share them. Uninstall needs Python to validate ownership and selectively restore settings. It removes unchanged recorded links, restores safely displaced original files or links, and reverses unchanged owned settings and Git hooks. Changed links, parent directories, settings and hooks are preserved conservatively; retained records allow a later retry.
+Installation records changes privately under `${XDG_STATE_HOME:-$HOME/.local/state}/agent-tack/ownership`. Original state and installation-time tool declarations survive reinstallations, so later customization does not invalidate historical ownership. These snapshots may include private settings: do not commit or share them. Uninstall needs Python to validate ownership and selectively restore settings. It removes unchanged recorded links, restores safely displaced original files or links, and reverses unchanged owned settings and Git hooks. Changed links, parent directories, settings and hooks are preserved conservatively; retained records allow a later retry.
 
 Uninstall never deletes project files, project activation/trust configuration or shared plugins. It removes only the mods and local marketplace recorded by the installer; plugins from `plugins.txt`, and mods or marketplaces you already had, are kept.
 
@@ -38,33 +38,33 @@ The installer adds two mods to Claude Code (other tools do not support mods):
 | `usage-band` | A band above the prompt: 5-hour and weekly usage with reset times, context fill and session cost; toasts at 80% and 90%. Limits appear after the first response and only on a subscription | `/usage-band` hides or shows it |
 | `agent-activity` | A live pane of tool calls, skills, subagents (with their model) and permission prompts or denials; subagent actions are marked `↳` | `/activity` opens it (it opens by itself on terminals at least 144 columns wide) |
 
-Opt out with `./install.sh --skip-mods` or `harness config mods false --global`, then rerun the installer; `./uninstall.sh` removes them. To change a mod, edit it under `plugins/`, bump `version` in its `plugin.json` and rerun `./install.sh` (Claude Code caches installed plugins). It cannot infer ownership of legacy configuration: paths already identical before recording began are preserved. Installation and uninstall previews make no persistent changes. Installation accepts paths with spaces; use absolute paths without tabs, newlines or dot components, and keep the checkout path free of quotes and backslashes for Claude hook command substitution.
+Opt out with `./install.sh --skip-mods` or `tack config mods false --global`, then rerun the installer; `./uninstall.sh` removes them. To change a mod, edit it under `plugins/`, bump `version` in its `plugin.json` and rerun `./install.sh` (Claude Code caches installed plugins). It cannot infer ownership of legacy configuration: paths already identical before recording began are preserved. Installation and uninstall previews make no persistent changes. Installation accepts paths with spaces; use absolute paths without tabs, newlines or dot components, and keep the checkout path free of quotes and backslashes for Claude hook command substitution.
 
 ## On/off per project
 The workflow (planning, TDD, conventions, docs, Conventional Commits, auto-format) is opt-in per project, and its weight follows the [workflow mode](#workflow-modes). Everywhere else the AI works normally and only the safety net stays on.
 
 ```bash
-harness doctor            # read-only installation and project diagnostics
-harness help              # CLI reference; aliases: --help and -h
-harness status            # workflow activation, mode and local formatter trust
-harness status --quiet    # no output; exit 0 when enabled, 1 when disabled
-harness enable            # this clone only (git config; nothing added to the repo)
-harness enable --shared   # commit a .harness file so every clone has it
-harness disable
-harness mode              # effective mode and its source
-harness mode lite         # set the mode for this project
-harness mode strict --global   # set your default for every project
-harness mode --unset      # go back to the global default
-harness config            # feature toggles with value, source and enforcement
-harness config delegation off            # set a toggle for this project
-harness config context false --global    # set it for every project
-harness config delegation --unset        # go back to the global value or default
-harness context           # project instructions plus an index of architecture and active handoff
-harness trust             # permit automatic project formatter execution in this clone
-harness trust --revoke     # revoke execution permission without disabling the workflow
-harness trusted           # trusted / untrusted; exit 0 when trusted, 1 otherwise
-harness trusted --quiet   # the same trust check without output
-git config --global harness.enabled true   # every repo (a local disable still wins)
+tack doctor            # read-only installation and project diagnostics
+tack help              # CLI reference; aliases: --help and -h
+tack status            # workflow activation, mode and local formatter trust
+tack status --quiet    # no output; exit 0 when enabled, 1 when disabled
+tack enable            # this clone only (git config; nothing added to the repo)
+tack enable --shared   # commit a .tack file so every clone has it
+tack disable
+tack mode              # effective mode and its source
+tack mode lite         # set the mode for this project
+tack mode strict --global   # set your default for every project
+tack mode --unset      # go back to the global default
+tack config            # feature toggles with value, source and enforcement
+tack config delegation off            # set a toggle for this project
+tack config context false --global    # set it for every project
+tack config delegation --unset        # go back to the global value or default
+tack context           # project instructions plus an index of architecture and active handoff
+tack trust             # permit automatic project formatter execution in this clone
+tack trust --revoke     # revoke execution permission without disabling the workflow
+tack trusted           # trusted / untrusted; exit 0 when trusted, 1 otherwise
+tack trusted --quiet   # the same trust check without output
+git config --global tack.enabled true   # every repo (a local disable still wins)
 ```
 
 | | Enabled project | Any other repo |
@@ -76,11 +76,11 @@ git config --global harness.enabled true   # every repo (a local disable still w
 | Workflow at the configured mode | ✔ | — |
 | Claude Code auto-format | With explicit local trust | — |
 
-Start a new session after switching. Claude Code is told the status at session start; other tools check `harness status` as their instructions say. Projects created with "create a project…" are enabled automatically.
+Start a new session after switching. Claude Code is told the status at session start; other tools check `tack status` as their instructions say. Projects created with "create a project…" are enabled automatically.
 
 ## Feature toggles
 
-`harness config` turns individual features on or off without editing files. It lists every toggle declared in `features.txt` with its current value, where that value comes from (`local`, `global` or `default`) and how it is enforced:
+`tack config` turns individual features on or off without editing files. It lists every toggle declared in `features.txt` with its current value, where that value comes from (`local`, `global` or `default`) and how it is enforced:
 
 | Enforcement | Meaning |
 | --- | --- |
@@ -93,15 +93,15 @@ A project value wins over the global one, which wins over the default. Values ar
 ### Fast check after edits
 
 ```bash
-harness trust                                    # the check runs project code, like the formatter
-harness config check-fast "uv run pytest -q -x"  # or: npm test -- --bail, make lint, ...
+tack trust                                    # the check runs project code, like the formatter
+tack config check-fast "uv run pytest -q -x"  # or: npm test -- --bail, make lint, ...
 ```
 
-After each file edit, Claude Code runs the command from the repository root. When it fails, the assistant sees the exit code and the last 40 lines of output and fixes the problem before continuing. Keep it fast (a focused test target or a linter); it times out after 60 seconds where `timeout` is available. Remove it with `harness config check-fast --unset`.
+After each file edit, Claude Code runs the command from the repository root. When it fails, the assistant sees the exit code and the last 40 lines of output and fixes the problem before continuing. Keep it fast (a focused test target or a linter); it times out after 60 seconds where `timeout` is available. Remove it with `tack config check-fast --unset`.
 
 ### Check before stopping and the docs map
 
-Before Claude Code's assistant ends a turn in an enabled project, a Stop hook looks for unfinished business: uncommitted changes, a failing fast check, a stale handoff, and code changed on the branch without the docs that `docs-map.txt` pairs with it. If it finds any, the assistant gets the list once and either fixes it or explains why it stays; the next stop always goes through. Turn it off with `harness config stop-check false`.
+Before Claude Code's assistant ends a turn in an enabled project, a Stop hook looks for unfinished business: uncommitted changes, a failing fast check, a stale handoff, and code changed on the branch without the docs that `docs-map.txt` pairs with it. If it finds any, the assistant gets the list once and either fixes it or explains why it stays; the next stop always goes through. Turn it off with `tack config stop-check false`.
 
 `docs-map.txt` lives in the project root, one rule per line:
 
@@ -115,7 +115,7 @@ A rule is satisfied when any of its docs changed on the branch or in the working
 
 ## Workflow modes
 
-The mode decides how much process each task gets. `auto` is the default: before each task the assistant picks a level, states it in one line (for example `Level: standard (bounded bug fix)`) and moves up if the task grows. You can change the level for one task ("do this in strict") or fix it with `harness mode`.
+The mode decides how much process each task gets. `auto` is the default: before each task the assistant picks a level, states it in one line (for example `Level: standard (bounded bug fix)`) and moves up if the task grows. You can change the level for one task ("do this in strict") or fix it with `tack mode`.
 
 | | lite | standard | strict |
 | --- | --- | --- | --- |
@@ -130,27 +130,27 @@ The mode decides how much process each task gets. `auto` is the default: before 
 
 In every mode the hooks still enforce Conventional Commits, no AI attribution, no secrets and protected `main` and tags; the assistant works on a branch, asks before anything outward-facing and **asks whenever it has a real doubt** instead of guessing (except in `unleash`, below). It also follows token-efficiency rules: search before reading, read only the needed ranges, batch tool calls, trim output and avoid commands the guard would ask about.
 
-A project setting (`harness mode lite`) overrides your global default (`harness mode lite --global`); with neither, the mode is `auto`. Invalid values behave as `auto` and are reported by `harness status` and `harness doctor`. Lighter modes cost fewer tokens and less time; [results](results.md) compares them.
+A project setting (`tack mode lite`) overrides your global default (`tack mode lite --global`); with neither, the mode is `auto`. Invalid values behave as `auto` and are reported by `tack status` and `tack doctor`. Lighter modes cost fewer tokens and less time; [results](results.md) compares them.
 
 ### Lean: save tokens
 
-`harness mode lean` is for small, well-defined tasks when tokens matter more than process. Its rules are self-contained, so the assistant does not load `dev-workflow`; it starts with only `AGENTS.md` as context, reads only the lines it needs, runs only the affected tests and replies in a few lines. It still branches, adds a test for changed logic and makes a Conventional Commit, and the hooks apply as in every mode. It skips plans, handoffs, the AI log, review agents and delegation, and suggests `standard` or `strict` when a task turns out risky.
+`tack mode lean` is for small, well-defined tasks when tokens matter more than process. Its rules are self-contained, so the assistant does not load `dev-workflow`; it starts with only `AGENTS.md` as context, reads only the lines it needs, runs only the affected tests and replies in a few lines. It still branches, adds a test for changed logic and makes a Conventional Commit, and the hooks apply as in every mode. It skips plans, handoffs, the AI log, review agents and delegation, and suggests `standard` or `strict` when a task turns out risky.
 
 The same savings are available one by one in any mode:
 
 ```bash
-harness config reply-style terse          # short replies (output tokens)
-harness config skill-loading minimal      # load skills only when needed (input tokens)
-harness config subagent-model economical  # cheapest capable model when delegating
-harness config context false              # no startup context at all
-harness config stop-check false           # no extra turn before stopping
+tack config reply-style terse          # short replies (output tokens)
+tack config skill-loading minimal      # load skills only when needed (input tokens)
+tack config subagent-model economical  # cheapest capable model when delegating
+tack config context false              # no startup context at all
+tack config stop-check false           # no extra turn before stopping
 ```
 
 Add `--global` to make any of them your default. [Results](results.md) compares `lean` with `lite` and the plain assistant.
 
 ### Unleash: autonomous work
 
-`harness mode unleash` lets the assistant work without asking: it follows its plan without waiting for approval, decides instead of asking (recording every assumption in the handoff and final summary), may push its branch and open a pull request, and the command guard stops asking about explicit local data loss in the current project (`git reset --hard`, `clean -f`, `restore`, discarding checkouts, `branch -D`, `stash drop`, `rm -rf .`). That waiver never applies to a command that changes directory (`cd`, `pushd`, `popd`) or points git elsewhere (`-C`, `--git-dir`, `--work-tree`), nor to deleting `main` or `master`. The assistant also cannot change the harness's settings in this mode: `harness config` writes, `harness mode`, `trust`, `enable`, `disable` and `git config harness.*` writes are refused, so it cannot lift its own limits or leave the mode.
+`tack mode unleash` lets the assistant work without asking: it follows its plan without waiting for approval, decides instead of asking (recording every assumption in the handoff and final summary), may push its branch and open a pull request, and the command guard stops asking about explicit local data loss in the current project (`git reset --hard`, `clean -f`, `restore`, discarding checkouts, `branch -D`, `stash drop`, `rm -rf .`). That waiver never applies to a command that changes directory (`cd`, `pushd`, `popd`) or points git elsewhere (`-C`, `--git-dir`, `--work-tree`), nor to deleting `main` or `master`. The assistant also cannot change tack's settings in this mode: `tack config` writes, `tack mode`, `trust`, `enable`, `disable` and `git config tack.*` (or former `harness.*`) writes are refused, so it cannot lift its own limits or leave the mode.
 
 What stays, whatever the mode:
 
@@ -158,42 +158,42 @@ What stays, whatever the mode:
 - asks about deleting outside the project, rewriting remote history, database commands, your own guard rules, and opaque or unanalysable commands (heredocs to interpreters, loops, dynamic commands), because hiding a command inside them would otherwise skip the deny rules;
 - never merging to `main`, tagging, releasing or rewriting published history.
 
-It is project-only and branch-only: `harness mode unleash --global` is refused, a global value set by hand is ignored, and selecting it on `main` or `master` is refused (`harness doctor` warns if you switch back to them later). Session start shows a warning and `harness doctor` reports it. Claude Code's own permission prompts are separate: for unattended runs also choose a permissive permission mode in Claude Code.
+It is project-only and branch-only: `tack mode unleash --global` is refused, a global value set by hand is ignored, and selecting it on `main` or `master` is refused (`tack doctor` warns if you switch back to them later). Session start shows a warning and `tack doctor` reports it. Claude Code's own permission prompts are separate: for unattended runs also choose a permissive permission mode in Claude Code.
 
 Optional limits, none by default; set either, both or neither, per project or with `--global`:
 
 ```bash
-harness config unleash-max-tool-calls 300   # a hook refuses tool calls past 300 in one session
-harness config unleash-max-cost 5           # the usage mod refuses tool calls once the session passes 5 USD
+tack config unleash-max-tool-calls 300   # a hook refuses tool calls past 300 in one session
+tack config unleash-max-cost 5           # the usage mod refuses tool calls once the session passes 5 USD
 ```
 
-When a limit is reached, tool calls are refused with an instruction to update the handoff and summarise. The tool-call limit is enforced by a Claude Code hook and counts every tool call per session (counters live in `${XDG_STATE_HOME:-~/.local/state}/agent-harness/budget/`; parallel tool calls can make the count slightly low, so treat it as a safety net rather than an exact quota); the cost limit needs the `usage-band` mod and a session that reports its cost.
+When a limit is reached, tool calls are refused with an instruction to update the handoff and summarise. The tool-call limit is enforced by a Claude Code hook and counts every tool call per session (counters live in `${XDG_STATE_HOME:-~/.local/state}/agent-tack/budget/`; parallel tool calls can make the count slightly low, so treat it as a safety net rather than an exact quota); the cost limit needs the `usage-band` mod and a session that reports its cost.
 
 Risks you accept: wrong decisions nobody stops in time, lost uncommitted work, unbounded token use unless you set a limit, and above all prompt injection: text in the repository, an issue or a web page can steer an agent that no longer asks. Prefer a container or an isolated machine without important credentials, and review the assumptions and the pull request before merging.
 
 ### Your own modes
 
-Each mode is a short file of rules: the built-in ones in `modes/`, yours in `~/.config/agent-harness/modes/` (outside the repository, so updates never overwrite them).
+Each mode is a short file of rules: the built-in ones in `modes/`, yours in `~/.config/agent-tack/modes/` (outside the repository, so updates never overwrite them).
 
 ```bash
-harness mode list                   # built-in and user modes, with when to use each
-harness mode new spike --from lite  # copy lite into ~/.config/agent-harness/modes/spike.md
-$EDITOR ~/.config/agent-harness/modes/spike.md
-harness mode spike                  # use it in this project (or --global)
-harness mode show                   # the rules the assistant receives at session start
+tack mode list                   # built-in and user modes, with when to use each
+tack mode new spike --from lite  # copy lite into ~/.config/agent-tack/modes/spike.md
+$EDITOR ~/.config/agent-tack/modes/spike.md
+tack mode spike                  # use it in this project (or --global)
+tack mode show                   # the rules the assistant receives at session start
 ```
 
 A mode file has a `# name` title, a `When:` line (used by `auto` to choose and by `mode list`), a `Scope:` line and `- ` rule lines. Built-in names cannot be reused. In `auto`, the assistant chooses among all modes, yours included. If a selected user mode is deleted, the mode falls back to `auto` and `status` reports it.
 
 ## Startup context and formatter trust
 
-Claude Code's SessionStart hook supplies the activation status and mode plus the project's `AGENTS.md`. Documents load on demand: `auto` and `standard` add an index with the path of `docs/architecture.md` and the newest active or paused handoff, including its status and next step; `strict` adds bounded excerpts of both; `lite` lists only the handoff. Every mode adds a handoff check: it compares the handoff with git and says whether it is up to date, may be stale (commits after its last update) or names another branch, so a resumed session verifies and refreshes it before continuing. Other tools follow the global instructions to run `harness context` at session start. This is an instruction-driven startup step for tools without a SessionStart hook.
+Claude Code's SessionStart hook supplies the activation status and mode plus the project's `AGENTS.md`. Documents load on demand: `auto` and `standard` add an index with the path of `docs/architecture.md` and the newest active or paused handoff, including its status and next step; `strict` adds bounded excerpts of both; `lite` lists only the handoff. Every mode adds a handoff check: it compares the handoff with git and says whether it is up to date, may be stale (commits after its last update) or names another branch, so a resumed session verifies and refreshes it before continuing. Other tools follow the global instructions to run `tack context` at session start. This is an instruction-driven startup step for tools without a SessionStart hook.
 
-The combined document content is capped at 6,000 bytes, with per-file line limits. Claude Code also receives it again after compacting the conversation. Missing files and symlinks outside the checkout are skipped. Read the referenced documents in full when needed. Disable the extra context with `git config harness.context false`; activation messages remain available.
+The combined document content is capped at 6,000 bytes, with per-file line limits. Claude Code also receives it again after compacting the conversation. Missing files and symlinks outside the checkout are skipped. Read the referenced documents in full when needed. Disable the extra context with `git config tack.context false`; activation messages remain available.
 
-A shared `.harness` file enables workflow instructions but does not authorise execution of project code. Run `harness trust` only for a checkout whose formatter binaries and configuration you trust. Formatting requires both activation and explicit local trust; global trust settings are ignored. `harness trust --revoke` removes that execution permission.
+A shared `.tack` file enables workflow instructions but does not authorise execution of project code. Run `tack trust` only for a checkout whose formatter binaries and configuration you trust. Formatting requires both activation and explicit local trust; global trust settings are ignored. `tack trust --revoke` removes that execution permission.
 
-`harness status` shows both settings, for example:
+`tack status` shows both settings, for example:
 
 ```text
 enabled
@@ -201,7 +201,7 @@ mode: auto (default)
 formatter trust: trusted
 ```
 
-The first line and exit status describe workflow activation; the mode line shows its source (`local`, `global` or `default`); formatter trust is independent and can remain configured while the workflow is disabled. `harness trusted` checks only trust and prints `trusted` or `untrusted`. Both queries support `--quiet` for scripts. Trust permits Claude Code's formatter hook to run project formatters; it is not a general permission for the AI to execute commands.
+The first line and exit status describe workflow activation; the mode line shows its source (`local`, `global` or `default`); formatter trust is independent and can remain configured while the workflow is disabled. `tack trusted` checks only trust and prints `trusted` or `untrusted`. Both queries support `--quiet` for scripts. Trust permits Claude Code's formatter hook to run project formatters; it is not a general permission for the AI to execute commands.
 
 ## What to ask
 Talk normally, in your language:
@@ -220,15 +220,15 @@ Talk normally, in your language:
 
 ## Automatic delegation and integration choices
 
-In enabled projects, complex strict-level work with independent parts is delegated automatically after the plan is approved; at lite and standard the assistant suggests delegation and waits for your OK, because each subagent starts cold and costs extra tokens. Small or tightly coupled tasks stay with the main assistant. The harness recommends available models and effort according to complexity; the actual selection depends on the tool's supported controls. Tools without subagents perform the plan sequentially.
+In enabled projects, complex strict-level work with independent parts is delegated automatically after the plan is approved; at lite and standard the assistant suggests delegation and waits for your OK, because each subagent starts cold and costs extra tokens. Small or tightly coupled tasks stay with the main assistant. Tack recommends available models and effort according to complexity; the actual selection depends on the tool's supported controls. Tools without subagents perform the plan sequentially.
 
 ```bash
-harness config delegation off     # disable automatic delegation in this project
-harness config delegation --unset # restore the default automatic policy
-harness config delegation         # shows auto (default) when unset
+tack config delegation off     # disable automatic delegation in this project
+tack config delegation --unset # restore the default automatic policy
+tack config delegation         # shows auto (default) when unset
 ```
 
-Explicitly asking for subagents authorises them for that task even when automatic mode is off. Disabling the workflow with `harness disable` also removes automatic delegation from the enabled-project policy. Delegation is driven by instructions, not enforced by a process scheduler, and can consume more tokens. Values set directly in git config that are neither `auto` nor `off` are treated as off and reported.
+Explicitly asking for subagents authorises them for that task even when automatic mode is off. Disabling the workflow with `tack disable` also removes automatic delegation from the enabled-project policy. Delegation is driven by instructions, not enforced by a process scheduler, and can consume more tokens. Values set directly in git config that are neither `auto` nor `off` are treated as off and reported.
 
 The assistant commits coherent verified milestones as it works. Before integrating a PR, it inspects the history, recommends preserving useful milestones with a merge commit or combining temporary intermediate commits with squash, and offers the available methods in the existing integration confirmation. Commits are preserved unless you explicitly choose squash; a choice already given for that integration is respected without asking again.
 
@@ -236,14 +236,14 @@ The assistant commits coherent verified milestones as it works. Before integrati
 
 Every supported tool reads the same installed instructions and skills, so you can switch tools mid-task. Before switching, ask for a handoff (or let the strict level keep one); the next tool reads it at session start.
 
-- **Claude Code to Codex:** the installer already configures Codex. Codex's own `/import` can bring recent chats and projects from Claude Code; when it offers configuration, skills, agents or hooks, skip them, because copies would duplicate the harness's symlinked versions and would not update with `git pull` or be recognised by `doctor` and `uninstall.sh`.
+- **Claude Code to Codex:** the installer already configures Codex. Codex's own `/import` can bring recent chats and projects from Claude Code; when it offers configuration, skills, agents or hooks, skip them, because copies would duplicate tack's symlinked versions and would not update with `git pull` or be recognised by `doctor` and `uninstall.sh`.
 - **Windows:** use WSL2. Clone inside the Linux file system (for example `~/Projects`, not `/mnt/c`), install the AI tools inside WSL and run `./install.sh` there. Native Windows shells are not supported.
 - **Unfinished branches** must be pushed (the assistant asks first) to continue on another machine.
 
 ## Overrides
 | Situation | Command |
 | --- | --- |
-| A repo with other commit conventions | `harness config conventional-commits false` |
+| A repo with other commit conventions | `tack config conventional-commits false` |
 | A deliberate force-push to `main` | `HARNESS_ALLOW_FORCE_PUSH=1 git push --force …` |
 | A deliberate tag change | `HARNESS_ALLOW_TAG=1 git push …` |
 | A false positive in the secrets check | `HARNESS_ALLOW_SECRETS=1 git commit …` |
@@ -252,7 +252,18 @@ Secret scanning runs after the local pre-commit hook and keeps the added-line po
 
 ## Updating
 ```bash
-cd /path/to/your/agent-harness && git pull && ./install.sh
+cd /path/to/your/agent-tack && git pull && ./install.sh
 ```
 Replace the path with the directory you chose during installation.
 To change a rule, edit the files here or tell the AI (it uses `lessons`), then commit and push. Changes apply at once on this machine through the symlinks; restart the tool for new skills or agents.
+
+### Upgrading from agent-harness
+
+The project was called agent-harness and its command `harness`. After `git pull && ./install.sh`:
+
+- `tack` is the command; `harness` remains as an alias that prints a notice when you run it yourself, and will be removed in a later release.
+- Settings move from `harness.*` to `tack.*` git keys. Old keys keep working: the new one wins when both exist, and changing a setting writes the new key and removes the old one in that scope.
+- A project's `.harness` marker still enables it; `tack enable --shared` writes `.tack`.
+- The installer moves `~/.config/agent-harness` (your modes and guard rules) and `~/.local/state/agent-harness` (installation records) to `agent-tack`, re-tags hooks from `#harness` to `#tack`, and replaces the `agent-harness-mods` marketplace with `agent-tack-mods`.
+- Codex sees new hook commands, so run `/hooks` in Codex and approve them again.
+- Other machines keep working with the old names until you update them the same way.

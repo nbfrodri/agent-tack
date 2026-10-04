@@ -66,7 +66,7 @@ for agent in "$REPO"/agents/*.md; do
 done
 
 echo "Cross-references and components list"
-# Paths like ~/.agents/skills/<skill>/... and ~/.agents/harness/... are what agents and skills
+# Paths like ~/.agents/skills/<skill>/... and ~/.agents/tack/... (or the former ~/.agents/harness/...) are what agents and skills
 # read at runtime; references/x.md belongs to the skill it's written in unless another skill is
 # named next to it ("`dev-workflow` → `references/x.md`" or "dev-workflow/references/x.md").
 if problems="$(python3 - "$REPO" <<'PY'
@@ -87,7 +87,7 @@ for doc in docs:
             target = repo / "skills" / m.group(1) / (m.group(2) or "").lstrip("/")
             if not target.exists():
                 print(f"{rel}:{n}: {m.group(0)} does not exist")
-        for m in re.finditer(r"~/\.agents/harness(/[A-Za-z0-9_./-]*)?", line):
+        for m in re.finditer(r"~/\.agents/(?:tack|harness)(/[A-Za-z0-9_./-]*)?", line):
             if not (repo / (m.group(1) or "").lstrip("/")).exists():
                 print(f"{rel}:{n}: {m.group(0)} does not exist")
         for m in re.finditer(r"(?:`([a-z0-9-]+)` → `|([a-z0-9-]+)/)?references/([a-z0-9-]+\.md)", line):

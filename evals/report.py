@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Summarises graded eval runs as Markdown tables comparing baseline and harness.
 
-Usage: evals/report.py [evals dir]   (default: $EVALS_OUT or $TMPDIR/agent-harness-evals)
+Usage: evals/report.py [evals dir]   (default: $EVALS_OUT or $TMPDIR/agent-tack-evals)
 Reads every <scenario>/<condition>-<rep>/metrics.json written by evals/grade.py.
 """
 import json
@@ -53,7 +53,7 @@ def fmt(values, kind):
 
 def main():
     root = Path(sys.argv[1] if len(sys.argv) > 1 else os.environ.get(
-        "EVALS_OUT", Path(os.environ.get("TMPDIR", "/tmp")) / "agent-harness-evals"))
+        "EVALS_OUT", Path(os.environ.get("TMPDIR", "/tmp")) / "agent-tack-evals"))
     runs = defaultdict(lambda: defaultdict(list))
     for f in sorted(root.glob("*/*/metrics.json")):
         m = json.loads(f.read_text())

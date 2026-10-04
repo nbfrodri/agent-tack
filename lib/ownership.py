@@ -42,7 +42,8 @@ def no_symlink_ancestors(path, floor):
 
 
 def expected_link(path, target, home, repo, declaration):
-    fixed = {home + "/.agents/harness": repo,
+    fixed = {home + "/.agents/harness": repo, home + "/.agents/tack": repo,
+             home + "/.local/bin/tack": repo + "/bin/tack",
              home + "/.local/bin/harness": repo + "/bin/harness"}
     skill_dirs = {home + "/.agents/skills"}
     for line in declaration.read_text().splitlines():
@@ -214,7 +215,7 @@ def restore_displaced_hooks(original, current):
         if not isinstance(group, dict) or not isinstance(group.get("hooks"), list):
             continue
         displaced = [hook for hook in group["hooks"] if isinstance(hook, dict) and
-                     any(tag in str(hook.get("command", "")) for tag in ("#harness", "#agent-config"))]
+                     any(tag in str(hook.get("command", "")) for tag in ("#tack", "#harness", "#agent-config"))]
         for hook in displaced:
             if any(isinstance(item, dict) and hook in item.get("hooks", []) for item in current):
                 continue
@@ -266,7 +267,7 @@ def restore_retired_events(before, after, managed, current, restored):
                 continue
             removed = [hook for hook in group["hooks"] if hook not in retained and
                        isinstance(hook, dict) and any(tag in str(hook.get("command", ""))
-                                                     for tag in ("#harness", "#agent-config"))]
+                                                     for tag in ("#tack", "#harness", "#agent-config"))]
             if removed:
                 displaced.append(dict(group, hooks=removed))
         if displaced:

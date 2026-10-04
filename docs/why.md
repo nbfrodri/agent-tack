@@ -1,4 +1,4 @@
-# Why agent-harness
+# Why agent-tack
 
 What problem it solves, how, and why it's worth using.
 

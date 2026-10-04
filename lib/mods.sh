@@ -2,15 +2,17 @@
 # Claude Code mods shipped in plugins/: a local marketplace in this checkout, one plugin per mod.
 # Sourced by install.sh (install_mods) and lib/doctor.sh (check_mods); defines functions only.
 
-MODS_MARKETPLACE=agent-harness-mods
+MODS_MARKETPLACE=agent-tack-mods
+# Name used before the rename; installs from that time are retired so mods do not load twice.
+MODS_LEGACY_MARKETPLACE=agent-harness-mods
 
 mods_has() { command -v "$1" >/dev/null 2>&1; }
 
-# Success unless global git config sets harness.mods to false.
+# Success unless the global tack.mods (or legacy harness.mods) is false.
 mods_enabled() {
   local value
   mods_has git || return 0
-  value="$(git config --global --bool --get harness.mods 2>/dev/null || true)"
+  value="$(key_get --bool global mods || true)"
   [ "$value" != false ]
 }
 
@@ -65,6 +67,21 @@ mods_skip_reason() {
   return 1
 }
 
+# Removes the mods and marketplace installed under the name used before the rename. The name is
+# this project's own, so its presence is enough evidence that this installer added it.
+mods_retire_legacy() {
+  local mod
+  mods_marketplace_exists "$MODS_LEGACY_MARKETPLACE" || return 0
+  for mod in $(mods_list "$REPO"); do
+    claude plugin uninstall "$mod@$MODS_LEGACY_MARKETPLACE" </dev/null >/dev/null 2>&1 || true
+  done
+  if claude plugin marketplace remove "$MODS_LEGACY_MARKETPLACE" </dev/null >/dev/null 2>&1; then
+    ok "retired the former mods marketplace $MODS_LEGACY_MARKETPLACE"
+  else
+    warn "could not remove the former marketplace $MODS_LEGACY_MARKETPLACE; remove it if the mods appear twice"
+  fi
+}
+
 install_mods() {
   section "Claude Code mods"
   local reason mod id state rc
@@ -84,6 +101,7 @@ install_mods() {
     return
   fi
 
+  mods_retire_legacy
   mods_marketplace_exists "$MODS_MARKETPLACE"
   rc=$?
   if [ "$rc" -eq 1 ]; then

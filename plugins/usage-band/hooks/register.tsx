@@ -53,7 +53,7 @@ export function crossedWarning(before: UsageWindow[], after: UsageWindow[]): str
 }
 
 // A cost limit applies only in a project-only mode (harness prints a WARNING line for those)
-// and only when `harness config unleash-max-cost` holds a positive amount.
+// and only when `tack config unleash-max-cost` holds a positive amount.
 export function costLimit(modeShow: string, configValue: string): number | undefined {
   if (!modeShow.startsWith('WARNING:')) return undefined
   const amount = Number(configValue.trim().split(' ')[0])
@@ -72,8 +72,8 @@ export const register: Register = on => {
     await update($, usage, () => toUsage(context, rateLimits, cost))
     await $.command.register({ name: 'usage-band', description: 'Show or hide the usage band above the prompt' })
     try {
-      const mode = await $.process.run(['harness', 'mode', 'show'], { timeoutMs: 5000 })
-      const config = await $.process.run(['harness', 'config', 'unleash-max-cost'], { timeoutMs: 5000 })
+      const mode = await $.process.run(['tack', 'mode', 'show'], { timeoutMs: 5000 })
+      const config = await $.process.run(['tack', 'config', 'unleash-max-cost'], { timeoutMs: 5000 })
       limitUsd = mode.exitCode === 0 && config.exitCode === 0 ? costLimit(mode.stdout, config.stdout) : undefined
     } catch {
       limitUsd = undefined
@@ -85,7 +85,7 @@ export const register: Register = on => {
     const current = await read($, usage)
     if (overBudget(current.costUsd, limitUsd)) {
       return {
-        deny: `This autonomous session reached its cost limit of $${limitUsd} (harness config unleash-max-cost). Stop, update the handoff and summarise what is done, what is pending and the assumptions made.`,
+        deny: `This autonomous session reached its cost limit of $${limitUsd} (tack config unleash-max-cost). Stop, update the handoff and summarise what is done, what is pending and the assumptions made.`,
       }
     }
     return next(e)

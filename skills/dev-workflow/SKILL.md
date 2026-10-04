@@ -1,11 +1,11 @@
 ---
 name: dev-workflow
-description: The user's engineering workflow for projects with harness enabled, scaled by workflow level (lite, standard, strict): planning, TDD, SOLID/DDD, code and git conventions (Conventional Commits, branches, PRs) and docs. Use whenever writing, changing or debugging code, committing or opening PRs in such projects (implement, fix, commit).
+description: The user's engineering workflow for projects with tack enabled, scaled by workflow level (lite, standard, strict): planning, TDD, SOLID/DDD, code and git conventions (Conventional Commits, branches, PRs) and docs. Use whenever writing, changing or debugging code, committing or opening PRs in such projects (implement, fix, commit).
 ---
 
 # Dev Workflow
 
-Applies in projects where the harness is enabled (`harness status`; Claude Code says so at session start). Elsewhere, work normally without this ceremony unless the user asks for it.
+Applies in projects where tack is enabled (`tack status`; Claude Code says so at session start). Elsewhere, work normally without this ceremony unless the user asks for it.
 
 The goal: every request ends as a small, tested change in a clean git history, with only as much process as the task deserves. It works the same with any assistant (Claude, Codex or another).
 
@@ -15,7 +15,7 @@ The goal: every request ends as a small, tested change in a clean git history, w
 
 ## Workflow levels
 
-`harness mode` sets the level: `auto` (the default) picks one per task; `lite`, `standard` or `strict` fix it for every task. A project setting overrides the user's global default (`harness mode --global`). The user can change the level for any task in conversation ("do this in strict"). Each mode's rules live in a file (`modes/<name>.md` in the harness, or the user's own in `~/.config/agent-harness/modes/`); SessionStart supplies the active one, and `harness mode show` prints it. A user mode overrides the table below where it differs. Two built-in modes sit outside the table: `lean` (self-contained minimal rules to save tokens; this skill is not loaded) and `unleash` (autonomous, project-only).
+`tack mode` sets the level: `auto` (the default) picks one per task; `lite`, `standard` or `strict` fix it for every task. A project setting overrides the user's global default (`tack mode --global`). The user can change the level for any task in conversation ("do this in strict"). Each mode's rules live in a file (`modes/<name>.md` in tack, or the user's own in `~/.config/agent-tack/modes/`); SessionStart supplies the active one, and `tack mode show` prints it. A user mode overrides the table below where it differs. Two built-in modes sit outside the table: `lean` (self-contained minimal rules to save tokens; this skill is not loaded) and `unleash` (autonomous, project-only).
 
 In `auto`, classify each request before acting and state it in one line, for example `Level: standard (bounded bug fix in one module)`:
 - **lite:** questions, typos, renames, config tweaks, a one-line fix, small scripts or prototypes.
@@ -34,7 +34,7 @@ If a task turns out larger or riskier than its level, say so and move up before 
 | Handoff | none | only if work spans sessions or context or usage looks low | from the start, updated every milestone |
 | AI log | none | none | one row in `docs/ai/log.md` |
 | Review | read your own diff | `code-reviewer` for large or risky diffs | `code-reviewer` before offering to push |
-| Delegation | suggest and wait | suggest and wait | automatic after approval unless `harness.delegation` is `off` |
+| Delegation | suggest and wait | suggest and wait | automatic after approval unless `tack.delegation` is `off` |
 
 Every level keeps the hooks' guarantees (Conventional Commits, no AI attribution, no secrets, protected `main` and tags) and the rules on what to ask before doing.
 
@@ -65,7 +65,7 @@ Aim for the **smallest change that does the job**: touch as few files and lines 
 While reading the code, look for signs that the architecture will not scale with this request or the project's growth: a change that needs edits in many places, files or functions with too many responsibilities, duplicated logic, dependencies pointing the wrong way, hard-coded variation that should be data, hot paths or data volumes the current design cannot handle. Don't restructure silently: tell the user what you found, its cost now and later, and the options (do the minimal change now, or refactor first), and ask. At strict, record an accepted architecture change as an ADR and update `docs/architecture.md`. Details: `references/design.md`.
 
 ### 4. Pick the level and plan
-Apply the level from `harness mode`, or classify the task in `auto`. Plan as the table says: ordered steps, each ending in a commit; tests first; docs to update; risks and open questions. A strict plan that splits into independent parts also has a delegation section with file ownership and model/effort per task, as in `orchestrate`.
+Apply the level from `tack mode`, or classify the task in `auto`. Plan as the table says: ordered steps, each ending in a commit; tests first; docs to update; risks and open questions. A strict plan that splits into independent parts also has a delegation section with file ownership and model/effort per task, as in `orchestrate`.
 
 ### 5. Branch
 Check `git status` first so unrelated changes don't get mixed in, then branch: `feat/short-description`, `fix/…`, `refactor/…`, `docs/…`, `chore/…`.

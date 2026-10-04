@@ -18,7 +18,7 @@ set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 STAMP="$(date +%Y%m%d-%H%M%S)"
-WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/agent-harness.XXXXXX")" || { echo "cannot create a temp dir" >&2; exit 1; }
+WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/agent-tack.XXXXXX")" || { echo "cannot create a temp dir" >&2; exit 1; }
 trap 'rm -rf "$WORKDIR"' EXIT
 SKIP_PLUGINS=0
 SKIP_MODS=0
@@ -55,6 +55,8 @@ has()     { command -v "$1" >/dev/null 2>&1; }
 
 # shellcheck source=lib/ownership.sh
 source "$REPO/lib/ownership.sh"
+# shellcheck source=lib/keys.sh
+source "$REPO/lib/keys.sh"
 # shellcheck source=lib/mods.sh
 source "$REPO/lib/mods.sh"
 # shellcheck source=lib/vscode.sh
@@ -196,10 +198,13 @@ EOF
 
   section "Config repo link"
   # Canonical path skills and agents use to reach this repo, wherever it is cloned
+  link "$REPO" "$HOME/.agents/tack"
+  # Former canonical path, kept for skills and settings written before the rename
   link "$REPO" "$HOME/.agents/harness"
 
   section "Command"
-  [ "$DRY_RUN" -eq 1 ] || chmod +x "$REPO/bin/harness" 2>/dev/null
+  [ "$DRY_RUN" -eq 1 ] || chmod +x "$REPO/bin/tack" "$REPO/bin/harness" 2>/dev/null
+  link "$REPO/bin/tack" "$HOME/.local/bin/tack"
   link "$REPO/bin/harness" "$HOME/.local/bin/harness"
   case ":$PATH:" in
     *":$HOME/.local/bin:"*) ;;
@@ -217,7 +222,7 @@ EOF
 
 # Merges claude/settings.json into ~/.claude/settings.json:
 #   - objects are deep-merged and the repo's values win; your other keys are kept
-#   - hooks: entries tagged "#harness" are replaced by the repo's, your own hooks are kept
+#   - hooks: entries tagged "#tack" (or the former "#harness") are replaced by the repo's, your own hooks are kept
 #   - __REPO__ in the repo file is replaced with this repo's path
 merge_settings() {
   merge_json "Claude Code settings" "$REPO/claude/settings.json" "$HOME/.claude/settings.json"
@@ -285,8 +290,8 @@ merge_json() {
 capture_harness_hooks() {
   local link_path root target entry
   : > "$WORKDIR/prior-harness-hooks"
-  for link_path in "$HOME/.agents/harness" "$HOME/.agents/agent-config" \
-    "$HOME/.local/bin/harness" "$HOME/.local/bin/agent-config"; do
+  for link_path in "$HOME/.agents/tack" "$HOME/.agents/harness" "$HOME/.agents/agent-config" \
+    "$HOME/.local/bin/tack" "$HOME/.local/bin/harness" "$HOME/.local/bin/agent-config"; do
     [ -L "$link_path" ] || continue
     target="$(readlink "$link_path")"
     ownership_plain_path "$target" || continue
@@ -294,7 +299,7 @@ capture_harness_hooks() {
       "$HOME/.agents/"*) root="${target%/}" ;;
       *)
         case "$target" in
-          */bin/harness|*/bin/agent-config) root="$(dirname "$(dirname "$target")")" ;;
+          */bin/tack|*/bin/harness|*/bin/agent-config) root="$(dirname "$(dirname "$target")")" ;;
           *) continue ;;
         esac
         ;;
@@ -312,7 +317,7 @@ capture_harness_hooks() {
 is_harness_hooks() {
   local path="$1" known
   if [ -d "$path" ]; then
-    [ -e "$path/_chain" ] && { [ -e "$path/../bin/harness" ] || [ -e "$path/../bin/agent-config" ]; }
+    [ -e "$path/_chain" ] && { [ -e "$path/../bin/tack" ] || [ -e "$path/../bin/harness" ] || [ -e "$path/../bin/agent-config" ]; }
     return
   fi
   while IFS= read -r known; do
@@ -477,7 +482,11 @@ install_plugins() {
 }
 
 main() {
-  printf '%sInstalling agent-harness from %s%s\n' "$C_HEAD" "$REPO" "$C_OFF"
+  printf '%sInstalling tack from %s%s\n' "$C_HEAD" "$REPO" "$C_OFF"
+  if [ "$DRY_RUN" -eq 0 ]; then
+    migrate_tool_dir "${XDG_STATE_HOME:-$HOME/.local/state}" || { fail "cannot move the former state directory to agent-tack"; exit 1; }
+    migrate_tool_dir "${XDG_CONFIG_HOME:-$HOME/.config}" || warn "could not move ~/.config/agent-harness to agent-tack; it is still read"
+  fi
   ownership_init || exit 1
   capture_harness_hooks
   install_links
