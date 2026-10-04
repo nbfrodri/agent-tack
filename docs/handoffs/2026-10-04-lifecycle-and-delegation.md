@@ -1,6 +1,6 @@
 # Lifecycle and delegation checkpoint
 
-- Status: paused at the owner's request for the benchmark; implementation complete.
+- Status: completed; integrated by PR #32. The paused benchmark was superseded by the adaptive-modes benchmark.
 - Branch: `feat/lifecycle-doctor-and-auto-delegation`.
 - Plan: `docs/plans/2026-10-04-lifecycle-and-delegation.md`.
 - Evaluation: `docs/audits/2026-10-04-improvement-agent-harness.md`; initial 7.4, published baseline 8.4, final local 8.7/10.
