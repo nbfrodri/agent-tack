@@ -1,0 +1,14 @@
+# Docs that should change when code changes: "code glob | doc, doc". The Stop hook reports a
+# changed file whose docs did not change on the branch (or in the working tree).
+bin/harness | docs/usage.md
+lib/config.sh | docs/usage.md
+lib/modes.sh | docs/usage.md
+lib/doctor.sh | docs/usage.md
+features.txt | docs/usage.md
+modes/* | docs/usage.md
+plugins/* | docs/usage.md
+uninstall.sh | docs/usage.md
+install.sh | docs/how-it-works.md
+targets.txt | docs/how-it-works.md
+hooks/claude/* | docs/how-it-works.md
+git-hooks/* | docs/how-it-works.md

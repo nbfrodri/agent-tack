@@ -12,6 +12,7 @@ context               harness.context              true     bool      any     in
 conventional-commits  harness.conventionalCommits  true     bool      any     hook         Enforce Conventional Commits in enabled projects
 delegation            harness.delegation           auto     auto|off  any     instruction  Delegate separable strict-level work to subagents automatically
 mods                  harness.mods                 true     bool      global  installer    Install the harness's Claude Code mods (usage band, activity pane)
+stop-check            harness.stopCheck            true     bool      any     hook         Before the assistant stops, report uncommitted work, a failing fast check, a stale handoff or docs the docs map expects
 check-fast            harness.checkFast            none     text      any     hook         Shell command run after each edit in trusted projects; its failures are shown to the assistant
 unleash-max-tool-calls harness.unleashMaxToolCalls none    number    any     hook         In a project-only mode such as unleash, refuse tool calls after this many in one session
 unleash-max-cost      harness.unleashMaxCost       none     decimal   any     mod          In a project-only mode such as unleash, refuse tool calls once the session cost passes this many USD

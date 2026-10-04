@@ -469,6 +469,42 @@ git -C "$F" config harness.enabled true
 check "fast-check: malformed input is ignored" "[ -z \"\$(printf 'not json' | bash '$FAST')\" ]"
 check "fast-check: registered after edits" "grep -q 'fast-check.sh' '$REPO/claude/settings.json'"
 
+echo "Claude hook: stop-check"
+STOP="$REPO/hooks/claude/stop-check.sh"
+P2="$WORK/stop-repo"
+git init -q -b main "$P2"
+git -C "$P2" config harness.enabled true
+mkdir -p "$P2/bin" "$P2/docs/handoffs"
+printf 'bin/* | docs/usage.md\n' > "$P2/docs-map.txt"
+printf 'usage\n' > "$P2/docs/usage.md"
+git -C "$P2" add -A && git -C "$P2" commit -q -m "chore: initial commit"
+git -C "$P2" switch -q -c feat/x
+stopping() { printf '{"cwd":"%s","stop_hook_active":%s}' "$P2" "${1:-false}" | bash "$STOP"; }
+check "stop-check: silent when everything is in order" "[ -z \"\$(stopping)\" ]"
+printf 'x\n' > "$P2/notes.txt"
+check "stop-check: uncommitted work is reported" "stopping | grep -q 'uncommitted'"
+check "stop-check: the report asks the assistant to continue" "stopping | grep -q '\"decision\":\"block\"'"
+check "stop-check: a second stop is never blocked" "[ -z \"\$(stopping true)\" ]"
+rm "$P2/notes.txt"
+printf 'tool\n' > "$P2/bin/tool"
+git -C "$P2" add bin/tool && git -C "$P2" commit -q -m "feat: add tool"
+check "stop-check: code changed without its mapped docs is reported" "stopping | grep -q 'bin/tool changed but docs/usage.md did not'"
+printf 'usage of tool\n' > "$P2/docs/usage.md"
+git -C "$P2" add docs/usage.md && git -C "$P2" commit -q -m "docs: describe tool"
+check "stop-check: mapped docs updated on the branch satisfy the map" "[ -z \"\$(stopping)\" ]"
+printf '# Handoff\nStatus: in progress\n' > "$P2/docs/handoffs/2026-10-04-x.md"
+git -C "$P2" add docs/handoffs && git -C "$P2" commit -q -m "docs(handoffs): start"
+touch -t 202001010000 "$P2/docs/handoffs/2026-10-04-x.md"
+GIT_COMMITTER_DATE="2030-01-01T00:00:00" git -C "$P2" commit -q --allow-empty -m "feat: later work"
+check "stop-check: a stale handoff is reported" "stopping | grep -q 'handoff may be stale'"
+git -C "$P2" config harness.stopCheck false
+check "stop-check: can be turned off" "[ -z \"\$(stopping)\" ]"
+git -C "$P2" config --unset harness.stopCheck
+git -C "$P2" config harness.enabled false
+check "stop-check: disabled projects are left alone" "[ -z \"\$(stopping)\" ]"
+check "stop-check: malformed input is ignored" "[ -z \"\$(printf 'not json' | bash '$STOP')\" ]"
+check "stop-check: registered for Stop" "grep -q 'stop-check.sh' '$REPO/claude/settings.json'"
+
 echo "Claude hook: format-file"
 FORMAT="$REPO/hooks/claude/format-file.sh"
 P="$WORK/project"

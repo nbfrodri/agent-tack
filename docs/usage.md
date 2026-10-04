@@ -99,6 +99,20 @@ harness config check-fast "uv run pytest -q -x"  # or: npm test -- --bail, make 
 
 After each file edit, Claude Code runs the command from the repository root. When it fails, the assistant sees the exit code and the last 40 lines of output and fixes the problem before continuing. Keep it fast (a focused test target or a linter); it times out after 60 seconds where `timeout` is available. Remove it with `harness config check-fast --unset`.
 
+### Check before stopping and the docs map
+
+Before Claude Code's assistant ends a turn in an enabled project, a Stop hook looks for unfinished business: uncommitted changes, a failing fast check, a stale handoff, and code changed on the branch without the docs that `docs-map.txt` pairs with it. If it finds any, the assistant gets the list once and either fixes it or explains why it stays; the next stop always goes through. Turn it off with `harness config stop-check false`.
+
+`docs-map.txt` lives in the project root, one rule per line:
+
+```text
+# code glob | docs that should change with it
+src/api/* | docs/api.md, README.md
+bin/mycli | docs/usage.md
+```
+
+A rule is satisfied when any of its docs changed on the branch or in the working tree.
+
 ## Workflow modes
 
 The mode decides how much process each task gets. `auto` is the default: before each task the assistant picks a level, states it in one line (for example `Level: standard (bounded bug fix)`) and moves up if the task grows. You can change the level for one task ("do this in strict") or fix it with `harness mode`.

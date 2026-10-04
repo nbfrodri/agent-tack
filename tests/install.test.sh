@@ -118,7 +118,7 @@ cat >"$H/.claude/settings.json" <<'JSON'
       { "matcher": "Bash", "hooks": [{ "type": "command", "command": "echo my-own-hook" }] },
       { "matcher": "Bash", "hooks": [{ "type": "command", "command": "bash '/old/path/hooks/claude/guard-bash.sh' #harness" }] }
     ],
-    "Stop": [
+    "Notification": [
       { "hooks": [{ "type": "command", "command": "bash '/old/path/hooks/claude/removed.sh' #harness" }] }
     ]
   }
@@ -130,7 +130,7 @@ check "repo path substituted (no __REPO__ left)" "! grep -q __REPO__ '$S'"
 check "guard hook points at this repo" "grep -q \"$REPO/hooks/claude/guard-bash.sh\" '$S'"
 check "your own hooks are kept" "grep -q my-own-hook '$S'"
 check "outdated tagged hooks are replaced" "! grep -q /old/path '$S'"
-check "events left empty are removed" "! grep -q '\"Stop\"' '$S'"
+check "events left empty are removed" "! grep -q '\"Notification\"' '$S'"
 check "one guard and one budget hook" "[ \"\$(count_ours '$S' PreToolUse)\" = 2 ]"
 check "one format and one fast-check hook" "[ \"\$(count_ours '$S' PostToolUse)\" = 2 ]"
 check "exactly one session-start hook" "[ \"\$(count_ours '$S' SessionStart)\" = 1 ]"

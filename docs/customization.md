@@ -10,6 +10,7 @@ Clone it into any directory you choose and install from that checkout, as shown 
 | --- | --- |
 | Conversation language, permissions and global preferences | `global/AGENTS.md` |
 | Planning, testing, commits and documentation workflow, and what each level requires | `skills/dev-workflow/` and its references; each level's rules in `modes/<name>.md` (default level: `harness mode <mode> --global`) |
+| Which docs must change with which code (checked before the assistant stops) | `docs-map.txt` in each project's root: `code glob \| doc, doc` |
 | Your own workflow modes, without touching the repository | `harness mode new <name> --from <mode>`, then edit `~/.config/agent-harness/modes/<name>.md` |
 | Task-specific guidance or reusable templates | `skills/<name>/SKILL.md`, `references/` and `assets/` |
 | Automatic delegation, complexity routing and model fallbacks | `skills/orchestrate/` (per-project opt-out: `harness config delegation off`) |
