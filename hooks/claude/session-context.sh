@@ -24,6 +24,12 @@ if (cd "$cwd" && "$cli" status --quiet); then
   context="harness: ENABLED for this project (mode: $mode). $level At every level: work on a branch off main, test the change, and make a Conventional Commit for each verified milestone. Ask the user whenever you have a real doubt."
   mode_rules="$(cd "$cwd" && "$cli" mode show)" || mode_rules=''
   [ -z "$mode_rules" ] || context="$context"$'\n'"$mode_rules"
+  setting() { local value; value="$(cd "$cwd" && "$cli" config "$1" 2>/dev/null)"; printf '%s' "${value%% *}"; }
+  tokens=''
+  [ "$(setting reply-style)" != terse ] || tokens="$tokens Keep replies terse: what changed, the commit and what is pending, in a few lines."
+  [ "$(setting skill-loading)" != minimal ] || tokens="$tokens Load a skill only when the task cannot be done without it; prefer the rules already in context."
+  [ "$(setting subagent-model)" != economical ] || tokens="$tokens When delegating, use the most economical model that can do the task."
+  [ -z "$tokens" ] || context="$context"$'\n'"Token settings:$tokens"
   project_context="$(cd "$cwd" && "$cli" context)" || project_context=''
   [ -z "$project_context" ] || context="$context"$'\n'"$project_context"
 else

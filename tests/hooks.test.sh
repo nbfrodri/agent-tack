@@ -418,6 +418,16 @@ check "fixed mode: names the level to apply" "session '$WORK/repo' | grep -q 'mo
 check "fixed mode: injects that mode's rules" "session '$WORK/repo' | grep -q 'Plan: none.'"
 git -C "$WORK/repo" config --unset harness.mode
 check "auto mode: lists the modes to choose from" "session '$WORK/repo' | grep -q 'strict: several modules'"
+check "token toggles: defaults add nothing" "! session '$WORK/repo' | grep -q 'Token settings'"
+git -C "$WORK/repo" config harness.replyStyle terse
+git -C "$WORK/repo" config harness.skillLoading minimal
+git -C "$WORK/repo" config harness.subagentModel economical
+check "token toggles: terse replies are requested" "session '$WORK/repo' | grep -q 'Token settings:.*Keep replies terse'"
+check "token toggles: minimal skill loading is requested" "session '$WORK/repo' | grep -q 'Load a skill only when'"
+check "token toggles: economical subagents are requested" "session '$WORK/repo' | grep -q 'most economical model'"
+git -C "$WORK/repo" config --unset harness.replyStyle
+git -C "$WORK/repo" config --unset harness.skillLoading
+git -C "$WORK/repo" config --unset harness.subagentModel
 git -C "$WORK/repo" config harness.mode lean
 check "lean mode: the rules say not to load dev-workflow" "session '$WORK/repo' | grep -q 'do not load the \`dev-workflow\` skill'"
 check "lean mode: the message points to the mode's own rules" "session '$WORK/repo' | grep -q 'Apply the lean mode rules below'"
