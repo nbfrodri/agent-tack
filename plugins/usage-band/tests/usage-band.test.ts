@@ -1,6 +1,13 @@
 import { expect, test } from 'claude-code/testing'
 
-import { bar, colorFor, costLimit, crossedWarning, overBudget, resetLabel, toUsage } from '../hooks/register'
+import { bar, colorFor, costLimit, crossedWarning, modeChip, overBudget, resetLabel, toUsage } from '../hooks/register'
+
+test('mode chip names the active mode, or off when tack is not enabled', () => {
+  expect(modeChip(0, 'auto (default)\n')).toBe('tack · auto')
+  expect(modeChip(0, 'unleash (local)')).toBe('tack · unleash')
+  expect(modeChip(1, 'auto (default)')).toBe('tack · off')
+  expect(modeChip(0, '')).toBe('tack · off')
+})
 
 test('cost limit applies only in project-only modes with a positive amount', () => {
   expect(costLimit('WARNING: unleash mode is active\nMode unleash rules:', '5 (local)\n')).toBe(5)

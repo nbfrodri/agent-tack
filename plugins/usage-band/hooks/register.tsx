@@ -60,12 +60,19 @@ export function costLimit(modeShow: string, configValue: string): number | undef
   return Number.isFinite(amount) && amount > 0 ? amount : undefined
 }
 
+// `tack mode` prints "<mode> (<source>)"; a failing `tack status --quiet` means the project is not enabled.
+export function modeChip(statusExit: number, modeOutput: string): string {
+  const mode = modeOutput.trim().split(' ')[0]
+  return statusExit === 0 && mode ? `tack · ${mode}` : 'tack · off'
+}
+
 export function overBudget(costUsd: number | undefined, limitUsd: number | undefined): boolean {
   return limitUsd !== undefined && costUsd !== undefined && costUsd >= limitUsd
 }
 
 export const register: Register = on => {
   let limitUsd: number | undefined
+  let chip = 'tack · off'
 
   on('session.start', async ($, e, next) => {
     const { context, rateLimits, cost } = await $.session.usage()
@@ -77,6 +84,13 @@ export const register: Register = on => {
       limitUsd = mode.exitCode === 0 && config.exitCode === 0 ? costLimit(mode.stdout, config.stdout) : undefined
     } catch {
       limitUsd = undefined
+    }
+    try {
+      const status = await $.process.run(['tack', 'status', '--quiet'], { timeoutMs: 5000 })
+      const mode = await $.process.run(['tack', 'mode'], { timeoutMs: 5000 })
+      chip = modeChip(status.exitCode, mode.exitCode === 0 ? mode.stdout : '')
+    } catch {
+      chip = 'tack · off'
     }
     return next(e)
   })
@@ -115,6 +129,7 @@ export const register: Register = on => {
 
     return (
       <Box flexDirection="row" gap={3}>
+        <Text color="cyan">{chip}</Text>
         {!hasData && <Text dimColor>usage: waiting for the first response</Text>}
         {current.windows.map(window => (
           <Box key={window.kind} flexDirection="row" gap={1}>
