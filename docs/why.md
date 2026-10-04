@@ -20,7 +20,7 @@ One versioned repo that makes any AI assistant work like a disciplined senior en
 ## Strengths
 | | What you get |
 | --- | --- |
-| **Consistency** | The same workflow and conventions in every project and session: plans, tests first, frequent atomic commits preserved through PR integration, SemVer releases, docs for humans and AIs. |
+| **Consistency** | The same workflow and conventions in every project and session: impact mapping so help, docs and callers stay in sync, minimal modular changes, plans, tests first, frequent atomic commits preserved through PR integration, SemVer releases, docs for humans and AIs. |
 | **Safety net** | Blocks force-pushes and deletion of `main`, catastrophic `rm -rf`, hook bypasses and tag rewrites; asks before discarding work or wiping a database. Git-level rules apply to every tool and to you. |
 | **Clean history** | Conventional Commits enforced, AI attribution removed, changelogs and versions computed from commits. |
 | **Better code** | TDD, SOLID/DDD where it fits, self-explanatory code, stack-specific best practices. |

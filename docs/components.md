@@ -7,7 +7,7 @@ Open Agent Skills format (`SKILL.md`), read by every supported tool.
 
 | Skill | Purpose |
 | --- | --- |
-| `dev-workflow` | The workflow at lite, standard or strict level: plan, TDD, SOLID/DDD, code, git and release conventions, docs |
+| `dev-workflow` | The workflow at lite, standard or strict level: impact mapping, minimal modular changes, architecture fit, plan, TDD, SOLID/DDD, code, git and release conventions, docs |
 | `new-project` | Scaffold a project with tests, lint, CI, docs, templates, release-please |
 | `debugging` | Reproduce → regression test → isolate → verify → fix the root cause |
 | `testing` | What and how to test per layer; pytest, Pest/PHPUnit, Vitest/Jest |

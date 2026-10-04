@@ -45,26 +45,34 @@ If `docs/handoffs/` has an in-progress handoff for this branch or task, read it 
 
 Read the relevant code, tests and docs before proposing anything. **Ask whenever you have a real doubt** about scope, behaviour, design or risk, grouping all questions in one round; don't guess. Decide alone only purely conventional details, and say what you chose.
 
-### 2. Pick the level and plan
+### 2. Map the impact
+Before changing anything, list what the change touches beyond the obvious file: callers and dependants, tests, CLI help and usage text, README and `docs/` pages that describe the behaviour, `docs/architecture.md`, configuration and its examples, schemas and migrations, installer or setup steps, CI, translations. Search for the names you are changing (`grep` for the function, flag, setting or command) rather than relying on memory. Every affected item is updated in the same change or listed as pending; adding a mode to a CLI, for example, also means its `--help`, its validation, its tests and its usage docs. At lite this is a quick search; at standard and strict, put the list in the plan.
+
+Aim for the **smallest change that does the job**: touch as few files and lines as possible, extend through the existing extension points (data files, interfaces, registries, configuration) instead of editing many call sites, and keep unrelated refactors out (note them as suggestions). If the smallest correct change still has to touch many files, that is a design signal: see step 3.
+
+### 3. Check that the design still fits
+While reading the code, look for signs that the architecture will not scale with this request or the project's growth: a change that needs edits in many places, files or functions with too many responsibilities, duplicated logic, dependencies pointing the wrong way, hard-coded variation that should be data, hot paths or data volumes the current design cannot handle. Don't restructure silently: tell the user what you found, its cost now and later, and the options (do the minimal change now, or refactor first), and ask. At strict, record an accepted architecture change as an ADR and update `docs/architecture.md`. Details: `references/design.md`.
+
+### 4. Pick the level and plan
 Apply the level from `harness mode`, or classify the task in `auto`. Plan as the table says: ordered steps, each ending in a commit; tests first; docs to update; risks and open questions. A strict plan that splits into independent parts also has a delegation section with file ownership and model/effort per task, as in `orchestrate`.
 
-### 3. Branch
+### 5. Branch
 Check `git status` first so unrelated changes don't get mixed in, then branch: `feat/short-description`, `fix/…`, `refactor/…`, `docs/…`, `chore/…`.
 
-### 4. Implement
-At standard and strict, red → green → refactor for all logic with behaviour. At lite, add or update a test when logic changes. Design with SOLID and, where there's a real business domain, DDD; follow `references/conventions.md` and only the stack file you touch in `references/languages/`. Details: `references/tdd.md` and `references/design.md`.
+### 6. Implement
+At standard and strict, red → green → refactor for all logic with behaviour. At lite, add or update a test when logic changes. Keep code modular so future changes touch few files: SOLID and, where there's a real business domain, DDD; follow `references/conventions.md` and only the stack file you touch in `references/languages/`. Details: `references/tdd.md` and `references/design.md`.
 
-### 5. Commit
+### 7. Commit
 Commit each coherent verified milestone immediately in Conventional Commits. Recommend an integration method from the branch history in the existing merge confirmation; preserve commits unless the user explicitly chooses squash. Details: `references/git-github.md`.
 
-### 6. Document
-As the level requires, following `project-docs`. Every enabled project should have `docs/architecture.md`; if it is missing, add it during the first strict task after reading the code.
+### 8. Document
+Update everything on the impact list, plus what the level requires, following `project-docs`. Every enabled project should have `docs/architecture.md`; if it is missing, add it during the first strict task after reading the code.
 
-### 7. Verify
-Run the project's tests, linter, formatter and type checker. Never say something works without having checked it; if something fails or couldn't run, say so clearly, with the output.
+### 9. Verify
+Run the project's tests, linter, formatter and type checker. Re-run the impact search on the final diff to catch help text, docs or callers that still describe the old behaviour. Never say something works without having checked it; if something fails or couldn't run, say so clearly, with the output.
 
-### 8. Close
-Summarise briefly: what changed, the commits, how it was verified and what's pending. Offer to push or open the PR where it applies.
+### 10. Close
+Summarise briefly: what changed, the commits, what else the change affected and how it was covered, how it was verified and what's pending. Offer to push or open the PR where it applies.
 
 ## Related skills and agents
 Use them when the current tool has them:
@@ -80,9 +88,9 @@ Use them when the current tool has them:
 - `auto-improve`: only when the user asks for autonomous improvement; an evaluator scores the project and you lead agents until a target score, on its own branch.
 - `lessons`: when the user corrects you or sets a lasting preference, save it as a rule.
 - Stack skills when the task touches that layer: `frontend`, `api-design`, `database`, `auth`, `e2e-testing`, `deployment`, `observability`.
-- Agent `planner`: for strict tasks that need a deep plan (step 2).
-- Agent `code-reviewer`: as the level's review row says (between steps 7 and 8).
-- Agent `docs-writer`: strict tasks whose change affects several documents (step 6).
+- Agent `planner`: for strict tasks that need a deep plan (step 4).
+- Agent `code-reviewer`: as the level's review row says (between steps 9 and 10).
+- Agent `docs-writer`: strict tasks whose change affects several documents (step 8).
 - Agent `security-auditor`: before releases and after changes to auth, payments, file uploads or input handling.
 - Agent `performance-analyzer`: when something is slow, or before launching something performance-sensitive.
 - Agent `test-writer`: adding tests to existing untested code or before refactoring it. Not for new code: there you write the test first (TDD).

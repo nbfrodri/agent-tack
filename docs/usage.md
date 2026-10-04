@@ -101,7 +101,7 @@ Talk normally, in your language:
 
 | You say | What happens |
 | --- | --- |
-| "Add Google login" | States the level, then plans as that level requires (waits for your OK at strict) → branch → tests → Conventional Commits → docs → summary. Asks before pushing. |
+| "Add Google login" | States the level, maps what the change affects (callers, tests, CLI help, docs), flags design that no longer scales, then plans as the level requires (waits for your OK at strict) → branch → smallest change with tests → Conventional Commits → affected docs → summary. Asks before pushing. |
 | "Work on issue #12" | Reads the issue and its acceptance criteria; the PR closes it (after asking). |
 | "Checkout is broken" | Reproduces the bug, writes a failing test, fixes the root cause. |
 | "What would you improve in this module?" | Asks scope and focus, runs read-only reviewers, gives a prioritised report and creates deduplicated GitHub issues for verified findings unless you request no publication. |
