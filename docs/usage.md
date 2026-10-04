@@ -128,7 +128,7 @@ The mode decides how much process each task gets. `auto` is the default: before 
 | Review | Self-review | `code-reviewer` for large or risky diffs | `code-reviewer` before offering to push |
 | Delegation | Suggested, waits for OK | Suggested, waits for OK | Automatic after approval |
 
-In every mode the hooks still enforce Conventional Commits, no AI attribution, no secrets and protected `main` and tags; the assistant works on a branch, asks before anything outward-facing and **asks whenever it has a real doubt** instead of guessing.
+In every mode the hooks still enforce Conventional Commits, no AI attribution, no secrets and protected `main` and tags; the assistant works on a branch, asks before anything outward-facing and **asks whenever it has a real doubt** instead of guessing (except in `unleash`, below). It also follows token-efficiency rules: search before reading, read only the needed ranges, batch tool calls, trim output and avoid commands the guard would ask about.
 
 A project setting (`harness mode lite`) overrides your global default (`harness mode lite --global`); with neither, the mode is `auto`. Invalid values behave as `auto` and are reported by `harness status` and `harness doctor`. Lighter modes cost fewer tokens and less time; [results](results.md) compares them.
 
