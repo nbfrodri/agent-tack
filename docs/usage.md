@@ -15,11 +15,14 @@ Clone into any directory you choose and run `./install.sh` from that checkout. I
 ./install.sh --dry-run --skip-plugins  # preview local configuration only
 ./install.sh --skip-plugins            # apply local configuration only
 harness doctor                        # check installation and current project; no writes
+harness doctor --tools                # check each installed AI tool instead of the project
 ./uninstall.sh --dry-run               # preview safe restoration
 ./uninstall.sh                         # restore recorded unchanged state
 ```
 
 Doctor checks required tools, managed links, Claude settings and hook registration, ownership metadata, effective Git hooks, project activation and formatter trust. Missing optional CLIs and deliberate foreign hooks paths produce warnings. Broken managed components produce errors (exit 1); a healthy checked installation exits 0. Doctor works outside Git and never runs plugins or prints restoration snapshots or credentials. It diagnoses configuration rather than proving every external tool works.
+
+`harness doctor --tools` checks each installed AI tool listed in `targets.txt`: version, configured capabilities, minimum version and a non-interactive smoke check (`claude doctor`, `codex doctor --summary`). It prints no tool output or credentials. A failed smoke check or an old version is a warning; a broken managed link is an error. A weekly CI workflow installs the latest Claude Code and Codex and runs the same check, so breaking changes in either tool surface early.
 
 Installation records changes privately under `${XDG_STATE_HOME:-$HOME/.local/state}/agent-harness/ownership`. Original state and installation-time tool declarations survive reinstallations, so later customization does not invalidate historical ownership. These snapshots may include private settings: do not commit or share them. Uninstall needs Python to validate ownership and selectively restore settings. It removes unchanged recorded links, restores safely displaced original files or links, and reverses unchanged owned settings and Git hooks. Changed links, parent directories, settings and hooks are preserved conservatively; retained records allow a later retry.
 

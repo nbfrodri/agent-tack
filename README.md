@@ -28,7 +28,7 @@ Details: [architecture](docs/architecture.md) · [components](docs/components.md
    ~/Projects/agent-harness/install.sh
    ```
    Keep the repository at that path after installation: the installed files are symlinks to it. If you move it, run `install.sh` again from its new location.
-   Preview changes with `./install.sh --dry-run`; add `--skip-plugins` to configure local files without plugin operations. Run `harness doctor` after installation to diagnose links, settings, Git hooks and project state without changing anything.
+   Preview changes with `./install.sh --dry-run`; add `--skip-plugins` to configure local files without plugin operations. Run `harness doctor` after installation to diagnose links, settings, Git hooks and project state without changing anything, and `harness doctor --tools` to check each installed AI tool (version, capabilities, a non-interactive smoke check). A weekly CI job runs that check against the latest Claude Code and Codex.
 3. Read any warning it prints (e.g. Cursor needs its global rules pasted once), and make sure `~/.local/bin` is in your `PATH`.
 4. Restart your AI tools.
 
