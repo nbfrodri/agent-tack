@@ -41,7 +41,7 @@ flowchart LR
 | `modes/`, `lib/modes.sh` | Define each workflow mode as data; resolve, list, create and show modes (built-in first, then the user's `~/.config/agent-harness/modes/`) | Sourced by `bin/harness`; read by SessionStart through `harness mode show` |
 | `features.txt`, `lib/config.sh` | Declare feature toggles; list, validate, read and write them for `harness config` (project value, then global, then default) | Git configuration; consumers read each toggle's git key |
 | `git-hooks/` | Check staged secrets, commit messages and pushed refs; delegate local hooks | `bin/harness`, git and `_chain` |
-| `hooks/claude/` | Supply session context, assess Bash commands and format edited files | `bin/harness`; the guard sources `lib/shell-parse.sh`, which uses its Python parser when available |
+| `hooks/claude/` | Supply session context, assess Bash commands, limit autonomous tool calls, format edited files, run the opt-in fast check and review unfinished work before stopping | `bin/harness`; the guard sources `lib/shell-parse.sh`, which uses its Python parser when available |
 | `tests/`, `.github/workflows/ci.yml` | Validate content and exercise installation and hooks in temporary environments | Bash, git, Python, jq and ShellCheck |
 | `evals/` | Run agent scenarios, grade artifacts and transcripts, and aggregate results | Claude or Codex CLI; grading also runs `uv run pytest` |
 
