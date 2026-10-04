@@ -1,6 +1,6 @@
 # CI watching, delegated docs and visibility
 
-- Status: in progress (implementation and docs done; pushing, PR, CI and merge next)
+- Status: done (PR #55, integrated with a merge commit once CI was green)
 - Branch: `feat/ci-docs-visibility` from `main` at `447d228` (after PR #40, the rename to tack)
 - Plan: `docs/plans/2026-10-04-ci-docs-visibility.md` (approved, owner answers recorded there)
 - Context: the GitHub repository is `nbfrodri/agent-tack` and the checkout lives in `~/Projects/agent-tack`. The rules delete merged branches locally and remotely without asking (`c8341ba`, `33895e3`). The owner must approve the Codex hooks again with `/hooks`: the Stop and SessionStart commands now pass `--codex`.
@@ -17,5 +17,6 @@
 - Verified: full ShellCheck and all 15 suites pass locally on the final tree. Pushed; PR #55 open.
 - CI run 1 failed `install (ubuntu-latest)` on a racy cli check (`grep -q` plus `pipefail` passed locally by SIGPIPE timing); fixed in `8e94736` by counting toggle names from the full listing.
 - CI run 2 failed `install (macos-latest)`: without `timeout(1)` the 6-second watchdog plus startup passed the test's 8 seconds and neared the hook's 10. `c188f17` bounds both paths to about 4 seconds and resolves `bin/tack` absolutely (a guard started by a relative path let merges through).
-- Next: wait for CI on #55 (fix failures from the log), merge with a merge commit (owner authorised), delete the branch locally and remotely, mark this handoff done.
+- CI run 3 green on Ubuntu and macOS (lint, mods, install). Merged with a merge commit and the branch deleted locally and remotely.
+- Also opened: #56 (validate requirements and trace them to tests).
 - Follow-ups noted: rename the repo's own `.harness` marker to `.tack`; the `harness` alias will be removed in a later release; the owner asked about shipping tack as a Claude Code plugin (proposed: a plugin for the Claude part next to `install.sh`; no issue yet).
