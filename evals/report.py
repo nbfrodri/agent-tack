@@ -38,6 +38,9 @@ ROWS = [
 ]
 
 
+CONDITION_ORDER = ["baseline", "harness", "auto", "lite", "standard", "strict"]
+
+
 def fmt(values, kind):
     values = [v for v in values if v is not None]
     if not values:
@@ -60,18 +63,18 @@ def main():
     for group in sorted(runs):
         scenario, version, provider = group
         by_condition = runs[group]
-        print(f"### {scenario} (baseline: {len(by_condition.get('baseline', []))} runs; harness: {len(by_condition.get('harness', []))} runs)\n")
+        conditions = sorted(by_condition, key=lambda c: (CONDITION_ORDER.index(c) if c in CONDITION_ORDER else len(CONDITION_ORDER), c))
+        counts = "; ".join(f"{c}: {len(by_condition[c])} runs" for c in conditions)
+        print(f"### {scenario} ({counts})\n")
         print(f"Provider: {provider}; metrics version: {version}. Unknown measurements are excluded; rates show the number of observed runs.\n")
-        print("| Metric | Baseline | Harness |")
-        print("| --- | --- | --- |")
+        print("| Metric | " + " | ".join(c.capitalize() for c in conditions) + " |")
+        print("| --- |" + " --- |" * len(conditions))
         for key, label, kind in ROWS:
-            base = [m.get(key) for m in by_condition.get("baseline", [])]
-            harn = [m.get(key) for m in by_condition.get("harness", [])]
-            if all(v is None for v in base + harn):
+            columns = [[m.get(key) for m in by_condition[c]] for c in conditions]
+            if all(v is None for column in columns for v in column):
                 continue
-            print(f"| {label} | {fmt(base, kind)} | {fmt(harn, kind)} |")
+            print(f"| {label} | " + " | ".join(fmt(column, kind) for column in columns) + " |")
         print()
-
 
 if __name__ == "__main__":
     main()

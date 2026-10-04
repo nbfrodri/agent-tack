@@ -37,6 +37,7 @@ if __name__ == '__main__':
         metadata = dict(scenario=scenario, condition=condition, repetition=int(rep), provider=provider,
                         requested_model=model or None, resolved_model=None, cli_version=version,
                         harness_revision=revision, metrics_version=2,
+                        workflow_mode=None if condition == 'baseline' else ('auto' if condition == 'harness' else condition),
                         prompt_sha256=hashlib.sha256((directory / 'prompt.txt').read_bytes()).hexdigest(),
                         allowed_tools=sys.argv[10:] if provider == 'claude' else None,
                         permission_mode='workspace-write' if provider == 'codex' else 'acceptEdits',

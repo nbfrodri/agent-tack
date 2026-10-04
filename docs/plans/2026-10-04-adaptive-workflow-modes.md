@@ -29,3 +29,8 @@
 - SessionStart reports the effective mode; `lite` loads only `AGENTS.md` as startup context.
 - All suites, ShellCheck and `tests/validate.sh` pass; bash 3.2 compatible; tests use isolated HOME and git config.
 - Documentation describes the modes accurately; benchmark results reported as measured, including failures.
+
+## Next phase (approved, after the benchmark)
+
+- Guard policy as versioned data (e.g. a policy file read by `guard-bash.sh`) so rules change without code edits.
+- Feedback hooks: PostToolUse running fast lint/tests and returning failures to the agent; Stop hook warning about uncommitted work or failing tests.

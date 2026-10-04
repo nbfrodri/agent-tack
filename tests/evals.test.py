@@ -152,8 +152,29 @@ class Runner(unittest.TestCase):
         path.write_text('#!/usr/bin/env bash\n' + body + '\n')
         path.chmod(0o755)
 
-    def run_eval(self, scenario):
-        return subprocess.run(['bash', str(ROOT / 'evals/run.sh'), scenario, 'baseline'], env=self.env, capture_output=True, text=True)
+    def run_eval(self, scenario, condition='baseline'):
+        return subprocess.run(['bash', str(ROOT / 'evals/run.sh'), scenario, condition], env=self.env, capture_output=True, text=True)
+
+    def test_mode_conditions_enable_the_project_at_that_mode(self):
+        self.stub('claude', 'if [ "$1" = --version ]; then echo fixture-cli; exit; fi\n'
+                  '{ harness status --quiet && echo enabled; git config --local --get harness.mode; } > "' + str(self.root / 'state') + '"')
+        (self.root / 'bin/harness').symlink_to(ROOT / 'bin/harness')
+        for condition, mode in (('lite', 'lite'), ('standard', 'standard'), ('strict', 'strict'), ('auto', 'auto'), ('harness', 'auto')):
+            with self.subTest(condition=condition):
+                outcome = self.run_eval('bug-fix', condition)
+                self.assertEqual(outcome.returncode, 0, outcome.stderr)
+                self.assertEqual((self.root / 'state').read_text().split(), ['enabled', mode])
+                metadata = json.loads((self.root / 'out/bug-fix' / (condition + '-1') / 'metadata.json').read_text())
+                self.assertEqual(metadata['workflow_mode'], mode)
+
+    def test_baseline_has_no_workflow_mode(self):
+        self.stub('claude', 'exit 0')
+        self.assertEqual(self.run_eval('bug-fix').returncode, 0)
+        metadata = json.loads((self.root / 'out/bug-fix/baseline-1/metadata.json').read_text())
+        self.assertIsNone(metadata['workflow_mode'])
+
+    def test_unknown_condition_is_rejected(self):
+        self.assertEqual(self.run_eval('bug-fix', 'turbo').returncode, 2)
 
     def test_cli_failure_retains_transcript_and_status(self):
         self.stub('claude', 'echo partial; echo diagnostic >&2; exit 42')
@@ -237,6 +258,20 @@ class Report(unittest.TestCase):
             self.assertIn('metrics version: legacy', output)
             self.assertIn('| Test written before code | 1/1 |', output)
             self.assertNotIn('1/3', output)
+
+    def test_every_condition_gets_a_column_in_a_stable_order(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            for condition, value in (('strict', True), ('baseline', False), ('lite', True)):
+                directory = root / 'bug-fix' / (condition + '-1')
+                directory.mkdir(parents=True)
+                metrics = {'scenario': 'bug-fix', 'condition': condition, 'metrics_version': 2, 'provider': 'claude',
+                           'test_written_before_code': value}
+                (directory / 'metrics.json').write_text(json.dumps(metrics))
+            output = subprocess.run(['python3', str(ROOT / 'evals/report.py'), str(root)], capture_output=True, text=True, check=True).stdout
+            self.assertIn('| Metric | Baseline | Lite | Strict |', output)
+            self.assertIn('| Test written before code | 0/1 | 1/1 | 1/1 |', output)
+            self.assertIn('baseline: 1 runs; lite: 1 runs; strict: 1 runs', output)
 
 
 if __name__ == '__main__':

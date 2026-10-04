@@ -2,9 +2,10 @@
 # Runs one behaviour eval: a real `claude -p` (or `codex exec`) session on a throwaway repo.
 # Uses real model tokens.
 #
-# Usage: evals/run.sh <scenario> [harness|baseline] [repetition]
+# Usage: evals/run.sh <scenario> [condition] [repetition]
 #   scenarios:  new-project | bug-fix | release | codex-new-project
-#   harness:    the full setup, with the project enabled (default)
+#   conditions: auto | lite | standard | strict: the full setup, with the project enabled at
+#               that workflow mode; harness (default) is an alias for auto
 #   baseline:   Claude Code as shipped: no user settings, skills or instructions, and git
 #               without the global hooks (same repo and prompt)
 # Results go to $EVALS_OUT (default: $TMPDIR/agent-harness-evals)/<scenario>/<condition>-<rep>;
@@ -24,8 +25,10 @@ case "$name" in
     ;;
 esac
 case "$condition" in
-  harness | baseline) ;;
-  *) echo "unknown condition '$condition' (harness | baseline)" >&2; exit 2 ;;
+  baseline) mode='' ;;
+  harness) mode=auto ;;
+  auto | lite | standard | strict) mode="$condition" ;;
+  *) echo "unknown condition '$condition' (baseline | harness | auto | lite | standard | strict)" >&2; exit 2 ;;
 esac
 case "$rep" in *[!0-9]* | '') echo "repetition must be a number" >&2; exit 2 ;; esac
 
@@ -153,7 +156,11 @@ case "$name" in
   release) seed_release_repo ;;
 esac
 cd "$dir" || exit 1
-[ "$condition" = harness ] && "$HARNESS_REPO/bin/harness" enable >/dev/null
+if [ -n "$mode" ]; then
+  "$HARNESS_REPO/bin/harness" enable >/dev/null
+  # Set locally so the user's global default mode cannot leak into the comparison.
+  "$HARNESS_REPO/bin/harness" mode "$mode" >/dev/null
+fi
 
 case "$name" in
   new-project | codex-new-project) prompt="$NEW_PROJECT_PROMPT" ;;
