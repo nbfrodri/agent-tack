@@ -1,6 +1,6 @@
 # Full tool coverage: VS Code setting and Codex agents and hooks
 
-- Status: approved 2026-10-04 (including delegating workstream 1)
+- Status: done; Codex hooks verified against real payloads (the guard turns asks into denials for Codex, which otherwise runs a command when a hook asks), Codex agents generated, VS Code setting automated. Users approve the Codex hooks once with `/hooks`.
 
 ## Research (2026-10-04, Codex docs)
 
