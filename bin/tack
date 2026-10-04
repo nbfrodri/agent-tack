@@ -29,6 +29,9 @@ Commands:
   trust [--revoke]     Allow or revoke project formatter execution in this clone
   trusted [--quiet]    Query local formatter trust independently of activation
   doctor              Diagnose installation and project state without changes
+  trace [PLAN]        Check that every requirement the plan numbers (R1, R2…) has
+                      a test naming it (default: the newest docs/plans file);
+                      exits 1 when one has none
   log [N]             Print the last N (default 20) activity log entries; turn the
                       log on with: tack config activity-log true
   log --cost|--skills|--levels [--days N] [--csv]
@@ -293,6 +296,11 @@ case "$cmd" in
     command -v python3 >/dev/null 2>&1 || fail "log reports need python3"
     python3 "$HARNESS_ROOT/lib/log-report.py" "$report" "$log_file" "$days" "$csv" \
       "${XDG_CONFIG_HOME:-$HOME/.config}/agent-tack/pricing.txt" "$HARNESS_ROOT"
+    ;;
+  trace)
+    [ "$#" -le 1 ] || { echo "tack: trace takes at most one plan (see --help)" >&2; exit 2; }
+    bash "$HARNESS_ROOT/lib/trace.sh" "$@"
+    exit
     ;;
   doctor)
     allowed_option='--tools'; check_args "$@"

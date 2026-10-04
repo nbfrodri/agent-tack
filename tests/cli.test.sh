@@ -401,5 +401,37 @@ printf 'm1 | \377 | 2 | 0 | 0\n' > "$XDG_CONFIG_HOME/agent-tack/pricing.txt"
 check "a price file in another encoding never crashes the report" expect_exit 0 "$CLI" log --cost
 rm -f "$LOG_FILE" "$XDG_CONFIG_HOME/agent-tack/pricing.txt"
 
+# tack trace: requirement IDs in the plan against the tests that name them.
+TRACE="$WORK/trace-repo"
+git init -q "$TRACE"
+mkdir -p "$TRACE/docs/plans" "$TRACE/tests" "$TRACE/src"
+cat > "$TRACE/docs/plans/2026-10-01-login.md" <<'EOF'
+# Login
+## Acceptance criteria
+- R1: a wrong password is rejected with 401
+- **R2**: five failures lock the account for 15 minutes
+- R3: a locked account says when it unlocks
+Later prose mentions R1 again; that is not a new requirement.
+EOF
+printf 'def test_wrong_password_R1():\n    pass\n' > "$TRACE/tests/test_login.py"
+printf '// R2: lockout after five failures\ntest("locks", () => {})\n' > "$TRACE/tests/lockout.test.js"
+printf '# R3 is mentioned in code, not in a test\n' > "$TRACE/src/login.py"
+printf 'def test_old_R9():\n    pass\n' > "$TRACE/tests/test_legacy.py"
+git -C "$TRACE" add -A
+trace() { (cd "$TRACE" && "$CLI" trace "$@"); }
+check "trace fails when a requirement has no test" expect_exit 1 trace
+check "trace lists covered requirements with their tests" out_matches "^R1 +covered +tests/test_login.py"
+check "trace lists every test that names a requirement" out_matches "^R2 +covered +tests/lockout.test.js"
+check "trace names the requirement without a test" out_matches "^R3 +MISSING +a locked account says when it unlocks"
+check "trace ignores IDs outside test files" out_lacks "src/login.py"
+check "trace warns about tests tied to a requirement the plan lacks" contains 'R9 is named in tests/test_legacy.py but not in the plan'
+printf 'def test_unlock_message_R3():\n    pass\n' > "$TRACE/tests/test_unlock.py"
+git -C "$TRACE" add -A
+check "trace passes once every requirement has a test" expect_exit 0 trace
+check "trace takes a plan path" expect_exit 0 trace docs/plans/2026-10-01-login.md
+check "trace rejects a missing plan" expect_exit 2 trace docs/plans/nope.md
+rm -rf "$TRACE/docs/plans"
+check "trace without a plan explains itself" expect_exit 2 trace
+
 printf '\n%s passed, %s failed\n' "$PASSED" "$FAILED"
 [ "$FAILED" -eq 0 ]

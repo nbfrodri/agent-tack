@@ -267,6 +267,17 @@ formatter trust: trusted
 
 The first line and exit status describe workflow activation; the mode line shows its source (`local`, `global` or `default`); formatter trust is independent and can remain configured while the workflow is disabled. `tack trusted` checks only trust and prints `trusted` or `untrusted`. Both queries support `--quiet` for scripts. Trust permits Claude Code's formatter hook to run project formatters; it is not a general permission for the AI to execute commands.
 
+## Requirements and traceability
+
+At standard and strict, the plan or issue numbers each acceptance criterion (`R1`, `R2`…) and checks them for verifiability, consistency, completeness and traceability before any code (`dev-workflow` → `references/requirements.md`); each test names the requirement it proves (`test_lockout_R2`, or a `R2` comment), and the pull request lists requirement → tests → commit. `tack trace` checks the result in any language:
+
+```bash
+tack trace                               # the newest plan in docs/plans/
+tack trace docs/plans/2026-10-01-login.md
+```
+
+It lists each requirement as `covered` with the test files that name it, or `MISSING` with its text, warns about tests naming a requirement the plan no longer has, and exits 1 when one is missing, so CI can run it. Test files are found by the usual conventions (`tests/`, `spec/`, `test_*`, `*.test.*`, `*_test.*`).
+
 ## What to ask
 Talk normally, in your language:
 
