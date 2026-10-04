@@ -45,8 +45,11 @@ class Turn:
 
     def add_text(self, text):
         for match in LEVEL.finditer(text or ""):
-            reason = match.group(2).strip().strip("()").strip()
-            self.levels.append(f"{match.group(1).lower()} {reason}".strip())
+            reason = match.group(2).strip()
+            # "(why) more prose" keeps only the parenthesised reason; otherwise a short prefix.
+            if reason.startswith("(") and ")" in reason:
+                reason = reason[1:reason.index(")")]
+            self.levels.append(f"{match.group(1).lower()} {reason[:120]}".strip())
 
 
 def claude_entry(entry, turn, seen):
@@ -55,6 +58,9 @@ def claude_entry(entry, turn, seen):
         return
     turn.known = True
     usage = message.get("usage") or {}
+    # Claude Code writes placeholder replies under "<synthetic>"; no model ran for them.
+    if str(message.get("model", "")).startswith("<"):
+        return
     if message.get("id") not in seen:
         seen.add(message.get("id"))
         turn.add_tokens(message.get("model"), usage.get("input_tokens"), usage.get("output_tokens"),

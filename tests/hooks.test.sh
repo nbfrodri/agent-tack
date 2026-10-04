@@ -633,7 +633,8 @@ TR="$WORK/claude-transcript.jsonl"
 # Two entries share message m1, as Claude Code writes one entry per content block.
 cat > "$TR" <<'JSONL'
 {"type":"user","message":{"role":"user","content":"Fix the login bug"}}
-{"type":"assistant","message":{"id":"m1","model":"claude-test","usage":{"input_tokens":10,"output_tokens":5,"cache_read_input_tokens":100,"cache_creation_input_tokens":20},"content":[{"type":"text","text":"Nivel: **strict** (touches auth)"}]}}
+{"type":"assistant","message":{"id":"m1","model":"claude-test","usage":{"input_tokens":10,"output_tokens":5,"cache_read_input_tokens":100,"cache_creation_input_tokens":20},"content":[{"type":"text","text":"Nivel: **strict** (touches auth); the plan is approved, so I start"}]}}
+{"type":"assistant","message":{"id":"m0","model":"<synthetic>","usage":{"input_tokens":0,"output_tokens":0},"content":[{"type":"text","text":"No response requested."}]}}
 {"type":"assistant","message":{"id":"m1","model":"claude-test","usage":{"input_tokens":10,"output_tokens":5,"cache_read_input_tokens":100,"cache_creation_input_tokens":20},"content":[{"type":"tool_use","name":"Skill","input":{"skill":"dev-workflow"}}]}}
 {"type":"assistant","message":{"id":"m2","model":"claude-test","usage":{"input_tokens":1,"output_tokens":2,"cache_read_input_tokens":0,"cache_creation_input_tokens":0},"content":[{"type":"tool_use","name":"Agent","input":{"subagent_type":"code-reviewer","prompt":"x"}}]}}
 JSONL
@@ -651,6 +652,8 @@ check "metrics: tokens are recorded once per message and model" "grep -q 'turn.*
 check "metrics: loaded skills are recorded" "logged skill dev-workflow"
 check "metrics: subagents are recorded by type" "logged agent code-reviewer"
 check "metrics: the stated level is recorded in any language" "logged level strict"
+check "metrics: the level's reason is the text in its parentheses" "grep -q \"\$(printf 'level\\tstrict touches auth')\$\" '$LOG'"
+check "metrics: synthetic messages are not counted as a model" "! grep -q 'model=<synthetic>' '$LOG'"
 turns_before="$(grep -c 'turn' "$LOG")"
 stop_turn s-claude "$TR"
 check "metrics: a second stop with nothing new records nothing" "[ \"\$(grep -c 'turn' '$LOG')\" = '$turns_before' ]"
