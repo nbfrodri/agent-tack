@@ -253,7 +253,7 @@ run_plugins() {
   mkdir -p "$home"
   : > "$home.calls"
   env "$@" HOME="$home" XDG_CONFIG_HOME="$home/.config" GIT_CONFIG_NOSYSTEM=1 PATH="$FAKE:$MINBIN" \
-    CLAUDE_LOG="$home.calls" "$REPO/install.sh" >"$home.log" 2>&1
+    CLAUDE_LOG="$home.calls" "$REPO/install.sh" --skip-mods >"$home.log" 2>&1
 }
 called() { grep -qxF -- "$2" "$1.calls"; }
 
