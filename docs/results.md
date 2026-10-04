@@ -2,6 +2,8 @@
 
 What the harness changes in practice, measured on real sessions: the same tasks with and without it.
 
+> **Model and tool.** The workflow-modes and lean benchmarks ran in Claude Code 2.1.288 with `claude-sonnet-5-5` (Claude Sonnet 5.5). The earlier single-workflow tables below used Claude Code's default model at the time, which was not recorded. Results depend on the model and the tool: another model (a different Claude model, GPT, DeepSeek, Qwen and others) or another AI tool can follow instructions more or less closely, take more or fewer turns and cost differently, so treat these numbers as one measurement, not a guarantee. Git hooks behave the same with any model; instruction-based rules vary.
+
 ## Workflow modes (2026-10-04)
 
 15 sessions on revision `93dc7ef`: `bug-fix` twice and `new-project` once for the plain assistant (baseline) and each mode, with Claude Code 2.1.288 and `claude-sonnet-5-5`. [Full tables and method](benchmarks/2026-10-04-modes-final.md).
@@ -29,6 +31,10 @@ What the harness changes in practice, measured on real sessions: the same tasks 
 - The Stop hook fired in 2 of 12 harness sessions, adding one turn each.
 
 Limits: one or two runs per condition, one model, Python scenarios and automatic grading.
+
+### Lean mode
+
+A follow-up of 9 sessions compared `lean` with `lite` and the plain assistant ([details](benchmarks/2026-10-04-lean.md)). Lean cost the same as lite on a bug fix and about 10% less on a new project, with the same branch, commit and regression test. The startup context adds only about 7,000 input tokens; most of the overhead is the extra turns the discipline needs (branch, test run, commit) plus probing for the test command. Stating the test command in the project's `AGENTS.md`, or setting `harness config check-fast`, avoids that probing.
 
 A 15-session [pilot](benchmarks/2026-10-04-modes-pilot.md) before these fixes is kept as evidence and is not a valid comparison; an earlier single-workflow comparison was superseded before completion ([attempt evidence](benchmarks/2026-10-04-bug-fix-attempts.json)). The sections below describe the earlier single-workflow harness.
 

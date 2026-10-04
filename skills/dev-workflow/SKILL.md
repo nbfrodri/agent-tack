@@ -15,7 +15,7 @@ The goal: every request ends as a small, tested change in a clean git history, w
 
 ## Workflow levels
 
-`harness mode` sets the level: `auto` (the default) picks one per task; `lite`, `standard` or `strict` fix it for every task. A project setting overrides the user's global default (`harness mode --global`). The user can change the level for any task in conversation ("do this in strict"). Each mode's rules live in a file (`modes/<name>.md` in the harness, or the user's own in `~/.config/agent-harness/modes/`); SessionStart supplies the active one, and `harness mode show` prints it. A user mode overrides the table below where it differs.
+`harness mode` sets the level: `auto` (the default) picks one per task; `lite`, `standard` or `strict` fix it for every task. A project setting overrides the user's global default (`harness mode --global`). The user can change the level for any task in conversation ("do this in strict"). Each mode's rules live in a file (`modes/<name>.md` in the harness, or the user's own in `~/.config/agent-harness/modes/`); SessionStart supplies the active one, and `harness mode show` prints it. A user mode overrides the table below where it differs. Two built-in modes sit outside the table: `lean` (self-contained minimal rules to save tokens; this skill is not loaded) and `unleash` (autonomous, project-only).
 
 In `auto`, classify each request before acting and state it in one line, for example `Level: standard (bounded bug fix in one module)`:
 - **lite:** questions, typos, renames, config tweaks, a one-line fix, small scripts or prototypes.
@@ -44,7 +44,7 @@ Every level keeps the hooks' guarantees (Conventional Commits, no AI attribution
 - Do not re-read what is already in context, and do not re-verify an edit the tool reported as applied.
 - Batch independent tool calls in one response; run long commands in the background instead of polling.
 - Trim output: `tail`, quiet flags and summaries instead of full logs; never paste large outputs back.
-- Run the affected tests first and the full suite once, before committing or closing.
+- Run the affected tests first and the full suite once, before committing or closing. Use the commands in the project's `AGENTS.md`; if they are missing, find them once and add them there instead of probing in every session.
 - Keep replies, handoffs and docs concise: state what changed and what is pending, not the whole history.
 - Delegate only separable work, with self-contained prompts and the most economical model that can do it.
 - Avoid commands the command guard asks about (heredocs to interpreters, shell loops, dynamic commands): put multi-step logic in a script file and run it. Each confirmation costs the user time and a turn.

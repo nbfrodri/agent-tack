@@ -28,7 +28,7 @@ Inspect the current tool's actual model and reasoning controls before choosing. 
 | Medium: standard implementation | A feature following existing patterns, tests, typical bug fixes | Balanced coding model | medium |
 | High: design-heavy or risky | Architecture, security, migrations, tricky bugs, integration | Most capable suitable model available | high |
 
-Bump the recommendation for unclear requirements, missing tests or costly mistakes. If the runtime exposes no model choice, inherit the available model. If a model or effort cannot be set, report the actual fallback; do not claim a selection was applied. Do not rewrite shared agent definitions just to change one invocation's effort. Ask only when an unresolved choice materially affects the approved budget or scope.
+When `harness config subagent-model` is `economical`, start every task on the most economical model that can do it and move up only when it cannot. Bump the recommendation for unclear requirements, missing tests or costly mistakes. If the runtime exposes no model choice, inherit the available model. If a model or effort cannot be set, report the actual fallback; do not claim a selection was applied. Do not rewrite shared agent definitions just to change one invocation's effort. Ask only when an unresolved choice materially affects the approved budget or scope.
 
 Record actual models, effort settings, fallbacks, branches/worktrees and task status in the orchestration handoff and `docs/ai/log.md`. Keep the handoff current as agents report so work can resume after interruption.
 

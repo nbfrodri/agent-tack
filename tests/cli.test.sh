@@ -241,6 +241,15 @@ check "strict context includes architecture text" contains 'Architecture context
 check "strict context includes the handoff body" contains '# Handoff'
 check "strict context reports handoff freshness" contains 'up to date: no commits since its last update'
 git config --local --unset harness.mode
+"$CLI" mode new deep --from lite >/dev/null
+sed 's/^Context: minimal$/Context: full/' "$XDG_CONFIG_HOME/agent-harness/modes/deep.md" > "$WORK/deep.md" && mv "$WORK/deep.md" "$XDG_CONFIG_HOME/agent-harness/modes/deep.md"
+git config --local harness.mode deep
+check "a mode file's Context line decides the startup context" expect_exit 0 "$CLI" context
+check "a user mode asking for full context gets excerpts" contains 'Architecture context'
+git config --local harness.mode lean
+check "lean context succeeds" expect_exit 0 "$CLI" context
+check "lean context skips architecture" eval '! contains "Architecture context"'
+git config --local --unset harness.mode
 check "fresh handoff is reported up to date" expect_exit 0 "$CLI" context
 check "fresh handoff says so" contains 'up to date: no commits since its last update'
 touch -t 202001010000 docs/handoffs/2026-10-03-active.md

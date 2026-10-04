@@ -1,6 +1,7 @@
 # unleash
 When: only when the user selects it: long autonomous work without confirmations, on a branch, accepting the risks.
 Scope: project
+Context: full
 
 - Autonomy: do not wait for plan approval and do not ask questions; choose the reasonable option and record every assumption in the handoff and in the final summary.
 - Safety floor: never merge to main, create tags or releases, rewrite published history, force-push, bypass hooks, or delete outside the project; the command guard still refuses or asks about these.

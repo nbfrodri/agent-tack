@@ -1,6 +1,7 @@
 # lite
 When: questions, typos, renames, config tweaks, a one-line fix, small scripts or prototypes.
 Scope: any
+Context: minimal
 
 - Plan: none.
 - Tests: add or update a test when logic changes; run the affected suite.

@@ -4,7 +4,7 @@
 #
 # Usage: evals/run.sh <scenario> [condition] [repetition]
 #   scenarios:  new-project | bug-fix | release | codex-new-project
-#   conditions: auto | lite | standard | strict: the full setup, with the project enabled at
+#   conditions: auto | lite | lean | standard | strict: the full setup, with the project enabled at
 #               that workflow mode; harness (default) is an alias for auto
 #   baseline:   Claude Code as shipped: no user settings, skills or instructions, and git
 #               without the global hooks (same repo and prompt)
@@ -27,8 +27,8 @@ esac
 case "$condition" in
   baseline) mode='' ;;
   harness) mode=auto ;;
-  auto | lite | standard | strict) mode="$condition" ;;
-  *) echo "unknown condition '$condition' (baseline | harness | auto | lite | standard | strict)" >&2; exit 2 ;;
+  auto | lite | lean | standard | strict) mode="$condition" ;;
+  *) echo "unknown condition '$condition' (baseline | harness | auto | lite | lean | standard | strict)" >&2; exit 2 ;;
 esac
 case "$rep" in *[!0-9]* | '') echo "repetition must be a number" >&2; exit 2 ;; esac
 

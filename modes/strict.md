@@ -1,6 +1,7 @@
 # strict
 When: several modules, architecture or public API changes, migrations, deletions, auth, payments or security, debatable design, or anything the user calls important or risky.
 Scope: any
+Context: full
 
 - Plan: written plan saved in `docs/plans/`; wait for the user's approval before changing code.
 - Tests: TDD (red, green, refactor).

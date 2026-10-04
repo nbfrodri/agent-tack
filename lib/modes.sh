@@ -50,6 +50,16 @@ list_modes() {
   done
 }
 
+# How much startup context the effective mode wants: minimal, index (default) or full.
+context_level() {
+  local mode file level
+  mode="$(effective_mode)"
+  mode="${mode%% *}"
+  file="$(mode_file "$mode" 2>/dev/null)" || { echo index; return; }
+  level="$(mode_field "$file" Context)"
+  case "$level" in minimal | index | full) echo "$level" ;; *) echo index ;; esac
+}
+
 # The rules of the effective mode for startup context; auto lists every mode to choose from.
 show_mode() {
   local mode file
