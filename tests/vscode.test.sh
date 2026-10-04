@@ -26,6 +26,10 @@ for editor in code code-insiders codium; do
   printf '#!/usr/bin/env bash\nexit 0\n' > "$EDITORS/$editor"
   chmod +x "$EDITORS/$editor"
 done
+# Pin the platform: the settings path depends on uname, and CI also runs on macOS.
+rm -f "$MINBIN/uname"
+printf '#!/usr/bin/env bash\necho Linux\n' > "$MINBIN/uname"
+chmod +x "$MINBIN/uname"
 DARWIN="$WORK/bin-darwin"
 mkdir -p "$DARWIN"
 printf '#!/usr/bin/env bash\necho Darwin\n' > "$DARWIN/uname"
