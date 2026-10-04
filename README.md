@@ -70,7 +70,7 @@ Run `harness help` for everything. [Usage →](docs/usage.md)
 
 ## Results
 
-Measured on real sessions, plain assistant versus the harness ([method and limits](docs/results.md)):
+Measured on real sessions with Claude Sonnet 5.5 in Claude Code, plain assistant versus the harness. Other models and tools can give different numbers ([method and limits](docs/results.md)):
 
 | | Plain assistant | Lite / Auto | Strict |
 | --- | --- | --- | --- |
