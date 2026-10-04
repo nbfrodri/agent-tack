@@ -275,7 +275,7 @@ case "$cmd" in
     if [ -n "$report" ]; then
       [ -z "$count" ] || log_usage 'a number of entries does not apply to a report; use --days'
     else
-      [ "$csv" -eq 0 ] && [ -z "$days" ] || log_usage '--csv and --days need --cost, --skills or --levels'
+      if [ "$csv" -eq 1 ] || [ -n "$days" ]; then log_usage '--csv and --days need --cost, --skills or --levels'; fi
     fi
     count="${count:-20}" days="${days:-30}"
     if ! printf '%s' "$count" | grep -qE '^[1-9][0-9]*$' || ! printf '%s' "$days" | grep -qE '^[1-9][0-9]*$'; then
