@@ -4,6 +4,7 @@
 | --- | --- |
 | [why.md](why.md) | The problem, the solution, strengths and limits |
 | [usage.md](usage.md) | On/off per project, what to ask, overrides, updating |
+| [editors.md](editors.md) | Using and enabling it in each editor and AI tool |
 | [how-it-works.md](how-it-works.md) | Supported tools, what the installer does, enforced rules, layout |
 | [architecture.md](architecture.md) | Component responsibilities, dependencies and key flows |
 | [customization.md](customization.md) | Personal rules, skills, agents, tools, plugins and hooks |

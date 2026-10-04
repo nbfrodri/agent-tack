@@ -67,6 +67,7 @@ Make the harness your own after cloning it: change the rules, workflow, skills, 
 | --- | --- |
 | [Why](docs/why.md) | The problem, the solution, strengths and limits |
 | [Usage](docs/usage.md) | On/off, what to ask, overrides, updating |
+| [Editors and AI tools](docs/editors.md) | Using and enabling it in VS Code, Cursor, JetBrains and each AI tool, including WSL |
 | [How it works](docs/how-it-works.md) | Supported tools, installer, hooks, layout |
 | [Architecture](docs/architecture.md) | Components, dependencies, installation and runtime flows |
 | [Customization](docs/customization.md) | Adapt the harness to your preferences and keep personal changes |
