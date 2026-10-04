@@ -581,7 +581,9 @@ git -C "$P2" add docs/usage.md && git -C "$P2" commit -q -m "docs: refresh usage
 printf '# Handoff\nStatus: in progress\n' > "$P2/docs/handoffs/2026-10-04-x.md"
 git -C "$P2" add docs/handoffs && git -C "$P2" commit -q -m "docs(handoffs): start"
 touch -t 202001010000 "$P2/docs/handoffs/2026-10-04-x.md"
-GIT_COMMITTER_DATE="2030-01-01T00:00:00" git -C "$P2" commit -q --allow-empty -m "feat: later work"
+printf 'later\n' > "$P2/later.txt"
+git -C "$P2" add later.txt
+GIT_COMMITTER_DATE="2030-01-01T00:00:00" git -C "$P2" commit -q -m "feat: later work"
 check "stop-check: a stale handoff is reported" "stopping | grep -q 'handoff may be stale'"
 git -C "$P2" config harness.stopCheck false
 check "stop-check: can be turned off" "[ -z \"\$(stopping)\" ]"
