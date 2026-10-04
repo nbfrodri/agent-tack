@@ -34,6 +34,7 @@ jobs:
         run: |
           tests/lifecycle.test.sh
           tests/doctor.test.sh
+          tests/tools.test.sh
           tests/cli.test.sh
           tests/settings.test.sh
           tests/safety.test.sh
