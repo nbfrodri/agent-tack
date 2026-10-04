@@ -69,7 +69,7 @@ if (cd "$cwd" && "$cli" status --quiet); then
     remaining=$((cap - ${#head} - ${#pointer} - 1))
     context="$head"
     for part in "$settings" "$mode_rules" "$project_context"; do
-      [ -n "$part" ] && [ "$remaining" -gt 1 ] || continue
+      if [ -z "$part" ] || [ "$remaining" -le 1 ]; then continue; fi
       if [ $((${#part} + 1)) -le "$remaining" ]; then
         context="$context"$'\n'"$part"
         remaining=$((remaining - ${#part} - 1))
