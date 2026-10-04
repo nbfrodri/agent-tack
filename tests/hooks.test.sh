@@ -492,6 +492,17 @@ check "stop-check: code changed without its mapped docs is reported" "stopping |
 printf 'usage of tool\n' > "$P2/docs/usage.md"
 git -C "$P2" add docs/usage.md && git -C "$P2" commit -q -m "docs: describe tool"
 check "stop-check: mapped docs updated on the branch satisfy the map" "[ -z \"\$(stopping)\" ]"
+git -C "$P2" mv bin/tool bin/renamed
+printf 'bin/renamed | docs/other.md\n' > "$P2/docs-map.txt"
+check "stop-check: an uncommitted rename counts under its new name" "stopping | grep -q 'bin/renamed changed but docs/other.md did not'"
+git -C "$P2" mv bin/renamed bin/tool
+printf 'bin/* | *\n' > "$P2/docs-map.txt"
+git -C "$P2" add docs-map.txt && git -C "$P2" commit -q -m "chore: wildcard docs entry"
+check "stop-check: docs entries are not expanded as globs" "stopping | grep -q 'changed but \\* did not'"
+printf 'bin/* | docs/usage.md\n' > "$P2/docs-map.txt"
+git -C "$P2" add docs-map.txt && git -C "$P2" commit -q -m "chore: restore docs map"
+printf 'more usage\n' >> "$P2/docs/usage.md"
+git -C "$P2" add docs/usage.md && git -C "$P2" commit -q -m "docs: refresh usage"
 printf '# Handoff\nStatus: in progress\n' > "$P2/docs/handoffs/2026-10-04-x.md"
 git -C "$P2" add docs/handoffs && git -C "$P2" commit -q -m "docs(handoffs): start"
 touch -t 202001010000 "$P2/docs/handoffs/2026-10-04-x.md"

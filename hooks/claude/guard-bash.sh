@@ -49,6 +49,12 @@ ask() { [ -n "$ASK_REASON" ] || ASK_REASON="$1"; }
 # unleash may waive. Opaque syntax and analysis limits keep asking, so the deny rules hold.
 LOCAL_ASK_REASON=""
 ask_local() { [ -n "$LOCAL_ASK_REASON" ] || LOCAL_ASK_REASON="$1"; }
+# A command that changes directory or points git elsewhere may act outside the project,
+# so its local asks are never waived.
+ACTS_ELSEWHERE=0
+# Writes to the harness's own settings; refused in project-only modes so an autonomous
+# agent cannot lift its limits or leave its mode.
+SETTINGS_WRITE=""
 
 command="$(json_field .tool_input.command)"
 cwd="$(json_field .cwd)"
@@ -83,7 +89,9 @@ check_git() {
     fi
     if [ -z "$sub" ]; then
       case "$a" in
-        -C | -c | --git-dir | --work-tree | --namespace | --config-env) prev="$a"; skip_next=1 ;;
+        -C | --git-dir | --work-tree) ACTS_ELSEWHERE=1; prev="$a"; skip_next=1 ;;
+        --git-dir=* | --work-tree=*) ACTS_ELSEWHERE=1 ;;
+        -c | --namespace | --config-env) prev="$a"; skip_next=1 ;;
         -c?* | --config-env=*) case "$(printf '%s' "$a" | tr '[:upper:]' '[:lower:]')" in
                           -ccore.hookspath=* | --config-env=core.hookspath=*) deny "Overriding core.hooksPath disables the git hooks that enforce the user's rules." ;;
                         esac ;;
@@ -105,6 +113,11 @@ check_git() {
           case "$joined" in
             *" --get"* | *" -l "* | *" --list "*) ;;
             *) deny "Changing core.hooksPath disables the git hooks that enforce the user's rules." ;;
+          esac ;;
+        *" harness."*)
+          case "$joined" in
+            *" --get"* | *" -l "* | *" --list "*) ;;
+            *) SETTINGS_WRITE="Changing the harness's settings is the user's decision in this mode." ;;
           esac ;;
       esac
       ;;
@@ -148,6 +161,9 @@ check_git() {
         *" --delete "*" --force "* | *" --force "*" --delete "* | *" -d "*" -f "* | *" -d --force "*)
           ask_local "Force-deleting a branch can lose unmerged commits." ;;
       esac
+      for r in "${rest[@]+"${rest[@]}"}"; do
+        if is_main "$r" && [ -n "$LOCAL_ASK_REASON" ]; then ask "Force-deleting the main branch."; fi
+      done
       ;;
     stash)
       case "$joined" in *" clear "* | *" drop "*) ask_local "This permanently deletes stashed changes." ;; esac
@@ -228,6 +244,23 @@ check_git_push() {
     fi
     ask "This push rewrites or deletes history on the remote. Confirm the branch is yours and not shared."
   fi
+}
+
+# Flags harness subcommands that change settings; reads (status, show, list, a lone name) pass.
+check_harness() {
+  local positional=0 a
+  case "${1:-}" in
+    trust | enable | disable) SETTINGS_WRITE="Changing the harness's settings is the user's decision in this mode."; return ;;
+    mode)
+      case "${2:-}" in '' | list | show | new) return ;; esac
+      SETTINGS_WRITE="Changing the workflow mode is the user's decision in this mode." ;;
+    config)
+      shift
+      for a in "$@"; do
+        case "$a" in --unset) positional=2 ;; --global) ;; *) positional=$((positional + 1)) ;; esac
+      done
+      [ "$positional" -lt 2 ] || SETTINGS_WRITE="Changing the harness's settings is the user's decision in this mode." ;;
+  esac
 }
 
 check_rm() {
@@ -423,6 +456,8 @@ check_command() {
     *'__subst__'* | *'$'* | *'`'*) ask "Dynamic executable name requires review." ;;
     git) check_git "${args[@]+"${args[@]}"}" ;;
     rm) check_rm "${args[@]+"${args[@]}"}" ;;
+    cd | pushd | popd) ACTS_ELSEWHERE=1 ;;
+    harness) check_harness "${args[@]+"${args[@]}"}" ;;
     bash | sh | zsh | dash | ksh)
       local k=0 shell_string=0
       while [ "$k" -lt "${#args[@]}" ]; do
@@ -523,9 +558,12 @@ waives_local_asks() {
 }
 
 analyze "$command"
+if [ -n "$SETTINGS_WRITE" ] && waives_local_asks; then
+  deny "$SETTINGS_WRITE"
+fi
 if [ -n "$ASK_REASON" ]; then
   emit ask "$ASK_REASON"
-elif [ -n "$LOCAL_ASK_REASON" ] && ! waives_local_asks; then
-  emit ask "$LOCAL_ASK_REASON"
+elif [ -n "$LOCAL_ASK_REASON" ]; then
+  if [ "$ACTS_ELSEWHERE" -eq 1 ] || ! waives_local_asks; then emit ask "$LOCAL_ASK_REASON"; fi
 fi
 exit 0

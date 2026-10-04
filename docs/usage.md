@@ -134,7 +134,7 @@ A project setting (`harness mode lite`) overrides your global default (`harness 
 
 ### Unleash: autonomous work
 
-`harness mode unleash` lets the assistant work without asking: it follows its plan without waiting for approval, decides instead of asking (recording every assumption in the handoff and final summary), may push its branch and open a pull request, and the command guard stops asking about explicit local data loss inside the project (`git reset --hard`, `clean -f`, `restore`, discarding checkouts, `branch -D`, `stash drop`, `rm -rf .`).
+`harness mode unleash` lets the assistant work without asking: it follows its plan without waiting for approval, decides instead of asking (recording every assumption in the handoff and final summary), may push its branch and open a pull request, and the command guard stops asking about explicit local data loss in the current project (`git reset --hard`, `clean -f`, `restore`, discarding checkouts, `branch -D`, `stash drop`, `rm -rf .`). That waiver never applies to a command that changes directory (`cd`, `pushd`, `popd`) or points git elsewhere (`-C`, `--git-dir`, `--work-tree`), nor to deleting `main` or `master`. The assistant also cannot change the harness's settings in this mode: `harness config` writes, `harness mode`, `trust`, `enable`, `disable` and `git config harness.*` writes are refused, so it cannot lift its own limits or leave the mode.
 
 What stays, whatever the mode:
 
@@ -142,7 +142,7 @@ What stays, whatever the mode:
 - asks about deleting outside the project, rewriting remote history, database commands, your own guard rules, and opaque or unanalysable commands (heredocs to interpreters, loops, dynamic commands), because hiding a command inside them would otherwise skip the deny rules;
 - never merging to `main`, tagging, releasing or rewriting published history.
 
-It is project-only: `harness mode unleash --global` is refused and a global value set by hand is ignored. Session start shows a warning and `harness doctor` reports it. Claude Code's own permission prompts are separate: for unattended runs also choose a permissive permission mode in Claude Code.
+It is project-only and branch-only: `harness mode unleash --global` is refused, a global value set by hand is ignored, and selecting it on `main` or `master` is refused (`harness doctor` warns if you switch back to them later). Session start shows a warning and `harness doctor` reports it. Claude Code's own permission prompts are separate: for unattended runs also choose a permissive permission mode in Claude Code.
 
 Optional limits, none by default; set either, both or neither, per project or with `--global`:
 
@@ -151,7 +151,7 @@ harness config unleash-max-tool-calls 300   # a hook refuses tool calls past 300
 harness config unleash-max-cost 5           # the usage mod refuses tool calls once the session passes 5 USD
 ```
 
-When a limit is reached, tool calls are refused with an instruction to update the handoff and summarise. The tool-call limit is enforced by a Claude Code hook and counts every tool call per session (counters live in `${XDG_STATE_HOME:-~/.local/state}/agent-harness/budget/`); the cost limit needs the `usage-band` mod and a session that reports its cost.
+When a limit is reached, tool calls are refused with an instruction to update the handoff and summarise. The tool-call limit is enforced by a Claude Code hook and counts every tool call per session (counters live in `${XDG_STATE_HOME:-~/.local/state}/agent-harness/budget/`; parallel tool calls can make the count slightly low, so treat it as a safety net rather than an exact quota); the cost limit needs the `usage-band` mod and a session that reports its cost.
 
 Risks you accept: wrong decisions nobody stops in time, lost uncommitted work, unbounded token use unless you set a limit, and above all prompt injection: text in the repository, an issue or a web page can steer an agent that no longer asks. Prefer a container or an isolated machine without important credentials, and review the assumptions and the pull request before merging.
 

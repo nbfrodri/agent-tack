@@ -39,7 +39,9 @@ dirty="$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')"
 if "$cli" trusted --quiet; then
   check="$("$cli" config check-fast 2>/dev/null)"
   check="${check% (*}"
-  if [ -n "$check" ] && [ "$check" != none ] && ! bash -c "$check" >/dev/null 2>&1; then
+  limit=()
+  command -v timeout >/dev/null 2>&1 && limit=(timeout 60)
+  if [ -n "$check" ] && [ "$check" != none ] && ! ${limit[@]+"${limit[@]}"} bash -c "$check" >/dev/null 2>&1; then
     add "the fast check fails: $check"
   fi
 fi
@@ -55,7 +57,8 @@ if [ -f docs-map.txt ]; then
     [ "$current" != "$trunk" ] || break
     base="$(git merge-base HEAD "$trunk" 2>/dev/null)" && break
   done
-  changed="$( { [ -z "$base" ] || git diff --name-only "$base" HEAD; git status --porcelain | cut -c4-; } 2>/dev/null | sort -u)"
+  # A rename shows as "old -> new"; the new path is the one that exists now.
+  changed="$( { [ -z "$base" ] || git diff --name-only "$base" HEAD; git status --porcelain | cut -c4- | sed 's/.* -> //'; } 2>/dev/null | sort -u)"
   while IFS='|' read -r pattern docs; do
     pattern="$(printf '%s' "$pattern" | tr -d '[:space:]')"
     case "$pattern" in '' | '#'*) continue ;; esac
@@ -63,9 +66,12 @@ if [ -f docs-map.txt ]; then
     matched="$(printf '%s\n' "$changed" | while IFS= read -r file; do case "$file" in $pattern) printf '%s\n' "$file" ;; esac; done | head -n 1)"
     [ -n "$matched" ] || continue
     covered=false missing=""
+    # Doc names are literal paths: disable globbing so an entry like "*" is not expanded.
+    set -f
     for doc in $(printf '%s' "$docs" | tr ',' ' '); do
       if printf '%s\n' "$changed" | grep -qxF "$doc"; then covered=true; else missing="$missing $doc"; fi
     done
+    set +f
     missing="${missing# }"
     [ "$covered" = true ] || add "$matched changed but ${missing// / and } did not (docs-map.txt): update them or explain why not."
   done < docs-map.txt

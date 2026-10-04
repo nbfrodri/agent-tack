@@ -347,6 +347,9 @@ check_project() {
     warn "current project mode: $mode"
   elif "$REPO/bin/harness" mode show | grep -q '^WARNING:'; then
     warn "current project mode: $mode; autonomous mode without confirmations is active"
+    case "$(git branch --show-current 2>/dev/null)" in
+      main | master) warn "current branch is $(git branch --show-current) in a project-only mode; switch to a branch or worktree" ;;
+    esac
   else
     ok "current project mode: $mode"
   fi

@@ -118,8 +118,11 @@ user_policy.write_text(
     "command | ask | terraform destroy | Terraform destroy deletes infrastructure.\n"
     "command | deny | kubectl delete namespace prod | Never delete the production namespace.\n"
     "command | allow | git commit --no-verify | users cannot relax the guard\n"
+    "sql | allow | DROP TABLE | users cannot relax shipped asks\n"
+    "nowhere | deny | echo hi | unknown scopes are skipped\n"
     "this line is malformed\n"
 )
+expect("ask", "psql -c 'DROP TABLE orders'", "user policy cannot relax a shipped ask")
 expect("ask", "terraform destroy -auto-approve", "user policy adds an ask rule", reason="infrastructure")
 expect("deny", "kubectl delete namespace prod", "user policy adds a deny rule", reason="production")
 expect("allow", "terraform plan", "user rules match only their pattern")
@@ -142,8 +145,24 @@ expect("ask", "psql -c 'DROP TABLE orders'", "unleash: database rules still ask"
 expect("ask", "cat <<'EOF' | python3\nprint(1)\nEOF", "unleash: opaque commands still ask", cwd=project)
 expect("deny", "git commit --no-verify -m 'fix: x'", "unleash: deny rules stay", cwd=project)
 expect("deny", "git push origin main --force", "unleash: force-push to main stays denied", cwd=project)
+expect("ask", "cd ~ && rm -rf *", "unleash: a directory change before a local discard still asks", cwd=project)
+expect("ask", "cd / && rm -rf ./*", "unleash: deleting after cd to root still asks", cwd=project)
+expect("ask", "pushd /tmp && git clean -fdx", "unleash: pushd counts as a directory change", cwd=project)
+expect("ask", "git -C /home/someone/other reset --hard", "unleash: git -C targets another repository", cwd=project)
+expect("ask", "git --git-dir=/x --work-tree=/y clean -fdx", "unleash: git-dir and work-tree target another repository", cwd=project)
+expect("ask", "git branch -D main", "unleash: deleting the main branch still asks", cwd=project)
+expect("deny", "harness config unleash-max-tool-calls 999999", "unleash: the agent cannot raise its own limit", cwd=project)
+expect("deny", "harness config unleash-max-tool-calls --unset", "unleash: the agent cannot remove its own limit", cwd=project)
+expect("deny", "harness mode standard", "unleash: the agent cannot change its own mode", cwd=project)
+expect("deny", "harness trust", "unleash: the agent cannot grant itself formatter trust", cwd=project)
+expect("deny", "git config harness.unleashMaxToolCalls 999999", "unleash: raw git config writes to harness keys are refused", cwd=project)
+expect("allow", "harness config unleash-max-tool-calls", "unleash: reading a setting is allowed", cwd=project)
+expect("allow", "harness status", "unleash: status is allowed", cwd=project)
 subprocess.run(["git", "-C", str(project), "config", "harness.mode", "lite"], check=True)
 expect("ask", "git reset --hard HEAD~1", "other modes keep asking about local discards", cwd=project)
+expect("allow", "harness config delegation off", "other modes let the assistant change settings", cwd=project)
+subprocess.run(["git", "-C", str(project), "config", "harness.mode", "no-such-mode"], check=True)
+expect("ask", "git reset --hard HEAD~1", "an invalid mode keeps asking", cwd=project)
 subprocess.run(["git", "-C", str(project), "config", "harness.enabled", "false"], check=True)
 subprocess.run(["git", "-C", str(project), "config", "harness.mode", "unleash"], check=True)
 expect("ask", "git reset --hard HEAD~1", "unleash needs the workflow enabled", cwd=project)

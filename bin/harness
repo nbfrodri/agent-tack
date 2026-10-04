@@ -199,6 +199,11 @@ case "$cmd" in
       echo "harness: $value is project-only; select it inside each project instead" >&2; exit 2
     fi
     [ "$scope" = global ] || require_repo
+    if [ "$scope" = local ] && [ -n "$value" ] && is_project_only "$value"; then
+      case "$(git branch --show-current 2>/dev/null)" in
+        main | master) echo "harness: $value runs without confirmations; switch to a branch or worktree first" >&2; exit 2 ;;
+      esac
+    fi
     if [ "$unset" = true ]; then
       if git config "--$scope" --get harness.mode >/dev/null 2>&1; then
         git config "--$scope" --unset-all harness.mode || fail "cannot unset the $scope mode"

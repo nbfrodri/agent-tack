@@ -155,6 +155,9 @@ check "existing user modes are not overwritten" expect_exit 2 "$CLI" mode new sp
 check "mode names must be simple words" expect_exit 2 "$CLI" mode new 'bad/name' --from lite
 check "the source mode must exist" expect_exit 2 "$CLI" mode new other --from nowhere
 check "mode new needs --from" expect_exit 2 "$CLI" mode new other
+git switch -q -c main 2>/dev/null || git switch -q main
+check "unleash is refused on the main branch" expect_exit 2 "$CLI" mode unleash
+git switch -q -c feat/autonomous
 check "unleash can be selected for a project" expect_exit 0 "$CLI" mode unleash
 check "unleash is effective locally" expect_mode 'unleash (local)'
 git config --local --unset harness.mode
@@ -185,6 +188,10 @@ check "config unsets a project value" expect_exit 0 "$CLI" config delegation --u
 check "unset project value falls back to the default" expect_mode_like 'auto (default)' "$CLI" config delegation
 check "config unsets a global value" expect_exit 0 "$CLI" config context --unset --global
 check "config rejects unknown features" expect_exit 2 "$CLI" config turbo
+check "feature names are matched literally, not as patterns" expect_exit 2 "$CLI" config '.*'
+check "values may start with a dash after --" expect_exit 0 "$CLI" config check-fast -- "-x test"
+check "the dash value is stored" test "$(git config --local --get harness.checkFast)" = "-x test"
+git config --local --unset harness.checkFast
 check "config rejects invalid values" expect_exit 2 "$CLI" config delegation sometimes
 check "rejected value is not stored" test -z "$(git config --get harness.delegation)"
 check "config rejects non-boolean values for boolean features" expect_exit 2 "$CLI" config context maybe

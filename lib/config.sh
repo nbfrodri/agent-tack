@@ -12,7 +12,8 @@ in_repo() { git rev-parse --show-toplevel >/dev/null 2>&1; }
 # Sets name, key, default, values, scope, enforcement and description for one feature.
 load_feature() {
   local line
-  line="$(grep -E "^$1[[:space:]]" "$registry")" || return 1
+  line="$(awk -v wanted="$1" '$1 == wanted && $1 !~ /^#/ { print; exit }' "$registry")"
+  [ -n "$line" ] || return 1
   read -r name key default values scope enforcement description <<EOF
 $line
 EOF
@@ -61,18 +62,19 @@ list() {
   done < "$registry"
 }
 
-target_scope=local unset=false feature='' value=''
+target_scope=local unset=false feature='' value='' options_done=false
 for arg in "$@"; do
-  case "$arg" in
-    --global) target_scope=global ;;
-    --unset) unset=true ;;
-    -*) usage_error "unknown option for config: $arg" ;;
-    *)
-      if [ -z "$feature" ]; then feature="$arg"
-      elif [ -z "$value" ]; then value="$arg"
-      else usage_error 'too many arguments for config'; fi
-      ;;
-  esac
+  if [ "$options_done" = false ]; then
+    case "$arg" in
+      --) options_done=true; continue ;;
+      --global) target_scope=global; continue ;;
+      --unset) unset=true; continue ;;
+      -*) usage_error "unknown option for config: $arg (use -- before a value that starts with a dash)" ;;
+    esac
+  fi
+  if [ -z "$feature" ]; then feature="$arg"
+  elif [ -z "$value" ]; then value="$arg"
+  else usage_error 'too many arguments for config'; fi
 done
 
 if [ -z "$feature" ]; then
