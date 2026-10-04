@@ -15,5 +15,6 @@
   8. `61e368e` docs gaps closed at the owner's request: README feature lists, editors, why and the docs delegation note in usage.
 - Issues opened at the owner's request from a review of affaan-m/ECC: #41–#53 (enhancements; #53 covers support for any editor through thin adapters). #54: screenshots of visual changes in `.tack/screenshots/` (git-ignored) scored by a fresh-context subagent (owner's choices).
 - Verified: full ShellCheck and all 15 suites pass locally on the final tree. Pushed; PR #55 open.
+- CI run 1 failed `install (ubuntu-latest)` on a racy cli check (`grep -q` plus `pipefail` passed locally by SIGPIPE timing); fixed in `8e94736` by counting toggle names from the full listing.
 - Next: wait for CI on #55 (fix failures from the log), merge with a merge commit (owner authorised), delete the branch locally and remotely, mark this handoff done.
 - Follow-ups noted: rename the repo's own `.harness` marker to `.tack`; the `harness` alias will be removed in a later release; the owner asked about shipping tack as a Claude Code plugin (proposed: a plugin for the Claude part next to `install.sh`; no issue yet).
