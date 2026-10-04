@@ -342,6 +342,23 @@ echo '{broken' > "$H/.claude/settings.json"
 run_install "$H"
 check "no hook summary when registering the hooks failed" "! grep -q 'Hooks installed' '$H.log'"
 
+echo "Skill groups (tack config skill-groups)"
+H="$WORK/groups"
+run_install "$H"
+check "by default every skill group is installed" "[ -L '$H/.agents/skills/frontend' ] && [ -L '$H/.agents/skills/improve' ] && [ -L '$H/.agents/skills/dev-workflow' ]"
+git_global "$H" tack.skillGroups process
+run_install "$H"
+check "a deselected group's skills are removed" "[ ! -e '$H/.agents/skills/frontend' ] && [ ! -e '$H/.claude/skills/frontend' ]"
+check "selected groups stay" "[ -L '$H/.agents/skills/improve' ]"
+check "core skills are always installed" "[ -L '$H/.agents/skills/dev-workflow' ] && [ -L '$H/.agents/skills/lessons' ]"
+check "the installer says which groups it installed" "grep -q 'skill groups: core, process' '$H.log'"
+mkdir -p "$H/.agents/skills/frontend-mine"
+check "skills that are not tack's are never removed" "run_install '$H' && [ -d '$H/.agents/skills/frontend-mine' ]"
+git_global "$H" --unset tack.skillGroups
+run_install "$H"
+check "selecting a group again installs it again" "[ -L '$H/.agents/skills/frontend' ]"
+check "uninstall still restores after groups changed" "HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 '$REPO/uninstall.sh' >'$H.uninstall.log' 2>&1 && [ ! -e '$H/.agents/skills/dev-workflow' ]"
+
 echo
 echo "$PASSED passed, $FAILED failed"
 if [ "$FAILED" -gt 0 ]; then

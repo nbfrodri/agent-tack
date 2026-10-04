@@ -88,6 +88,16 @@ ownership_begin() {
     { [ "$kind" != link ] || cp "$REPO/targets.txt" "$OWN_ENTRY/targets"; })
 }
 
+# ownership_release_link PATH: drops the record of a link tack created where nothing was before,
+# once the link is removed on purpose. Fails, keeping the record, when the link replaced something
+# of the user's: only uninstall may put that back.
+ownership_release_link() {
+  ownership_find link "$1"
+  [ -n "$OWN_ENTRY" ] || return 0
+  [ "$(cat "$OWN_ENTRY/before_kind" 2>/dev/null)" = absent ] || return 1
+  rm -rf "$OWN_ENTRY"
+}
+
 ownership_parent_identity() {
   if has stat; then
     stat -c '%d:%i' "$1" 2>/dev/null || stat -f '%d:%i' "$1" 2>/dev/null

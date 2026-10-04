@@ -17,6 +17,8 @@ has() { command -v "$1" >/dev/null 2>&1; }
 source "$REPO/lib/keys.sh"
 # shellcheck source=lib/mods.sh
 source "$REPO/lib/mods.sh"
+# shellcheck source=lib/skill-groups.sh
+source "$REPO/lib/skill-groups.sh"
 # shellcheck source=lib/vscode.sh
 source "$REPO/lib/vscode.sh"
 expand_home() {
@@ -49,6 +51,8 @@ check_skills() {
   check_stale_links "$dir"
   for source in "$REPO"/skills/*; do
     [ -f "$source/SKILL.md" ] || continue
+    # Skills of a group the user did not select are left out on purpose.
+    skill_selected "${source##*/}" || continue
     check_link "$source" "$dir/${source##*/}"
   done
 }
@@ -82,6 +86,7 @@ check_tools_and_links() {
   check_link "$REPO/bin/tack" "$HOME/.local/bin/tack"
   check_link "$REPO/bin/harness" "$HOME/.local/bin/harness"
   [ -x "$REPO/bin/tack" ] || fail 'tack CLI is not executable'
+  ok "skill groups: $(skill_groups_selected)"
   check_skills "$HOME/.agents/skills"
   while read -r tool when commands instructions skills_dir _ <&3; do
     case "$tool" in ''|'#'*) continue ;; esac

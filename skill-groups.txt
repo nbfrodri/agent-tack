@@ -1,0 +1,27 @@
+# Which group each skill belongs to. `tack config skill-groups --global` picks the optional
+# groups to install for every AI tool; core is always installed. Every skill folder needs a line
+# (tests/validate.sh checks it).
+#   core     the workflow itself: always installed
+#   process  larger processes: reviews, delegation, releases, new projects
+#   stack    technology guidance for one layer of an application
+#
+# skill          group
+dev-workflow     core
+project-docs     core
+lessons          core
+testing          core
+debugging        core
+git-history      core
+github-issues    core
+improve          process
+orchestrate      process
+auto-improve     process
+release          process
+new-project      process
+frontend         stack
+api-design       stack
+database         stack
+auth             stack
+e2e-testing      stack
+deployment       stack
+observability    stack

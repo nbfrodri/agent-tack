@@ -64,6 +64,17 @@ for agent in "$REPO"/agents/*.md; do
   check_file "$agent" "$(basename "$agent" .md)" "$AGENT_DESC_MAX"
   echo "  ✔ $(basename "$agent" .md)"
 done
+# Every skill belongs to a group the installer knows; the core workflow can never be left out.
+for skill_dir in "$REPO"/skills/*/; do
+  skill_name="$(basename "$skill_dir")"
+  skill_group="$(sed -n "s/^$skill_name[[:space:]][[:space:]]*\([a-z]*\).*/\1/p" "$REPO/skill-groups.txt")"
+  case "$skill_group" in
+    core | process | stack) ;;
+    '') err "skill-groups.txt: skill '$skill_name' has no group" ;;
+    *) err "skill-groups.txt: '$skill_name' is in unknown group '$skill_group'" ;;
+  esac
+done
+grep -qE '^dev-workflow[[:space:]]+core$' "$REPO/skill-groups.txt" || err "skill-groups.txt: dev-workflow must be core"
 # Tests never touch the real HOME: one that moves HOME must also move or unset XDG_STATE_HOME,
 # which many desktops set and which the hooks and tack write to.
 for test_file in "$REPO"/tests/*.test.sh; do

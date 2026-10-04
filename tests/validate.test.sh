@@ -48,6 +48,12 @@ expect_failure "an unclosed frontmatter" "not closed" \
   "printf -- '---\nname: broken\ndescription: x\n' > skills/testing/SKILL.md && mkdir -p skills/broken && cp skills/testing/SKILL.md skills/broken/"
 expect_failure "a description over budget" "max 400" \
   "python3 -c \"import re;p='skills/testing/SKILL.md';s=open(p).read();open(p,'w').write(re.sub(r'^description: .*\$','description: '+'x'*401,s,count=1,flags=re.M))\""
+expect_failure "a skill without a group" "skill-groups.txt: skill 'testing' has no group" \
+  "grep -v '^testing ' skill-groups.txt > tmp && mv tmp skill-groups.txt"
+expect_failure "a skill in an unknown group" "skill-groups.txt: 'frontend' is in unknown group 'ui'" \
+  "sed 's/^frontend .*/frontend ui/' skill-groups.txt > tmp && mv tmp skill-groups.txt"
+expect_failure "the core workflow made optional" "skill-groups.txt: dev-workflow must be core" \
+  "sed 's/^dev-workflow .*/dev-workflow process/' skill-groups.txt > tmp && mv tmp skill-groups.txt"
 expect_failure "a test that moves HOME but leaves the real state directory" "tests/leaky.test.sh: exports HOME" \
   "printf 'export HOME=/tmp/x\n' > tests/leaky.test.sh"
 expect_failure "a toggle name too long for the tack config table" "features.txt: name" \
