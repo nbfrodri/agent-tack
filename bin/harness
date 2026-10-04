@@ -32,6 +32,7 @@ Command options:
   --quiet             Suppress output for status or trusted; preserve exit codes
   --shared            Enable with a .harness file you can commit and share
   --revoke            Revoke local formatter trust without disabling the workflow
+  --tools             With doctor: check each installed AI tool (version, capabilities, smoke check)
   --global            Read or write the user's default mode instead of the project's
 
 Modes:
@@ -55,6 +56,7 @@ Examples:
   harness trusted --quiet
   harness trust --revoke
   harness doctor
+  harness doctor --tools
   harness help
 
 Formatter execution requires both activation and local trust. Trust applies only
@@ -220,9 +222,9 @@ case "$cmd" in
     bash "$source_root/lib/project-context.sh" "$root" "${mode%% *}"
     ;;
   doctor)
-    allowed_option=''; check_args "$@"
+    allowed_option='--tools'; check_args "$@"
     source_root="$(harness_root)" || fail "cannot locate installed diagnostics"
-    bash "$source_root/lib/doctor.sh" "$source_root"
+    bash "$source_root/lib/doctor.sh" "$source_root" "$@"
     ;;
   -h|--help|help)
     allowed_option=''; check_args "$@"
