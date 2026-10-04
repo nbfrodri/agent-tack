@@ -30,6 +30,10 @@ What the harness changes in practice, measured on real sessions: the same tasks 
 
 Limits: one or two runs per condition, one model, Python scenarios and automatic grading.
 
+### Lean mode
+
+A follow-up of 9 sessions compared `lean` with `lite` and the plain assistant ([details](benchmarks/2026-10-04-lean.md)). Lean cost the same as lite on a bug fix and about 10% less on a new project, with the same branch, commit and regression test. The startup context adds only about 7,000 input tokens; most of the overhead is the extra turns the discipline needs (branch, test run, commit) plus probing for the test command. Stating the test command in the project's `AGENTS.md`, or setting `harness config check-fast`, avoids that probing.
+
 A 15-session [pilot](benchmarks/2026-10-04-modes-pilot.md) before these fixes is kept as evidence and is not a valid comparison; an earlier single-workflow comparison was superseded before completion ([attempt evidence](benchmarks/2026-10-04-bug-fix-attempts.json)). The sections below describe the earlier single-workflow harness.
 
 ## Historical method
