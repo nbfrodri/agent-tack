@@ -21,7 +21,7 @@ if (cd "$cwd" && "$cli" status --quiet); then
   else
     level="Apply the $mode level of dev-workflow to every task unless the user asks for another."
   fi
-  context="harness: ENABLED for this project (mode: $mode). $level Ask the user whenever you have a real doubt."
+  context="harness: ENABLED for this project (mode: $mode). $level At every level: work on a branch off main, test the change, and make a Conventional Commit for each verified milestone. Ask the user whenever you have a real doubt."
   project_context="$(cd "$cwd" && "$cli" context)" || project_context=''
   [ -z "$project_context" ] || context="$context"$'\n'"$project_context"
 else

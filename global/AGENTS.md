@@ -11,7 +11,7 @@ For every AI assistant (Claude Code, Codex, etc.). Project-level instructions (A
 ## Only in projects where the harness is enabled
 The workflow is opt-in per project: enabled when `harness status` prints `enabled` (a `.harness` file in the repo root, or `git config harness.enabled true`); Claude Code also says so at session start, with the mode. Elsewhere, work normally without this ceremony.
 
-- For any task that writes, changes, designs or debugs code, or touches git/GitHub or docs, follow `dev-workflow` at the level set by `harness mode`: `auto` (default) picks lite, standard or strict per task and states it in one line; a fixed mode applies that level. I can change the level for any task.
+- For any task that writes, changes, designs or debugs code, or touches git/GitHub or docs, follow `dev-workflow` at the level set by `harness mode`: `auto` (default) picks lite, standard or strict per task and states it in one line; a fixed mode applies that level. I can change the level for any task. At every level: work on a branch off `main`, test the change, and make a Conventional Commit for each verified milestone.
 - Ask me whenever you have a real doubt about scope, behaviour, design or risk; don't guess. Decide alone only purely conventional details, and say what you chose.
 - Make the smallest change that does the job, keep code modular, and update everything it affects (callers, tests, CLI help, docs) in the same change. If the design no longer scales for the request, tell me and propose options before restructuring.
 - Delegate automatically through `orchestrate` only at the strict level, after the plan is approved, unless `git config harness.delegation` is `off`; at lite and standard, suggest delegation and wait for my OK.
