@@ -51,6 +51,25 @@ class Metrics(unittest.TestCase):
                           use('Write', file_path='tests/test_cart.py', content='def test_empty():\n    assert total([]) == 0')])
         self.assertIs(m['test_written_before_code'], False)
 
+    def measure_with_bodies(self, bodies, scenario='bug-fix'):
+        def fake_git(repo, *args):
+            return bodies if '--format=%B' in args else ''
+        with tempfile.TemporaryDirectory() as temp:
+            directory = Path(temp) / scenario / 'baseline-1'
+            (directory / 'repo').mkdir(parents=True)
+            (directory / 'repo' / 'pyproject.toml').write_text('[project]\nname = "cart"\n')
+            (directory / 'transcript.jsonl').write_text('')
+            (directory / 'run.txt').write_text('exit=0 seconds=1')
+            with patch.object(grade, 'git', side_effect=fake_git), patch.object(
+                grade.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, '1 passed', '')):
+                return grade.grade(directory)
+
+    def test_red_and_green_evidence_in_commit_bodies(self):
+        bodies = 'fix: handle empty carts\n\nRed: uv run pytest -q -> 1 failed (test_empty)\nGreen: uv run pytest -q -> 3 passed\n'
+        self.assertTrue(self.measure_with_bodies(bodies)['red_evidence_recorded'])
+        self.assertFalse(self.measure_with_bodies('fix: handle empty carts\n')['red_evidence_recorded'])
+        self.assertIsNone(self.measure_with_bodies(bodies, scenario='release')['red_evidence_recorded'])
+
     def test_missing_evidence_is_unknown(self):
         m = self.measure([])
         for key in ('test_written_before_code', 'red_green_verified', 'cost_usd', 'input_tokens', 'planned', 'pushed_or_bypassed'):

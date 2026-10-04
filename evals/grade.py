@@ -172,6 +172,9 @@ def grade(run_dir: Path):
         "tests_error": tests_error,
         "test_written_before_code": order if scenario in ("new-project", "codex-new-project", "bug-fix") else None,
         "red_green_verified": red_green if scenario in ("new-project", "codex-new-project", "bug-fix") else None,
+        # dev-workflow asks for "Red:" and "Green:" lines in the commit body of a behaviour change.
+        "red_evidence_recorded": bool(re.search(r"^Red:", bodies, re.M) and re.search(r"^Green:", bodies, re.M))
+        if scenario in ("new-project", "codex-new-project", "bug-fix") else None,
         "planned": any(tool in ("TodoWrite", "Agent") for tool, _ in tool_uses(evs))
         or any("docs/plans/" in p for p in paths) or None,
         "skills_used": sorted({inp.get("skill", "") for tool, inp in tool_uses(evs) if tool == "Skill"}) or None,
