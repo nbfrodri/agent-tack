@@ -21,13 +21,14 @@ One versioned repo that makes any AI assistant work like a disciplined senior en
 | | What you get |
 | --- | --- |
 | **Consistency** | The same workflow and conventions in every project and session: impact mapping so help, docs and callers stay in sync, minimal modular changes, plans, tests first, frequent atomic commits preserved through PR integration, SemVer releases, docs for humans and AIs. |
-| **Safety net** | Blocks force-pushes and deletion of `main`, catastrophic `rm -rf`, hook bypasses and tag rewrites; asks before discarding work or wiping a database. Git-level rules apply to every tool and to you. |
+| **Safety net** | Blocks force-pushes and deletion of `main`, catastrophic `rm -rf`, hook bypasses and tag rewrites; asks before discarding work or wiping a database. Refuses merges while CI fails or is still running, and the assistant waits for CI after a push and fixes failures itself. Git-level rules apply to every tool and to you. |
 | **Clean history** | Conventional Commits enforced, AI attribution removed, changelogs and versions computed from commits. |
 | **Better code** | TDD, SOLID/DDD where it fits, self-explanatory code, stack-specific best practices. |
 | **Continuity** | Continuous handoffs, so a session cut off by usage limits resumes where it stopped, in any tool or machine. |
 | **It learns** | Corrections become versioned rules (`lessons`). |
 | **Scales up** | Parallel reviewers (`improve`), multi-agent delegation with per-task models (`orchestrate`), and an autonomous improvement loop with a scored target (`auto-improve`), within the approved scope and delegation mode. |
-| **Low overhead** | Opt-in per project; skill descriptions kept to a budget (~1.2k tokens per session). |
+| **Low overhead** | Opt-in per project; skill descriptions kept to a budget (~1.2k tokens per session); large doc updates delegated to `docs-writer` on an economical model. |
+| **Visible** | The usage band shows the active mode (`tack · <mode>`), and an opt-in activity log (`tack log`) shows what the hooks decided. |
 | **Proven** | ~260 automated tests on Linux and macOS, and [measured results](results.md) against a plain assistant. |
 
 ## Why use it

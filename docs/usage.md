@@ -247,6 +247,8 @@ tack config delegation --unset # restore the default automatic policy
 tack config delegation         # shows auto (default) when unset
 ```
 
+Documentation is delegated separately, at every level: when a committed change leaves docs pending in 3 or more files, the assistant hands them to the `docs-writer` agent, which runs on an economical model, then reviews its result. Smaller updates, ADRs and design decisions stay with the main assistant.
+
 Explicitly asking for subagents authorises them for that task even when automatic mode is off. Disabling the workflow with `tack disable` also removes automatic delegation from the enabled-project policy. Delegation is driven by instructions, not enforced by a process scheduler, and can consume more tokens. Values set directly in git config that are neither `auto` nor `off` are treated as off and reported.
 
 The assistant commits coherent verified milestones as it works. Before integrating a PR, it inspects the history, recommends preserving useful milestones with a merge commit or combining temporary intermediate commits with squash, and offers the available methods in the existing integration confirmation. Commits are preserved unless you explicitly choose squash; a choice already given for that integration is respected without asking again.

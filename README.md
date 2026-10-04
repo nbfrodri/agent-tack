@@ -7,7 +7,7 @@
 ## What it does
 
 - **One workflow, scaled to the task:** plan, test first, small commits, docs, review; light for a typo, thorough for a risky change.
-- **Rules that are enforced, not just suggested:** git and Claude Code hooks block AI attribution, committed secrets, force-pushes to `main` and dangerous commands.
+- **Rules that are enforced, not just suggested:** git and Claude Code hooks block AI attribution, committed secrets, force-pushes to `main`, dangerous commands and merges with red or unfinished CI.
 - **Opt-in per project:** everywhere else the assistant works normally with only the safety net on.
 - **Yours to change:** rules, skills, modes and toggles are plain files and commands. [Why →](docs/why.md)
 
@@ -64,7 +64,7 @@ Run `tack help` for everything. [Usage →](docs/usage.md)
 
 - **Skills:** a core workflow (`dev-workflow`) plus process skills (debugging, testing, releases, issues, reviews, delegation) and stack skills (frontend, APIs, databases, auth, deployment…).
 - **Agents:** planner, implementer, reviewers (code, security, performance, architecture, UI), test and docs writers.
-- **Hooks:** commit conventions, secret scanning, a command guard, auto-format, a fast check after edits and a check before the assistant stops.
+- **Hooks:** commit conventions, secret scanning, a command guard (including green-only merges), auto-format, a fast check after edits, a check before the assistant stops and an opt-in activity log.
 - **Claude Code mods:** a usage band with the active tack mode and your 5-hour and weekly limits, and a live pane of what the agent is doing.
 
 [Full list →](docs/components.md) · [How it works →](docs/how-it-works.md)
