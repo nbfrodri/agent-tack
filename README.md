@@ -1,79 +1,90 @@
 # agent-harness
 
-**A portable, versioned harness for AI coding agents.** The instructions, skills, agents, hooks and conventions that make Claude Code, Codex, Cursor, Copilot, Gemini, OpenCode or Crush work like a disciplined senior engineer, installed on any machine with one command. Think of it as *dotfiles for AI agents*.
+**Dotfiles for AI coding agents.** One install gives Claude Code, Codex, Copilot, Cursor, Gemini, OpenCode and Crush the same instructions, skills and safety rules, so they work like a disciplined senior engineer in every project.
 
 [![CI](https://github.com/nbfrodri/agent-harness/actions/workflows/ci.yml/badge.svg)](https://github.com/nbfrodri/agent-harness/actions/workflows/ci.yml)
 
-## Why
-Out of the box, AI assistants forget your conventions every session, skip tests, write giant commits signed by the AI, and can force-push `main`. This harness gives them one consistent workflow (plan → TDD → small commits → docs → review), scaled to each task, and **enforces** the rules that matter with hooks, opt-in per project. [More →](docs/why.md)
+## What it does
 
-## At a glance
-| | |
-| --- | --- |
-| **Workflow** | `dev-workflow` with lite, standard and strict levels (auto-selected by default) and code, git and release conventions |
-| **Process skills** | `new-project`, `debugging`, `testing`, `git-history`, `release`, `github-issues`, `project-docs`, `improve`, `orchestrate`, `auto-improve`, `lessons` |
-| **Stack skills** | `frontend`, `api-design`, `database`, `auth`, `e2e-testing`, `deployment`, `observability` |
-| **Agents** | `planner`, `implementer`, `code-reviewer`, `test-writer`, `docs-writer`, `evaluator`, `architecture-reviewer`, `security-auditor`, `performance-analyzer`, `ui-reviewer` |
-| **Enforced by hooks** | Conventional Commits, no AI attribution, no secrets or `.env` committed, protected `main` and tags, a guard against dangerous commands, auto-format |
-| **Tools** | Claude Code, Codex, Cursor, GitHub Copilot (CLI and VS Code Copilot Chat), Gemini CLI, OpenCode, Crush; the Claude Code and Codex VS Code extensions share their CLI configuration |
-| **Quality** | 560 automated checks; CI targets Linux and macOS; [measured results](docs/results.md) |
+- **One workflow, scaled to the task:** plan, test first, small commits, docs, review; light for a typo, thorough for a risky change.
+- **Rules that are enforced, not just suggested:** git and Claude Code hooks block AI attribution, committed secrets, force-pushes to `main` and dangerous commands.
+- **Opt-in per project:** everywhere else the assistant works normally with only the safety net on.
+- **Yours to change:** rules, skills, modes and toggles are plain files and commands. [Why →](docs/why.md)
 
-Details: [architecture](docs/architecture.md) · [components](docs/components.md) · [how it works](docs/how-it-works.md) · [conventions](docs/conventions.md).
+## Quick start
 
-## Install
-1. Requirements: Linux, macOS or Windows with WSL; `git`, `bash`, `python3` or `jq`, and at least one supported AI tool. Recommended: `gh`, logged in.
-2. Clone and install. The path below is an example; replace `~/Projects/agent-harness` in both commands with any directory where you want to keep the repository:
-   ```bash
-   git clone https://github.com/nbfrodri/agent-harness.git ~/Projects/agent-harness
-   ~/Projects/agent-harness/install.sh
-   ```
-   Keep the repository at that path after installation: the installed files are symlinks to it. If you move it, run `install.sh` again from its new location.
-   Preview changes with `./install.sh --dry-run`; add `--skip-plugins` to configure local files without plugin operations. Run `harness doctor` after installation to diagnose links, settings, Git hooks and project state without changing anything, and `harness doctor --tools` to check each installed AI tool (version, capabilities, a non-interactive smoke check). A weekly CI job runs that check against the latest Claude Code and Codex.
-   Two Claude Code mods from `plugins/` are installed by default through a local marketplace: `usage-band` (a band above the prompt with the 5-hour and weekly limits, context fill and cost; `/usage-band` toggles it) and `agent-activity` (a live pane of tool calls, skills, subagents and permission decisions; `/activity` opens it). Opt out with `--skip-mods` or `harness config mods false --global`; `--skip-plugins` skips them too.
-3. Read any warning it prints (e.g. Cursor needs its global rules pasted once), and make sure `~/.local/bin` is in your `PATH`.
-4. Restart your AI tools.
+Requirements: Linux, macOS or Windows with WSL2; `git`, `bash`, `python3` or `jq`; at least one supported AI tool.
 
-To uninstall, run `./uninstall.sh --dry-run` first, then `./uninstall.sh` from the checkout. Uninstall requires `python3`; it restores only recorded, unchanged harness-owned state and preserves user edits, project files and shared plugins; it removes only the mods and local marketplace the installer added. Existing configuration from installations without ownership records is not automatically claimed. [Installation and removal →](docs/usage.md#installation-diagnostics-and-removal)
-
-## Use
 ```bash
+git clone https://github.com/nbfrodri/agent-harness.git ~/Projects/agent-harness
+~/Projects/agent-harness/install.sh      # keep the checkout there: installed files link to it
+
 cd ~/Projects/my-app
-harness enable      # turn the workflow on for this project (off by default)
-harness mode        # auto by default; also lite, standard or strict
+harness enable                           # turn the workflow on for this project
 ```
-**Workflow modes:** in `auto` the assistant picks a level per task (lite for small changes, standard for bounded features and fixes, strict for risky or multi-module work) and says which. Lighter levels skip plans, handoffs, logs and subagents to save tokens and time; hooks enforce the same safety rules in every mode. Set your default with `harness mode lite --global` and override it per project with `harness mode strict`. Create your own with `harness mode new <name> --from <mode>`. `harness mode unleash` (project-only) works autonomously without confirmations while keeping the guard's deny rules; read its [risks](docs/usage.md#unleash-autonomous-work) first. [Modes →](docs/usage.md#workflow-modes)
-Project instructions load at startup; architecture and an active handoff are indexed and read only when a task needs them (strict mode loads excerpts). Automatic formatting also needs `harness trust` for the local checkout; `harness status` shows both activation and formatter trust. Run `harness help` for commands and examples. [Context and trust →](docs/usage.md#startup-context-and-formatter-trust)
-Complex independent strict-level tasks are delegated automatically after plan approval; lighter levels suggest delegation and ask. Disable it with `harness config delegation off`; `harness config` lists every feature toggle. [Feature toggles →](docs/usage.md#feature-toggles) [Delegation and integration choices →](docs/usage.md#automatic-delegation-and-integration-choices)
-Then work as usual: "Add Google login", "Work on issue #12", "What would you improve?", "Improve it autonomously until it scores 8/10", "Prepare a release". `harness disable` turns it off. [Usage →](docs/usage.md)
 
-Update with `git pull && ./install.sh`. Sharing it with someone else: [sharing](docs/sharing.md).
+Restart your AI tools, then work as usual: *"Add Google login"*, *"Fix issue #12"*, *"What would you improve?"*, *"Prepare a release"*.
 
-## Customize
-Make the harness your own after cloning it: change the rules, workflow, skills, agents, supported tools, plugins and hooks to fit your preferences. Keep personal changes in your own clone or fork. [Customization guide →](docs/customization.md)
+Preview with `./install.sh --dry-run`, check with `harness doctor`, update with `git pull && ./install.sh`, remove with `./uninstall.sh`. [Installation details →](docs/usage.md#installation-diagnostics-and-removal) · [Editors and WSL →](docs/editors.md)
+
+## Modes
+
+The mode decides how much process each task gets. `auto` is the default and picks a level per task.
+
+| Mode | For | What the assistant does |
+| --- | --- | --- |
+| `lite` | Typos, config, one-line fixes | Branch, commit, a test when logic changes |
+| `standard` | A bounded feature or bug fix | Adds TDD, a short plan and the affected docs |
+| `strict` | Risky or multi-module work | Adds a saved plan you approve, handoffs, review and delegation |
+| `unleash` | Unattended work on a branch | Works without asking; the guard still blocks dangerous commands ([risks](docs/usage.md#unleash-autonomous-work)) |
+
+```bash
+harness mode strict            # this project
+harness mode lite --global     # your default everywhere
+harness mode new spike --from lite   # your own mode, in ~/.config/agent-harness/modes/
+```
+
+[Modes in detail →](docs/usage.md#workflow-modes)
+
+## Everyday commands
+
+| Command | What it does |
+| --- | --- |
+| `harness status` | Is the workflow on, which mode, is the formatter trusted |
+| `harness config` | List and change feature toggles (delegation, fast check, limits…) |
+| `harness doctor` / `--tools` | Diagnose the installation / each installed AI tool |
+| `harness trust` | Allow automatic formatting and the fast check in this checkout |
+| `harness disable` | Turn the workflow off for this project |
+
+Run `harness help` for everything. [Usage →](docs/usage.md)
+
+## What's included
+
+- **Skills:** a core workflow (`dev-workflow`) plus process skills (debugging, testing, releases, issues, reviews, delegation) and stack skills (frontend, APIs, databases, auth, deployment…).
+- **Agents:** planner, implementer, reviewers (code, security, performance, architecture, UI), test and docs writers.
+- **Hooks:** commit conventions, secret scanning, a command guard, auto-format, a fast check after edits and a check before the assistant stops.
+- **Claude Code mods:** a usage band with your 5-hour and weekly limits, and a live pane of what the agent is doing.
+
+[Full list →](docs/components.md) · [How it works →](docs/how-it-works.md)
 
 ## Results
-15 real sessions per workflow mode, plain assistant versus the harness ([method, full tables and limitations](docs/results.md)):
+
+Measured on real sessions, plain assistant versus the harness ([method and limits](docs/results.md)):
 
 | | Plain assistant | Lite / Auto | Strict |
 | --- | --- | --- | --- |
-| Bug fix on a branch with a `fix:` commit | 0/2 | 2/2 | 2/2 |
-| Regression test for the bug | 1/2 | 2/2 | 2/2 |
-| Plan, docs and AI log | – | – | 2/2 |
+| Bug fix on a branch with a `fix:` commit and a regression test | 0/2 | 2/2 | 2/2 |
 | Cost of a bug fix | 1× | ~2× | 3.5× |
-| Cost of a new project | 1× | ~2.2× (was 6.6× with the earlier single workflow) | waits for plan approval |
+| Cost of a new project | 1× | ~2.2× | waits for your plan approval |
 
-## Documentation
-| Doc | |
+## Learn more
+
+| | |
 | --- | --- |
-| [Why](docs/why.md) | The problem, the solution, strengths and limits |
-| [Usage](docs/usage.md) | On/off, what to ask, overrides, updating |
-| [Editors and AI tools](docs/editors.md) | Using and enabling it in VS Code, Cursor, JetBrains and each AI tool, including WSL |
-| [How it works](docs/how-it-works.md) | Supported tools, installer, hooks, layout |
-| [Architecture](docs/architecture.md) | Components, dependencies, installation and runtime flows |
-| [Customization](docs/customization.md) | Adapt the harness to your preferences and keep personal changes |
-| [Components](docs/components.md) | Every skill, agent, plugin and mod |
-| [Conventions](docs/conventions.md) | Commits, PRs, releases, code, docs |
-| [Results](docs/results.md) | Measured with vs without the harness |
-| [Sharing](docs/sharing.md) | Using it on someone else's machine |
-| [Development](docs/development.md) | Tests, evals, adding skills and tools |
-| [AI usage](docs/ai/README.md) | How AI is used to build this project |
+| [Usage](docs/usage.md) | Modes, toggles, startup context, delegation, overrides |
+| [Editors and AI tools](docs/editors.md) | VS Code, Cursor, JetBrains, each AI tool, WSL |
+| [Customization](docs/customization.md) | Change rules, skills, modes, guard rules and supported tools |
+| [How it works](docs/how-it-works.md) · [Architecture](docs/architecture.md) | Installer, hooks, components and flows |
+| [Components](docs/components.md) · [Conventions](docs/conventions.md) | Every skill, agent and mod; commit, PR and release rules |
+| [Results](docs/results.md) · [Development](docs/development.md) | Benchmarks; tests, evals and contributing |
+| [Sharing](docs/sharing.md) · [AI usage](docs/ai/README.md) | Using it on another machine; how AI builds this project |
