@@ -25,7 +25,7 @@ tack enable                           # turn the workflow on for this project
 
 Restart your AI tools, then work as usual: *"Add Google login"*, *"Fix issue #12"*, *"What would you improve?"*, *"Prepare a release"*.
 
-Preview with `./install.sh --dry-run`, check with `tack doctor`, update with `git pull && ./install.sh`, remove with `./uninstall.sh`. [Installation details →](docs/usage.md#installation-diagnostics-and-removal) · [Editors and WSL →](docs/editors.md)
+Preview with `./install.sh --dry-run` (the first install lists every hook it adds; `--no-hooks` adds none), check with `tack doctor`, update with `git pull && ./install.sh`, remove with `./uninstall.sh`. [Installation details →](docs/usage.md#installation-diagnostics-and-removal) · [Editors and WSL →](docs/editors.md)
 
 ## Modes
 

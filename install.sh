@@ -9,11 +9,13 @@
 #     git config --global harness.mods false; --skip-plugins skips them too)
 #   - when VS Code is installed, "chat.useAgentsMdFile": true in its user settings so Copilot Chat
 #     loads each project's AGENTS.md (opt out with git config --global harness.vscodeAgentsMd false)
+#   - --no-hooks installs instructions, skills, agents and settings but registers no git, Claude Code
+#     or Codex hooks (hooks from an earlier install stay until ./uninstall.sh)
 #
 # Safe to re-run at any time. Existing files are backed up with a timestamp,
 # never overwritten. A failing step is reported and the rest still runs.
 #
-# Usage: ./install.sh [--dry-run] [--skip-plugins] [--skip-mods] [--help]
+# Usage: ./install.sh [--dry-run] [--skip-plugins] [--skip-mods] [--no-hooks] [--help]
 set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -22,6 +24,7 @@ WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/agent-tack.XXXXXX")" || { echo "cannot cre
 trap 'rm -rf "$WORKDIR"' EXIT
 SKIP_PLUGINS=0
 SKIP_MODS=0
+NO_HOOKS=0
 DRY_RUN=0
 FAILURES=0
 WARNINGS=0
@@ -30,9 +33,10 @@ for arg in "$@"; do
   case "$arg" in
     --skip-plugins) SKIP_PLUGINS=1 ;;
     --skip-mods) SKIP_MODS=1 ;;
+    --no-hooks) NO_HOOKS=1 ;;
     --dry-run) DRY_RUN=1 ;;
     -h|--help)
-      sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//'
+      sed -n '2,18p' "$0" | sed 's/^# \{0,1\}//'
       exit 0
       ;;
     *)
@@ -225,8 +229,38 @@ EOF
 #   - hooks: entries tagged "#tack" (or the former "#harness") are replaced by the repo's, your own hooks are kept
 #   - __REPO__ in the repo file is replaced with this repo's path
 merge_settings() {
-  merge_json "Claude Code settings" "$REPO/claude/settings.json" "$HOME/.claude/settings.json"
+  local claude="$REPO/claude/settings.json"
+  if [ "$NO_HOOKS" -eq 1 ]; then
+    # The other Claude Code settings (attribution, permissions) still apply without hooks.
+    claude="$WORKDIR/settings-no-hooks.json"
+    if has python3; then
+      python3 -c 'import json, sys
+d = json.load(open(sys.argv[1])); d.pop("hooks", None); json.dump(d, open(sys.argv[2], "w"), indent=2)' \
+        "$REPO/claude/settings.json" "$claude" || { fail "cannot prepare settings without hooks"; return; }
+    else
+      jq 'del(.hooks)' "$REPO/claude/settings.json" > "$claude" || { fail "cannot prepare settings without hooks"; return; }
+    fi
+  fi
+  merge_json "Claude Code settings" "$claude" "$HOME/.claude/settings.json"
+  if [ "$NO_HOOKS" -eq 1 ]; then
+    section "Codex hooks"
+    ok "skipped (--no-hooks)"
+    return
+  fi
   merge_json "Codex hooks" "$REPO/codex/hooks.json" "$HOME/.codex/hooks.json"
+}
+
+# After a first install, says what each hook does and how to turn hooks off (hooks/summary.txt).
+explain_hooks() {
+  local where name what
+  [ "$FIRST_INSTALL" -eq 1 ] && [ "$NO_HOOKS" -eq 0 ] && [ "$DRY_RUN" -eq 0 ] || return 0
+  section "Hooks installed"
+  while IFS='|' read -r where name what; do
+    case "$where" in '' | '#'*) continue ;; esac
+    printf '  - %s (%s): %s\n' "$(printf '%s' "$name" | sed 's/^ *//; s/ *$//')" \
+      "$(printf '%s' "$where" | sed 's/^ *//; s/ *$//')" "$(printf '%s' "$what" | sed 's/^ *//')"
+  done < "$REPO/hooks/summary.txt"
+  printf '  Turn off advisory hooks with tack config disabled-hooks, or install without any with ./install.sh --no-hooks.\n'
 }
 
 # Merges a repo template (with __REPO__ placeholders) into a JSON settings file, keeping the
@@ -330,6 +364,10 @@ is_harness_hooks() {
 # Never overrides a hooksPath you configured for other hooks.
 install_git_hooks() {
   section "Git hooks (global)"
+  if [ "$NO_HOOKS" -eq 1 ]; then
+    ok "skipped (--no-hooks)"
+    return
+  fi
   if ! has git; then
     warn "git not found: skipping global git hooks"
     return
@@ -487,6 +525,9 @@ main() {
     migrate_tool_dir "${XDG_STATE_HOME:-$HOME/.local/state}" || { fail "cannot move the former state directory to agent-tack"; exit 1; }
     migrate_tool_dir "${XDG_CONFIG_HOME:-$HOME/.config}" || warn "could not move ~/.config/agent-harness to agent-tack; it is still read"
   fi
+  # A first install has no ownership records yet; it is the one that explains the hooks.
+  FIRST_INSTALL=0
+  [ -e "$(tool_dir "${XDG_STATE_HOME:-$HOME/.local/state}")/ownership" ] || FIRST_INSTALL=1
   ownership_init || exit 1
   capture_harness_hooks
   install_links
@@ -496,6 +537,7 @@ main() {
   install_mods
   install_vscode
   install_codex_agents
+  explain_hooks
 
   section "Summary"
   if [ "$FAILURES" -gt 0 ]; then

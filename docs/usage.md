@@ -15,11 +15,14 @@ Clone into any directory you choose and run `./install.sh` from that checkout. I
 ./install.sh --dry-run --skip-plugins  # preview local configuration only
 ./install.sh --skip-plugins            # apply local configuration only (also skips mods)
 ./install.sh --skip-mods               # apply everything except the Claude Code mods
+./install.sh --no-hooks                # instructions, skills, agents and settings, but no hooks
 tack doctor                        # check installation and current project; no writes
 tack doctor --tools                # check each installed AI tool instead of the project
 ./uninstall.sh --dry-run               # preview safe restoration
 ./uninstall.sh                         # restore recorded unchanged state
 ```
+
+A first install ends with a short list of the hooks it registered and what each does (from `hooks/summary.txt`), and how to turn them off; reinstalls skip it. `--no-hooks` registers no git, Claude Code or Codex hooks; hooks from an earlier install stay until `./uninstall.sh`, and without them the rules apply only as instructions.
 
 Doctor checks required tools, managed links, Claude settings and hook registration, ownership metadata, effective Git hooks, project activation and formatter trust. Missing optional CLIs and deliberate foreign hooks paths produce warnings. Broken managed components produce errors (exit 1); a healthy checked installation exits 0. Doctor works outside Git and never runs plugins or prints restoration snapshots or credentials. It diagnoses configuration rather than proving every external tool works. Doctor also warns when the claude CLI is missing or a tack mod is not installed or is disabled, and reports `chat.useAgentsMdFile` for each VS Code install it finds.
 
