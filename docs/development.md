@@ -5,7 +5,7 @@ How to change this repo safely: commands, adding skills or agents, and measuring
 ## Commands
 ```bash
 shellcheck -x install.sh uninstall.sh bin/harness lib/*.sh tests/*.sh evals/run.sh git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push git-hooks/pre-commit hooks/claude/*.sh hooks/claude/lib/*.sh
-tests/validate.sh        # skills, agents, cross-references, README coverage, budgets
+tests/validate.sh        # skills, agents, cross-references, components list coverage, budgets
 tests/validate.test.sh   # the validator catches each kind of error
 tests/install.test.sh    # installer, in throwaway HOME directories
 tests/lifecycle.test.sh  # ownership, previews and safe uninstall
@@ -24,7 +24,7 @@ CI runs ShellCheck and content validation on Linux, the installer and hook regre
 
 ## Adding a skill, agent or tool
 1. Create `skills/<name>/SKILL.md` or `agents/<name>.md` with `name` and `description` (what it does and when to use it, within the budget `validate.sh` enforces), or add a line to `targets.txt` for a new AI tool.
-2. List it in the README and [components](components.md).
+2. List it in [components](components.md) (the validator requires it); mention it in the README only if it changes what a newcomer needs to know.
 3. Run `tests/validate.sh` and `./install.sh`, then commit and push.
 
 ## Tools compatibility (weekly)

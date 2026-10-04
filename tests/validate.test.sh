@@ -38,7 +38,7 @@ else
 fi
 
 echo "Detects"
-expect_failure "a checker exception fails validation" "cross-reference checker failed" "rm README.md"
+expect_failure "a checker exception fails validation" "cross-reference checker failed" "rm docs/components.md"
 # Expected messages quote paths literally, as written in the docs
 # shellcheck disable=SC2088
 {
@@ -56,7 +56,7 @@ expect_failure "an agent citing a skill path that doesn't exist" "~/.agents/skil
   "echo 'See ~/.agents/skills/nope/SKILL.md' >> agents/planner.md"
 expect_failure "a path in the canonical repo link that doesn't exist" "~/.agents/harness/agents/nope.md" \
   "echo 'See ~/.agents/harness/agents/nope.md' >> skills/improve/SKILL.md"
-expect_failure "a skill missing from the README" "\`brand-new\` is not documented" \
+expect_failure "a skill missing from the components list" "docs/components.md: \`brand-new\` is not documented" \
   "mkdir skills/brand-new && printf -- '---\nname: brand-new\ndescription: New skill. Use when testing.\n---\n' > skills/brand-new/SKILL.md"
 expect_failure "a marketplace line without source" "needs a source" \
   "echo 'marketplace lonely' >> plugins.txt"
