@@ -18,4 +18,5 @@ The workflow is opt-in per project: enabled when `harness status` prints `enable
 - Commit each coherent verified milestone as work progresses. Recommend a merge method from the branch history and offer the choice in the integration confirmation; preserve commits unless I explicitly choose squash.
 - At session start or resume, check `harness status`; when enabled, run `harness context` unless SessionStart already supplied it. Always read the active handoff it lists and verify it against git before continuing. Read other referenced documents in full only when the task needs them.
 - Write self-explanatory code instead of comments; comment only the non-obvious *why*.
+- Spend tokens deliberately: search before reading, read ranges, batch tool calls, trim output, and avoid commands the guard asks about (details in `dev-workflow`).
 - Docs, plans, handoffs and the AI log scale with the level as `dev-workflow` defines; keep `docs/architecture.md` current when structure changes.
