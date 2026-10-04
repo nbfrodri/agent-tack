@@ -7,5 +7,6 @@
 - Benchmark: `docs/benchmarks/2026-10-04-modes-final.md`, published in `docs/results.md` and the README (`b78f9c5`)
 - Verified: 820 checks + evals and ShellCheck green at `93dc7ef`; later commits are docs only.
 - Installed on the real HOME from this branch (mods `usage-band` 0.2.0, `agent-activity` 0.1.0).
-- Next: ask the owner to push and open the PR; recommend a merge commit (milestone commits). After merge, delete this handoff.
+- Pushed with the owner's approval; [PR #34](https://github.com/nbfrodri/agent-harness/pull/34). First CI run failed (older ShellCheck SC2015 in `bin/harness` and `lib/config.sh`; bash 3.2 misparsed a `case` inside `$( )` in `stop-check.sh`); fixed in `4f9d46f`, CI rerunning.
+- Next: when CI is green, ask the owner to merge (recommend a merge commit). After merge, delete this handoff.
 - Process: avoid commands the guard asks about; the owner wants no confirmations.
