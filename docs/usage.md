@@ -40,7 +40,7 @@ harness mode              # effective mode and its source
 harness mode lite         # set the mode for this project
 harness mode strict --global   # set your default for every project
 harness mode --unset      # go back to the global default
-harness context           # bounded project instructions, architecture and active handoff
+harness context           # project instructions plus an index of architecture and active handoff
 harness trust             # permit automatic project formatter execution in this clone
 harness trust --revoke     # revoke execution permission without disabling the workflow
 harness trusted           # trusted / untrusted; exit 0 when trusted, 1 otherwise
@@ -80,9 +80,9 @@ A project setting (`harness mode lite`) overrides your global default (`harness 
 
 ## Startup context and formatter trust
 
-Claude Code's SessionStart hook supplies the activation status and mode plus bounded excerpts from the project's `AGENTS.md`, `docs/architecture.md` and the newest active or paused handoff. Other tools follow the global instructions to run `harness context` at session start. This is an instruction-driven startup step for tools without a SessionStart hook.
+Claude Code's SessionStart hook supplies the activation status and mode plus the project's `AGENTS.md`. Documents load on demand: `auto` and `standard` add an index with the path of `docs/architecture.md` and the newest active or paused handoff, including its status and next step; `strict` adds bounded excerpts of both; `lite` adds nothing. Other tools follow the global instructions to run `harness context` at session start. This is an instruction-driven startup step for tools without a SessionStart hook.
 
-The combined document content is capped at 6,000 bytes, with per-file line limits; in `lite` mode only `AGENTS.md` is included. Claude Code also receives it again after compacting the conversation. Missing files and symlinks outside the checkout are skipped. Read the referenced documents in full when needed. Disable the extra context with `git config harness.context false`; activation messages remain available.
+The combined document content is capped at 6,000 bytes, with per-file line limits. Claude Code also receives it again after compacting the conversation. Missing files and symlinks outside the checkout are skipped. Read the referenced documents in full when needed. Disable the extra context with `git config harness.context false`; activation messages remain available.
 
 A shared `.harness` file enables workflow instructions but does not authorise execution of project code. Run `harness trust` only for a checkout whose formatter binaries and configuration you trust. Formatting requires both activation and explicit local trust; global trust settings are ignored. `harness trust --revoke` removes that execution permission.
 

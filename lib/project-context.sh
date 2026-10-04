@@ -24,10 +24,14 @@ include() {
   done < "$root/$path"
 }
 
+safe_file() {
+  [ -f "$root/$1" ] && [ ! -L "$root/$1" ] || return 1
+  case "$(cd "$(dirname "$root/$1")" && pwd -P)/" in "$root/"*) return 0 ;; *) return 1 ;; esac
+}
+
 include AGENTS.md 45
 # Lite tasks rarely need architecture or handoffs; skipping them keeps startup cheap.
 [ "$mode" != lite ] || exit 0
-include docs/architecture.md 45
 active=''
 for file in "$root"/docs/handoffs/*.md; do
   if [ ! -f "$file" ] || [ -L "$file" ]; then continue; fi
@@ -35,4 +39,17 @@ for file in "$root"/docs/handoffs/*.md; do
     active="${file#"$root"/}"
   fi
 done
-[ -z "$active" ] || include "$active" 40
+if [ "$mode" = strict ]; then
+  include docs/architecture.md 45
+  [ -z "$active" ] || include "$active" 40
+  exit 0
+fi
+# Other modes load documents on demand: an index costs a few lines instead of full excerpts.
+printf '\n--- Index: read these in full only when the task needs them ---\n'
+if safe_file docs/architecture.md; then
+  printf -- '- docs/architecture.md (%s lines)\n' "$(wc -l < "$root/docs/architecture.md" | tr -d ' ')"
+fi
+if [ -n "$active" ] && safe_file "$active"; then
+  printf -- '- Active handoff: %s\n' "$active"
+  grep -iE '^[-[:space:]]*(\*\*)?(Status|Next):' "$root/$active" | head -n 4 | cut -c1-300
+fi

@@ -140,9 +140,16 @@ printf '# Handoff\nStatus: in progress\nNext: implement feature\n' > docs/handof
 printf '# Old handoff\nStatus: complete\nDo not include completed work\n' > docs/handoffs/2026-10-04-complete.md
 check "context succeeds in enabled projects" expect_exit 0 "$CLI" context
 check "context includes project instructions" contains 'Project "instructions"'
-check "context includes architecture" contains 'Architecture context'
-check "context includes an active handoff" contains 'Next: implement feature'
+check "auto context indexes architecture instead of loading it" contains '- docs/architecture.md (1 lines)'
+check "auto context omits architecture text" eval '! contains "Architecture context"'
+check "auto context indexes the active handoff" contains '- Active handoff: docs/handoffs/2026-10-03-active.md'
+check "auto context shows the handoff's next step" contains 'Next: implement feature'
+check "auto context omits the handoff body" eval '! contains "# Handoff"'
 check "context excludes completed handoffs" excludes_completed
+git config --local harness.mode standard
+check "standard context succeeds" expect_exit 0 "$CLI" context
+check "standard context is an index too" contains '- docs/architecture.md (1 lines)'
+git config --local --unset harness.mode
 git config --local harness.mode lite
 check "lite context succeeds" expect_exit 0 "$CLI" context
 check "lite context keeps project instructions" contains 'Project "instructions"'
@@ -151,6 +158,7 @@ check "lite context skips handoffs" eval '! contains "Next: implement feature"'
 git config --local harness.mode strict
 check "strict context includes architecture" expect_exit 0 "$CLI" context
 check "strict context includes architecture text" contains 'Architecture context'
+check "strict context includes the handoff body" contains '# Handoff'
 git config --local --unset harness.mode
 check "SessionStart returns valid JSON with project context" expect_exit 0 session
 check "SessionStart preserves quotes and backslashes" session_has_instructions
@@ -160,7 +168,7 @@ check "context works through the installed symlink" expect_exit 0 "$HOME/.local/
 mkdir nested
 cd nested || exit 1
 check "context finds root from a nested directory" expect_exit 0 "$CLI" context
-check "nested context includes architecture" contains 'Architecture context'
+check "nested context indexes architecture" contains '- docs/architecture.md'
 cd .. || exit 1
 git config harness.context false
 check "context can be disabled independently" expect_exit 0 "$CLI" context

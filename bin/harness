@@ -21,7 +21,8 @@ Commands:
   trust [--revoke]     Allow or revoke project formatter execution in this clone
   trusted [--quiet]    Query local formatter trust independently of activation
   doctor              Diagnose installation and project state without changes
-  context             Print bounded project instructions, architecture and handoff
+  context             Print project instructions plus an index (or, in strict
+                      mode, excerpts) of architecture and the active handoff
   help                Show this help (also works outside a Git repository)
 
 Global options:

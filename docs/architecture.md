@@ -70,7 +70,7 @@ flowchart LR
 
 Human-readable `harness status` reports activation and local formatter trust together. Its exit code, including `--quiet`, depends only on activation. `harness trusted` and its quiet mode depend only on local trust; both commands share the same trust predicate.
 
-`lib/project-context.sh` reads bounded excerpts of project instructions, architecture and an active handoff, without loading the full docs tree; in `lite` mode it loads only the project instructions. It has a shared byte budget and per-file line limits and skips missing files and external symlinks. `harness.context=false` disables these extra excerpts.
+`lib/project-context.sh` reads a bounded excerpt of project instructions and, depending on the mode, nothing more (`lite`), an index of `docs/architecture.md` and the active handoff with its status and next step (`auto`, `standard`), or bounded excerpts of both (`strict`). The agent reads indexed documents in full only when the task needs them. It has a shared byte budget and per-file line limits and skips missing files and external symlinks. `harness.context=false` disables these extra excerpts.
 
 In enabled projects, `skills/orchestrate/` routes complex independent strict-level tasks to available models and effort settings under an approved plan; at lite and standard it only suggests delegation. `harness.delegation=off` opts out of automatic delegation; missing/auto uses it. Capability detection and sequential fallbacks avoid promises that the current runtime cannot fulfil.
 
