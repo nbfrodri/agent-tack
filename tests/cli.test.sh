@@ -350,6 +350,8 @@ check "doctor dispatches installation diagnostics outside Git" expect_exit 1 "$C
 check "doctor diagnoses missing installed canonical link" contains "missing managed symlink: $HOME/.agents/harness"
 
 # Reports over the activity log: a fixture with today's turns and one from long ago.
+out_matches() { grep -Eq -- "$1" "$WORK/output"; }
+out_lacks() { ! grep -q -- "$1" "$WORK/output"; }
 LOG_FILE="$XDG_STATE_HOME/agent-tack/activity.log"
 rm -f "$LOG_FILE"
 check "reports without a log say how to turn it on" expect_exit 0 "$CLI" log --cost
@@ -370,25 +372,25 @@ day="${now%%T*}"
   printf '2020-01-01T00:00:00Z\tclaude\t/p/app\tturn\tmodel=m1 input=999 output=0 cache_read=0 cache_write=0\n'
 } > "$LOG_FILE"
 check "cost report runs" expect_exit 0 "$CLI" log --cost
-check "cost report sums tokens per day, project, tool and model" eval 'grep -E "^$day +app +claude +m1 +1000000 +1000000 +0 +0 +-" "$WORK/output" >/dev/null'
-check "cost report keeps other tools and models apart" eval 'grep -E "^$day +app +codex +g1 +10 +20" "$WORK/output" >/dev/null'
-check "cost report covers the last 30 days by default" eval '! grep -q 2020-01-01 "$WORK/output"'
+check "cost report sums tokens per day, project, tool and model" out_matches "^$day +app +claude +m1 +1000000 +1000000 +0 +0 +-"
+check "cost report keeps other tools and models apart" out_matches "^$day +app +codex +g1 +10 +20"
+check "cost report covers the last 30 days by default" out_lacks "2020-01-01"
 check "cost report reaches further back with --days" expect_exit 0 "$CLI" log --cost --days 100000
 check "older turns appear with a wider window" contains '2020-01-01'
 mkdir -p "$XDG_CONFIG_HOME/agent-tack"
 printf '# model | input | output | cache read | cache write (USD per million tokens)\nm1 | 1 | 2 | 0.1 | 1.25\n' > "$XDG_CONFIG_HOME/agent-tack/pricing.txt"
 check "cost report with user prices runs" expect_exit 0 "$CLI" log --cost
-check "user prices turn tokens into dollars" eval 'grep -E "^$day +app +claude +m1 .* 3\.00$" "$WORK/output" >/dev/null'
-check "models without a price show no amount" eval 'grep -E "^$day +app +codex +g1 .* -$" "$WORK/output" >/dev/null'
+check "user prices turn tokens into dollars" out_matches "^$day +app +claude +m1 .* 3\.00$"
+check "models without a price show no amount" out_matches "^$day +app +codex +g1 .* -$"
 check "cost report as CSV runs" expect_exit 0 "$CLI" log --cost --csv
-check "CSV starts with its header" eval '[ "$(head -n 1 "$WORK/output")" = "day,project,tool,model,input,output,cache_read,cache_write,usd" ]'
+check "CSV starts with its header" out_matches "^day,project,tool,model,input,output,cache_read,cache_write,usd$"
 check "skills report runs" expect_exit 0 "$CLI" log --skills
-check "skills report counts each skill" eval 'grep -E "^skill +dev-workflow +2$" "$WORK/output" >/dev/null'
-check "skills report counts subagents" eval 'grep -E "^agent +code-reviewer +1$" "$WORK/output" >/dev/null'
-check "skills report lists what was never used" eval 'grep "Never used" "$WORK/output" | grep -q testing'
+check "skills report counts each skill" out_matches "^skill +dev-workflow +2$"
+check "skills report counts subagents" out_matches "^agent +code-reviewer +1$"
+check "skills report lists what was never used" out_matches "^Never used.*testing"
 check "levels report runs" expect_exit 0 "$CLI" log --levels
-check "levels report counts levels per project" eval 'grep -E "^app +strict +1$" "$WORK/output" >/dev/null'
-check "levels report shows turns without a stated level" eval 'grep -E "^app +missing +1$" "$WORK/output" >/dev/null'
+check "levels report counts levels per project" out_matches "^app +strict +1$"
+check "levels report shows turns without a stated level" out_matches "^app +missing +1$"
 check "reports reject a bad window" expect_exit 2 "$CLI" log --cost --days soon
 check "log rejects unknown options" expect_exit 2 "$CLI" log --bogus
 rm -f "$LOG_FILE" "$XDG_CONFIG_HOME/agent-tack/pricing.txt"
