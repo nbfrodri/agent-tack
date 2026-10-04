@@ -48,6 +48,8 @@ expect_failure "an unclosed frontmatter" "not closed" \
   "printf -- '---\nname: broken\ndescription: x\n' > skills/testing/SKILL.md && mkdir -p skills/broken && cp skills/testing/SKILL.md skills/broken/"
 expect_failure "a description over budget" "max 400" \
   "python3 -c \"import re;p='skills/testing/SKILL.md';s=open(p).read();open(p,'w').write(re.sub(r'^description: .*\$','description: '+'x'*401,s,count=1,flags=re.M))\""
+expect_failure "a toggle name too long for the tack config table" "features.txt: name" \
+  "printf 'a-toggle-name-far-too-long tack.x none bool any hook Too long\n' >> features.txt"
 expect_failure "docs-writer inheriting the main model" "docs-writer must pin an economical model" \
   "sed 's/^model: .*/model: inherit/' agents/docs-writer.md > agents/tmp && mv agents/tmp agents/docs-writer.md"
 expect_failure "a missing references/ file of the skill itself" "testing/references/python.md" \

@@ -64,6 +64,11 @@ for agent in "$REPO"/agents/*.md; do
   check_file "$agent" "$(basename "$agent" .md)" "$AGENT_DESC_MAX"
   echo "  ✔ $(basename "$agent" .md)"
 done
+# tack config prints names in a 24-character column; a longer name runs into its value.
+while read -r feature _; do
+  case "$feature" in '' | '#'*) continue ;; esac
+  [ "${#feature}" -le 23 ] || err "features.txt: name '$feature' is over 23 characters and breaks the tack config table"
+done < "$REPO/features.txt"
 # Large doc updates are delegated to docs-writer to save tokens, so it must not inherit the main model.
 case "$(sed -n 's/^model: *//p' "$REPO/agents/docs-writer.md")" in
   sonnet | haiku) ;;

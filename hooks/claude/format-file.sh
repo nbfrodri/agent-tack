@@ -24,6 +24,9 @@ cli="$(cd "$(dirname "$0")/../../bin" && pwd)/tack"
 dir="$(cd "$(dirname "$file")" && pwd)" || exit 0
 root="$(git -C "$dir" rev-parse --show-toplevel 2>/dev/null)" || exit 0
 (cd "$root" && "$cli" status --quiet && "$cli" trusted --quiet) || exit 0
+# shellcheck source=SCRIPTDIR/lib/hook-control.sh
+. "$(dirname "$0")/lib/hook-control.sh"
+! hook_disabled "$root" format-file || exit 0
 
 has_file() {
   local f

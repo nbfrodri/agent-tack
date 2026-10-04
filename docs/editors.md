@@ -31,7 +31,7 @@ Restart the tool or editor after installing or updating so it reloads instructio
 
 - **Terminal:** `claude` in the project. Everything applies: instructions, skills, agents, hooks, mods and the startup context with the mode.
 - **VS Code and JetBrains extensions:** they use the same configuration as the CLI (`~/.claude`), so nothing else is needed. Open the project folder, start a Claude Code session and check the startup message names the mode.
-- **Mods:** `/usage-band` hides or shows the usage band; `/activity` opens the activity pane. They need a restart after installing.
+- **Mods:** `/usage-band` hides or shows the usage band; `/activity` opens or closes the activity pane. They need a restart after installing.
 - **Check:** `tack doctor` (links, settings, hooks, mods) and `tack mode show`.
 
 ## Codex

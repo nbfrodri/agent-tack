@@ -314,6 +314,34 @@ check "vscode: Copilot Chat gets the skills" "[ \"\$(find '$H/.copilot/skills' -
 echo "Rejects unknown options"
 check "exits 2" "HOME='$WORK/opt' XDG_CONFIG_HOME='$WORK/opt/.config' GIT_CONFIG_NOSYSTEM=1 '$REPO/install.sh' --nope >/dev/null 2>&1; [ \$? -eq 2 ]"
 
+echo "First install explains the hooks; --no-hooks installs none"
+H="$WORK/explain"
+run_install "$H"
+check "first install lists what each hook does" "grep -q 'Hooks installed' '$H.log' && grep -q 'command guard' '$H.log'"
+check "the summary says how to opt out" "grep -q -- '--no-hooks' '$H.log' && grep -q 'disabled-hooks' '$H.log'"
+run_install "$H"
+check "reinstalls stay quiet about the hooks" "! grep -q 'Hooks installed' '$H.log'"
+H="$WORK/no-hooks"
+run_install "$H" --no-hooks
+check "--no-hooks registers no Claude Code hooks" "[ \"\$(count_ours '$H/.claude/settings.json' PreToolUse)\" = 0 ] && [ \"\$(count_ours '$H/.claude/settings.json' SessionStart)\" = 0 ]"
+check "--no-hooks still writes the other Claude Code settings" "[ \"\$(json_get '$H/.claude/settings.json' attribution.commit)\" = '\"\"' ]"
+check "--no-hooks registers no Codex hooks" "[ ! -e '$H/.codex/hooks.json' ] || [ \"\$(count_ours '$H/.codex/hooks.json' PreToolUse)\" = 0 ]"
+check "--no-hooks leaves git's hooksPath alone" "! git_global '$H' --get core.hooksPath >/dev/null"
+check "--no-hooks still installs skills" "[ -e '$H/.agents/skills/dev-workflow' ]"
+check "--no-hooks is reported" "grep -q 'skipped (--no-hooks)' '$H.log'"
+check "--no-hooks shows no hook summary" "! grep -q 'Hooks installed' '$H.log'"
+run_install "$H"
+check "the first install that registers hooks explains them, even after --no-hooks" "grep -q 'Hooks installed' '$H.log'"
+run_install "$H" --no-hooks
+check "--no-hooks over an install removes tack's Claude Code hooks" "[ \"\$(count_ours '$H/.claude/settings.json' PreToolUse)\" = 0 ]"
+check "--no-hooks over an install removes tack's Codex hooks too" "[ \"\$(count_ours '$H/.codex/hooks.json' PreToolUse)\" = 0 ]"
+check "--no-hooks over an install says how to remove the git hooks" "grep -q 'uninstall.sh' '$H.log' && git_global '$H' --get core.hooksPath >/dev/null"
+H="$WORK/broken-first"
+mkdir -p "$H/.claude"
+echo '{broken' > "$H/.claude/settings.json"
+run_install "$H"
+check "no hook summary when registering the hooks failed" "! grep -q 'Hooks installed' '$H.log'"
+
 echo
 echo "$PASSED passed, $FAILED failed"
 if [ "$FAILED" -gt 0 ]; then

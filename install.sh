@@ -9,11 +9,13 @@
 #     git config --global harness.mods false; --skip-plugins skips them too)
 #   - when VS Code is installed, "chat.useAgentsMdFile": true in its user settings so Copilot Chat
 #     loads each project's AGENTS.md (opt out with git config --global harness.vscodeAgentsMd false)
+#   - --no-hooks installs instructions, skills, agents and settings but no git, Claude Code or Codex
+#     hooks, removing tack's agent hooks from an earlier install (git hooks: ./uninstall.sh)
 #
 # Safe to re-run at any time. Existing files are backed up with a timestamp,
 # never overwritten. A failing step is reported and the rest still runs.
 #
-# Usage: ./install.sh [--dry-run] [--skip-plugins] [--skip-mods] [--help]
+# Usage: ./install.sh [--dry-run] [--skip-plugins] [--skip-mods] [--no-hooks] [--help]
 set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -22,6 +24,7 @@ WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/agent-tack.XXXXXX")" || { echo "cannot cre
 trap 'rm -rf "$WORKDIR"' EXIT
 SKIP_PLUGINS=0
 SKIP_MODS=0
+NO_HOOKS=0
 DRY_RUN=0
 FAILURES=0
 WARNINGS=0
@@ -30,9 +33,10 @@ for arg in "$@"; do
   case "$arg" in
     --skip-plugins) SKIP_PLUGINS=1 ;;
     --skip-mods) SKIP_MODS=1 ;;
+    --no-hooks) NO_HOOKS=1 ;;
     --dry-run) DRY_RUN=1 ;;
     -h|--help)
-      sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//'
+      sed -n '2,18p' "$0" | sed 's/^# \{0,1\}//'
       exit 0
       ;;
     *)
@@ -224,9 +228,43 @@ EOF
 #   - objects are deep-merged and the repo's values win; your other keys are kept
 #   - hooks: entries tagged "#tack" (or the former "#harness") are replaced by the repo's, your own hooks are kept
 #   - __REPO__ in the repo file is replaced with this repo's path
+# without_hooks SRC DEST: copies a settings template without its "hooks" key. Merging it
+# removes tack's tagged hooks from the destination and keeps the user's own.
+without_hooks() {
+  if has python3; then
+    python3 -c 'import json, sys
+d = json.load(open(sys.argv[1])); d.pop("hooks", None); json.dump(d, open(sys.argv[2], "w"), indent=2)' "$1" "$2"
+  else
+    jq 'del(.hooks)' "$1" > "$2"
+  fi
+}
+
 merge_settings() {
-  merge_json "Claude Code settings" "$REPO/claude/settings.json" "$HOME/.claude/settings.json"
-  merge_json "Codex hooks" "$REPO/codex/hooks.json" "$HOME/.codex/hooks.json"
+  local claude="$REPO/claude/settings.json" codex="$REPO/codex/hooks.json"
+  if [ "$NO_HOOKS" -eq 1 ]; then
+    # The other Claude Code settings (attribution, permissions) still apply without hooks.
+    claude="$WORKDIR/settings-no-hooks.json" codex="$WORKDIR/codex-no-hooks.json"
+    if ! without_hooks "$REPO/claude/settings.json" "$claude" || ! without_hooks "$REPO/codex/hooks.json" "$codex"; then
+      fail "cannot prepare settings without hooks"
+      return
+    fi
+  fi
+  merge_json "Claude Code settings" "$claude" "$HOME/.claude/settings.json"
+  merge_json "Codex hooks" "$codex" "$HOME/.codex/hooks.json"
+}
+
+# Explains the hooks the first time an install registers them (hooks/summary.txt), unless
+# registering them failed.
+explain_hooks() {
+  local where name what
+  [ "$HAD_HOOKS" -eq 0 ] && [ "$NO_HOOKS" -eq 0 ] && [ "$DRY_RUN" -eq 0 ] && [ "$HOOK_FAILURES" -eq 0 ] || return 0
+  section "Hooks installed"
+  while IFS='|' read -r where name what; do
+    case "$where" in '' | '#'*) continue ;; esac
+    printf '  - %s (%s): %s\n' "$(printf '%s' "$name" | sed 's/^ *//; s/ *$//')" \
+      "$(printf '%s' "$where" | sed 's/^ *//; s/ *$//')" "$(printf '%s' "$what" | sed 's/^ *//')"
+  done < "$REPO/hooks/summary.txt"
+  printf '  Turn off advisory hooks with tack config disabled-hooks, or install without any with ./install.sh --no-hooks.\n'
 }
 
 # Merges a repo template (with __REPO__ placeholders) into a JSON settings file, keeping the
@@ -330,6 +368,15 @@ is_harness_hooks() {
 # Never overrides a hooksPath you configured for other hooks.
 install_git_hooks() {
   section "Git hooks (global)"
+  if [ "$NO_HOOKS" -eq 1 ]; then
+    # Restoring the user's former hooksPath is uninstall's job, from its ownership records.
+    if has git && [ "$(git config --global --get core.hooksPath 2>/dev/null)" = "$REPO/git-hooks" ]; then
+      warn "skipped (--no-hooks), but the global git hooks from an earlier install remain; ./uninstall.sh removes them"
+    else
+      ok "skipped (--no-hooks)"
+    fi
+    return
+  fi
   if ! has git; then
     warn "git not found: skipping global git hooks"
     return
@@ -487,15 +534,21 @@ main() {
     migrate_tool_dir "${XDG_STATE_HOME:-$HOME/.local/state}" || { fail "cannot move the former state directory to agent-tack"; exit 1; }
     migrate_tool_dir "${XDG_CONFIG_HOME:-$HOME/.config}" || warn "could not move ~/.config/agent-harness to agent-tack; it is still read"
   fi
+  # The hooks are explained the first time they are registered: no tagged hooks exist yet.
+  HAD_HOOKS=0
+  grep -qsE '#(tack|harness)' "$HOME/.claude/settings.json" "$HOME/.codex/hooks.json" && HAD_HOOKS=1
   ownership_init || exit 1
   capture_harness_hooks
   install_links
+  HOOK_FAILURES="$FAILURES"
   merge_settings
   install_git_hooks
+  HOOK_FAILURES=$((FAILURES - HOOK_FAILURES))
   install_plugins
   install_mods
   install_vscode
   install_codex_agents
+  explain_hooks
 
   section "Summary"
   if [ "$FAILURES" -gt 0 ]; then

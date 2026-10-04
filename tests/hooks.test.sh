@@ -430,6 +430,28 @@ check "token toggles: economical subagents are requested" "session '$WORK/repo' 
 git -C "$WORK/repo" config --unset harness.replyStyle
 git -C "$WORK/repo" config --unset harness.skillLoading
 git -C "$WORK/repo" config --unset harness.subagentModel
+context_of() { session "$1" | python3 -c 'import json,sys; print(json.load(sys.stdin)["hookSpecificOutput"]["additionalContext"])'; }
+printf '# AGENTS.md\n%s\n' "$(printf 'project rule %.0s' $(seq 1 60))" > "$WORK/repo/AGENTS.md"
+# shellcheck disable=SC2034 # Read inside check's eval strings.
+uncapped="$(context_of "$WORK/repo")"
+git -C "$WORK/repo" config tack.contextMaxChars 100000
+check "context cap: a generous cap leaves the context unchanged" "[ \"\$(context_of '$WORK/repo')\" = \"\$uncapped\" ]"
+git -C "$WORK/repo" config tack.contextMaxChars 600
+# shellcheck disable=SC2034 # Read inside check's eval strings.
+capped="$(context_of "$WORK/repo")"
+check "context cap: the context stays within the cap" "[ \${#capped} -le 600 ]"
+check "context cap: the activation line is always kept" "printf '%s' \"\$capped\" | grep -q 'ENABLED for this project'"
+check "context cap: the project context goes first" "! printf '%s' \"\$capped\" | grep -q 'project rule'"
+check "context cap: it says where to read the rest" "printf '%s' \"\$capped\" | grep -q 'tack context'"
+git -C "$WORK/repo" config tack.contextMaxChars 50
+check "context cap: a cap below the activation line drops the pointer, never the line" "[ \"\$(context_of '$WORK/repo')\" = \"\$(context_of '$WORK/repo' | head -n 1)\" ] && context_of '$WORK/repo' | grep -q 'ENABLED'"
+git -C "$WORK/repo" config --unset tack.contextMaxChars
+git -C "$WORK/repo" config tack.replyStyle terse
+git -C "$WORK/repo" config tack.ciWatch false
+check "settings: token and workflow settings sit on separate lines" "context_of '$WORK/repo' | grep -q '^Token settings:' && context_of '$WORK/repo' | grep -q '^Workflow settings:'"
+git -C "$WORK/repo" config --unset tack.replyStyle
+git -C "$WORK/repo" config --unset tack.ciWatch
+rm "$WORK/repo/AGENTS.md"
 check "ci-watch: the default adds no setting line" "! session '$WORK/repo' | grep -q 'Workflow settings'"
 git -C "$WORK/repo" config tack.ciWatch false
 check "ci-watch: turning it off tells the assistant not to wait for CI" "session '$WORK/repo' | grep -q 'Workflow settings:.*Do not wait for CI'"
@@ -474,6 +496,31 @@ git -C "$B" config --unset harness.unleashMaxToolCalls
 check "budget: no limit configured means no limit" "[ -z \"\$(budget s1 '$B')\" ]"
 check "budget: malformed input is ignored" "[ -z \"\$(printf 'not json' | bash '$BUDGET')\" ]"
 check "budget: registered for every tool" "grep -q 'budget.sh' '$REPO/claude/settings.json'"
+
+echo "State retention (state-retention-days)"
+BUDGET_DIR="$WORK/state/agent-tack/budget"
+mkdir -p "$BUDGET_DIR"
+touch -t 202001010000 "$BUDGET_DIR/old-session"
+: > "$BUDGET_DIR/recent-session"
+session "$B" >/dev/null
+check "retention: session state older than 30 days is pruned at session start" "[ ! -e '$BUDGET_DIR/old-session' ]"
+check "retention: recent session state is kept" "[ -e '$BUDGET_DIR/recent-session' ]"
+touch -t "$(date -d '-3 days' +%Y%m%d%H%M 2>/dev/null || date -v-3d +%Y%m%d%H%M)" "$BUDGET_DIR/recent-session"
+git -C "$B" config tack.stateRetentionDays 2
+session "$B" >/dev/null
+check "retention: a project value cannot shorten the user-wide period" "[ -e '$BUDGET_DIR/recent-session' ]"
+git -C "$B" config --unset tack.stateRetentionDays
+git config --global tack.stateRetentionDays 2
+session "$B" >/dev/null
+check "retention: the period follows tack config state-retention-days --global" "[ ! -e '$BUDGET_DIR/recent-session' ]"
+git config --global --unset tack.stateRetentionDays
+touch -t 202001010000 "$BUDGET_DIR/old-again"
+git -C "$B" config tack.disabledHooks session-context
+session "$B" >/dev/null
+check "retention: pruning still runs when session-context is turned off" "[ ! -e '$BUDGET_DIR/old-again' ]"
+git -C "$B" config --unset tack.disabledHooks
+session "$WORK" >/dev/null
+check "retention: pruning never fails the session outside a repository" "session '$WORK' | grep -q 'NOT enabled'"
 
 echo "Claude hook: fast-check"
 FAST="$REPO/hooks/claude/fast-check.sh"
@@ -534,7 +581,9 @@ git -C "$P2" add docs/usage.md && git -C "$P2" commit -q -m "docs: refresh usage
 printf '# Handoff\nStatus: in progress\n' > "$P2/docs/handoffs/2026-10-04-x.md"
 git -C "$P2" add docs/handoffs && git -C "$P2" commit -q -m "docs(handoffs): start"
 touch -t 202001010000 "$P2/docs/handoffs/2026-10-04-x.md"
-GIT_COMMITTER_DATE="2030-01-01T00:00:00" git -C "$P2" commit -q --allow-empty -m "feat: later work"
+printf 'later\n' > "$P2/later.txt"
+git -C "$P2" add later.txt
+GIT_COMMITTER_DATE="2030-01-01T00:00:00" git -C "$P2" commit -q -m "feat: later work"
 check "stop-check: a stale handoff is reported" "stopping | grep -q 'handoff may be stale'"
 git -C "$P2" config harness.stopCheck false
 check "stop-check: can be turned off" "[ -z \"\$(stopping)\" ]"
@@ -621,6 +670,32 @@ format "$P/src/a.py"
 check "python file without ruff/black config untouched" "[ \"\$(cat '$P/src/a.py')\" = 'x = 1' ]"
 check "missing file is ignored" "format '$P/nope.ts'"
 check "always exits 0" "printf 'garbage' | bash '$FORMAT'"
+
+echo "Disabling hooks by ID (tack config disabled-hooks)"
+D="$WORK/disabled-repo"
+git init -q -b main "$D"
+git -C "$D" config tack.enabled true
+git -C "$D" config tack.trusted true
+git -C "$D" config tack.checkFast "exit 1"
+printf 'x\n' > "$D/dirty.txt"
+echo "const a=1" > "$D/a.ts"
+mkdir -p "$D/node_modules/.bin"
+cp "$P/node_modules/.bin/prettier" "$D/node_modules/.bin/prettier"
+echo '{}' > "$D/.prettierrc"
+git -C "$D" config tack.disabledHooks "session-context, fast-check,stop-check,format-file,guard,budget"
+check "disabled: session-context adds nothing" "[ -z \"\$(printf '{\"cwd\":\"%s\"}' '$D' | bash '$SESSION')\" ]"
+check "disabled: fast-check does not run the check" "[ -z \"\$(printf '{\"cwd\":\"%s\",\"tool_input\":{\"file_path\":\"%s/a.ts\"}}' '$D' '$D' | bash '$FAST')\" ]"
+check "disabled: stop-check lets the turn end" "[ -z \"\$(printf '{\"cwd\":\"%s\",\"stop_hook_active\":false}' '$D' | bash '$STOP')\" ]"
+format "$D/a.ts"
+check "disabled: format-file leaves the file alone" "[ \"\$(cat '$D/a.ts')\" = 'const a=1' ]"
+check "disabled: the guard cannot be turned off" "printf '{\"cwd\":\"%s\",\"tool_input\":{\"command\":\"git commit --no-verify\"}}' '$D' | bash '$GUARD' | grep -q '\"deny\"'"
+git -C "$D" config tack.mode unleash
+git -C "$D" config tack.unleashMaxToolCalls 1
+git -C "$D" switch -q -c feat/x
+budget s-disabled "$D" >/dev/null
+check "disabled: the tool-call limit cannot be turned off" "budget s-disabled '$D' | grep -q '\"deny\"'"
+git -C "$D" config tack.disabledHooks "fast-check"
+check "disabled: hooks not listed keep running" "printf '{\"cwd\":\"%s\",\"stop_hook_active\":false}' '$D' | bash '$STOP' | grep -q uncommitted"
 
 echo
 echo "$PASSED passed, $FAILED failed"

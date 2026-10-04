@@ -43,16 +43,26 @@ export function clock(at: number): string {
   return [time.getHours(), time.getMinutes(), time.getSeconds()].map(n => String(n).padStart(2, '0')).join(':')
 }
 
+// /activity toggles: it closes the pane when it is already open and opens it otherwise.
+export function paneToggle(openPaneIds: readonly string[]): 'open' | 'close' {
+  return openPaneIds.includes(PANE) ? 'close' : 'open'
+}
+
 export const register: Register = on => {
   let sequence = 0
 
   on('session.start', async ($, e, next) => {
-    await $.command.register({ name: 'activity', description: 'Open the live pane of tool calls, skills, subagents and permission decisions' })
+    await $.command.register({ name: 'activity', description: 'Open or close the live pane of tool calls, skills, subagents and permission decisions' })
     void $.ui.open({ id: PANE, title: 'Agent activity' })
     return next(e)
   })
 
   on('command.run', { command: 'activity' }, async $ => {
+    const open = (await $.ui.panes()).map(pane => pane.id)
+    if (paneToggle(open) === 'close') {
+      await $.ui.close({ id: PANE })
+      return { text: 'Agent activity pane closed.' }
+    }
     await $.ui.open({ id: PANE, title: 'Agent activity' })
     return { text: 'Agent activity pane opened.' }
   })

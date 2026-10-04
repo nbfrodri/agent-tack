@@ -218,6 +218,12 @@ check "number features reject zero" expect_exit 2 "$CLI" config unleash-max-tool
 check "decimal features accept amounts" expect_exit 0 "$CLI" config unleash-max-cost 4.50
 check "decimal features reject text" expect_exit 2 "$CLI" config unleash-max-cost cheap
 check "decimal features reject zero" expect_exit 2 "$CLI" config unleash-max-cost 0.0
+check "list features accept known items" expect_exit 0 "$CLI" config disabled-hooks "fast-check, stop-check"
+check "list features reject an unknown item" expect_exit 2 "$CLI" config disabled-hooks "fast-check,fastcheck"
+# shellcheck disable=SC2016 # Expanded by eval inside check; the command exits 2 by design.
+check "list features name the allowed items" eval '[ -n "$("$CLI" config disabled-hooks nope 2>&1 | grep format-file)" ]'
+check "list features reject the guard, which cannot be turned off" expect_exit 2 "$CLI" config disabled-hooks guard
+git config --local --unset tack.disabledHooks
 git config --local --unset tack.unleashMaxToolCalls
 git config --local --unset tack.unleashMaxCost
 check "global-only features refuse a project value" expect_exit 2 "$CLI" config mods false
@@ -271,7 +277,9 @@ git config --local --unset tack.mode
 check "fresh handoff is reported up to date" expect_exit 0 "$CLI" context
 check "fresh handoff says so" contains 'up to date: no commits since its last update'
 touch -t 202001010000 docs/handoffs/2026-10-03-active.md
-git -c user.name=T -c user.email=t@example.com commit -q --allow-empty -m 'feat: later work'
+echo work > later-work.txt
+git add later-work.txt
+git -c user.name=T -c user.email=t@example.com commit -q -m 'feat: later work'
 check "handoff older than new commits is flagged" expect_exit 0 "$CLI" context
 check "stale handoff names the commit count" contains 'may be stale: 1 commit(s) since its last update'
 touch -t 202001010000 docs/handoffs/2026-10-03-active.md
@@ -279,6 +287,14 @@ git add docs/handoffs/2026-10-03-active.md
 git -c user.name=T -c user.email=t@example.com commit -q -m 'docs(handoffs): refresh'
 check "committing the handoff itself counts as an update" expect_exit 0 "$CLI" context
 check "committed handoff is up to date" contains 'up to date: no commits since its last update'
+mkdir -p docs/plans
+echo plan > docs/plans/2026-10-03-plan.md
+git add docs/plans/2026-10-03-plan.md
+GIT_COMMITTER_DATE="2030-01-01T00:00:00" git -c user.name=T -c user.email=t@example.com commit -q -m 'docs(plans): note a decision'
+check "context after a plans-only commit succeeds" expect_exit 0 "$CLI" context
+check "a commit that only touches plans or handoffs keeps the handoff up to date" contains 'up to date: no commits since its last update'
+git rm -q docs/plans/2026-10-03-plan.md
+GIT_COMMITTER_DATE="2030-01-01T00:00:01" git -c user.name=T -c user.email=t@example.com commit -q -m 'docs(plans): drop the note'
 touch docs/handoffs/2026-10-03-active.md
 # shellcheck disable=SC2016 # Literal Markdown backticks.
 printf 'Branch: `feat/other`\n' >> docs/handoffs/2026-10-03-active.md

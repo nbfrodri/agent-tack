@@ -15,11 +15,14 @@ Clone into any directory you choose and run `./install.sh` from that checkout. I
 ./install.sh --dry-run --skip-plugins  # preview local configuration only
 ./install.sh --skip-plugins            # apply local configuration only (also skips mods)
 ./install.sh --skip-mods               # apply everything except the Claude Code mods
+./install.sh --no-hooks                # instructions, skills, agents and settings, but no hooks
 tack doctor                        # check installation and current project; no writes
 tack doctor --tools                # check each installed AI tool instead of the project
 ./uninstall.sh --dry-run               # preview safe restoration
 ./uninstall.sh                         # restore recorded unchanged state
 ```
+
+The first install that registers hooks ends with a short list of them and what each does (from `hooks/summary.txt`), and how to turn them off; later installs skip it. `--no-hooks` registers no git, Claude Code or Codex hooks and removes tack's Claude Code and Codex hooks from an earlier install (your own hooks stay); global git hooks from an earlier install remain until `./uninstall.sh`, which restores your former `core.hooksPath`. Without hooks the rules apply only as instructions.
 
 Doctor checks required tools, managed links, Claude settings and hook registration, ownership metadata, effective Git hooks, project activation and formatter trust. Missing optional CLIs and deliberate foreign hooks paths produce warnings. Broken managed components produce errors (exit 1); a healthy checked installation exits 0. Doctor works outside Git and never runs plugins or prints restoration snapshots or credentials. It diagnoses configuration rather than proving every external tool works. Doctor also warns when the claude CLI is missing or a tack mod is not installed or is disabled, and reports `chat.useAgentsMdFile` for each VS Code install it finds.
 
@@ -36,7 +39,7 @@ The installer adds two mods to Claude Code (other tools do not support mods):
 | Mod | What it shows | Command |
 | --- | --- | --- |
 | `usage-band` | A band above the prompt: the active tack mode (`tack · <mode>`, or `tack · off`), 5-hour and weekly usage with reset times, context fill and session cost; toasts at 80% and 90%. Limits appear after the first response and only on a subscription | `/usage-band` hides or shows it |
-| `agent-activity` | A live pane of tool calls, skills, subagents (with their model) and permission prompts or denials; subagent actions are marked `↳` | `/activity` opens it (it opens by itself on terminals at least 144 columns wide) |
+| `agent-activity` | A live pane of tool calls, skills, subagents (with their model) and permission prompts or denials; subagent actions are marked `↳` | `/activity` opens it, or closes it when it is open (it opens by itself on terminals at least 144 columns wide) |
 
 Opt out with `./install.sh --skip-mods` or `tack config mods false --global`, then rerun the installer; `./uninstall.sh` removes them. To change a mod, edit it under `plugins/`, bump `version` in its `plugin.json` and rerun `./install.sh` (Claude Code caches installed plugins). It cannot infer ownership of legacy configuration: paths already identical before recording began are preserved. Installation and uninstall previews make no persistent changes. Installation accepts paths with spaces; use absolute paths without tabs, newlines or dot components, and keep the checkout path free of quotes and backslashes for Claude hook command substitution.
 
@@ -89,6 +92,23 @@ Start a new session after switching. Claude Code is told the status at session s
 | `installer` | `install.sh` reads it; user-wide only (for example `mods`, `vscode-agents-md`) |
 
 A project value wins over the global one, which wins over the default. Values are validated: booleans take `true` or `false`, others list their alternatives. User-wide features refuse a project value. Secret scanning, the command guard and the protection of `main` and tags are not toggles; they keep their [one-off overrides](#overrides). Add a toggle by adding a line to `features.txt` ([customization](customization.md)).
+
+### Turning off individual hooks
+
+Skip advisory hooks by ID, for one project or everywhere. The command guard and the tool-call limit of project-only modes always run, whatever the list says, and the git hooks are separate (see [overrides](#overrides)):
+
+```bash
+tack config disabled-hooks "fast-check,stop-check"   # this project
+tack config disabled-hooks format-file --global      # everywhere
+tack config disabled-hooks --unset                   # all hooks again
+```
+
+| ID | Hook |
+| --- | --- |
+| `session-context` | Startup context, mode rules and state pruning (without it the assistant does not know tack is on) |
+| `fast-check` | The fast check after edits |
+| `stop-check` | The check before stopping |
+| `format-file` | Automatic formatting of edited files |
 
 ### Fast check after edits
 
@@ -186,7 +206,7 @@ tack config unleash-max-tool-calls 300   # a hook refuses tool calls past 300 in
 tack config unleash-max-cost 5           # the usage mod refuses tool calls once the session passes 5 USD
 ```
 
-When a limit is reached, tool calls are refused with an instruction to update the handoff and summarise. The tool-call limit is enforced by a Claude Code hook and counts every tool call per session (counters live in `${XDG_STATE_HOME:-~/.local/state}/agent-tack/budget/`; parallel tool calls can make the count slightly low, so treat it as a safety net rather than an exact quota); the cost limit needs the `usage-band` mod and a session that reports its cost.
+When a limit is reached, tool calls are refused with an instruction to update the handoff and summarise. The tool-call limit is enforced by a Claude Code hook and counts every tool call per session (counters live in `${XDG_STATE_HOME:-~/.local/state}/agent-tack/budget/`, are deleted at session start once older than `tack config state-retention-days --global` (default 30; user-wide, because the state is) and are counted by `tack doctor`; parallel tool calls can make the count slightly low, so treat it as a safety net rather than an exact quota); the cost limit needs the `usage-band` mod and a session that reports its cost.
 
 Risks you accept: wrong decisions nobody stops in time, lost uncommitted work, unbounded token use unless you set a limit, and above all prompt injection: text in the repository, an issue or a web page can steer an agent that no longer asks. Prefer a container or an isolated machine without important credentials, and review the assumptions and the pull request before merging.
 
@@ -206,9 +226,15 @@ A mode file has a `# name` title, a `When:` line (used by `auto` to choose and b
 
 ## Startup context and formatter trust
 
-Claude Code's SessionStart hook supplies the activation status and mode plus the project's `AGENTS.md`. Documents load on demand: `auto` and `standard` add an index with the path of `docs/architecture.md` and the newest active or paused handoff, including its status and next step; `strict` adds bounded excerpts of both; `lite` lists only the handoff. Every mode adds a handoff check: it compares the handoff with git and says whether it is up to date, may be stale (commits after its last update) or names another branch, so a resumed session verifies and refreshes it before continuing. Other tools follow the global instructions to run `tack context` at session start. This is an instruction-driven startup step for tools without a SessionStart hook.
+Claude Code's SessionStart hook supplies the activation status and mode plus the project's `AGENTS.md`. Documents load on demand: `auto` and `standard` add an index with the path of `docs/architecture.md` and the newest active or paused handoff, including its status and next step; `strict` adds bounded excerpts of both; `lite` lists only the handoff. Every mode adds a handoff check: it compares the handoff with git and says whether it is up to date, may be stale (commits after its last update, not counting commits that only touch `docs/plans/` or `docs/handoffs/`) or names another branch, so a resumed session verifies and refreshes it before continuing. Other tools follow the global instructions to run `tack context` at session start. This is an instruction-driven startup step for tools without a SessionStart hook.
 
 The combined document content is capped at 6,000 bytes, with per-file line limits. Claude Code also receives it again after compacting the conversation. Missing files and symlinks outside the checkout are skipped. Read the referenced documents in full when needed. Disable the extra context with `git config tack.context false`; activation messages remain available.
+
+To bound everything SessionStart adds (activation line, mode rules, settings and project context), set a character cap, useful for small-context or local models. Past the cap the project context goes first, then the mode rules; the activation line always stays, and a final line points to `tack mode show` and `tack context` for the rest:
+
+```bash
+tack config context-max-chars 4000 --global
+```
 
 A shared `.tack` file enables workflow instructions but does not authorise execution of project code. Run `tack trust` only for a checkout whose formatter binaries and configuration you trust. Formatting requires both activation and explicit local trust; global trust settings are ignored. `tack trust --revoke` removes that execution permission.
 

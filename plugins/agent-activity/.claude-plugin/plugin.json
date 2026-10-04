@@ -1,6 +1,6 @@
 {
   "name": "agent-activity",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Live pane of what the agent does behind the scenes: tool calls, skills, subagents and permission decisions",
   "author": { "name": "tack" },
   "types": "./types/index.d.ts"
