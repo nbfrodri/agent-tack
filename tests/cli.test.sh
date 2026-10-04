@@ -320,9 +320,9 @@ check "disabled context is empty" test ! -s "$WORK/output"
   listing && /^  [a-z]/ { name = $1; if ($2 ~ /^(list|show|new|--[a-z]+)$/) name = name " " $2; print name }' > "$WORK/help-commands"
 check "help lists commands for the drift check" test -s "$WORK/help-commands"
 while IFS= read -r help_command; do
-  check "usage docs cover 'harness $help_command'" grep -qF "harness $help_command" "$REPO/docs/usage.md"
+  check "usage docs cover 'tack $help_command'" grep -qF "tack $help_command" "$REPO/docs/usage.md"
 done < "$WORK/help-commands"
-check "usage docs cover 'harness doctor --tools'" grep -qF "harness doctor --tools" "$REPO/docs/usage.md"
+check "usage docs cover 'tack doctor --tools'" grep -qF "tack doctor --tools" "$REPO/docs/usage.md"
 
 check "doctor rejects unsupported arguments" expect_exit 2 "$CLI" doctor --quiet
 check "help documents doctor" expect_exit 0 "$CLI" help

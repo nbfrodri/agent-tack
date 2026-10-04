@@ -1,6 +1,6 @@
 # Rename to agent-tack (repository) and tack (command)
 
-- Status: approved 2026-10-04, in progress
+- Status: approved 2026-10-04, in progress. A separate `tack migrate` command proved unnecessary: legacy keys are read indefinitely and every write moves the key.
 - Level: strict (every component, user installations and other machines are affected)
 - Goal: a distinctive tool name without breaking existing installations or projects.
 

@@ -8,4 +8,4 @@ Context: full
 - Docs: the full checklist in `dev-workflow` references, plus ADRs for significant decisions.
 - Handoff: from the start, updated at every milestone. AI log: one row in `docs/ai/log.md`.
 - Review: `code-reviewer` before offering to push.
-- Delegation: automatic for separable work after approval, unless `harness config delegation` is `off`.
+- Delegation: automatic for separable work after approval, unless `tack config delegation` is `off`.

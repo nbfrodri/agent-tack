@@ -1,6 +1,6 @@
 ---
 name: orchestrate
-description: Delegate complex separable tasks using available models and isolated worktrees, then integrate and verify. Use for subagents or parallel work, or automatically for complex independent strict-level tasks in enabled projects unless harness.delegation is off.
+description: Delegate complex separable tasks using available models and isolated worktrees, then integrate and verify. Use for subagents or parallel work, or automatically for complex independent strict-level tasks in enabled projects unless tack.delegation is off.
 ---
 
 # Orchestrate
@@ -9,7 +9,7 @@ You plan, delegate, integrate and verify. Delegation pays off when a complex tas
 
 ## 1. Check mode, plan and split
 
-In an enabled project, automatic delegation applies only to tasks at the strict workflow level (`dev-workflow`); at lite and standard, suggest it and wait for approval. Then read `git config --get harness.delegation`: absent or `auto` allows automatic delegation; `off` disables it. Treat any other value as off and explain the invalid setting. Outside enabled projects, suggest delegation and wait for approval unless the user requested it. An explicit request for subagents authorises delegation for that task even when automatic mode is off.
+In an enabled project, automatic delegation applies only to tasks at the strict workflow level (`dev-workflow`); at lite and standard, suggest it and wait for approval. Then read `git config --get tack.delegation`: absent or `auto` allows automatic delegation; `off` disables it. Treat any other value as off and explain the invalid setting. Outside enabled projects, suggest delegation and wait for approval unless the user requested it. An explicit request for subagents authorises delegation for that task even when automatic mode is off.
 
 - Follow the approved scope and planning requirements in `dev-workflow`. Automatic delegation does not authorise an unapproved large or risky implementation plan.
 - After the plan is approved, automatically delegate complex separable work in auto mode. Show the task, owner, files, model, effort and reason in a concise progress update; do not ask again for delegation approval.
@@ -28,7 +28,7 @@ Inspect the current tool's actual model and reasoning controls before choosing. 
 | Medium: standard implementation | A feature following existing patterns, tests, typical bug fixes | Balanced coding model | medium |
 | High: design-heavy or risky | Architecture, security, migrations, tricky bugs, integration | Most capable suitable model available | high |
 
-When `harness config subagent-model` is `economical`, start every task on the most economical model that can do it and move up only when it cannot. Bump the recommendation for unclear requirements, missing tests or costly mistakes. If the runtime exposes no model choice, inherit the available model. If a model or effort cannot be set, report the actual fallback; do not claim a selection was applied. Do not rewrite shared agent definitions just to change one invocation's effort. Ask only when an unresolved choice materially affects the approved budget or scope.
+When `tack config subagent-model` is `economical`, start every task on the most economical model that can do it and move up only when it cannot. Bump the recommendation for unclear requirements, missing tests or costly mistakes. If the runtime exposes no model choice, inherit the available model. If a model or effort cannot be set, report the actual fallback; do not claim a selection was applied. Do not rewrite shared agent definitions just to change one invocation's effort. Ask only when an unresolved choice materially affects the approved budget or scope.
 
 Record actual models, effort settings, fallbacks, branches/worktrees and task status in the orchestration handoff and `docs/ai/log.md`. Keep the handoff current as agents report so work can resume after interruption.
 

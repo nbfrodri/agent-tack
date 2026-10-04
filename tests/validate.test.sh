@@ -54,8 +54,8 @@ expect_failure "a missing file referenced from another skill" "dev-workflow/refe
   "rm skills/dev-workflow/references/tdd.md"
 expect_failure "an agent citing a skill path that doesn't exist" "~/.agents/skills/nope/SKILL.md" \
   "echo 'See ~/.agents/skills/nope/SKILL.md' >> agents/planner.md"
-expect_failure "a path in the canonical repo link that doesn't exist" "~/.agents/harness/agents/nope.md" \
-  "echo 'See ~/.agents/harness/agents/nope.md' >> skills/improve/SKILL.md"
+expect_failure "a path in the canonical repo link that doesn't exist" "~/.agents/tack/agents/nope.md" \
+  "echo 'See ~/.agents/tack/agents/nope.md' >> skills/improve/SKILL.md"
 expect_failure "a skill missing from the components list" "docs/components.md: \`brand-new\` is not documented" \
   "mkdir skills/brand-new && printf -- '---\nname: brand-new\ndescription: New skill. Use when testing.\n---\n' > skills/brand-new/SKILL.md"
 expect_failure "a marketplace line without source" "needs a source" \

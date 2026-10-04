@@ -22,7 +22,7 @@ When unsure, apply the fix, then ask in one line: "Should I save this as a rule 
 
 The user's config repo is where the skills live:
 ```bash
-CONFIG_REPO="$(cd ~/.agents/harness && pwd -P)"   # canonical link created by install.sh
+CONFIG_REPO="$(cd ~/.agents/tack && pwd -P)"   # canonical link created by install.sh
 ```
 
 ## 3. Write it well
