@@ -39,6 +39,17 @@
             "statusMessage": "Formatting"
           }
         ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '__REPO__/hooks/claude/fast-check.sh' #harness",
+            "timeout": 90,
+            "statusMessage": "Running the fast check"
+          }
+        ]
       }
     ],
     "SessionStart": [

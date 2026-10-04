@@ -132,10 +132,10 @@ check "your own hooks are kept" "grep -q my-own-hook '$S'"
 check "outdated tagged hooks are replaced" "! grep -q /old/path '$S'"
 check "events left empty are removed" "! grep -q '\"Stop\"' '$S'"
 check "one guard and one budget hook" "[ \"\$(count_ours '$S' PreToolUse)\" = 2 ]"
-check "exactly one format hook" "[ \"\$(count_ours '$S' PostToolUse)\" = 1 ]"
+check "one format and one fast-check hook" "[ \"\$(count_ours '$S' PostToolUse)\" = 2 ]"
 check "exactly one session-start hook" "[ \"\$(count_ours '$S' SessionStart)\" = 1 ]"
 run_install "$H"
-check "no duplicates after re-running" "[ \"\$(count_ours '$S' PreToolUse)\" = 2 ] && [ \"\$(count_ours '$S' PostToolUse)\" = 1 ]"
+check "no duplicates after re-running" "[ \"\$(count_ours '$S' PreToolUse)\" = 2 ] && [ \"\$(count_ours '$S' PostToolUse)\" = 2 ]"
 
 echo "Settings merge with jq only (no python3)"
 if command -v jq >/dev/null 2>&1; then

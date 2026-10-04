@@ -447,6 +447,28 @@ check "budget: no limit configured means no limit" "[ -z \"\$(budget s1 '$B')\" 
 check "budget: malformed input is ignored" "[ -z \"\$(printf 'not json' | bash '$BUDGET')\" ]"
 check "budget: registered for every tool" "grep -q 'budget.sh' '$REPO/claude/settings.json'"
 
+echo "Claude hook: fast-check"
+FAST="$REPO/hooks/claude/fast-check.sh"
+F="$WORK/fast-repo"
+git init -q "$F"
+git -C "$F" config harness.enabled true
+git -C "$F" config harness.trusted true
+edited() { printf '{"cwd":"%s","tool_name":"Edit","tool_input":{"file_path":"%s/a.py"}}' "$F" "$F" | bash "$FAST"; }
+check "fast-check: silent when no check is configured" "[ -z \"\$(edited)\" ]"
+git -C "$F" config harness.checkFast "true"
+check "fast-check: silent when the check passes" "[ -z \"\$(edited)\" ]"
+git -C "$F" config harness.checkFast "echo 'tests/test_a.py::test_x FAILED'; exit 1"
+check "fast-check: a failing check is reported to the assistant" "edited | grep -q '\"decision\":\"block\"'"
+check "fast-check: the report includes the check output" "edited | grep -q 'test_x FAILED'"
+git -C "$F" config harness.trusted false
+check "fast-check: untrusted projects never run the check" "[ -z \"\$(edited)\" ]"
+git -C "$F" config harness.trusted true
+git -C "$F" config harness.enabled false
+check "fast-check: disabled projects never run the check" "[ -z \"\$(edited)\" ]"
+git -C "$F" config harness.enabled true
+check "fast-check: malformed input is ignored" "[ -z \"\$(printf 'not json' | bash '$FAST')\" ]"
+check "fast-check: registered after edits" "grep -q 'fast-check.sh' '$REPO/claude/settings.json'"
+
 echo "Claude hook: format-file"
 FORMAT="$REPO/hooks/claude/format-file.sh"
 P="$WORK/project"

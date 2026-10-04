@@ -35,6 +35,7 @@ is_allowed() {
     bool) case "$1" in true | false) return 0 ;; *) return 1 ;; esac ;;
     number) printf '%s' "$1" | grep -qE '^[1-9][0-9]*$'; return ;;
     decimal) printf '%s' "$1" | grep -qE '^[0-9]+(\.[0-9]+)?$' && printf '%s' "$1" | grep -qE '[1-9]'; return ;;
+    text) [ -n "$1" ]; return ;;
   esac
   case "|$values|" in *"|$1|"*) return 0 ;; *) return 1 ;; esac
 }
@@ -44,6 +45,7 @@ allowed_text() {
     bool) echo 'true|false' ;;
     number) echo 'a positive integer' ;;
     decimal) echo 'a positive amount such as 5 or 2.50' ;;
+    text) echo 'any non-empty value' ;;
     *) echo "$values" ;;
   esac
 }

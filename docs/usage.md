@@ -90,6 +90,15 @@ Start a new session after switching. Claude Code is told the status at session s
 
 A project value wins over the global one, which wins over the default. Values are validated: booleans take `true` or `false`, others list their alternatives. User-wide features refuse a project value. Secret scanning, the command guard and the protection of `main` and tags are not toggles; they keep their [one-off overrides](#overrides). Add a toggle by adding a line to `features.txt` ([customization](customization.md)).
 
+### Fast check after edits
+
+```bash
+harness trust                                    # the check runs project code, like the formatter
+harness config check-fast "uv run pytest -q -x"  # or: npm test -- --bail, make lint, ...
+```
+
+After each file edit, Claude Code runs the command from the repository root. When it fails, the assistant sees the exit code and the last 40 lines of output and fixes the problem before continuing. Keep it fast (a focused test target or a linter); it times out after 60 seconds where `timeout` is available. Remove it with `harness config check-fast --unset`.
+
 ## Workflow modes
 
 The mode decides how much process each task gets. `auto` is the default: before each task the assistant picks a level, states it in one line (for example `Level: standard (bounded bug fix)`) and moves up if the task grows. You can change the level for one task ("do this in strict") or fix it with `harness mode`.
