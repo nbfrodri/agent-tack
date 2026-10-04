@@ -25,6 +25,15 @@ The user's config repo is where the skills live:
 CONFIG_REPO="$(cd ~/.agents/tack && pwd -P)"   # canonical link created by install.sh
 ```
 
+### Prohibitions on shell commands become guard rules too
+An instruction can be forgotten; the command guard cannot. When the lesson forbids a shell command ("never publish from here", "never drop the staging database"), also propose a rule for the user's own guard policy, `~/.config/agent-tack/guard-policy.txt` (`scope | decision | pattern | reason`), and add it only after the user agrees:
+
+```text
+command | deny | npm publish | Never publish packages from an agent session; the user releases.
+```
+
+Use `deny` for what must never run and `ask` for what needs a confirmation; keep the pattern the shortest text that names the command. The guard reads the file on every command in Claude Code and Codex, and user rules can only add asks or denials, never relax the shipped ones. Tools without the guard keep the written rule.
+
 ## 3. Write it well
 - **Search first.** Grep the target file (and related skills) for an existing rule on the topic. Update or replace it instead of appending a second, contradictory one.
 - **One short rule, with the reason.** For example: "Use `pnpm`, not `npm`: the monorepo's lockfile and workspaces depend on it." The reason lets future readers apply it sensibly to cases the rule didn't foresee.
