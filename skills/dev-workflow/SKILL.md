@@ -15,7 +15,7 @@ The goal: every request ends as a small, tested change in a clean git history, w
 
 ## Workflow levels
 
-`harness mode` sets the level: `auto` (the default) picks one per task; `lite`, `standard` or `strict` fix it for every task. A project setting overrides the user's global default (`harness mode --global`). The user can change the level for any task in conversation ("do this in strict"). Each mode's rules live in a file (`modes/<name>.md` in the harness, or the user's own in `~/.config/agent-harness/modes/`); SessionStart supplies the active one, and `harness mode show` prints it. A user mode overrides the table below where it differs.
+`harness mode` sets the level: `auto` (the default) picks one per task; `lite`, `standard` or `strict` fix it for every task. A project setting overrides the user's global default (`harness mode --global`). The user can change the level for any task in conversation ("do this in strict"). Each mode's rules live in a file (`modes/<name>.md` in the harness, or the user's own in `~/.config/agent-harness/modes/`); SessionStart supplies the active one, and `harness mode show` prints it. A user mode overrides the table below where it differs. Two built-in modes sit outside the table: `lean` (self-contained minimal rules to save tokens; this skill is not loaded) and `unleash` (autonomous, project-only).
 
 In `auto`, classify each request before acting and state it in one line, for example `Level: standard (bounded bug fix in one module)`:
 - **lite:** questions, typos, renames, config tweaks, a one-line fix, small scripts or prototypes.
