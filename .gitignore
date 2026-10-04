@@ -19,6 +19,9 @@ evals/out/
 
 # Personal, per-machine settings
 .claude/settings.local.json
+
+# Worktrees created for delegated agents
+.claude/worktrees/
 .env
 .env.*
 
