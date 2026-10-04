@@ -18,6 +18,15 @@ client=claude
 . "$(dirname "$0")/lib/activity-log.sh"
 
 cli="$(cd "$(dirname "$0")/../../bin" && pwd)/tack"
+
+# Per-session state (tool-call counters) is pruned here: SessionStart is the one hook every
+# tool runs, whether or not the project is enabled.
+retention="$(cd "$cwd" && "$cli" config state-retention-days 2>/dev/null)"
+retention="${retention%% *}"
+case "$retention" in '' | *[!0-9]*) retention=30 ;; esac
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/agent-tack/budget"
+[ ! -d "$state_dir" ] || find "$state_dir" -type f -mtime +"$retention" -exec rm -f {} + 2>/dev/null
+
 if (cd "$cwd" && "$cli" status --quiet); then
   mode="$(cd "$cwd" && "$cli" mode)" || mode=auto
   mode="${mode%% *}"

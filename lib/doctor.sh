@@ -386,6 +386,15 @@ check_project() {
   if "$REPO/bin/tack" trusted --quiet; then ok 'current project formatter: trusted'
   else ok 'current project formatter: untrusted'; fi
 }
+# Per-session counters are pruned at session start (tack config state-retention-days).
+check_state() {
+  local dir count size
+  dir="${XDG_STATE_HOME:-$HOME/.local/state}/agent-tack/budget"
+  [ -d "$dir" ] || return 0
+  count="$(find "$dir" -type f | wc -l | tr -d ' ')"
+  size="$(du -sk "$dir" 2>/dev/null | cut -f1)"
+  ok "per-session state: $count file(s), ${size:-?} KB in $dir"
+}
 if [ "$TOOLS_MODE" -eq 1 ]; then
   [ -f "$REPO/targets.txt" ] || { echo 'doctor: targets.txt is missing' >&2; exit 1; }
   check_tools
@@ -398,6 +407,7 @@ else
   check_git_hooks
   check_mods
   check_vscode
+  check_state
   check_project
 fi
 printf 'Summary: %s error(s), %s warning(s); only checked installation components are reported.\n' "$FAILURES" "$WARNINGS"

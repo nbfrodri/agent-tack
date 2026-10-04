@@ -475,6 +475,22 @@ check "budget: no limit configured means no limit" "[ -z \"\$(budget s1 '$B')\" 
 check "budget: malformed input is ignored" "[ -z \"\$(printf 'not json' | bash '$BUDGET')\" ]"
 check "budget: registered for every tool" "grep -q 'budget.sh' '$REPO/claude/settings.json'"
 
+echo "State retention (state-retention-days)"
+BUDGET_DIR="$WORK/state/agent-tack/budget"
+mkdir -p "$BUDGET_DIR"
+touch -t 202001010000 "$BUDGET_DIR/old-session"
+: > "$BUDGET_DIR/recent-session"
+session "$B" >/dev/null
+check "retention: session state older than 30 days is pruned at session start" "[ ! -e '$BUDGET_DIR/old-session' ]"
+check "retention: recent session state is kept" "[ -e '$BUDGET_DIR/recent-session' ]"
+touch -t "$(date -d '-3 days' +%Y%m%d%H%M 2>/dev/null || date -v-3d +%Y%m%d%H%M)" "$BUDGET_DIR/recent-session"
+git -C "$B" config tack.stateRetentionDays 2
+session "$B" >/dev/null
+check "retention: the period follows tack config state-retention-days" "[ ! -e '$BUDGET_DIR/recent-session' ]"
+git -C "$B" config --unset tack.stateRetentionDays
+session "$WORK" >/dev/null
+check "retention: pruning never fails the session outside a repository" "session '$WORK' | grep -q 'NOT enabled'"
+
 echo "Claude hook: fast-check"
 FAST="$REPO/hooks/claude/fast-check.sh"
 F="$WORK/fast-repo"

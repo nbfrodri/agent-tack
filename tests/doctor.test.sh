@@ -32,6 +32,11 @@ run_doctor
 check 'installed links are healthy outside Git' [ "$RC" -eq 0 ]
 check 'optional absent tools are warnings' grep -q "WARN.*claude" "$WORK/report"
 check 'outside Git is accepted' grep -q "outside a Git repository" "$WORK/report"
+mkdir -p "$XDG_STATE_HOME/agent-tack/budget"
+: > "$XDG_STATE_HOME/agent-tack/budget/s1"
+: > "$XDG_STATE_HOME/agent-tack/budget/s2"
+run_doctor
+check 'the per-session state is reported with its file count' grep -q "OK   per-session state: 2 file(s)" "$WORK/report"
 rm "$HOME/.agents/harness"
 ln -s "$WORK/missing" "$HOME/.agents/harness"
 run_doctor
