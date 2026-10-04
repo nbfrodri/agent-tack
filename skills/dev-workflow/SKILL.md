@@ -44,7 +44,7 @@ Every level keeps the hooks' guarantees (Conventional Commits, no AI attribution
 - Do not re-read what is already in context, and do not re-verify an edit the tool reported as applied.
 - Batch independent tool calls in one response; run long commands in the background instead of polling.
 - Trim output: `tail`, quiet flags and summaries instead of full logs; never paste large outputs back.
-- Run the affected tests first and the full suite once, before committing or closing.
+- Run the affected tests first and the full suite once, before committing or closing. Use the commands in the project's `AGENTS.md`; if they are missing, find them once and add them there instead of probing in every session.
 - Keep replies, handoffs and docs concise: state what changed and what is pending, not the whole history.
 - Delegate only separable work, with self-contained prompts and the most economical model that can do it.
 - Avoid commands the command guard asks about (heredocs to interpreters, shell loops, dynamic commands): put multi-step logic in a script file and run it. Each confirmation costs the user time and a turn.
