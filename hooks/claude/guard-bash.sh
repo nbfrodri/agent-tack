@@ -38,6 +38,7 @@ emit() {
     decision=deny
     reason="Needs the user's confirmation, which Codex hooks cannot ask for: $reason Ask the user to run it or to approve it."
   fi
+  activity_log "$cwd" "$CLIENT" "guard $decision" "${command:0:120} -- $reason"
   if command -v jq >/dev/null 2>&1; then
     jq -cn --arg d "$decision" --arg r "$reason" \
       '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: $d, permissionDecisionReason: $r}}'
@@ -72,6 +73,9 @@ cwd="$(json_field .cwd)"
 
 # shellcheck source=SCRIPTDIR/lib/shell-parse.sh
 . "$(dirname "$0")/lib/shell-parse.sh"
+# The bare-script copy in the guard tests has no log library; logging is optional.
+# shellcheck source=SCRIPTDIR/lib/activity-log.sh
+. "$(dirname "$0")/lib/activity-log.sh" 2>/dev/null || activity_log() { :; }
 
 current_branch() {
   git -C "$cwd" branch --show-current 2>/dev/null

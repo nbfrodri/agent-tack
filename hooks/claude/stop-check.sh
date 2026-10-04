@@ -18,6 +18,11 @@ print("true" if value is True else value if isinstance(value, str) else "")' "$1
   fi
 }
 
+client=claude
+[ "${1:-}" != --codex ] || client=codex
+# shellcheck source=SCRIPTDIR/lib/activity-log.sh
+. "$(dirname "$0")/lib/activity-log.sh"
+
 cwd="$(field .cwd)"
 [ "$(field .stop_hook_active)" = true ] && exit 0
 [ -n "$cwd" ] && [ -d "$cwd" ] || exit 0
@@ -89,6 +94,7 @@ fi
 
 [ -n "$findings" ] || exit 0
 reason="Before stopping, check:$findings"
+activity_log "$root" "$client" stop-check "$findings"
 if command -v jq >/dev/null 2>&1; then
   jq -cn --arg r "$reason" '{decision: "block", reason: $r}'
 else

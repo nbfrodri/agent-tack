@@ -29,7 +29,9 @@ Commands:
   trust [--revoke]     Allow or revoke project formatter execution in this clone
   trusted [--quiet]    Query local formatter trust independently of activation
   doctor              Diagnose installation and project state without changes
-  context             Print project instructions plus an index (or, in strict
+  log [N]             Print the last N (default 20) activity log entries; turn the
+                      log on with: tack config activity-log true
+  context            Print project instructions plus an index (or, in strict
                       mode, excerpts) of architecture and the active handoff
   help                Show this help (also works outside a Git repository)
 
@@ -251,6 +253,19 @@ case "$cmd" in
     source_root="$HARNESS_ROOT"
     bash "$source_root/lib/config.sh" "$source_root" "$@"
     exit
+    ;;
+  log)
+    count="${1:-20}"
+    if [ "$#" -gt 1 ] || ! printf '%s' "$count" | grep -qE '^[1-9][0-9]*$'; then
+      echo "tack: log takes an optional positive number of entries (see --help)" >&2
+      exit 2
+    fi
+    log_file="${XDG_STATE_HOME:-$HOME/.local/state}/agent-tack/activity.log"
+    if [ ! -s "$log_file" ]; then
+      echo "No activity recorded. Turn the log on with: tack config activity-log true"
+      exit 0
+    fi
+    tail -n "$count" "$log_file"
     ;;
   doctor)
     allowed_option='--tools'; check_args "$@"

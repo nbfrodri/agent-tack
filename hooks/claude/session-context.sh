@@ -12,6 +12,11 @@ elif command -v python3 >/dev/null 2>&1; then
 fi
 [ -n "$cwd" ] && [ -d "$cwd" ] || cwd="$PWD"
 
+client=claude
+[ "${1:-}" != --codex ] || client=codex
+# shellcheck source=SCRIPTDIR/lib/activity-log.sh
+. "$(dirname "$0")/lib/activity-log.sh"
+
 cli="$(cd "$(dirname "$0")/../../bin" && pwd)/tack"
 if (cd "$cwd" && "$cli" status --quiet); then
   mode="$(cd "$cwd" && "$cli" mode)" || mode=auto
@@ -33,6 +38,7 @@ if (cd "$cwd" && "$cli" status --quiet); then
   workflow=''
   [ "$(setting ci-watch)" != false ] || workflow="$workflow Do not wait for CI after a push unless the user asks; merges still need green checks."
   [ -z "$workflow" ] || context="$context"$'\n'"Workflow settings:$workflow"
+  activity_log "$cwd" "$client" session-start "mode=$mode"
   project_context="$(cd "$cwd" && "$cli" context)" || project_context=''
   [ -z "$project_context" ] || context="$context"$'\n'"$project_context"
 else

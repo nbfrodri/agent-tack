@@ -544,6 +544,34 @@ check "stop-check: disabled projects are left alone" "[ -z \"\$(stopping)\" ]"
 check "stop-check: malformed input is ignored" "[ -z \"\$(printf 'not json' | bash '$STOP')\" ]"
 check "stop-check: registered for Stop" "grep -q 'stop-check.sh' '$REPO/claude/settings.json'"
 
+echo "Activity log (tack config activity-log, tack log)"
+LOG="$WORK/state/agent-tack/activity.log"
+A="$WORK/activity-repo"
+git init -q -b main "$A"
+git -C "$A" config tack.enabled true
+deny_in() { printf '{"cwd":"%s","tool_input":{"command":"git commit --no-verify"}}' "$A" | bash "$GUARD" "$@" >/dev/null; }
+log_cmd() { (cd "$A" && "$CLI" log "$@"); }
+deny_in
+check "activity log: off by default" "[ ! -e '$LOG' ]"
+check "activity log: tack log explains how to turn it on" "log_cmd | grep -q 'tack config activity-log true'"
+git -C "$A" config tack.activityLog true
+deny_in
+check "activity log: guard decisions are recorded" "grep -q 'claude.*guard deny.*no-verify' '$LOG'"
+deny_in --codex
+check "activity log: Codex runs are labelled" "grep -q 'codex.*guard deny' '$LOG'"
+printf '{"cwd":"%s"}' "$A" | bash "$SESSION" >/dev/null
+check "activity log: session starts are recorded with the mode" "grep -q 'session-start.*mode=auto' '$LOG'"
+printf 'x\n' > "$A/dirty.txt"
+printf '{"cwd":"%s","stop_hook_active":false}' "$A" | bash "$STOP" >/dev/null
+check "activity log: Stop findings are recorded" "grep -q 'stop-check.*uncommitted' '$LOG'"
+check "activity log: each line starts with a UTC timestamp" "grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:]{8}Z' '$LOG'"
+check "activity log: tack log prints the recent entries" "log_cmd | grep -q 'guard deny'"
+check "activity log: tack log N limits the entries" "[ \"\$(log_cmd 1 | wc -l | tr -d ' ')\" = 1 ] && log_cmd 1 | grep -q stop-check"
+check "activity log: tack log rejects a bad count" "log_cmd nope >/dev/null 2>&1; [ \$? -eq 2 ]"
+git -C "$A" config tack.activityLog false
+deny_in
+check "activity log: turning it off stops recording" "[ \"\$(grep -c 'guard deny' '$LOG')\" = 2 ]"
+
 echo "Claude hook: format-file"
 FORMAT="$REPO/hooks/claude/format-file.sh"
 P="$WORK/project"

@@ -113,6 +113,25 @@ bin/mycli | docs/usage.md
 
 A rule is satisfied when any of its docs changed on the branch or in the working tree.
 
+### CI: wait for it, merge only when green
+
+In `standard`, `strict` and `unleash`, after a push or a new pull request the assistant waits for CI in the background, reports the result and fixes failures from the failed job's log before continuing (`ci-watch`, default `true`; `lite` and `lean` skip it). Independently, the command guard refuses `gh pr merge` while the pull request's checks fail or are still running, so the assistant waits and retries; when `gh` is missing or reports no checks, it asks you (`merge-requires-green`, default `true`):
+
+```bash
+tack config ci-watch false               # do not wait for CI after a push in this project
+tack config merge-requires-green false   # let gh pr merge through without checking CI
+```
+
+### Activity log
+
+An opt-in log of what the hooks did, for Claude Code and Codex: session starts with their mode, every guard decision (deny or ask) with the command, and the findings of the check before stopping. Lines are tab-separated (UTC time, tool, project, event, detail) in `~/.local/state/agent-tack/activity.log`, kept to the newest few thousand.
+
+```bash
+tack config activity-log true --global   # record in every project (or drop --global for one)
+tack log                                 # the last 20 entries
+tack log 100                             # the last 100
+```
+
 ## Workflow modes
 
 The mode decides how much process each task gets. `auto` is the default: before each task the assistant picks a level, states it in one line (for example `Level: standard (bounded bug fix)`) and moves up if the task grows. You can change the level for one task ("do this in strict") or fix it with `tack mode`.
