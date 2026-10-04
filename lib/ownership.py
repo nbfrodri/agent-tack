@@ -4,6 +4,7 @@ import copy
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import stat
 import subprocess
@@ -11,6 +12,8 @@ import sys
 import tempfile
 
 MISSING = object()
+MOD_NAME = re.compile(r"[a-z0-9][a-z0-9._-]*")
+MOD_ID = re.compile(r"[a-z0-9][a-z0-9._-]*@[a-z0-9][a-z0-9._-]*")
 
 
 def read(path):
@@ -124,6 +127,11 @@ def validate(state, home):
                 raise ValueError("unexpected Git config path")
             if "\n" in (entry / "before").read_text():
                 raise ValueError("unsupported multiline Git baseline")
+        elif kind in ("mod", "modmarket"):
+            name = read(entry / ("plugin" if kind == "mod" else "marketplace"))
+            pattern = MOD_ID if kind == "mod" else MOD_NAME
+            if not pattern.fullmatch(name) or path != home.rstrip("/") + "/.claude/plugins/" + name:
+                raise ValueError("unexpected mod record")
         else:
             raise ValueError("unknown ownership kind")
     return sorted(entries.iterdir(), key=lambda p: int(p.name))
@@ -266,8 +274,40 @@ def write_json(path, value):
             os.unlink(temporary)
 
 
+def claude(*args):
+    return subprocess.run(["claude", *args], stdin=subprocess.DEVNULL, capture_output=True, text=True)
+
+
+def claude_names(listing, key):
+    result = claude("plugin", *listing, "--json")
+    if result.returncode:
+        return None
+    return {item.get(key) for item in json.loads(result.stdout)}
+
+
+def uninstall_mod(entry, kind, dry_run):
+    name = read(entry / ("plugin" if kind == "mod" else "marketplace"))
+    label = "mod" if kind == "mod" else "mods marketplace"
+    if not shutil.which("claude"):
+        print(f"preserved {label} {name}: claude CLI not found")
+        return False
+    present = claude_names(["list"] if kind == "mod" else ["marketplace", "list"],
+                           "id" if kind == "mod" else "name")
+    if present is not None and name not in present:
+        print(f"{label} already removed: {name}")
+        return True
+    print(f"{'would remove' if dry_run else 'remove'} {label}: {name}")
+    if not dry_run:
+        args = ["uninstall", name] if kind == "mod" else ["marketplace", "remove", name]
+        subprocess.run(["claude", "plugin", *args], stdin=subprocess.DEVNULL,
+                       capture_output=True, check=True)
+    return True
+
+
 def uninstall_entry(entry, dry_run):
     kind, path = read(entry / "kind"), Path(read(entry / "path"))
+    if kind in ("mod", "modmarket"):
+        return uninstall_mod(entry, kind, dry_run)
     if not same_parent(entry, path):
         print(f"preserved changed parent: {path}")
         return False
@@ -336,12 +376,23 @@ def main():
         raise ValueError("unknown ownership action")
     dry_run = len(sys.argv) == 5 and sys.argv[4] == "--dry-run"
     failed = False
-    for entry in entries:
+    kept_markets = set()
+    # A mods marketplace goes last, and only when none of its mods was kept
+    ordered = sorted(entries, key=lambda e: read(e / "kind") == "modmarket")
+    for entry in ordered:
         try:
+            kind = read(entry / "kind")
+            if kind == "modmarket" and read(entry / "marketplace") in kept_markets:
+                print(f"preserved mods marketplace {read(entry / 'marketplace')}: some mods were kept")
+                continue
             complete = uninstall_entry(entry, dry_run)
+            if not complete and kind == "mod":
+                kept_markets.add(read(entry / "plugin").split("@", 1)[1])
             if complete and not dry_run:
                 shutil.rmtree(entry)
         except (OSError, ValueError, subprocess.SubprocessError):
+            if read(entry / "kind") == "mod":
+                kept_markets.add(read(entry / "plugin").split("@", 1)[1])
             print(f"could not safely restore entry {entry.name}; kept ownership record", file=sys.stderr)
             failed = True
     if not dry_run and not any((state / "entries").iterdir()):

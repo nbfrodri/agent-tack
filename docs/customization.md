@@ -17,6 +17,7 @@ Clone it into any directory you choose and install from that checkout, as shown 
 | Supported tools and installation paths | `targets.txt` |
 | Claude Code settings and registered hooks | `claude/settings.json` |
 | Installed marketplaces and plugins | `plugins.txt` |
+| Mods shipped by the harness | `plugins/<name>/` (turn them off with `./install.sh --skip-mods` or `git config --global harness.mods false`) |
 | Git checks and command or formatting policies | `git-hooks/` and `hooks/claude/` |
 | Commands the guard asks about or refuses | `hooks/claude/guard-policy.txt` (shared rules) or, for your machine only, `~/.config/agent-harness/guard-policy.txt` with the same `scope \| decision \| pattern \| reason` format; personal rules can only add ask or deny decisions |
 
@@ -31,6 +32,10 @@ Re-run `./install.sh` after changing tool paths, registered hooks, Claude settin
 To support another AI tool, add one line to `targets.txt` (columns are documented in its header and in [how it works](how-it-works.md#targetstxt-columns)); optionally set a minimum version and a smoke check, then run `harness doctor --tools`.
 
 Run `tests/validate.sh` after changing skills, agents or their references. Changes to installer or hook behaviour also need regression tests and the relevant checks in [development](development.md).
+
+## Add or remove a mod
+
+To add one, create `plugins/<name>/` with `.claude-plugin/plugin.json` (`name`, `version`, `description`, `author`), `hooks/` and tests, and list it in `plugins/.claude-plugin/marketplace.json` with `"source": "./<name>"`; then run `claude plugin validate plugins/<name>` and `claude plugin test plugins/<name>`, and `./install.sh`. To remove one, delete its folder and its marketplace entry, and run `claude plugin uninstall <name>@agent-harness-mods` (the installer does not remove mods you deleted from the repo). To change a mod, edit it and bump `version`, then re-run `./install.sh`. To stop using mods entirely, run `./uninstall.sh` and set `git config --global harness.mods false`.
 
 ## Keep personal changes when updating
 

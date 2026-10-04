@@ -11,6 +11,8 @@ tests/install.test.sh    # installer, in throwaway HOME directories
 tests/lifecycle.test.sh  # ownership, previews and safe uninstall
 tests/doctor.test.sh     # read-only installation diagnostics
 tests/tools.test.sh      # targets.txt columns, `doctor --tools` and the weekly workflow
+tests/mods.test.sh       # mods step: install, opt-outs, dry run, uninstall and doctor (fake claude CLI)
+claude plugin validate plugins && claude plugin test plugins/usage-band && claude plugin test plugins/agent-activity   # the mods themselves (needs the claude CLI)
 tests/hooks.test.sh      # git and Claude Code hooks, in throwaway repos
 tests/cli.test.sh        # activation errors, local trust and bounded startup context
 tests/settings.test.sh   # mixed user and harness hook groups in Python and jq
@@ -18,7 +20,7 @@ tests/safety.test.sh     # final index scanning, exact paths and formatter trust
 tests/guard.test.sh      # executable shell syntax, boundaries and long inputs
 tests/evals.test.sh      # offline runner, transcript metrics and report fixtures
 ```
-CI runs ShellCheck and content validation on Linux, and the installer and hook regression suites on Linux and macOS. Rules for contributors (bash 3.2, isolated tests…) are in [`AGENTS.md`](../AGENTS.md).
+CI runs ShellCheck and content validation on Linux, the installer and hook regression suites on Linux and macOS, and `claude plugin validate`/`test` for each mod on Linux when the claude CLI is available (it skips otherwise). Rules for contributors (bash 3.2, isolated tests…) are in [`AGENTS.md`](../AGENTS.md).
 
 ## Adding a skill, agent or tool
 1. Create `skills/<name>/SKILL.md` or `agents/<name>.md` with `name` and `description` (what it does and when to use it, within the budget `validate.sh` enforces), or add a line to `targets.txt` for a new AI tool.

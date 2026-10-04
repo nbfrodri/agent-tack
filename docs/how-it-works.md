@@ -46,9 +46,18 @@ Codex 0.160.0 supports both (`codex features list`: `hooks` and `multi_agent` st
 | Git hooks | Points the global `core.hooksPath` at `git-hooks/`, unless you use a different one. |
 | Command | Links `bin/harness` into `~/.local/bin`, and the repo into `~/.agents/harness`. |
 | Plugins | Adds the marketplaces in `plugins.txt` and installs or updates each plugin. |
+| Mods | Adds the local marketplace `agent-harness-mods` (the repo's `plugins/` folder) and installs or updates each mod in it, so Claude Code loads them in every session without flags. |
 | Migration | Cleans up installs from when the project was called agent-config. |
 
 Safety: existing files are moved to `<name>.bak-<timestamp>`, never overwritten; an invalid `settings.json` is left untouched; links of deleted skills are pruned; missing tools are skipped with a warning; a failed step doesn't stop the rest and makes the exit code non-zero. Re-running is always safe. `--skip-plugins` works offline.
+
+## Mods
+Mods are small Claude Code plugins that change its interface; this repo ships two in `plugins/` (see [components](components.md#mods)). The installer registers `plugins/` as a local marketplace (`claude plugin marketplace add`) and installs each mod from it with `claude plugin install`, which survives `git pull` and needs no `--plugin-dir` flag. Claude Code copies a mod when it installs it, so after changing a mod bump its `version` in `plugin.json` and re-run `./install.sh` to update it.
+
+- Mods install by default. Skip them with `./install.sh --skip-mods`, or for good with `git config --global harness.mods false` (absent means enabled). `--skip-plugins` skips mods too, so an offline or local-only run never calls the Claude CLI.
+- `--dry-run` lists what would happen without calling Claude.
+- Only what the installer installed is recorded as owned. A mod or marketplace you already had is updated but never removed. `./uninstall.sh` uninstalls the recorded mods, then the marketplace if the installer added it.
+- `harness doctor` warns when the claude CLI is missing, a mod is not installed or disabled, and notes when mods are turned off by configuration.
 
 ## Enforced rules (hooks)
 | Hook | Where | What it does |
@@ -74,6 +83,7 @@ hooks/claude/         # Claude hooks (lib/shell-parse.py plus .sh bridge/fallbac
 git-hooks/            # global git hooks
 bin/harness           # per-project switch
 plugins.txt           # Claude Code plugins
+plugins/<name>/       # mods shipped with the harness (local marketplace)
 install.sh            # installer (lib/: settings merge in Python and jq)
 tests/  evals/        # automated tests and behaviour evals
 docs/                 # this documentation, audits and AI log

@@ -13,6 +13,8 @@ ok() { [ "$QUIET" -eq 1 ] || printf 'OK   %s\n' "$1"; }
 warn() { [ "$QUIET" -eq 1 ] || printf 'WARN %s\n' "$1"; WARNINGS=$((WARNINGS + 1)); }
 fail() { [ "$QUIET" -eq 1 ] || printf 'FAIL %s\n' "$1"; FAILURES=$((FAILURES + 1)); }
 has() { command -v "$1" >/dev/null 2>&1; }
+# shellcheck source=lib/mods.sh
+source "$REPO/lib/mods.sh"
 expand_home() {
   case "$1" in '~'/*) printf '%s/%s' "$HOME" "${1#\~/}" ;; *) printf '%s' "$1" ;; esac
 }
@@ -311,11 +313,26 @@ check_ownership() {
         case "$target" in "$REPO"|"$REPO"/*) ;; *) fail 'installation ownership source is outside this checkout'; continue ;; esac
         check_link "$target" "$path"
         ;;
-      settings|git) ;;
+      settings|git|mod|modmarket) ;;
       *) fail 'installation ownership entry type is unsupported' ;;
     esac
   done
   ok 'installation ownership metadata checked; restoration snapshots remain private'
+}
+check_mods() {
+  local mod id state
+  if ! mods_enabled; then ok 'mods disabled (git config harness.mods is false)'; return; fi
+  if ! has claude; then warn 'mods: claude CLI not found; the mods in plugins/ cannot be installed or checked'; return; fi
+  for mod in $(mods_list "$REPO"); do
+    id="$mod@$MODS_MARKETPLACE"
+    state="$(mods_plugin_state "$id")"
+    case "$state" in
+      enabled) ok "mod installed: $mod" ;;
+      disabled) warn "mod disabled: $mod (claude plugin enable $id)" ;;
+      missing) warn "mod not installed: $mod (run ./install.sh, or skip mods on purpose)" ;;
+      *) warn "mod state unknown: $mod (claude plugin list failed)" ;;
+    esac
+  done
 }
 check_project() {
   has git || return
@@ -343,6 +360,7 @@ else
   check_ownership
   check_settings
   check_git_hooks
+  check_mods
   check_project
 fi
 printf 'Summary: %s error(s), %s warning(s); only checked installation components are reported.\n' "$FAILURES" "$WARNINGS"

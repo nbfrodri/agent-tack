@@ -5,11 +5,13 @@
 #   - Claude Code settings and hooks from claude/settings.json (merged, your other keys kept)
 #   - global git hooks from git-hooks/ (Conventional Commits, no AI attribution, protect main)
 #   - Claude Code marketplaces and plugins from plugins.txt (installed or updated to latest)
+#   - Claude Code mods from plugins/ through a local marketplace (opt out with --skip-mods or
+#     git config --global harness.mods false; --skip-plugins skips them too)
 #
 # Safe to re-run at any time. Existing files are backed up with a timestamp,
 # never overwritten. A failing step is reported and the rest still runs.
 #
-# Usage: ./install.sh [--dry-run] [--skip-plugins] [--help]
+# Usage: ./install.sh [--dry-run] [--skip-plugins] [--skip-mods] [--help]
 set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -17,6 +19,7 @@ STAMP="$(date +%Y%m%d-%H%M%S)"
 WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/agent-harness.XXXXXX")" || { echo "cannot create a temp dir" >&2; exit 1; }
 trap 'rm -rf "$WORKDIR"' EXIT
 SKIP_PLUGINS=0
+SKIP_MODS=0
 DRY_RUN=0
 FAILURES=0
 WARNINGS=0
@@ -24,9 +27,10 @@ WARNINGS=0
 for arg in "$@"; do
   case "$arg" in
     --skip-plugins) SKIP_PLUGINS=1 ;;
+    --skip-mods) SKIP_MODS=1 ;;
     --dry-run) DRY_RUN=1 ;;
     -h|--help)
-      sed -n '2,11p' "$0" | sed 's/^# \{0,1\}//'
+      sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'
       exit 0
       ;;
     *)
@@ -49,6 +53,8 @@ has()     { command -v "$1" >/dev/null 2>&1; }
 
 # shellcheck source=lib/ownership.sh
 source "$REPO/lib/ownership.sh"
+# shellcheck source=lib/mods.sh
+source "$REPO/lib/mods.sh"
 
 # Moves an existing file or directory aside instead of overwriting it.
 backup() {
@@ -465,6 +471,7 @@ main() {
   merge_settings
   install_git_hooks
   install_plugins
+  install_mods
 
   section "Summary"
   if [ "$FAILURES" -gt 0 ]; then

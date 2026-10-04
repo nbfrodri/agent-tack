@@ -1,0 +1,9 @@
+{
+  "name": "agent-harness-mods",
+  "owner": { "name": "agent-harness" },
+  "metadata": { "description": "Claude Code mods shipped by agent-harness" },
+  "plugins": [
+    { "name": "usage-band", "source": "./usage-band", "description": "Usage limits, context fill and cost band above the prompt" },
+    { "name": "agent-activity", "source": "./agent-activity", "description": "Live pane of tool calls, skills, subagents and permission decisions" }
+  ]
+}
