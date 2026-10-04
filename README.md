@@ -52,15 +52,15 @@ Update with `git pull && ./install.sh`. Sharing it with someone else: [sharing](
 Make the harness your own after cloning it: change the rules, workflow, skills, agents, supported tools, plugins and hooks to fit your preferences. Keep personal changes in your own clone or fork. [Customization guide →](docs/customization.md)
 
 ## Results
-Workflow modes are not measured yet (a [pilot](docs/benchmarks/2026-10-04-modes-pilot.md) found defects, since fixed). Historical results of the earlier single workflow, from 12 real sessions with the original grading heuristics (including a test-order metric since corrected) ([method, full tables and limitations](docs/results.md)):
+15 real sessions per workflow mode, plain assistant versus the harness ([method, full tables and limitations](docs/results.md)):
 
-| | Plain assistant | With the harness |
-| --- | --- | --- |
-| Committed its work | 2/6 runs | 6/6 |
-| Test written before the code | 0/4 | 4/4 |
-| AI attribution left in history | 2/6 | 0/6 |
-| New project with CI, docs for humans and AIs, release setup | 0/2 | 2/2 |
-| Cost and time | 1× | ~2× focused tasks, ~6× a new project |
+| | Plain assistant | Lite / Auto | Strict |
+| --- | --- | --- | --- |
+| Bug fix on a branch with a `fix:` commit | 0/2 | 2/2 | 2/2 |
+| Regression test for the bug | 1/2 | 2/2 | 2/2 |
+| Plan, docs and AI log | – | – | 2/2 |
+| Cost of a bug fix | 1× | ~2× | 3.5× |
+| Cost of a new project | 1× | ~2.2× (was 6.6× with the earlier single workflow) | waits for plan approval |
 
 ## Documentation
 | Doc | |

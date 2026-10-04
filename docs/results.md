@@ -2,11 +2,35 @@
 
 What the harness changes in practice, measured on real sessions: the same tasks with and without it.
 
-## Current reevaluation checkpoint
+## Workflow modes (2026-10-04)
 
-Workflow modes (`auto`, `lite`, `standard`, `strict`) replaced the single full workflow. A 15-session [pilot](benchmarks/2026-10-04-modes-pilot.md) exposed an eval permission defect and a harness regression, both fixed, so it is **not a valid comparison**. A new benchmark across baseline and every mode will run after the next phase; until then the tables below describe the earlier single-workflow harness.
+15 sessions on revision `93dc7ef`: `bug-fix` twice and `new-project` once for the plain assistant (baseline) and each mode, with Claude Code 2.1.288 and `claude-sonnet-5-5`. [Full tables and method](benchmarks/2026-10-04-modes-final.md).
 
-The earlier 2026-10-04 single-workflow comparison was superseded before completion ([attempt evidence](benchmarks/2026-10-04-bug-fix-attempts.json)).
+| bug-fix (2 runs each) | Baseline | Lite | Auto | Standard | Strict |
+| --- | --- | --- | --- | --- | --- |
+| Branch and `fix:` commit | 0/2 | 2/2 | 2/2 | 2/2 | 2/2 |
+| Regression test | 1/2 | 2/2 | 2/2 | 2/2 | 2/2 |
+| Tests pass | 2/2 | 2/2 | 2/2 | 2/2 | 2/2 |
+| Plan, docs and AI log | – | – | – | – | 2/2 |
+| Cost | $0.062 (1×) | $0.116 (1.9×) | $0.128 (2.1×) | $0.124 (2.0×) | $0.215 (3.5×) |
+| Duration | 10 s | 18 s | 24 s | 25 s | 32 s |
+
+| new-project (1 run each) | Baseline | Lite | Auto | Standard | Strict |
+| --- | --- | --- | --- | --- | --- |
+| Branch and commit | 0/1 | 1/1 | 1/1 | 1/1 | plan only |
+| Tests | 7, not runnable by the grader | 11 pass | 12 pass | 10 pass | – |
+| Cost | $0.087 (1×) | $0.208 (2.4×) | $0.190 (2.2×) | $0.196 (2.3×) | $0.137 |
+
+**Reading it:**
+- Every mode kept the discipline the plain assistant skips: a branch, a `fix:` Conventional Commit and a regression test. Correctness was the same.
+- Lighter modes cost about 2× baseline; strict costs 3.5× in a bug fix because it also writes a plan, docs and an AI log row. `auto` picked its level per task and landed at lite or standard cost.
+- A new project in `auto` cost 2.2× baseline; the earlier single workflow cost 6.6× there (different model and prompts, so indicative only).
+- strict stopped a new project after committing its plan, waiting for approval as designed: use `unleash` for unattended work.
+- The Stop hook fired in 2 of 12 harness sessions, adding one turn each.
+
+Limits: one or two runs per condition, one model, Python scenarios and automatic grading.
+
+A 15-session [pilot](benchmarks/2026-10-04-modes-pilot.md) before these fixes is kept as evidence and is not a valid comparison; an earlier single-workflow comparison was superseded before completion ([attempt evidence](benchmarks/2026-10-04-bug-fix-attempts.json)). The sections below describe the earlier single-workflow harness.
 
 ## Historical method
 - **Scenarios:** create a small Python library from scratch (`new-project`), fix a reported bug (`bug-fix`), and prepare a release (`release`), with the same repo and prompt in both conditions.
