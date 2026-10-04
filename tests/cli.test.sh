@@ -401,6 +401,35 @@ printf 'm1 | \377 | 2 | 0 | 0\n' > "$XDG_CONFIG_HOME/agent-tack/pricing.txt"
 check "a price file in another encoding never crashes the report" expect_exit 0 "$CLI" log --cost
 rm -f "$LOG_FILE" "$XDG_CONFIG_HOME/agent-tack/pricing.txt"
 
+# tack lesson: candidate lessons counted across sessions (docs/adr/0001-candidate-lessons.md).
+LESSONS="$XDG_STATE_HOME/agent-tack/lessons.tsv"
+is_private() { [ -n "$(find "$1" -perm 600 2>/dev/null)" ]; }
+rm -f "$LESSONS"
+cd "$WORK/project" || exit 1
+check "a first note records a candidate" expect_exit 0 "$CLI" lesson note use-pnpm "Use pnpm, not npm: the workspace depends on it."
+check "notes are private to the user" is_private "$LESSONS"
+check "listing shows the candidate once seen" expect_exit 0 "$CLI" lesson list
+check "a candidate shows its count and text" out_matches "^use-pnpm +project +1 +0 +Use pnpm, not npm"
+"$CLI" lesson note use-pnpm "Use pnpm, not npm: the workspace depends on it." >/dev/null
+"$CLI" lesson note use-pnpm "Use pnpm, not npm, in this monorepo." >/dev/null
+check "repeats add up and keep the newest wording" expect_exit 0 "$CLI" lesson list
+check "three sightings make a candidate ready to promote" out_matches "^use-pnpm +project +3 +0 +ready +Use pnpm, not npm, in this monorepo\.$"
+check "contradicting a candidate records evidence against it" expect_exit 0 "$CLI" lesson contradict use-pnpm
+check "listing after a contradiction runs" expect_exit 0 "$CLI" lesson list
+check "contradicted candidates are no longer ready" out_matches "^use-pnpm +project +3 +1 +Use pnpm"
+check "user-wide notes are kept apart from project ones" expect_exit 0 "$CLI" lesson note terse-replies "Keep replies short." --global
+check "listing with a user-wide note runs" expect_exit 0 "$CLI" lesson list
+check "user-wide notes are listed as global" out_matches "^terse-replies +global +1"
+check "keys must be kebab-case" expect_exit 2 "$CLI" lesson note "Use pnpm" "text"
+check "a note needs its text" expect_exit 2 "$CLI" lesson note use-pnpm
+check "forgetting removes a candidate" expect_exit 0 "$CLI" lesson forget use-pnpm
+check "listing after forgetting runs" expect_exit 0 "$CLI" lesson list
+check "a forgotten candidate is gone" out_lacks "use-pnpm"
+check "forgetting an unknown key fails" expect_exit 1 "$CLI" lesson forget nope
+check "unknown lesson commands are rejected" expect_exit 2 "$CLI" lesson teach
+rm -f "$LESSONS"
+cd "$HOME" || exit 1
+
 # tack trace: requirement IDs in the plan against the tests that name them.
 TRACE="$WORK/trace-repo"
 git init -q "$TRACE"

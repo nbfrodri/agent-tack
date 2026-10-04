@@ -12,6 +12,9 @@ It is a lesson if it would apply again in a future, different task: a convention
 
 When unsure, apply the fix, then ask in one line: "Should I save this as a rule for future tasks?".
 
+### Count the ones you don't save yet
+A correction you are not saving now (unsure, or the user declined) is still noted, so a repeat is noticed: `tack lesson note KEY "rule"` with a short kebab-case key you reuse for the same correction (`--global` when it is about the user everywhere). When the user's feedback goes against a candidate, `tack lesson contradict KEY`. `tack lesson list` marks a candidate `ready` after three sightings with little against it: then ask the user whether to save it as a rule, write it as below, and remove it with `tack lesson forget KEY` (also when declined). Session start shows the strongest few as unconfirmed; never treat them as rules. Details: `docs/adr/0001-candidate-lessons.md` in the config repo.
+
 ## 2. Choose where it belongs
 | The lesson is about… | Write it in |
 | --- | --- |

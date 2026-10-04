@@ -452,6 +452,18 @@ check "settings: token and workflow settings sit on separate lines" "context_of 
 git -C "$WORK/repo" config --unset tack.replyStyle
 git -C "$WORK/repo" config --unset tack.ciWatch
 rm "$WORK/repo/AGENTS.md"
+check "candidate lessons: none adds nothing" "! session '$WORK/repo' | grep -q 'Candidate lessons'"
+lesson_note() { (cd "$WORK/repo" && "$CLI" lesson note "$@" >/dev/null); }
+lesson_note seen-once "A one-off remark."
+lesson_note use-pnpm "Use pnpm, not npm."
+lesson_note use-pnpm "Use pnpm, not npm."
+lesson_note use-pnpm "Use pnpm, not npm."
+for lesson_key in a-lesson b-lesson c-lesson; do lesson_note "$lesson_key" "Rule $lesson_key."; lesson_note "$lesson_key" "Rule $lesson_key."; done
+check "candidate lessons: repeated ones are shown as unconfirmed" "session '$WORK/repo' | grep -q 'Candidate lessons.*not yet confirmed'"
+check "candidate lessons: the strongest comes first" "context_of '$WORK/repo' | grep -A1 'Candidate lessons' | grep -q 'Use pnpm, not npm. (seen 3 times)'"
+check "candidate lessons: a single sighting is not shown" "! session '$WORK/repo' | grep -q 'A one-off remark'"
+check "candidate lessons: at most three are shown" "[ \"\$(context_of '$WORK/repo' | grep -c '(seen [0-9]* times)')\" = 3 ]"
+rm -f "${XDG_STATE_HOME:-$HOME/.local/state}/agent-tack/lessons.tsv"
 check "ci-watch: the default adds no setting line" "! session '$WORK/repo' | grep -q 'Workflow settings'"
 git -C "$WORK/repo" config tack.ciWatch false
 check "ci-watch: turning it off tells the assistant not to wait for CI" "session '$WORK/repo' | grep -q 'Workflow settings:.*Do not wait for CI'"
