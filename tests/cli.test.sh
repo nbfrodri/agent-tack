@@ -155,6 +155,15 @@ check "existing user modes are not overwritten" expect_exit 2 "$CLI" mode new sp
 check "mode names must be simple words" expect_exit 2 "$CLI" mode new 'bad/name' --from lite
 check "the source mode must exist" expect_exit 2 "$CLI" mode new other --from nowhere
 check "mode new needs --from" expect_exit 2 "$CLI" mode new other
+check "unleash can be selected for a project" expect_exit 0 "$CLI" mode unleash
+check "unleash is effective locally" expect_mode 'unleash (local)'
+git config --local --unset harness.mode
+check "unleash refuses to become the global default" expect_exit 2 "$CLI" mode unleash --global
+check "the refused global default is not stored" test -z "$(git config --global --get harness.mode)"
+git config --global harness.mode unleash
+check "an unleash default set by hand is ignored" expect_mode 'auto (unleash is project-only; global value ignored)'
+git config --global --unset harness.mode
+check "user modes copied from unleash stay project-only" eval '"$CLI" mode new wild --from unleash >/dev/null && ! "$CLI" mode wild --global >/dev/null 2>&1'
 # shellcheck disable=SC2016 # Expanded by eval inside check.
 check "a deleted user mode falls back to auto" eval 'git config --local harness.mode gone && "$CLI" mode | grep -q "auto (invalid local value: gone)"'
 git config --local --unset harness.mode

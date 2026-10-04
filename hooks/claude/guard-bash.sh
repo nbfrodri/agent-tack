@@ -45,6 +45,10 @@ ASK_REASON=""
 deny() { emit deny "$1"; exit 0; }
 # Remember the first reason to ask; a later deny in the same command still wins
 ask() { [ -n "$ASK_REASON" ] || ASK_REASON="$1"; }
+# Explicit local data loss inside the project: the only asks a project-only mode such as
+# unleash may waive. Opaque syntax and analysis limits keep asking, so the deny rules hold.
+LOCAL_ASK_REASON=""
+ask_local() { [ -n "$LOCAL_ASK_REASON" ] || LOCAL_ASK_REASON="$1"; }
 
 command="$(json_field .tool_input.command)"
 cwd="$(json_field .cwd)"
@@ -105,48 +109,48 @@ check_git() {
       esac
       ;;
     reset)
-      case "$joined" in *" --hard"*) ask "git reset --hard discards uncommitted changes permanently." ;; esac
+      case "$joined" in *" --hard"*) ask_local "git reset --hard discards uncommitted changes permanently." ;; esac
       ;;
     clean)
       for r in "${rest[@]+"${rest[@]}"}"; do
         case "$r" in
-          --force) ask "git clean -f deletes untracked files permanently." ;;
+          --force) ask_local "git clean -f deletes untracked files permanently." ;;
           --*) ;;
-          -*f*) ask "git clean -f deletes untracked files permanently." ;;
+          -*f*) ask_local "git clean -f deletes untracked files permanently." ;;
         esac
       done
       ;;
     restore)
       case "$joined" in
-        *" --worktree "* | *" -W "*) ask "git restore discards uncommitted changes in the working tree." ;;
+        *" --worktree "* | *" -W "*) ask_local "git restore discards uncommitted changes in the working tree." ;;
         *" --staged "* | *" -S "*) ;;
-        *) ask "git restore discards uncommitted changes in the working tree." ;;
+        *) ask_local "git restore discards uncommitted changes in the working tree." ;;
       esac
       ;;
     checkout)
       case "$joined" in
-        *" -- "* | *" . "* | *" -f "* | *" --force "*) ask "This checkout discards uncommitted changes." ;;
+        *" -- "* | *" . "* | *" -f "* | *" --force "*) ask_local "This checkout discards uncommitted changes." ;;
       esac
       ;;
     switch)
       case "$joined" in
-        *" -f "* | *" --force "* | *" --discard-changes "*) ask "This switch discards uncommitted changes." ;;
+        *" -f "* | *" --force "* | *" --discard-changes "*) ask_local "This switch discards uncommitted changes." ;;
       esac
       ;;
     branch)
       for r in "${rest[@]+"${rest[@]}"}"; do
         case "$r" in
           --*) ;;
-          -*D*) ask "Force-deleting a branch can lose unmerged commits." ;;
+          -*D*) ask_local "Force-deleting a branch can lose unmerged commits." ;;
         esac
       done
       case "$joined" in
         *" --delete "*" --force "* | *" --force "*" --delete "* | *" -d "*" -f "* | *" -d --force "*)
-          ask "Force-deleting a branch can lose unmerged commits." ;;
+          ask_local "Force-deleting a branch can lose unmerged commits." ;;
       esac
       ;;
     stash)
-      case "$joined" in *" clear "* | *" drop "*) ask "This permanently deletes stashed changes." ;; esac
+      case "$joined" in *" clear "* | *" drop "*) ask_local "This permanently deletes stashed changes." ;; esac
       ;;
     filter-branch | filter-repo)
       ask "This rewrites the whole repository history."
@@ -247,7 +251,7 @@ check_rm() {
     case "$t" in
       '/' | '/*' | '/.' | '~' | '~/' | '~/*' | '$HOME' | '$HOME/' | '$HOME/*' | '${HOME}' | '${HOME}/' | '${HOME}/*' | '..' | '../' | '../*' | "$HOME" | "$HOME/")
         deny "Recursive delete of '$t' is too broad. Delete specific paths instead." ;;
-      '.' | './' | '*' | './*') ask "Recursive delete of everything in the current directory ($t)." ;;
+      '.' | './' | '*' | './*') ask_local "Recursive delete of everything in the current directory ($t)." ;;
       /*)
         real="${t%/}"
         case "$real" in
@@ -510,6 +514,18 @@ analyze() {
   DEPTH=$((DEPTH - 1))
 }
 
+waives_local_asks() {
+  local cli mode
+  cli="$(dirname "$0")/../../bin/harness"
+  (cd "$cwd" && "$cli" status --quiet) || return 1
+  mode="$(cd "$cwd" && "$cli" mode show 2>/dev/null)" || return 1
+  [ -z "${mode##WARNING:*}" ]
+}
+
 analyze "$command"
-[ -n "$ASK_REASON" ] && emit ask "$ASK_REASON"
+if [ -n "$ASK_REASON" ]; then
+  emit ask "$ASK_REASON"
+elif [ -n "$LOCAL_ASK_REASON" ] && ! waives_local_asks; then
+  emit ask "$LOCAL_ASK_REASON"
+fi
 exit 0

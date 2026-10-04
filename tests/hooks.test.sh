@@ -418,6 +418,8 @@ check "fixed mode: names the level to apply" "session '$WORK/repo' | grep -q 'mo
 check "fixed mode: injects that mode's rules" "session '$WORK/repo' | grep -q 'Plan: none.'"
 git -C "$WORK/repo" config --unset harness.mode
 check "auto mode: lists the modes to choose from" "session '$WORK/repo' | grep -q 'strict: several modules'"
+git -C "$WORK/repo" config harness.mode unleash
+check "unleash mode: warns loudly at session start" "session '$WORK/repo' | grep -q 'WARNING: unleash mode is active'"
 git -C "$WORK/repo" config harness.mode turbo
 check "invalid mode: falls back to auto" "session '$WORK/repo' | grep -q 'mode: auto'"
 git -C "$WORK/repo" config --unset harness.mode

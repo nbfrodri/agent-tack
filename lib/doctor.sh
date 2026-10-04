@@ -343,10 +343,13 @@ check_project() {
   if "$REPO/bin/harness" status --quiet; then ok 'current project workflow: enabled'
   else ok 'current project workflow: disabled'; fi
   mode="$("$REPO/bin/harness" mode)"
-  case "$mode" in
-    *invalid*) warn "current project mode: $mode" ;;
-    *) ok "current project mode: $mode" ;;
-  esac
+  if [ -z "${mode##*invalid*}" ] || [ -z "${mode##*ignored*}" ]; then
+    warn "current project mode: $mode"
+  elif "$REPO/bin/harness" mode show | grep -q '^WARNING:'; then
+    warn "current project mode: $mode; autonomous mode without confirmations is active"
+  else
+    ok "current project mode: $mode"
+  fi
   if "$REPO/bin/harness" trusted --quiet; then ok 'current project formatter: trusted'
   else ok 'current project formatter: untrusted'; fi
 }

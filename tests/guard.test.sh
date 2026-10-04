@@ -26,7 +26,7 @@ guard = repo / "hooks/claude/guard-bash.sh"
 failed = 0
 passed = 0
 
-def expect(expected, command, name=None, path=None, reason=None, script=None):
+def expect(expected, command, name=None, path=None, reason=None, script=None, cwd=None):
     global failed, passed
     environment = dict(os.environ)
     if path is not None:
@@ -34,7 +34,7 @@ def expect(expected, command, name=None, path=None, reason=None, script=None):
     try:
         result = subprocess.run(
             ["bash", str(script or guard)],
-            input=json.dumps({"tool_input": {"command": command}, "cwd": str(work)}),
+            input=json.dumps({"tool_input": {"command": command}, "cwd": str(cwd or work)}),
             text=True, capture_output=True, env=environment, timeout=8,
         )
         assert result.returncode == 0, result.stderr
@@ -126,6 +126,27 @@ expect("allow", "terraform plan", "user rules match only their pattern")
 expect("deny", "git commit --no-verify", "user policy cannot allow what the guard denies")
 expect("allow", "echo hi", "malformed user lines are ignored")
 user_policy.unlink()
+
+# Unleash relaxes only explicit local asks; deny rules and opaque or outside-project asks stay.
+project = work / "unleashed"
+subprocess.run(["git", "init", "-q", str(project)], check=True)
+subprocess.run(["git", "-C", str(project), "config", "harness.enabled", "true"], check=True)
+subprocess.run(["git", "-C", str(project), "config", "harness.mode", "unleash"], check=True)
+expect("allow", "git reset --hard HEAD~1", "unleash: local discard is allowed", cwd=project)
+expect("allow", "git branch -D old-idea", "unleash: branch force-delete is allowed", cwd=project)
+expect("allow", "git stash drop", "unleash: stash drop is allowed", cwd=project)
+expect("allow", "rm -rf .", "unleash: deleting inside the project is allowed", cwd=project)
+expect("ask", "rm -rf /etc/app", "unleash: deleting outside the project still asks", cwd=project)
+expect("ask", "git push --force origin feat/x", "unleash: rewriting the remote still asks", cwd=project)
+expect("ask", "psql -c 'DROP TABLE orders'", "unleash: database rules still ask", cwd=project)
+expect("ask", "cat <<'EOF' | python3\nprint(1)\nEOF", "unleash: opaque commands still ask", cwd=project)
+expect("deny", "git commit --no-verify -m 'fix: x'", "unleash: deny rules stay", cwd=project)
+expect("deny", "git push origin main --force", "unleash: force-push to main stays denied", cwd=project)
+subprocess.run(["git", "-C", str(project), "config", "harness.mode", "lite"], check=True)
+expect("ask", "git reset --hard HEAD~1", "other modes keep asking about local discards", cwd=project)
+subprocess.run(["git", "-C", str(project), "config", "harness.enabled", "false"], check=True)
+subprocess.run(["git", "-C", str(project), "config", "harness.mode", "unleash"], check=True)
+expect("ask", "git reset --hard HEAD~1", "unleash needs the workflow enabled", cwd=project)
 bare = work / "bare-guard"
 (bare / "lib").mkdir(parents=True)
 (bare / "guard-bash.sh").write_text(guard.read_text())

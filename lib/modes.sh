@@ -16,6 +16,13 @@ is_mode() { [ "$1" = auto ] || mode_file "$1" >/dev/null; }
 
 mode_field() { sed -n "s/^$2:[[:space:]]*//p" "$1" | head -n 1; }
 
+# Project-only modes (Scope: project) are too risky to apply to every repository at once.
+is_project_only() {
+  local file
+  file="$(mode_file "$1")" || return 1
+  [ "$(mode_field "$file" Scope)" = project ]
+}
+
 # Prints the effective mode and where it comes from: a project setting wins over the
 # user's global default. Invalid values behave as auto so a typo never blocks work.
 effective_mode() {
@@ -23,7 +30,9 @@ effective_mode() {
   [ "$#" -gt 0 ] || set -- local global
   for scope in "$@"; do
     value="$(git config "--$scope" --get harness.mode 2>/dev/null)" || continue
-    if is_mode "$value"; then printf '%s (%s)\n' "$value" "$scope"
+    if [ "$scope" = global ] && is_project_only "$value"; then
+      printf 'auto (%s is project-only; global value ignored)\n' "$value"
+    elif is_mode "$value"; then printf '%s (%s)\n' "$value" "$scope"
     else printf 'auto (invalid %s value: %s)\n' "$scope" "$value"; fi
     return
   done
@@ -55,6 +64,9 @@ show_mode() {
     return
   fi
   file="$(mode_file "$mode")" || return 0
+  if is_project_only "$mode"; then
+    printf 'WARNING: %s mode is active: autonomous work without confirmations in this project. The command guard still refuses dangerous commands; keep to the safety floor below.\n' "$mode"
+  fi
   printf 'Mode %s rules:\n' "$mode"
   sed -n '/^- /p' "$file" | head -n 30 | cut -c1-400
 }

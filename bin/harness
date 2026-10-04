@@ -195,6 +195,9 @@ case "$cmd" in
       if [ "$scope" = global ]; then effective_mode global; else effective_mode; fi
       exit 0
     fi
+    if [ "$scope" = global ] && [ -n "$value" ] && is_project_only "$value"; then
+      echo "harness: $value is project-only; select it inside each project instead" >&2; exit 2
+    fi
     [ "$scope" = global ] || require_repo
     if [ "$unset" = true ]; then
       if git config "--$scope" --get harness.mode >/dev/null 2>&1; then

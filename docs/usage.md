@@ -109,6 +109,20 @@ In every mode the hooks still enforce Conventional Commits, no AI attribution, n
 
 A project setting (`harness mode lite`) overrides your global default (`harness mode lite --global`); with neither, the mode is `auto`. Invalid values behave as `auto` and are reported by `harness status` and `harness doctor`. Lighter modes cost fewer tokens and less time; [results](results.md) compares them.
 
+### Unleash: autonomous work
+
+`harness mode unleash` lets the assistant work without asking: it follows its plan without waiting for approval, decides instead of asking (recording every assumption in the handoff and final summary), may push its branch and open a pull request, and the command guard stops asking about explicit local data loss inside the project (`git reset --hard`, `clean -f`, `restore`, discarding checkouts, `branch -D`, `stash drop`, `rm -rf .`).
+
+What stays, whatever the mode:
+
+- every `deny` rule: hook bypasses, `core.hooksPath` overrides, force-push to `main`, tag changes, catastrophic deletes;
+- asks about deleting outside the project, rewriting remote history, database commands, your own guard rules, and opaque or unanalysable commands (heredocs to interpreters, loops, dynamic commands), because hiding a command inside them would otherwise skip the deny rules;
+- never merging to `main`, tagging, releasing or rewriting published history.
+
+It is project-only: `harness mode unleash --global` is refused and a global value set by hand is ignored. Session start shows a warning and `harness doctor` reports it. Claude Code's own permission prompts are separate: for unattended runs also choose a permissive permission mode in Claude Code.
+
+Risks you accept: wrong decisions nobody stops in time, lost uncommitted work, unbounded token use (see the limits below), and above all prompt injection: text in the repository, an issue or a web page can steer an agent that no longer asks. Prefer a container or an isolated machine without important credentials, and review the assumptions and the pull request before merging.
+
 ### Your own modes
 
 Each mode is a short file of rules: the built-in ones in `modes/`, yours in `~/.config/agent-harness/modes/` (outside the repository, so updates never overwrite them).
