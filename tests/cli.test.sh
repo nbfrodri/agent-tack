@@ -427,6 +427,20 @@ check "listing after forgetting runs" expect_exit 0 "$CLI" lesson list
 check "a forgotten candidate is gone" out_lacks "use-pnpm"
 check "forgetting an unknown key fails" expect_exit 1 "$CLI" lesson forget nope
 check "unknown lesson commands are rejected" expect_exit 2 "$CLI" lesson teach
+check "backslashes in a rule are kept as written" expect_exit 0 "$CLI" lesson note win-paths 'Use C:\new\temp and \\server paths.'
+line_count_is() { [ "$(grep -c "" "$1")" = "$2" ]; }
+check "the store keeps one line per candidate" line_count_is "$LESSONS" 2
+check "listing a backslash rule runs" expect_exit 0 "$CLI" lesson list
+check "a backslash rule is listed verbatim" contains 'Use C:\new\temp and \\server paths.'
+check "contradict finds a user-wide candidate without --global" expect_exit 0 "$CLI" lesson contradict terse-replies
+check "forget finds a user-wide candidate without --global" expect_exit 0 "$CLI" lesson forget terse-replies
+"$CLI" lesson forget win-paths >/dev/null
+printf 'other-key\t/elsewhere/repo\t3\t0\t2026-10-01\tSomeone else.\n' >> "$LESSONS"
+check "listing with only other projects' candidates runs" expect_exit 0 "$CLI" lesson list
+check "a project without candidates says so" contains 'No candidate lessons'
+# $WORK holds a dot; the same path with that dot replaced only matches if the scope is a regex.
+printf 'dot-key\t%s\t1\t0\t2026-10-01\tA lookalike path.\n' "$(printf '%s' "$WORK/project" | tr '.' 'x')" >> "$LESSONS"
+check "a scope that only matches as a pattern is not this project's" expect_exit 1 "$CLI" lesson forget dot-key
 rm -f "$LESSONS"
 cd "$HOME" || exit 1
 
@@ -459,6 +473,20 @@ git -C "$TRACE" add -A
 check "trace passes once every requirement has a test" expect_exit 0 trace
 check "trace takes a plan path" expect_exit 0 trace docs/plans/2026-10-01-login.md
 check "trace rejects a missing plan" expect_exit 2 trace docs/plans/nope.md
+trace_from_docs() { (cd "$TRACE/docs" && "$CLI" trace "$@"); }
+check "trace resolves a relative plan from the current directory" expect_exit 0 trace_from_docs plans/2026-10-01-login.md
+cat > "$TRACE/docs/plans/2026-10-02-checklist.md" <<'EOF'
+## Acceptance criteria
+- [ ] R1: a wrong password is rejected with 401
+- [x] **R2**: five failures lock the account
+1. R3: a locked account says when it unlocks
+EOF
+check "trace reads checkbox and numbered requirements" expect_exit 0 trace docs/plans/2026-10-02-checklist.md
+check "checkbox requirements are listed" out_matches "^R1 +covered"
+printf 'def test_R4a_variant():\n    pass\n' > "$TRACE/tests/test_variant.py"
+printf -- '- R4: exports a report\n' >> "$TRACE/docs/plans/2026-10-02-checklist.md"
+git -C "$TRACE" add -A
+check "an ID followed by a letter does not cover the requirement" expect_exit 1 trace docs/plans/2026-10-02-checklist.md
 rm -rf "$TRACE/docs/plans"
 check "trace without a plan explains itself" expect_exit 2 trace
 

@@ -79,6 +79,11 @@ class Metrics(unittest.TestCase):
         skipped = [use('Write', file_path='src/cart/__init__.py', content='x = 1'), text('R1: it is faster now')]
         self.assertFalse(self.measure(skipped, scenario='vague-requirement')['criteria_before_code'])
         self.assertIsNone(self.measure(stated, scenario='bug-fix')['criteria_before_code'])
+        planned = [use('Write', file_path='docs/plans/2026-10-05-speed.md', content='- R1: total() of 10,000 lines under 50 ms'),
+                   use('Write', file_path='src/cart/__init__.py', content='x = 1')]
+        self.assertTrue(self.measure(planned, scenario='vague-requirement')['criteria_before_code'])
+        shelled = [use('Bash', command='cat > src/cart/fast.py <<EOF\nx = 1\nEOF'), text('R1: it is faster now')]
+        self.assertFalse(self.measure(shelled, scenario='vague-requirement')['criteria_before_code'])
 
     def test_missing_evidence_is_unknown(self):
         m = self.measure([])

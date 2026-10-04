@@ -47,8 +47,8 @@ Who needs what, and why (the user value, not the solution).
 How it could work. Alternatives considered, if relevant.
 
 ## Acceptance criteria
-- [ ] Concrete, testable condition
-- [ ] …
+- [ ] R1: concrete, testable condition
+- [ ] R2: …
 
 ## Out of scope
 ```

@@ -4,7 +4,7 @@ set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/agent-harness-guard.XXXXXX")"
 trap 'rm -rf "$WORK"' EXIT
-export HOME="$WORK/home" XDG_CONFIG_HOME="$WORK/home/.config" GIT_CONFIG_NOSYSTEM=1
+export HOME="$WORK/home" XDG_CONFIG_HOME="$WORK/home/.config" XDG_STATE_HOME="$WORK/home/.local/state" GIT_CONFIG_NOSYSTEM=1
 mkdir -p "$HOME" "$WORK/no-python" "$WORK/no-jq"
 for tool in bash cat dirname tr jq; do
   executable="$(command -v "$tool" || true)"

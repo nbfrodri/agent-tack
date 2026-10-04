@@ -7,24 +7,28 @@ set -u
 export LC_ALL=C
 
 root="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "tack: not inside a git repository" >&2; exit 2; }
-cd "$root" || exit 2
 plan="${1:-}"
+# A relative plan path is relative to where the user is, not to the repository root.
+case "$plan" in '' | /*) ;; *) plan="$PWD/$plan" ;; esac
+cd "$root" || exit 2
 if [ -z "$plan" ]; then
   plan="$(find docs/plans -maxdepth 1 -name '*.md' 2>/dev/null | sort | tail -n 1)"
   [ -n "$plan" ] || { echo "tack: no plan in docs/plans/; pass one: tack trace PLAN" >&2; exit 2; }
 fi
 [ -f "$plan" ] || { echo "tack: plan not found: $plan" >&2; exit 2; }
 
-# A requirement is defined where a line starts with its ID: "- R1: text" or "**R2**: text".
-definitions="$(sed -nE 's/^[[:space:]]*([-*][[:space:]]*)?[*_]*(R[0-9]+)[*_]*[:.)][[:space:]]*(.*)$/\2|\3/p' "$plan" | awk -F'|' '!seen[$1]++')"
+# A requirement is defined where a line starts with its ID, after an optional bullet, number or
+# checkbox: "- R1: text", "**R2**: text", "- [ ] R3: text", "1. R4: text".
+definitions="$(sed -nE 's/^[[:space:]]*([-*][[:space:]]*|[0-9]+\.[[:space:]]*)?(\[[ xX]\][[:space:]]*)?[*_]*(R[0-9]+)[*_]*[:.)][[:space:]]*(.*)$/\3|\4/p' "$plan" | awk -F'|' '!seen[$1]++')"
 [ -n "$definitions" ] || { echo "tack: $plan numbers no requirements (lines like '- R1: ...')" >&2; exit 2; }
 
 # Test files by the usual conventions of the common ecosystems; other files never count.
 tests="$(git ls-files | grep -E '(^|/)(tests?|specs?|__tests__)/|(^|/)test_[^/]*$|[._-](test|spec)\.[A-Za-z]+$|_test\.[A-Za-z]+$')"
 
-# An ID counts when no letter or digit touches it, so test_login_R1 and "R1:" name R1, R10 does not.
+# An ID counts when no letter or digit touches it, so test_login_R1 and "R1:" name R1; R10 and
+# R1a do not.
 ID_BEFORE='(^|[^A-Za-z0-9])'
-ID_AFTER='([^0-9]|$)'
+ID_AFTER='([^A-Za-z0-9]|$)'
 
 files_naming() {
   local id="$1" file found=''

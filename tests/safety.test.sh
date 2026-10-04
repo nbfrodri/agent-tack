@@ -11,7 +11,7 @@ pass() { printf '  ✔ %s\n' "$1"; PASSED=$((PASSED + 1)); }
 fail() { printf '  ✘ %s\n' "$1"; FAILED=$((FAILED + 1)); }
 check() { local name="$1"; shift; if "$@"; then pass "$name"; else fail "$name"; fi; }
 
-export HOME="$WORK/home" XDG_CONFIG_HOME="$WORK/home/.config" GIT_CONFIG_NOSYSTEM=1
+export HOME="$WORK/home" XDG_CONFIG_HOME="$WORK/home/.config" XDG_STATE_HOME="$WORK/home/.local/state" GIT_CONFIG_NOSYSTEM=1
 mkdir -p "$HOME"
 git config --global user.name 'Test User'
 git config --global user.email 'test@example.com'

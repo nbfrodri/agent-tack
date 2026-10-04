@@ -89,15 +89,32 @@ def observations(evs):
 CRITERIA = re.compile(r"\bR1\b|acceptance criteri|criterios de aceptaci", re.I)
 
 
+SHELL_WRITE = re.compile(r"(?<![<>=])>(?![=])|\btee\b|\bsed\s+-i|\bapply_patch\b")
+
+
 def criteria_before_code(evs):
-    """True when numbered or explicit acceptance criteria appear before the first file write."""
+    """True when numbered or explicit acceptance criteria appear before the first code change.
+
+    Criteria count in the assistant's text or in a document it writes (a plan, an issue draft);
+    a write to any other file, or a shell command that writes, is code.
+    """
     for event in evs:
         if event.get("type") != "assistant":
             continue
         for block in event.get("message", {}).get("content", []):
             if block.get("type") == "text" and CRITERIA.search(block.get("text", "")):
                 return True
-            if block.get("type") == "tool_use" and block.get("name") in ("Write", "Edit", "MultiEdit"):
+            if block.get("type") != "tool_use":
+                continue
+            name, inputs = block.get("name"), block.get("input", {})
+            if name in ("Write", "Edit", "MultiEdit"):
+                path = inputs.get("file_path", "")
+                written = inputs.get("content") or inputs.get("new_string") or ""
+                if path.endswith(".md") and CRITERIA.search(written):
+                    return True
+                if not path.endswith(".md"):
+                    return False
+            if name == "Bash" and SHELL_WRITE.search(inputs.get("command", "")):
                 return False
     return None
 

@@ -8,7 +8,7 @@
 One sentence.
 
 ## Acceptance criteria
-- [ ] …
+- [ ] R1: … (one observable behaviour per ID; see dev-workflow → references/requirements.md)
 
 ## Design
 Affected modules and new types, with paths. A diagram if it helps.
