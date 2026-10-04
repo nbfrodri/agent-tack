@@ -7,7 +7,7 @@
 #   command  case-sensitive text anywhere in a simple command
 # Decisions: ask (confirm first) or deny (refuse). Structural rules (git, rm, sudo, env,
 # shells) stay in guard-bash.sh because they parse options and paths.
-# Add your own rules in ${XDG_CONFIG_HOME:-~/.config}/agent-harness/guard-policy.txt with the
+# Add your own rules in ${XDG_CONFIG_HOME:-~/.config}/agent-tack/guard-policy.txt with the
 # same format; user rules can only add ask or deny rules, never relax these.
 
 client | - | psql | -

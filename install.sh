@@ -483,6 +483,10 @@ install_plugins() {
 
 main() {
   printf '%sInstalling tack from %s%s\n' "$C_HEAD" "$REPO" "$C_OFF"
+  if [ "$DRY_RUN" -eq 0 ]; then
+    migrate_tool_dir "${XDG_STATE_HOME:-$HOME/.local/state}" || { fail "cannot move the former state directory to agent-tack"; exit 1; }
+    migrate_tool_dir "${XDG_CONFIG_HOME:-$HOME/.config}" || warn "could not move ~/.config/agent-harness to agent-tack; it is still read"
+  fi
   ownership_init || exit 1
   capture_harness_hooks
   install_links

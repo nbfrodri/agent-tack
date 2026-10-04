@@ -27,7 +27,7 @@ printf '{"theme":"dark","attribution":{"commit":"original"}}\n' > "$H/.claude/se
 printf '{"hooks":{"Stop":[{"hooks":[{"type":"command","command":"echo my-codex-hook"}]}]}}\n' > "$H/.codex/hooks.json"
 check 'install records ownership' 'run install.sh --skip-plugins'
 check 'codex hooks merged next to the user hook' "grep -q 'echo my-codex-hook' '$H/.codex/hooks.json' && grep -q 'guard-bash.sh' '$H/.codex/hooks.json'"
-STATE="$H/.local/state/agent-harness/ownership"
+STATE="$H/.local/state/agent-tack/ownership"
 check 'private ownership schema exists' "[ \"\$(cat '$STATE/version' 2>/dev/null)\" = 1 ]"
 check 'reinstall succeeds' 'run install.sh --skip-plugins'
 check 'uninstall preview succeeds' 'run uninstall.sh --dry-run'
@@ -38,6 +38,7 @@ check 'displaced original symlink restored' "[ \"\$(readlink '$H/.codex/AGENTS.m
 check 'only original settings remain' "python3 -c 'import json,sys; assert json.load(open(sys.argv[1])) == {\"theme\":\"dark\",\"attribution\":{\"commit\":\"original\"}}' '$H/.claude/settings.json'"
 check 'only the user codex hook remains' "python3 -c 'import json,sys; assert json.load(open(sys.argv[1])) == {\"hooks\":{\"Stop\":[{\"hooks\":[{\"type\":\"command\",\"command\":\"echo my-codex-hook\"}]}]}}' '$H/.codex/hooks.json'"
 check 'owned Git hooks entry removed' "! HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 git config --global --get core.hooksPath"
+check 'uninstall from the renamed state leaves no state behind' "[ ! -e '$H/.local/state/agent-tack/ownership' ]"
 check 'uninstall does not delete the project' "[ -f '$REPO/install.sh' ]"
 
 
@@ -71,7 +72,7 @@ check 'link under replaced symlink parent survives' "[ -L '$H/replacement/AGENTS
 H="$WORK/custom-state"
 mkdir -p "$H"
 check 'custom XDG state is supported' "XDG_STATE_HOME='$H/private-state' run install.sh --skip-plugins"
-check 'custom ownership metadata is private' "python3 -c 'import pathlib,stat,sys; p=pathlib.Path(sys.argv[1]); assert all(stat.S_IMODE(q.stat().st_mode)&0o077 == 0 for q in [p,*p.rglob(\"*\")])' '$H/private-state/agent-harness/ownership'"
+check 'custom ownership metadata is private' "python3 -c 'import pathlib,stat,sys; p=pathlib.Path(sys.argv[1]); assert all(stat.S_IMODE(q.stat().st_mode)&0o077 == 0 for q in [p,*p.rglob(\"*\")])' '$H/private-state/agent-tack/ownership'"
 check 'custom state can uninstall' "XDG_STATE_HOME='$H/private-state' run uninstall.sh"
 
 
@@ -89,7 +90,7 @@ check 'install accepts stable symlink ancestors outside HOME' 'run install.sh --
 check 'uninstall accepts stable symlink ancestors outside HOME' 'run uninstall.sh'
 H="$WORK/integrity"
 run install.sh --skip-plugins
-STATE="$H/.local/state/agent-harness/ownership"
+STATE="$H/.local/state/agent-tack/ownership"
 printf '2\n' > "$STATE/version"
 check 'unsupported ownership version refuses all changes' '! run uninstall.sh'
 check 'invalid ownership preserves installed links' "[ -L '$H/.claude/CLAUDE.md' ]"
@@ -206,6 +207,20 @@ PYTEST
     check 'modified installed command remains intact' "grep -q 'echo modified-by-user #harness' '$H/.claude/settings.json'"
   fi
 done
+
+# An installation made before the rename keeps its state and user config under agent-harness.
+H="$WORK/renamed"
+mkdir -p "$H"
+check 'install for the rename scenario succeeds' 'run install.sh --skip-plugins'
+mv "$H/.local/state/agent-tack" "$H/.local/state/agent-harness"
+mkdir -p "$H/.config/agent-harness/modes"
+printf '# old-mode\nWhen: x\nScope: any\n\n- Plan: none.\n' > "$H/.config/agent-harness/modes/old-mode.md"
+check 'uninstall preview reads the former state directory' 'run uninstall.sh --dry-run'
+check 'reinstall after the rename succeeds' 'run install.sh --skip-plugins'
+check 'the former state directory is moved to agent-tack' "[ -d '$H/.local/state/agent-tack/ownership' ] && [ ! -e '$H/.local/state/agent-harness' ]"
+check 'former user modes are moved to agent-tack' "[ -f '$H/.config/agent-tack/modes/old-mode.md' ] && [ ! -e '$H/.config/agent-harness' ]"
+check 'uninstall after the migration succeeds' 'run uninstall.sh'
+check 'the migrated state is cleaned up' "[ ! -e '$H/.local/state/agent-tack/ownership' ]"
 
 printf '\n%s passed, %s failed\n' "$PASSED" "$FAILED"
 [ "$FAILED" -eq 0 ]

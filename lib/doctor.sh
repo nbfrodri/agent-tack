@@ -246,7 +246,8 @@ PYTHON
   esac
 }
 recorded_git_hooks_path() {
-  local path="$1" state="${XDG_STATE_HOME:-$HOME/.local/state}/agent-harness/ownership" entry
+  local path="$1" state entry
+  state="$(tool_dir "${XDG_STATE_HOME:-$HOME/.local/state}")/ownership"
   [ "$OWNERSHIP_VALID" -eq 1 ] || return 1
   for entry in "$state"/entries/*; do
     if [ ! -f "$entry/kind" ] || [ ! -f "$entry/target" ]; then continue; fi
@@ -282,7 +283,8 @@ check_git_hooks() {
   fi
 }
 check_ownership() {
-  local state="${XDG_STATE_HOME:-$HOME/.local/state}/agent-harness/ownership" field entry kind path target
+  local state field entry kind path target
+  state="$(tool_dir "${XDG_STATE_HOME:-$HOME/.local/state}")/ownership"
   if [ ! -e "$state" ] && [ ! -L "$state" ]; then
     warn 'installation ownership is unrecorded (legacy install); uninstall restoration is not verified'
     return

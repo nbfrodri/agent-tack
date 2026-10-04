@@ -324,8 +324,10 @@ load_policy() {
 POLICY_FILE="$(dirname "$0")/guard-policy.txt"
 if [ -f "$POLICY_FILE" ]; then load_policy "$POLICY_FILE"
 else ask "The guard policy file is missing; review the command."; fi
-USER_POLICY="${XDG_CONFIG_HOME:-$HOME/.config}/agent-harness/guard-policy.txt"
-[ ! -f "$USER_POLICY" ] || load_policy "$USER_POLICY"
+# User rules: agent-tack, plus the directory from before the rename if it is still there.
+for USER_POLICY in "${XDG_CONFIG_HOME:-$HOME/.config}"/agent-tack/guard-policy.txt "${XDG_CONFIG_HOME:-$HOME/.config}"/agent-harness/guard-policy.txt; do
+  [ ! -f "$USER_POLICY" ] || load_policy "$USER_POLICY"
+done
 
 apply_rule() {
   if [ "${POLICY_DECISIONS[$1]}" = deny ]; then deny "${POLICY_REASONS[$1]}"; fi

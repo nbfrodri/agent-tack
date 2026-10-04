@@ -27,6 +27,19 @@ key_scope() {
   git config "--$1" --get "tack.$2" >/dev/null 2>&1 || git config "--$1" --get "harness.$2" >/dev/null 2>&1
 }
 
+# tool_dir BASE: the tool's directory under an XDG base (config or state). agent-tack, unless only
+# the directory from before the rename exists; the installer moves that one to agent-tack.
+tool_dir() {
+  if [ -d "$1/agent-tack" ] || [ ! -d "$1/agent-harness" ]; then printf '%s/agent-tack\n' "$1"
+  else printf '%s/agent-harness\n' "$1"; fi
+}
+
+# migrate_tool_dir BASE: moves BASE/agent-harness to BASE/agent-tack when only the former exists.
+migrate_tool_dir() {
+  [ -d "$1/agent-harness" ] && [ ! -e "$1/agent-tack" ] || return 0
+  mv "$1/agent-harness" "$1/agent-tack"
+}
+
 key_set() {
   git config "--$1" "tack.$2" "$3" || return 1
   if git config "--$1" --get "harness.$2" >/dev/null 2>&1; then git config "--$1" --unset-all "harness.$2"; fi

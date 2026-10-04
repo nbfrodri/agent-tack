@@ -141,7 +141,7 @@ mv "$WORK/bin/git" "$WORK/git"
 run_doctor
 check 'missing essential Git is an error' [ "$RC" -eq 1 ]
 mv "$WORK/git" "$WORK/bin/git"
-STATE="$XDG_STATE_HOME/agent-harness/ownership"
+STATE="$XDG_STATE_HOME/agent-tack/ownership"
 rm -rf "$STATE"
 mkdir -p "$STATE/entries/1"
 printf '1\n' > "$STATE/version"

@@ -452,8 +452,8 @@ check "budget: calls under the limit pass" "[ -z \"\$(budget s1 '$B')\" ] && [ -
 check "budget: the call past the limit is denied" "budget s1 '$B' | grep -q '\"permissionDecision\":\"deny\"'"
 check "budget: the reason names the limit" "budget s1 '$B' | grep -q 'limit of 2 tool calls'"
 check "budget: each session has its own count" "[ -z \"\$(budget s2 '$B')\" ]"
-check "budget: the count lives in the state directory" "[ -f '$WORK/state/agent-harness/budget/s1' ]"
-check "budget: unsafe session ids are ignored" "[ -z \"\$(budget '../escape' '$B')\" ] && [ ! -e '$WORK/state/agent-harness/escape' ]"
+check "budget: the count lives in the state directory" "[ -f '$WORK/state/agent-tack/budget/s1' ]"
+check "budget: unsafe session ids are ignored" "[ -z \"\$(budget '../escape' '$B')\" ] && [ ! -e '$WORK/state/agent-tack/escape' ]"
 git -C "$B" config harness.mode lite
 check "budget: other modes are never limited" "[ -z \"\$(budget s1 '$B')\" ]"
 git -C "$B" config harness.mode unleash

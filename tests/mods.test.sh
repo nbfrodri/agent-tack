@@ -85,7 +85,7 @@ check "exits 0" "install"
 check "adds the local marketplace from the repo" "called 'plugin marketplace add $REPO/plugins'"
 check "installs usage-band" "installed usage-band@$MARKET"
 check "installs agent-activity" "installed agent-activity@$MARKET"
-check "records the marketplace and each mod as owned" "[ \"\$(grep -l -x 'mod.*' '$H'/.local/state/agent-harness/ownership/entries/*/kind | wc -l | tr -d ' ')\" = 3 ]"
+check "records the marketplace and each mod as owned" "[ \"\$(grep -l -x 'mod.*' '$H'/.local/state/agent-tack/ownership/entries/*/kind | wc -l | tr -d ' ')\" = 3 ]"
 : > "$STATE/calls"
 check "second run exits 0" "install"
 check "second run does not re-add or re-install" "! grep -q '^plugin marketplace add $REPO/plugins' '$STATE/calls' && ! grep -q '^plugin install .*@$MARKET' '$STATE/calls'"
@@ -117,14 +117,14 @@ fresh_home dry
 check "exits 0" "install --dry-run"
 check "reports the mod actions" "grep -q 'would ensure mod usage-band' '$H.log' && grep -q 'would ensure mod agent-activity' '$H.log'"
 check "calls nothing" "[ ! -s '$STATE/calls' ]"
-check "records no ownership" "[ ! -e '$H/.local/state/agent-harness/ownership' ]"
+check "records no ownership" "[ ! -e '$H/.local/state/agent-tack/ownership' ]"
 
 echo "Failures"
 fresh_home failing
 check "a failed mod install makes the run fail" "! run_with_claude env FAKE_FAIL_INSTALL=agent-activity '$REPO/install.sh'"
 check "and names the mod" "grep -q 'could not install mod agent-activity' '$H.log'"
 check "the other mod is still installed" "installed usage-band@$MARKET"
-check "no ownership is recorded for the failed mod" "! grep -rq 'agent-activity@' '$H/.local/state/agent-harness/ownership/entries'"
+check "no ownership is recorded for the failed mod" "! grep -rq 'agent-activity@' '$H/.local/state/agent-tack/ownership/entries'"
 
 echo "Uninstall"
 fresh_home uninstall
@@ -142,7 +142,7 @@ echo "usage-band@$MARKET" > "$STATE/plugins"
 echo "$MARKET" > "$STATE/markets"
 install
 check "pre-existing mod is updated, not reinstalled" "called 'plugin update usage-band@$MARKET' && ! called 'plugin install usage-band@$MARKET'"
-check "mods and marketplace you already had are not recorded as owned" "! grep -rq 'usage-band@' '$H/.local/state/agent-harness/ownership/entries'"
+check "mods and marketplace you already had are not recorded as owned" "! grep -rq 'usage-band@' '$H/.local/state/agent-tack/ownership/entries'"
 uninstall
 check "uninstall leaves what it did not install" "installed usage-band@$MARKET && grep -qxF $MARKET '$STATE/markets'"
 check "uninstall removes the mod it did install" "! installed agent-activity@$MARKET"

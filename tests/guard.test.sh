@@ -111,7 +111,7 @@ if (work / "no-python/jq").exists():
 expect("ask", "psql -c 'drop table orders'", "shipped policy: destructive SQL is case-insensitive", reason="database")
 expect("ask", "mongosh --eval 'db.dropDatabase()'", "shipped policy: data deletion in a database client")
 expect("ask", "bin/rails db:drop", "shipped policy: database reset commands")
-user_policy = Path(os.environ["XDG_CONFIG_HOME"]) / "agent-harness/guard-policy.txt"
+user_policy = Path(os.environ["XDG_CONFIG_HOME"]) / "agent-tack/guard-policy.txt"
 user_policy.parent.mkdir(parents=True, exist_ok=True)
 user_policy.write_text(
     "# user rules\n"
@@ -129,6 +129,11 @@ expect("allow", "terraform plan", "user rules match only their pattern")
 expect("deny", "git commit --no-verify", "user policy cannot allow what the guard denies")
 expect("allow", "echo hi", "malformed user lines are ignored")
 user_policy.unlink()
+legacy_policy = Path(os.environ["XDG_CONFIG_HOME"]) / "agent-harness/guard-policy.txt"
+legacy_policy.parent.mkdir(parents=True, exist_ok=True)
+legacy_policy.write_text("command | ask | terraform destroy | Legacy rule.\n")
+expect("ask", "terraform destroy", "user rules in the former config directory still apply", reason="legacy")
+legacy_policy.unlink()
 
 # Unleash relaxes only explicit local asks; deny rules and opaque or outside-project asks stay.
 project = work / "unleashed"

@@ -19,7 +19,7 @@ Commands:
   mode list           List built-in and user modes with when to use each
   mode show           Print the effective mode's rules (auto: the modes to pick from)
   mode new NAME --from MODE
-                      Create a user mode in ~/.config/agent-harness/modes/
+                      Create a user mode in ~/.config/agent-tack/modes/
                       from an existing one, to edit and select
   config [NAME [VALUE]] [--global]
                       List feature toggles, show one, or set it for this project

@@ -137,7 +137,7 @@ check "help documents config" contains 'config [NAME [VALUE]] [--global]'
 check "help documents user modes" contains 'mode new NAME --from MODE'
 cd "$WORK/project" || exit 1
 
-USER_MODES="$XDG_CONFIG_HOME/agent-harness/modes"
+USER_MODES="$XDG_CONFIG_HOME/agent-tack/modes"
 git config --local harness.mode strict
 check "legacy harness.* keys are still honoured" expect_mode 'strict (local)'
 git config --local tack.mode lite
@@ -149,6 +149,11 @@ git config --local --unset tack.mode
 git config --local harness.delegation off
 check "config reads legacy keys" expect_mode_like 'off (local)' "$CLI" config delegation
 git config --local --unset harness.delegation
+mkdir -p "$XDG_CONFIG_HOME/agent-harness/modes"
+printf '# legacy\nWhen: an old user mode\nScope: any\n\n- Plan: none.\n' > "$XDG_CONFIG_HOME/agent-harness/modes/legacy.md"
+check "user modes in the former config directory are still found" expect_exit 0 "$CLI" mode legacy
+git config --local --unset tack.mode
+rm -rf "$XDG_CONFIG_HOME/agent-harness"
 check "mode list shows built-in modes" expect_exit 0 "$CLI" mode list
 check "mode list shows each mode's purpose" contains 'lite      built-in  questions, typos'
 check "mode list includes auto" contains 'auto      built-in'
@@ -253,7 +258,7 @@ check "strict context includes the handoff body" contains '# Handoff'
 check "strict context reports handoff freshness" contains 'up to date: no commits since its last update'
 git config --local --unset tack.mode
 "$CLI" mode new deep --from lite >/dev/null
-sed 's/^Context: minimal$/Context: full/' "$XDG_CONFIG_HOME/agent-harness/modes/deep.md" > "$WORK/deep.md" && mv "$WORK/deep.md" "$XDG_CONFIG_HOME/agent-harness/modes/deep.md"
+sed 's/^Context: minimal$/Context: full/' "$XDG_CONFIG_HOME/agent-tack/modes/deep.md" > "$WORK/deep.md" && mv "$WORK/deep.md" "$XDG_CONFIG_HOME/agent-tack/modes/deep.md"
 git config --local tack.mode deep
 check "a mode file's Context line decides the startup context" expect_exit 0 "$CLI" context
 check "a user mode asking for full context gets excerpts" contains 'Architecture context'

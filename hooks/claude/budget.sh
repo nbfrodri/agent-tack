@@ -31,7 +31,7 @@ limit="$("$cli" config unleash-max-tool-calls 2>/dev/null)"
 limit="${limit%% *}"
 case "$limit" in '' | *[!0-9]*) exit 0 ;; esac
 
-dir="${XDG_STATE_HOME:-$HOME/.local/state}/agent-harness/budget"
+dir="${XDG_STATE_HOME:-$HOME/.local/state}/agent-tack/budget"
 mkdir -p "$dir" 2>/dev/null || exit 0
 count="$(cat "$dir/$session" 2>/dev/null || echo 0)"
 case "$count" in '' | *[!0-9]*) count=0 ;; esac

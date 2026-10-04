@@ -2,7 +2,7 @@
 # Workflow modes as data: built-in files in modes/, user files in the user's config directory.
 # Sourced by bin/tack, which sets HARNESS_ROOT to the checkout.
 
-user_modes_dir() { printf '%s/agent-harness/modes\n' "${XDG_CONFIG_HOME:-$HOME/.config}"; }
+user_modes_dir() { printf '%s/modes\n' "$(tool_dir "${XDG_CONFIG_HOME:-$HOME/.config}")"; }
 
 # Prints the file that defines a mode; built-in names cannot be shadowed by user files.
 mode_file() {
