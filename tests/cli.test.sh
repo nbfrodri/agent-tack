@@ -218,6 +218,12 @@ check "number features reject zero" expect_exit 2 "$CLI" config unleash-max-tool
 check "decimal features accept amounts" expect_exit 0 "$CLI" config unleash-max-cost 4.50
 check "decimal features reject text" expect_exit 2 "$CLI" config unleash-max-cost cheap
 check "decimal features reject zero" expect_exit 2 "$CLI" config unleash-max-cost 0.0
+check "list features accept known items" expect_exit 0 "$CLI" config disabled-hooks "fast-check, stop-check"
+check "list features reject an unknown item" expect_exit 2 "$CLI" config disabled-hooks "fast-check,fastcheck"
+# shellcheck disable=SC2016 # Expanded by eval inside check; the command exits 2 by design.
+check "list features name the allowed items" eval '[ -n "$("$CLI" config disabled-hooks nope 2>&1 | grep format-file)" ]'
+check "list features reject the guard, which cannot be turned off" expect_exit 2 "$CLI" config disabled-hooks guard
+git config --local --unset tack.disabledHooks
 git config --local --unset tack.unleashMaxToolCalls
 git config --local --unset tack.unleashMaxCost
 check "global-only features refuse a project value" expect_exit 2 "$CLI" config mods false

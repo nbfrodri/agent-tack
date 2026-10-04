@@ -39,6 +39,15 @@ is_allowed() {
     number) printf '%s' "$1" | grep -qE '^[1-9][0-9]*$'; return ;;
     decimal) printf '%s' "$1" | grep -qE '^[0-9]+(\.[0-9]+)?$' && printf '%s' "$1" | grep -qE '[1-9]'; return ;;
     text) [ -n "$1" ]; return ;;
+    list:*)
+      # A comma-separated list whose every item is one of the declared alternatives.
+      local item items
+      items="$(printf '%s' "$1" | tr -d ' ' | tr ',' ' ')"
+      [ -n "$items" ] || return 1
+      for item in $items; do
+        case "|${values#list:}|" in *"|$item|"*) ;; *) return 1 ;; esac
+      done
+      return 0 ;;
   esac
   case "|$values|" in *"|$1|"*) return 0 ;; *) return 1 ;; esac
 }
@@ -49,6 +58,7 @@ allowed_text() {
     number) echo 'a positive integer' ;;
     decimal) echo 'a positive amount such as 5 or 2.50' ;;
     text) echo 'any non-empty value' ;;
+    list:*) printf 'a comma-separated list of %s\n' "$(printf '%s' "${values#list:}" | sed 's/|/, /g')" ;;
     *) echo "$values" ;;
   esac
 }
