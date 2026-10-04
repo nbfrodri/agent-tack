@@ -1,0 +1,38 @@
+# Pattern rules for guard-bash.sh: one rule per line, fields separated by " | ".
+#   scope | decision | pattern | reason
+# Scopes:
+#   client   a database client command name (decision and reason unused: "-")
+#   sql      case-insensitive text, checked only in commands that run a database client
+#   data     case-sensitive text, checked only in commands that run a database client
+#   command  case-sensitive text anywhere in a simple command
+# Decisions: ask (confirm first) or deny (refuse). Structural rules (git, rm, sudo, env,
+# shells) stay in guard-bash.sh because they parse options and paths.
+# Add your own rules in ${XDG_CONFIG_HOME:-~/.config}/agent-harness/guard-policy.txt with the
+# same format; user rules can only add ask or deny rules, never relax these.
+
+client | - | psql | -
+client | - | mysql | -
+client | - | mariadb | -
+client | - | sqlite3 | -
+client | - | sqlcmd | -
+client | - | mongosh | -
+client | - | mongo | -
+client | - | pgcli | -
+client | - | mycli | -
+
+sql | ask | DROP DATABASE | This drops or truncates database objects. Confirm it targets a local/dev database.
+sql | ask | DROP SCHEMA | This drops or truncates database objects. Confirm it targets a local/dev database.
+sql | ask | DROP TABLE | This drops or truncates database objects. Confirm it targets a local/dev database.
+sql | ask | TRUNCATE | This drops or truncates database objects. Confirm it targets a local/dev database.
+
+data | ask | dropDatabase | This deletes database data. Confirm it targets a local/dev database.
+data | ask | deleteMany({}) | This deletes database data. Confirm it targets a local/dev database.
+
+command | ask | migrate:fresh | This wipes or resets a database. Confirm it targets a local/dev database.
+command | ask | migrate:reset | This wipes or resets a database. Confirm it targets a local/dev database.
+command | ask | db:wipe | This wipes or resets a database. Confirm it targets a local/dev database.
+command | ask | db:drop | This wipes or resets a database. Confirm it targets a local/dev database.
+command | ask | prisma migrate reset | This wipes or resets a database. Confirm it targets a local/dev database.
+command | ask | prisma db push --force-reset | This wipes or resets a database. Confirm it targets a local/dev database.
+command | ask | alembic downgrade base | This wipes or resets a database. Confirm it targets a local/dev database.
+command | ask | manage.py flush | This wipes or resets a database. Confirm it targets a local/dev database.

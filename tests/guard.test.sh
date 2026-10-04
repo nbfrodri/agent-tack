@@ -26,14 +26,14 @@ guard = repo / "hooks/claude/guard-bash.sh"
 failed = 0
 passed = 0
 
-def expect(expected, command, name=None, path=None, reason=None):
+def expect(expected, command, name=None, path=None, reason=None, script=None):
     global failed, passed
     environment = dict(os.environ)
     if path is not None:
         environment["PATH"] = str(path)
     try:
         result = subprocess.run(
-            ["bash", str(guard)],
+            ["bash", str(script or guard)],
             input=json.dumps({"tool_input": {"command": command}, "cwd": str(work)}),
             text=True, capture_output=True, env=environment, timeout=8,
         )
@@ -106,6 +106,34 @@ if (work / "no-python/jq").exists():
     expect("deny", "sudo -n rm -rf /", "jq-only fallback still denies", path=work / "no-python")
     expect("ask", "cat <<EOF\n$(rm -rf /)\nEOF", "jq-only unsupported syntax asks", path=work / "no-python")
     expect("ask", "printf '%s' '" + "x" * 50000 + "'", "jq-only long input asks promptly", path=work / "no-python", reason="size")
+
+# Policy as data: the shipped table keeps the database rules; a user file can only add rules.
+expect("ask", "psql -c 'drop table orders'", "shipped policy: destructive SQL is case-insensitive", reason="database")
+expect("ask", "mongosh --eval 'db.dropDatabase()'", "shipped policy: data deletion in a database client")
+expect("ask", "bin/rails db:drop", "shipped policy: database reset commands")
+user_policy = Path(os.environ["XDG_CONFIG_HOME"]) / "agent-harness/guard-policy.txt"
+user_policy.parent.mkdir(parents=True, exist_ok=True)
+user_policy.write_text(
+    "# user rules\n"
+    "command | ask | terraform destroy | Terraform destroy deletes infrastructure.\n"
+    "command | deny | kubectl delete namespace prod | Never delete the production namespace.\n"
+    "command | allow | git commit --no-verify | users cannot relax the guard\n"
+    "this line is malformed\n"
+)
+expect("ask", "terraform destroy -auto-approve", "user policy adds an ask rule", reason="infrastructure")
+expect("deny", "kubectl delete namespace prod", "user policy adds a deny rule", reason="production")
+expect("allow", "terraform plan", "user rules match only their pattern")
+expect("deny", "git commit --no-verify", "user policy cannot allow what the guard denies")
+expect("allow", "echo hi", "malformed user lines are ignored")
+user_policy.unlink()
+bare = work / "bare-guard"
+(bare / "lib").mkdir(parents=True)
+(bare / "guard-bash.sh").write_text(guard.read_text())
+for name in ("shell-parse.sh", "shell-parse.py"):
+    source = repo / "hooks/claude/lib" / name
+    if source.exists():
+        (bare / "lib" / name).write_text(source.read_text())
+expect("ask", "echo hi", "missing shipped policy asks for review", reason="policy", script=bare / "guard-bash.sh")
 print(f"\n{passed} passed, {failed} failed")
 sys.exit(bool(failed))
 PY

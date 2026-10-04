@@ -42,7 +42,7 @@ Safety: existing files are moved to `<name>.bak-<timestamp>`, never overwritten;
 | `pre-push` | git (global) | Refuses force-pushes and deletions of `main`/`master`. In enabled projects, only annotated `vX.Y.Z` tags, never moved or deleted. |
 | Other git hooks | git (global) | Pass through to each repo's own `.git/hooks/*` (client and server side). |
 | `session-context.sh` | Claude Code `SessionStart` | Supplies activation status, workflow mode, project instructions and an index (excerpts in strict mode) of architecture and the active handoff through `harness context`; runs again after context compaction. |
-| `guard-bash.sh` | Claude Code `PreToolUse` | Performs bounded shell analysis. Blocks recognised catastrophic commands and hook bypasses; asks before destructive operations, unsupported executable constructs or exceeded parsing limits. |
+| `guard-bash.sh` | Claude Code `PreToolUse` | Performs bounded shell analysis. Blocks recognised catastrophic commands and hook bypasses; asks before destructive operations, unsupported executable constructs or exceeded parsing limits. Structural rules (git, `rm`, wrappers, shells) live in the script; pattern rules (database clients, destructive SQL, database resets) live in `guard-policy.txt`, and users can add ask or deny rules in `~/.config/agent-harness/guard-policy.txt`. |
 | `format-file.sh` | Claude Code `PostToolUse` | In enabled, locally trusted projects, formats each edited file with the project's own formatter. |
 
 Repos with their own local `core.hooksPath` (e.g. Husky) use only their hooks; there, Claude's `attribution` setting still prevents its trailers.

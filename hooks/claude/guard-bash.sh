@@ -261,17 +261,49 @@ check_rm() {
   done
 }
 
-check_database() {
-  local joined="$1" upper
+POLICY_SCOPES=() POLICY_DECISIONS=() POLICY_PATTERNS=() POLICY_REASONS=()
+trim() { local value="$1"; value="${value#"${value%%[![:space:]]*}"}"; printf '%s' "${value%"${value##*[![:space:]]}"}"; }
+
+# Loads "scope | decision | pattern | reason" rules; malformed lines and relaxing rules are skipped.
+load_policy() {
+  local file="$1" scope decision pattern reason
+  while IFS='|' read -r scope decision pattern reason; do
+    scope="$(trim "$scope")" decision="$(trim "$decision")" pattern="$(trim "$pattern")" reason="$(trim "$reason")"
+    case "$scope" in client) ;; sql | data | command) case "$decision" in ask | deny) ;; *) continue ;; esac ;; *) continue ;; esac
+    [ -n "$pattern" ] || continue
+    POLICY_SCOPES+=("$scope") POLICY_DECISIONS+=("$decision") POLICY_PATTERNS+=("$pattern") POLICY_REASONS+=("${reason:-Matches a guard policy rule: $pattern}")
+  done < "$file"
+}
+
+POLICY_FILE="$(dirname "$0")/guard-policy.txt"
+if [ -f "$POLICY_FILE" ]; then load_policy "$POLICY_FILE"
+else ask "The guard policy file is missing; review the command."; fi
+USER_POLICY="${XDG_CONFIG_HOME:-$HOME/.config}/agent-harness/guard-policy.txt"
+[ ! -f "$USER_POLICY" ] || load_policy "$USER_POLICY"
+
+apply_rule() {
+  if [ "${POLICY_DECISIONS[$1]}" = deny ]; then deny "${POLICY_REASONS[$1]}"; fi
+  ask "${POLICY_REASONS[$1]}"
+}
+
+check_policy() {
+  local joined="$1" upper i has_client=0
+  # bash 3.2 treats expanding an empty array under set -u as an unbound variable
+  [ "${#POLICY_SCOPES[@]}" -gt 0 ] || return 0
+  for i in "${!POLICY_SCOPES[@]}"; do
+    [ "${POLICY_SCOPES[$i]}" = client ] || continue
+    case " $joined " in *" ${POLICY_PATTERNS[$i]} "* | */"${POLICY_PATTERNS[$i]} "*) has_client=1; break ;; esac
+  done
   upper="$(printf '%s' "$joined" | tr '[:lower:]' '[:upper:]')"
-  case "$upper" in
-    *"DROP DATABASE"* | *"DROP SCHEMA"* | *"DROP TABLE"* | *"TRUNCATE "*)
-      ask "This drops or truncates database objects. Confirm it targets a local/dev database." ;;
-  esac
-  case "$joined" in
-    *dropDatabase* | *"deleteMany({})"*)
-      ask "This deletes database data. Confirm it targets a local/dev database." ;;
-  esac
+  for i in "${!POLICY_SCOPES[@]}"; do
+    case "${POLICY_SCOPES[$i]}" in
+      command) case "$joined" in *"${POLICY_PATTERNS[$i]}"*) apply_rule "$i" ;; esac ;;
+      data) [ "$has_client" -eq 0 ] || case "$joined" in *"${POLICY_PATTERNS[$i]}"*) apply_rule "$i" ;; esac ;;
+      sql)
+        [ "$has_client" -eq 1 ] || continue
+        case "$upper" in *"$(printf '%s' "${POLICY_PATTERNS[$i]}" | tr '[:lower:]' '[:upper:]')"*) apply_rule "$i" ;; esac ;;
+    esac
+  done
 }
 
 # Checks one simple command given as words
@@ -411,15 +443,7 @@ check_command() {
     eval) analyze "${args[*]+"${args[*]}"}" ;;
   esac
 
-  local joined="${words[*]}"
-  case " $joined " in
-    *" psql "* | *" mysql "* | *" mariadb "* | *" sqlite3 "* | *" sqlcmd "* | *" mongosh "* | *" mongo "* | *" pgcli "* | *" mycli "* | */psql\ * | */mysql\ *)
-      check_database "$joined" ;;
-  esac
-  case "$joined" in
-    *migrate:fresh* | *migrate:reset* | *db:wipe* | *"db:drop"* | *"prisma migrate reset"* | *"prisma db push --force-reset"* | *"alembic downgrade base"* | *"manage.py flush"*)
-      ask "This wipes or resets a database. Confirm it targets a local/dev database." ;;
-  esac
+  check_policy "${words[*]}"
 }
 
 check_env_split() {

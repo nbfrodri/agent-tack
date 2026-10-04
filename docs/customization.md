@@ -18,6 +18,7 @@ Clone it into any directory you choose and install from that checkout, as shown 
 | Claude Code settings and registered hooks | `claude/settings.json` |
 | Installed marketplaces and plugins | `plugins.txt` |
 | Git checks and command or formatting policies | `git-hooks/` and `hooks/claude/` |
+| Commands the guard asks about or refuses | `hooks/claude/guard-policy.txt` (shared rules) or, for your machine only, `~/.config/agent-harness/guard-policy.txt` with the same `scope \| decision \| pattern \| reason` format; personal rules can only add ask or deny decisions |
 
 You can add or remove skills, agents and plugins, choose different conventions, or change the workflow itself. Keep the [architecture](architecture.md), component list and usage documentation consistent with your choices. Project-level instructions take precedence over the global rules, so preferences for a single project belong in that project's `AGENTS.md`.
 
