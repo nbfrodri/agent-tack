@@ -15,6 +15,7 @@ mods                  tack.mods                 true     bool      global  insta
 vscode-agents-md      tack.vscodeAgentsMd       true     bool      global  installer    Turn on VS Code's chat.useAgentsMdFile so Copilot Chat loads each project's AGENTS.md
 ci-watch              tack.ciWatch              true     bool      any     instruction  After a push or a new pull request, wait for CI in the background, report it and fix failures (standard, strict, unleash)
 activity-log          tack.activityLog          false    bool      any     hook         Record session starts, guard decisions and Stop findings for Claude Code and Codex; read them with tack log
+disabled-hooks        tack.disabledHooks        none     text      any     hook         Comma-separated advisory hooks to skip: session-context, fast-check, stop-check, format-file (the guard and tool-call limit always run)
 session-context-max-chars tack.sessionContextMaxChars none number any  hook         Cap the context added at session start at this many characters, dropping project context first
 state-retention-days  tack.stateRetentionDays   30       number    any     hook         Delete per-session state (tool-call counters) older than this many days at session start
 merge-requires-green  tack.mergeRequiresGreen  true     bool      any     hook         Refuse gh pr merge while the pull request's CI checks fail or are still running

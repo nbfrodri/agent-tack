@@ -16,6 +16,9 @@ client=claude
 [ "${1:-}" != --codex ] || client=codex
 # shellcheck source=SCRIPTDIR/lib/activity-log.sh
 . "$(dirname "$0")/lib/activity-log.sh"
+# shellcheck source=SCRIPTDIR/lib/hook-control.sh
+. "$(dirname "$0")/lib/hook-control.sh"
+! hook_disabled "$cwd" session-context || exit 0
 
 cli="$(cd "$(dirname "$0")/../../bin" && pwd)/tack"
 

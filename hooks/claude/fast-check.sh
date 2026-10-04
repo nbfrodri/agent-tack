@@ -16,6 +16,9 @@ except Exception:
     print("")' 2>/dev/null)"
 fi
 [ -n "$cwd" ] && [ -d "$cwd" ] || exit 0
+# shellcheck source=SCRIPTDIR/lib/hook-control.sh
+. "$(dirname "$0")/lib/hook-control.sh"
+! hook_disabled "$cwd" fast-check || exit 0
 
 cli="$(cd "$(dirname "$0")/../../bin" && pwd)/tack"
 cd "$cwd" || exit 0

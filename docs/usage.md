@@ -90,6 +90,23 @@ Start a new session after switching. Claude Code is told the status at session s
 
 A project value wins over the global one, which wins over the default. Values are validated: booleans take `true` or `false`, others list their alternatives. User-wide features refuse a project value. Secret scanning, the command guard and the protection of `main` and tags are not toggles; they keep their [one-off overrides](#overrides). Add a toggle by adding a line to `features.txt` ([customization](customization.md)).
 
+### Turning off individual hooks
+
+Skip advisory hooks by ID, for one project or everywhere. The command guard and the tool-call limit of project-only modes always run, whatever the list says, and the git hooks are separate (see [overrides](#overrides)):
+
+```bash
+tack config disabled-hooks "fast-check,stop-check"   # this project
+tack config disabled-hooks format-file --global      # everywhere
+tack config disabled-hooks --unset                   # all hooks again
+```
+
+| ID | Hook |
+| --- | --- |
+| `session-context` | Startup context, mode rules and state pruning (without it the assistant does not know tack is on) |
+| `fast-check` | The fast check after edits |
+| `stop-check` | The check before stopping |
+| `format-file` | Automatic formatting of edited files |
+
 ### Fast check after edits
 
 ```bash

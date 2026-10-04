@@ -26,6 +26,9 @@ client=claude
 cwd="$(field .cwd)"
 [ "$(field .stop_hook_active)" = true ] && exit 0
 [ -n "$cwd" ] && [ -d "$cwd" ] || exit 0
+# shellcheck source=SCRIPTDIR/lib/hook-control.sh
+. "$(dirname "$0")/lib/hook-control.sh"
+! hook_disabled "$cwd" stop-check || exit 0
 cli="$(cd "$(dirname "$0")/../../bin" && pwd)/tack"
 cd "$cwd" || exit 0
 "$cli" status --quiet || exit 0

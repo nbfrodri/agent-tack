@@ -79,6 +79,8 @@ Mods are small Claude Code plugins that change its interface; this repo ships tw
 | `guard-bash.sh` | Claude Code `PreToolUse` | Performs bounded shell analysis. Blocks recognised catastrophic commands and hook bypasses; asks before destructive operations, unsupported executable constructs or exceeded parsing limits. Structural rules (git, `rm`, wrappers, shells) live in the script; pattern rules (database clients, destructive SQL, database resets) live in `guard-policy.txt`, and users can add ask or deny rules in `~/.config/agent-tack/guard-policy.txt`. In enabled projects, before `gh pr merge` it reads the pull request's checks with `gh` (4-second limit): failing checks deny the merge, pending ones deny unless `--auto` is used, and checks it cannot read, or a merge after `cd` or with `GH_REPO`, ask (`tack config merge-requires-green`). |
 | `format-file.sh` | Claude Code `PostToolUse` | In enabled, locally trusted projects, formats each edited file with the project's own formatter. |
 
+The advisory hooks (`session-context`, `fast-check`, `stop-check`, `format-file`) first ask `hooks/claude/lib/hook-control.sh` whether `tack config disabled-hooks` lists them; the guard and `budget.sh` never ask.
+
 With `tack config activity-log true`, `session-context.sh`, `guard-bash.sh` and `stop-check.sh` also append what they did (session start and mode, deny or ask decisions, Stop findings) to `${XDG_STATE_HOME:-~/.local/state}/agent-tack/activity.log` through `hooks/claude/lib/activity-log.sh`, labelled `claude` or `codex` (Codex runs them with `--codex`); `tack log` prints the newest entries.
 
 Repos with their own local `core.hooksPath` (e.g. Husky) use only their hooks; there, Claude's `attribution` setting still prevents its trailers.

@@ -653,6 +653,32 @@ check "python file without ruff/black config untouched" "[ \"\$(cat '$P/src/a.py
 check "missing file is ignored" "format '$P/nope.ts'"
 check "always exits 0" "printf 'garbage' | bash '$FORMAT'"
 
+echo "Disabling hooks by ID (tack config disabled-hooks)"
+D="$WORK/disabled-repo"
+git init -q -b main "$D"
+git -C "$D" config tack.enabled true
+git -C "$D" config tack.trusted true
+git -C "$D" config tack.checkFast "exit 1"
+printf 'x\n' > "$D/dirty.txt"
+echo "const a=1" > "$D/a.ts"
+mkdir -p "$D/node_modules/.bin"
+cp "$P/node_modules/.bin/prettier" "$D/node_modules/.bin/prettier"
+echo '{}' > "$D/.prettierrc"
+git -C "$D" config tack.disabledHooks "session-context, fast-check,stop-check,format-file,guard,budget"
+check "disabled: session-context adds nothing" "[ -z \"\$(printf '{\"cwd\":\"%s\"}' '$D' | bash '$SESSION')\" ]"
+check "disabled: fast-check does not run the check" "[ -z \"\$(printf '{\"cwd\":\"%s\",\"tool_input\":{\"file_path\":\"%s/a.ts\"}}' '$D' '$D' | bash '$FAST')\" ]"
+check "disabled: stop-check lets the turn end" "[ -z \"\$(printf '{\"cwd\":\"%s\",\"stop_hook_active\":false}' '$D' | bash '$STOP')\" ]"
+format "$D/a.ts"
+check "disabled: format-file leaves the file alone" "[ \"\$(cat '$D/a.ts')\" = 'const a=1' ]"
+check "disabled: the guard cannot be turned off" "printf '{\"cwd\":\"%s\",\"tool_input\":{\"command\":\"git commit --no-verify\"}}' '$D' | bash '$GUARD' | grep -q '\"deny\"'"
+git -C "$D" config tack.mode unleash
+git -C "$D" config tack.unleashMaxToolCalls 1
+git -C "$D" switch -q -c feat/x
+budget s-disabled "$D" >/dev/null
+check "disabled: the tool-call limit cannot be turned off" "budget s-disabled '$D' | grep -q '\"deny\"'"
+git -C "$D" config tack.disabledHooks "fast-check"
+check "disabled: hooks not listed keep running" "printf '{\"cwd\":\"%s\",\"stop_hook_active\":false}' '$D' | bash '$STOP' | grep -q uncommitted"
+
 echo
 echo "$PASSED passed, $FAILED failed"
 [ "$FAILED" -eq 0 ]
