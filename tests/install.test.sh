@@ -295,6 +295,17 @@ check "crush not installed: ~/.config/AGENTS.md not created" "[ ! -e '$H/.config
 check "claude and codex are always configured" "[ -L '$H/.claude/CLAUDE.md' ] && [ -L '$H/.codex/AGENTS.md' ]"
 check "every tool gets the shared ~/.agents/skills" "[ \"\$(find '$H/.agents/skills' -maxdepth 1 -type l | wc -l | tr -d ' ')\" = '$skill_count' ]"
 
+echo "VS Code without the Copilot CLI"
+VSCODE_TOOLS="$WORK/fake-vscode"
+mkdir -p "$VSCODE_TOOLS"
+printf '#!/bin/sh\nexit 0\n' > "$VSCODE_TOOLS/code"
+chmod +x "$VSCODE_TOOLS/code"
+H="$WORK/vscode"
+mkdir -p "$H"
+check "exits 0 with only VS Code installed" "HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 PATH='$VSCODE_TOOLS:$MINBIN' '$REPO/install.sh' --skip-plugins >'$H.log' 2>&1"
+check "vscode: Copilot Chat gets the global instructions" "[ \"\$(readlink '$H/.copilot/copilot-instructions.md')\" = '$REPO/global/AGENTS.md' ]"
+check "vscode: Copilot Chat gets the skills" "[ \"\$(find '$H/.copilot/skills' -maxdepth 1 -type l | wc -l | tr -d ' ')\" = '$skill_count' ]"
+
 echo "Rejects unknown options"
 check "exits 2" "HOME='$WORK/opt' XDG_CONFIG_HOME='$WORK/opt/.config' GIT_CONFIG_NOSYSTEM=1 '$REPO/install.sh' --nope >/dev/null 2>&1; [ \$? -eq 2 ]"
 
