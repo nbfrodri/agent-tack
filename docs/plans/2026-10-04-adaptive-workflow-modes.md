@@ -38,6 +38,8 @@
 
 - Customization from the CLI: `harness config` to list and set feature toggles (value, source, description, whether a hook enforces it or it is an instruction) declared in a data file; safety checks (secrets, guard, protected `main`) stay outside general toggles and keep their one-off overrides. User-defined modes as data files (`modes/<name>.md`), created with `harness mode new <name> --from <mode>`, injected at session start and selectable by `auto`. Shares the configuration-as-data mechanism with the guard policy.
 
+- Token efficiency rules for every level in `dev-workflow` (plus one line in the global instructions): search before reading and read only needed ranges, no re-reading or re-verifying, batch independent tool calls, trim command output, targeted tests before one full run, concise replies and docs, economical models for mechanical delegated work, avoid commands the guard asks about. Measure with the next benchmark against this phase's results.
+
 ## Added during implementation (approved)
 
 - Startup context loads documents on demand: `auto` and `standard` index architecture and the active handoff; `strict` keeps excerpts.
