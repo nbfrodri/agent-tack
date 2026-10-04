@@ -330,6 +330,17 @@ check "--no-hooks leaves git's hooksPath alone" "! git_global '$H' --get core.ho
 check "--no-hooks still installs skills" "[ -e '$H/.agents/skills/dev-workflow' ]"
 check "--no-hooks is reported" "grep -q 'skipped (--no-hooks)' '$H.log'"
 check "--no-hooks shows no hook summary" "! grep -q 'Hooks installed' '$H.log'"
+run_install "$H"
+check "the first install that registers hooks explains them, even after --no-hooks" "grep -q 'Hooks installed' '$H.log'"
+run_install "$H" --no-hooks
+check "--no-hooks over an install removes tack's Claude Code hooks" "[ \"\$(count_ours '$H/.claude/settings.json' PreToolUse)\" = 0 ]"
+check "--no-hooks over an install removes tack's Codex hooks too" "[ \"\$(count_ours '$H/.codex/hooks.json' PreToolUse)\" = 0 ]"
+check "--no-hooks over an install says how to remove the git hooks" "grep -q 'uninstall.sh' '$H.log' && git_global '$H' --get core.hooksPath >/dev/null"
+H="$WORK/broken-first"
+mkdir -p "$H/.claude"
+echo '{broken' > "$H/.claude/settings.json"
+run_install "$H"
+check "no hook summary when registering the hooks failed" "! grep -q 'Hooks installed' '$H.log'"
 
 echo
 echo "$PASSED passed, $FAILED failed"

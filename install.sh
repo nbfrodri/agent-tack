@@ -9,8 +9,8 @@
 #     git config --global harness.mods false; --skip-plugins skips them too)
 #   - when VS Code is installed, "chat.useAgentsMdFile": true in its user settings so Copilot Chat
 #     loads each project's AGENTS.md (opt out with git config --global harness.vscodeAgentsMd false)
-#   - --no-hooks installs instructions, skills, agents and settings but registers no git, Claude Code
-#     or Codex hooks (hooks from an earlier install stay until ./uninstall.sh)
+#   - --no-hooks installs instructions, skills, agents and settings but no git, Claude Code or Codex
+#     hooks, removing tack's agent hooks from an earlier install (git hooks: ./uninstall.sh)
 #
 # Safe to re-run at any time. Existing files are backed up with a timestamp,
 # never overwritten. A failing step is reported and the rest still runs.
@@ -228,32 +228,36 @@ EOF
 #   - objects are deep-merged and the repo's values win; your other keys are kept
 #   - hooks: entries tagged "#tack" (or the former "#harness") are replaced by the repo's, your own hooks are kept
 #   - __REPO__ in the repo file is replaced with this repo's path
+# without_hooks SRC DEST: copies a settings template without its "hooks" key. Merging it
+# removes tack's tagged hooks from the destination and keeps the user's own.
+without_hooks() {
+  if has python3; then
+    python3 -c 'import json, sys
+d = json.load(open(sys.argv[1])); d.pop("hooks", None); json.dump(d, open(sys.argv[2], "w"), indent=2)' "$1" "$2"
+  else
+    jq 'del(.hooks)' "$1" > "$2"
+  fi
+}
+
 merge_settings() {
-  local claude="$REPO/claude/settings.json"
+  local claude="$REPO/claude/settings.json" codex="$REPO/codex/hooks.json"
   if [ "$NO_HOOKS" -eq 1 ]; then
     # The other Claude Code settings (attribution, permissions) still apply without hooks.
-    claude="$WORKDIR/settings-no-hooks.json"
-    if has python3; then
-      python3 -c 'import json, sys
-d = json.load(open(sys.argv[1])); d.pop("hooks", None); json.dump(d, open(sys.argv[2], "w"), indent=2)' \
-        "$REPO/claude/settings.json" "$claude" || { fail "cannot prepare settings without hooks"; return; }
-    else
-      jq 'del(.hooks)' "$REPO/claude/settings.json" > "$claude" || { fail "cannot prepare settings without hooks"; return; }
+    claude="$WORKDIR/settings-no-hooks.json" codex="$WORKDIR/codex-no-hooks.json"
+    if ! without_hooks "$REPO/claude/settings.json" "$claude" || ! without_hooks "$REPO/codex/hooks.json" "$codex"; then
+      fail "cannot prepare settings without hooks"
+      return
     fi
   fi
   merge_json "Claude Code settings" "$claude" "$HOME/.claude/settings.json"
-  if [ "$NO_HOOKS" -eq 1 ]; then
-    section "Codex hooks"
-    ok "skipped (--no-hooks)"
-    return
-  fi
-  merge_json "Codex hooks" "$REPO/codex/hooks.json" "$HOME/.codex/hooks.json"
+  merge_json "Codex hooks" "$codex" "$HOME/.codex/hooks.json"
 }
 
-# After a first install, says what each hook does and how to turn hooks off (hooks/summary.txt).
+# Explains the hooks the first time an install registers them (hooks/summary.txt), unless
+# registering them failed.
 explain_hooks() {
   local where name what
-  [ "$FIRST_INSTALL" -eq 1 ] && [ "$NO_HOOKS" -eq 0 ] && [ "$DRY_RUN" -eq 0 ] || return 0
+  [ "$HAD_HOOKS" -eq 0 ] && [ "$NO_HOOKS" -eq 0 ] && [ "$DRY_RUN" -eq 0 ] && [ "$HOOK_FAILURES" -eq 0 ] || return 0
   section "Hooks installed"
   while IFS='|' read -r where name what; do
     case "$where" in '' | '#'*) continue ;; esac
@@ -365,7 +369,12 @@ is_harness_hooks() {
 install_git_hooks() {
   section "Git hooks (global)"
   if [ "$NO_HOOKS" -eq 1 ]; then
-    ok "skipped (--no-hooks)"
+    # Restoring the user's former hooksPath is uninstall's job, from its ownership records.
+    if has git && [ "$(git config --global --get core.hooksPath 2>/dev/null)" = "$REPO/git-hooks" ]; then
+      warn "skipped (--no-hooks), but the global git hooks from an earlier install remain; ./uninstall.sh removes them"
+    else
+      ok "skipped (--no-hooks)"
+    fi
     return
   fi
   if ! has git; then
@@ -525,14 +534,16 @@ main() {
     migrate_tool_dir "${XDG_STATE_HOME:-$HOME/.local/state}" || { fail "cannot move the former state directory to agent-tack"; exit 1; }
     migrate_tool_dir "${XDG_CONFIG_HOME:-$HOME/.config}" || warn "could not move ~/.config/agent-harness to agent-tack; it is still read"
   fi
-  # A first install has no ownership records yet; it is the one that explains the hooks.
-  FIRST_INSTALL=0
-  [ -e "$(tool_dir "${XDG_STATE_HOME:-$HOME/.local/state}")/ownership" ] || FIRST_INSTALL=1
+  # The hooks are explained the first time they are registered: no tagged hooks exist yet.
+  HAD_HOOKS=0
+  grep -qsE '#(tack|harness)' "$HOME/.claude/settings.json" "$HOME/.codex/hooks.json" && HAD_HOOKS=1
   ownership_init || exit 1
   capture_harness_hooks
   install_links
+  HOOK_FAILURES="$FAILURES"
   merge_settings
   install_git_hooks
+  HOOK_FAILURES=$((FAILURES - HOOK_FAILURES))
   install_plugins
   install_mods
   install_vscode
