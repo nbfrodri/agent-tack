@@ -558,6 +558,7 @@ git -C "$A" config tack.activityLog true
 deny_in
 check "activity log: guard decisions are recorded" "grep -q 'claude.*guard deny.*no-verify' '$LOG'"
 deny_in --codex
+check "activity log: only the user can read it (it may hold commands)" "[ \"\$(ls -l '$LOG' | cut -c1-10)\" = '-rw-------' ]"
 check "activity log: Codex runs are labelled" "grep -q 'codex.*guard deny' '$LOG'"
 printf '{"cwd":"%s"}' "$A" | bash "$SESSION" >/dev/null
 check "activity log: session starts are recorded with the mode" "grep -q 'session-start.*mode=auto' '$LOG'"

@@ -31,7 +31,7 @@ Commands:
   doctor              Diagnose installation and project state without changes
   log [N]             Print the last N (default 20) activity log entries; turn the
                       log on with: tack config activity-log true
-  context            Print project instructions plus an index (or, in strict
+  context             Print project instructions plus an index (or, in strict
                       mode, excerpts) of architecture and the active handoff
   help                Show this help (also works outside a Git repository)
 

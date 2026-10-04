@@ -5,6 +5,8 @@ import type { Usage, UsageWindow } from '../types'
 
 const usage = atom({ plugin: 'usage-band', key: 'usage' } as const, { windows: [] } as Usage)
 const isHidden = atom({ plugin: 'usage-band', key: 'isHidden' } as const, false)
+// An atom, not a local, so setting it re-renders the band as soon as the mode is known.
+const chip = atom({ plugin: 'usage-band', key: 'chip' } as const, 'tack · off')
 
 const LABELS: Record<string, string> = { five_hour: '5h', seven_day: '7d', spend_limit: 'spend' }
 const WARN_AT = [80, 90]
@@ -72,7 +74,6 @@ export function overBudget(costUsd: number | undefined, limitUsd: number | undef
 
 export const register: Register = on => {
   let limitUsd: number | undefined
-  let chip = 'tack · off'
 
   on('session.start', async ($, e, next) => {
     const { context, rateLimits, cost } = await $.session.usage()
@@ -88,9 +89,10 @@ export const register: Register = on => {
     try {
       const status = await $.process.run(['tack', 'status', '--quiet'], { timeoutMs: 5000 })
       const mode = await $.process.run(['tack', 'mode'], { timeoutMs: 5000 })
-      chip = modeChip(status.exitCode, mode.exitCode === 0 ? mode.stdout : '')
+      const label = modeChip(status.exitCode, mode.exitCode === 0 ? mode.stdout : '')
+      await update($, chip, () => label)
     } catch {
-      chip = 'tack · off'
+      await update($, chip, () => 'tack · off')
     }
     return next(e)
   })
@@ -129,7 +131,7 @@ export const register: Register = on => {
 
     return (
       <Box flexDirection="row" gap={3}>
-        <Text color="cyan">{chip}</Text>
+        <Text color="cyan">{await read($, chip)}</Text>
         {!hasData && <Text dimColor>usage: waiting for the first response</Text>}
         {current.windows.map(window => (
           <Box key={window.kind} flexDirection="row" gap={1}>
