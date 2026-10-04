@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Validates the repo's content: skill and agent frontmatter, description budget, cross-references
-# between skills, agents and docs, README coverage, plugins.txt and git-hooks/.
+# between skills, agents and docs, components list coverage, plugins.txt and git-hooks/.
 # Usage: tests/validate.sh [repo dir]   (defaults to this repo)
 set -uo pipefail
 
@@ -65,7 +65,7 @@ for agent in "$REPO"/agents/*.md; do
   echo "  ✔ $(basename "$agent" .md)"
 done
 
-echo "Cross-references and README"
+echo "Cross-references and components list"
 # Paths like ~/.agents/skills/<skill>/... and ~/.agents/harness/... are what agents and skills
 # read at runtime; references/x.md belongs to the skill it's written in unless another skill is
 # named next to it ("`dev-workflow` → `references/x.md`" or "dev-workflow/references/x.md").
@@ -97,10 +97,10 @@ for doc in docs:
             if not (repo / "skills" / owner / "references" / m.group(3)).exists():
                 print(f"{rel}:{n}: {owner}/references/{m.group(3)} does not exist")
 
-readme = (repo / "README.md").read_text()
+components = (repo / "docs/components.md").read_text()
 for name in sorted(skills | agents):
-    if f"`{name}`" not in readme:
-        print(f"README.md: `{name}` is not documented")
+    if f"`{name}`" not in components:
+        print(f"docs/components.md: `{name}` is not documented")
 PY
 )"; then
   while IFS= read -r problem; do
