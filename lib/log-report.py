@@ -14,8 +14,18 @@ import os
 import sys
 
 
+HOME = os.path.expanduser("~")
+
+
+def project_name(path):
+    """The project's path, shortened under the home folder; two repos named alike stay apart."""
+    path = path.rstrip("/") or path
+    return "~" + path[len(HOME):] if HOME != "/" and (path == HOME or path.startswith(HOME + "/")) else path
+
+
 def entries(path, days):
     since = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=days)
+    first = None
     with open(path, encoding="utf-8", errors="replace") as handle:
         for line in handle:
             parts = line.rstrip("\n").split("\t")
@@ -25,15 +35,20 @@ def entries(path, days):
                 when = datetime.datetime.strptime(parts[0], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=datetime.timezone.utc)
             except ValueError:
                 continue
+            first = when if first is None else min(first, when)
             if when >= since:
-                yield when, parts[1], os.path.basename(parts[2].rstrip("/")) or parts[2], parts[3], parts[4]
+                yield when, parts[1], project_name(parts[2]), parts[3], parts[4]
+    # The log keeps only its newest lines; say so when the period reaches past them.
+    if first and first > since:
+        print(f"The log only goes back to {first.date().isoformat()}; older entries were rotated out.",
+              file=sys.stderr)
 
 
 def prices(path):
     table = {}
     if not os.path.isfile(path):
         return table
-    for line in open(path, encoding="utf-8"):
+    for line in open(path, encoding="utf-8", errors="replace"):
         fields = [field.strip() for field in line.split("|")]
         if len(fields) != 5 or fields[0].startswith("#"):
             continue
@@ -70,7 +85,7 @@ def cost(log, days, as_csv, pricing):
         rate = rates.get(key[3])
         usd = "%.2f" % (sum(count * price for count, price in zip(sums, rate)) / 1_000_000) if rate else "-"
         rows.append(list(key) + sums + [usd])
-    header = ["day", "project", "tool", "model", "input", "output", "cache_read", "cache_write", "usd"]
+    header = ["day_utc", "project", "tool", "model", "input", "output", "cache_read", "cache_write", "usd"]
     if as_csv:
         writer = csv.writer(sys.stdout, lineterminator="\n")
         writer.writerow(header)

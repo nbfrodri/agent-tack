@@ -2,7 +2,7 @@
 # Opt-in activity log shared by the hooks (`tack config activity-log true`, read with `tack log`).
 # activity_log CWD CLIENT EVENT DETAIL appends one tab-separated line; it never fails the hook.
 
-ACTIVITY_LOG_MAX_LINES=5000
+ACTIVITY_LOG_MAX_LINES=20000
 
 # activity_log_enabled DIR: succeeds when `tack config activity-log` is true for DIR.
 activity_log_enabled() {
@@ -11,6 +11,19 @@ activity_log_enabled() {
   [ -x "$cli" ] || return 1
   setting="$(cd "$1" 2>/dev/null && "$cli" config activity-log 2>/dev/null)" || return 1
   [ "${setting%% *}" = true ]
+}
+
+# start_turns DIR CLIENT SESSION TRANSCRIPT: at session start, marks where the transcript ends,
+# so record_turn counts only what this session adds.
+start_turns() {
+  local session="$3" transcript="$4" dir
+  case "$session" in '' | *[!A-Za-z0-9_-]*) return 0 ;; esac
+  [ -f "$transcript" ] && command -v python3 >/dev/null 2>&1 || return 0
+  activity_log_enabled "$1" || return 0
+  dir="${XDG_STATE_HOME:-$HOME/.local/state}/agent-tack/turns"
+  (umask 077; mkdir -p "$dir") 2>/dev/null || return 0
+  python3 "$(dirname "${BASH_SOURCE[0]}")/turn-report.py" "$transcript" "$2" fixed "$dir/$session" --init 2>/dev/null
+  return 0
 }
 
 # record_turn DIR CLIENT SESSION TRANSCRIPT: logs tokens, skills, agents and the stated level

@@ -629,15 +629,6 @@ check "activity log: turning it off stops recording" "[ \"\$(grep -c 'guard deny
 echo "Turn metrics from transcripts (activity log)"
 git -C "$A" config tack.activityLog true
 rm -f "$A/dirty.txt"
-TR="$WORK/claude-transcript.jsonl"
-# Two entries share message m1, as Claude Code writes one entry per content block.
-cat > "$TR" <<'JSONL'
-{"type":"user","message":{"role":"user","content":"Fix the login bug"}}
-{"type":"assistant","message":{"id":"m1","model":"claude-test","usage":{"input_tokens":10,"output_tokens":5,"cache_read_input_tokens":100,"cache_creation_input_tokens":20},"content":[{"type":"text","text":"Nivel: **strict** (touches auth); the plan is approved, so I start"}]}}
-{"type":"assistant","message":{"id":"m0","model":"<synthetic>","usage":{"input_tokens":0,"output_tokens":0},"content":[{"type":"text","text":"No response requested."}]}}
-{"type":"assistant","message":{"id":"m1","model":"claude-test","usage":{"input_tokens":10,"output_tokens":5,"cache_read_input_tokens":100,"cache_creation_input_tokens":20},"content":[{"type":"tool_use","name":"Skill","input":{"skill":"dev-workflow"}}]}}
-{"type":"assistant","message":{"id":"m2","model":"claude-test","usage":{"input_tokens":1,"output_tokens":2,"cache_read_input_tokens":0,"cache_creation_input_tokens":0},"content":[{"type":"tool_use","name":"Agent","input":{"subagent_type":"code-reviewer","prompt":"x"}}]}}
-JSONL
 # logged [CLIENT] EVENT DETAIL: the log has that event with a detail starting with DETAIL.
 logged() {
   local tab client
@@ -646,39 +637,70 @@ logged() {
   [ "$#" -lt 3 ] || { client="$1"; shift; }
   grep -q "^[^${tab}]*${tab}${client}${tab}[^${tab}]*${tab}$1${tab}$2" "$LOG"
 }
-stop_turn() { printf '{"cwd":"%s","session_id":"%s","transcript_path":"%s","stop_hook_active":false}' "$A" "$1" "$2" | bash "$STOP" "${@:3}" >/dev/null; }
+hook_input() { printf '{"cwd":"%s","session_id":"%s","transcript_path":"%s","stop_hook_active":%s}' "$A" "$1" "$2" "$3"; }
+start_session() { hook_input "$1" "$2" false | bash "$SESSION" "${@:3}" >/dev/null; }
+stop_turn() { hook_input "$1" "$2" false | bash "$STOP" "${@:3}" >/dev/null; }
+stop_again() { hook_input "$1" "$2" true | bash "$STOP" "${@:3}" >/dev/null; }
+TR="$WORK/s-claude.jsonl"
+# History from before this session started (a resumed session) must not count as today's turn.
+printf '%s\n' '{"type":"assistant","message":{"id":"m-old","model":"claude-test","usage":{"input_tokens":999,"output_tokens":999},"content":[{"type":"text","text":"Level: lite (old task)"}]}}' > "$TR"
+start_session s-claude "$TR"
+check "metrics: session start remembers where the transcript ends" "[ -s '$WORK/state/agent-tack/turns/s-claude' ]"
+# Two entries share message m1, as Claude Code writes one entry per content block.
+cat >> "$TR" <<'JSONL'
+{"type":"user","message":{"role":"user","content":"Fix the login bug"}}
+{"type":"assistant","message":{"id":"m1","model":"claude-test","usage":{"input_tokens":10,"output_tokens":5,"cache_read_input_tokens":100,"cache_creation_input_tokens":20},"content":[{"type":"text","text":"**Level:** strict (touches auth); the plan is approved, so I start.\nPython: standard library only\nNote: strict mode is off\nSummary:\n\nStandard tests pass"}]}}
+{"type":"assistant","message":{"id":"m0","model":"<synthetic>","usage":{"input_tokens":0,"output_tokens":0},"content":[{"type":"text","text":"No response requested."}]}}
+{"type":"assistant","message":{"id":"m1","model":"claude-test","usage":{"input_tokens":10,"output_tokens":5,"cache_read_input_tokens":100,"cache_creation_input_tokens":20},"content":[{"type":"tool_use","name":"Skill","input":{"skill":"dev-workflow"}}]}}
+{"type":"assistant","message":{"id":"m2","model":"claude-test","usage":{"input_tokens":1,"output_tokens":2,"cache_read_input_tokens":0,"cache_creation_input_tokens":0},"content":[{"type":"tool_use","name":"Agent","input":{"subagent_type":"code-reviewer","prompt":"x"}},{"type":"tool_use","name":"Edit","input":{"file_path":"/x"}}]}}
+JSONL
+mkdir -p "$WORK/s-claude/subagents"
+printf '%s\n' '{"type":"assistant","message":{"id":"s1","model":"claude-sub","usage":{"input_tokens":7,"output_tokens":8},"content":[{"type":"text","text":"done"}]}}' > "$WORK/s-claude/subagents/agent-1.jsonl"
 stop_turn s-claude "$TR"
+check "metrics: history from before the session is not counted" "! grep -q 'input=1010' '$LOG' && ! logged level lite"
 check "metrics: tokens are recorded once per message and model" "grep -q 'turn.*model=claude-test input=11 output=7 cache_read=100 cache_write=20' '$LOG'"
+check "metrics: subagent transcripts add their tokens" "grep -q 'turn.*model=claude-sub input=7 output=8' '$LOG'"
 check "metrics: loaded skills are recorded" "logged skill dev-workflow"
 check "metrics: subagents are recorded by type" "logged agent code-reviewer"
-check "metrics: the stated level is recorded in any language" "logged level strict"
+check "metrics: a bold label still marks the level" "logged level strict"
 check "metrics: the level's reason is the text in its parentheses" "grep -q \"\$(printf 'level\\tstrict touches auth')\$\" '$LOG'"
+check "metrics: prose that names a mode is not a level" "[ \"\$(grep -c \"\$(printf '\\tlevel\\t')\" '$LOG')\" = 1 ]"
 check "metrics: synthetic messages are not counted as a model" "! grep -q 'model=<synthetic>' '$LOG'"
 turns_before="$(grep -c 'turn' "$LOG")"
 stop_turn s-claude "$TR"
 check "metrics: a second stop with nothing new records nothing" "[ \"\$(grep -c 'turn' '$LOG')\" = '$turns_before' ]"
-printf '%s\n' '{"type":"assistant","message":{"id":"m3","model":"claude-test","usage":{"input_tokens":3,"output_tokens":4},"content":[{"type":"tool_use","name":"Edit","input":{"file_path":"/x"}}]}}' >> "$TR"
-stop_turn s-claude "$TR"
+# Stop-hook feedback and task notifications arrive as user entries but are not new tasks.
+printf '%s\n' '{"type":"user","isMeta":true,"message":{"role":"user","content":"Stop hook feedback: refresh the handoff"}}' \
+  '{"type":"user","origin":{"kind":"task-notification"},"message":{"role":"user","content":[{"type":"text","text":"<task-notification>done</task-notification>"}]}}' \
+  '{"type":"assistant","message":{"id":"m3","model":"claude-test","usage":{"input_tokens":3,"output_tokens":4},"content":[{"type":"tool_use","name":"Edit","input":{"file_path":"/x"}}]}}' >> "$TR"
+stop_again s-claude "$TR"
 check "metrics: only the new part of the transcript counts" "grep -q 'model=claude-test input=3 output=4' '$LOG'"
-check "metrics: an auto turn with edits and no level is recorded as missing" "logged level missing"
+check "metrics: edits after a stop-check request keep the task's level" "! logged level missing"
+printf '%s\n' '{"type":"user","message":{"role":"user","content":"Now fix the signup page too"}}' '{"type":"assistant","message":{"id":"m4","model":"claude-test","usage":{"input_tokens":1,"output_tokens":1},"content":[{"type":"tool_use","name":"Edit","input":{"file_path":"/y"}}]}}' >> "$TR"
+stop_turn s-claude "$TR"
+check "metrics: a new task with edits and no level is recorded as missing" "logged level missing"
 CX="$WORK/codex-rollout.jsonl"
-cat > "$CX" <<'JSONL'
+: > "$CX"
+start_session s-codex "$CX" --codex
+cat >> "$CX" <<'JSONL'
 {"type":"turn_context","payload":{"model":"gpt-test","cwd":"/x"}}
-{"type":"response_item","payload":{"type":"message","role":"assistant","content":[{"type":"output_text","text":"Level: lite (one-line fix)"}]}}
+{"type":"response_item","payload":{"type":"message","role":"assistant","content":[{"type":"output_text","text":"Nivel: lite (one-line fix)"}]}}
 {"type":"response_item","payload":{"type":"custom_tool_call","name":"exec","input":"cat ~/.codex/skills/debugging/SKILL.md"}}
 {"type":"response_item","payload":{"type":"function_call","name":"spawn_agent","arguments":"{\"task_name\":\"review\",\"model\":\"gpt-mini\"}"}}
-{"type":"event_msg","payload":{"type":"token_count","info":{"last_token_usage":{"input_tokens":50,"cached_input_tokens":40,"cache_write_input_tokens":0,"output_tokens":6}}}}
-{"type":"event_msg","payload":{"type":"token_count","info":{"last_token_usage":{"input_tokens":5,"cached_input_tokens":0,"cache_write_input_tokens":2,"output_tokens":1}}}}
+{"type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":50,"output_tokens":6},"last_token_usage":{"input_tokens":50,"cached_input_tokens":40,"cache_write_input_tokens":0,"output_tokens":6}}}}
+{"type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":50,"output_tokens":6},"last_token_usage":{"input_tokens":50,"cached_input_tokens":40,"cache_write_input_tokens":0,"output_tokens":6}}}}
+{"type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":55,"output_tokens":7},"last_token_usage":{"input_tokens":5,"cached_input_tokens":0,"cache_write_input_tokens":2,"output_tokens":1}}}}
 JSONL
 stop_turn s-codex "$CX" --codex
-check "metrics: Codex tokens are summed per turn" "grep -q 'codex.*turn.*model=gpt-test input=55 output=7 cache_read=40 cache_write=2' '$LOG'"
+check "metrics: Codex input excludes the cached part it already contains, and repeated counts are skipped" "grep -q 'codex.*turn.*model=gpt-test input=13 output=7 cache_read=40 cache_write=2' '$LOG'"
 check "metrics: Codex skills read from SKILL.md are recorded" "logged codex skill debugging"
 check "metrics: Codex subagents are recorded by model" "logged codex agent gpt-mini"
-check "metrics: Codex levels are recorded" "logged codex level lite"
+check "metrics: Codex levels are recorded in any language" "logged codex level lite"
 printf 'not json\n' > "$WORK/garbage.jsonl"
 check "metrics: an unknown transcript never fails the stop" "stop_turn s-garbage '$WORK/garbage.jsonl'"
 git -C "$A" config tack.activityLog false
 lines_off="$(wc -l < "$LOG")"
+start_session s-off "$TR"
 stop_turn s-off "$TR"
 check "metrics: nothing is parsed or recorded with the log off" "[ \"\$(wc -l < '$LOG')\" = '$lines_off' ] && [ ! -e '$WORK/state/agent-tack/turns/s-off' ]"
 

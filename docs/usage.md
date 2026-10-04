@@ -144,7 +144,7 @@ tack config merge-requires-green false   # let gh pr merge through without check
 
 ### Activity log
 
-An opt-in log of what the hooks did, for Claude Code and Codex: session starts with their mode, every guard decision (deny or ask) with the command, and the findings of the check before stopping. At each stop it also reads the turn from the tool's transcript and records the tokens used per model, the skills loaded, the subagents started and the workflow level the assistant stated (`level missing` when an `auto` turn edited files without stating one), so you can audit how tasks were classified. Lines are tab-separated (UTC time, tool, project, event, detail) in `~/.local/state/agent-tack/activity.log`, kept to the newest few thousand. The file is readable only by you, because logged commands may contain tokens; it never leaves your machine.
+An opt-in log of what the hooks did, for Claude Code and Codex: session starts with their mode, every guard decision (deny or ask) with the command, and the findings of the check before stopping. At each stop it also reads the turn from the tool's transcript and records the tokens used per model, the skills loaded, the subagents started and the workflow level the assistant stated (`level missing` when an `auto` turn edited files without stating one), so you can audit how tasks were classified. Lines are tab-separated (UTC time, tool, project, event, detail) in `~/.local/state/agent-tack/activity.log`, kept to the newest 20,000 lines or so. The file is readable only by you, because logged commands may contain tokens; it never leaves your machine.
 
 ```bash
 tack config activity-log true --global   # record in every project (or drop --global for one)
@@ -163,7 +163,13 @@ Transcripts carry tokens, not prices, and tack ships no price list because price
 claude-sonnet-5-5 | 3 | 15 | 0.3 | 3.75
 ```
 
-Tools that do not pass a transcript to their Stop hook, or whose format tack does not recognise, record `turn unknown` instead of guessing.
+How the numbers are counted, and their limits:
+
+- Counting starts when a session starts (or resumes) with the log on, so earlier history is never logged as new work; input tokens exclude cached ones for every tool, and repeated counts are skipped.
+- Claude Code subagents add their tokens from their own transcripts; Codex subagents (`spawn_agent`) keep separate rollouts that tack does not read yet, so Codex totals leave them out.
+- A task is a person's prompt; hook feedback, notifications and agent messages are not. A short follow-up ("yes, go on") counts as a new task, so `level missing` is an upper bound.
+- Days are UTC (`day_utc`); projects are shown by path. When a report's period reaches past the oldest kept entry, it says where the log starts.
+- Tools that do not pass a transcript to their Stop hook, or whose format tack does not recognise, record `turn unknown` instead of guessing.
 
 ## Workflow modes
 

@@ -259,22 +259,27 @@ case "$cmd" in
     exit
     ;;
   log)
-    report='' days=30 csv=0 count=20
+    report='' days='' csv=0 count=''
+    log_usage() { echo "tack: $1 (see --help)" >&2; exit 2; }
     while [ "$#" -gt 0 ]; do
       case "$1" in
-        --cost) report=cost ;;
-        --skills) report=skills ;;
-        --levels) report=levels ;;
+        --cost | --skills | --levels) [ -z "$report" ] || log_usage 'log takes one report'; report="${1#--}" ;;
         --csv) csv=1 ;;
-        --days) days="${2:-}"; shift ;;
-        -*) echo "tack: unknown option for log: $1 (see --help)" >&2; exit 2 ;;
-        *) count="$1" ;;
+        --days) days="${2:-}"; [ "$#" -gt 1 ] && shift ;;
+        -*) log_usage "unknown option for log: $1" ;;
+        *) [ -z "$count" ] || log_usage 'log takes one number of entries'; count="$1" ;;
       esac
       shift
     done
+    # A count belongs to the plain listing; --days and --csv to a report.
+    if [ -n "$report" ]; then
+      [ -z "$count" ] || log_usage 'a number of entries does not apply to a report; use --days'
+    else
+      [ "$csv" -eq 0 ] && [ -z "$days" ] || log_usage '--csv and --days need --cost, --skills or --levels'
+    fi
+    count="${count:-20}" days="${days:-30}"
     if ! printf '%s' "$count" | grep -qE '^[1-9][0-9]*$' || ! printf '%s' "$days" | grep -qE '^[1-9][0-9]*$'; then
-      echo "tack: log takes a positive number of entries, and --days a positive number of days (see --help)" >&2
-      exit 2
+      log_usage 'log takes a positive number of entries, and --days a positive number of days'
     fi
     log_file="${XDG_STATE_HOME:-$HOME/.local/state}/agent-tack/activity.log"
     if [ ! -s "$log_file" ]; then
