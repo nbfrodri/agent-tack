@@ -34,3 +34,9 @@
 
 - Guard policy as versioned data (e.g. a policy file read by `guard-bash.sh`) so rules change without code edits.
 - Feedback hooks: PostToolUse running fast lint/tests and returning failures to the agent; Stop hook warning about uncommitted work or failing tests.
+- Installer robustness for tool churn: `harness doctor --tools` smoke test against installed CLIs; weekly CI job installing the latest Claude Code and Codex to run it; per-tool adapters as data with minimum versions and capabilities (start with Codex hooks and agents if confirmed).
+
+## Added during implementation (approved)
+
+- Startup context loads documents on demand: `auto` and `standard` index architecture and the active handoff; `strict` keeps excerpts.
+- The workflow maps each change's impact (callers, tests, CLI help, docs), prefers the smallest modular change and raises architecture or scalability concerns before restructuring.
