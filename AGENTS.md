@@ -7,7 +7,7 @@ Architecture and execution flows: `docs/architecture.md`; keep it current when c
 - Lint: `shellcheck -x install.sh uninstall.sh bin/harness lib/*.sh tests/*.sh evals/run.sh git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push git-hooks/pre-commit hooks/claude/*.sh hooks/claude/lib/*.sh`
 - Validate skills, agents and cross-references: `tests/validate.sh` (its own tests: `tests/validate.test.sh`)
 - Test lifecycle and diagnostics: `tests/lifecycle.test.sh && tests/doctor.test.sh`
-- Test installer, tools and hooks: `tests/install.test.sh && tests/tools.test.sh && tests/hooks.test.sh`
+- Test installer, tools and hooks: `tests/install.test.sh && tests/tools.test.sh && tests/hooks.test.sh && tests/mods.test.sh && tests/vscode.test.sh && tests/codex.test.sh`
 - Audit regressions and context: `tests/cli.test.sh && tests/settings.test.sh && tests/safety.test.sh && tests/guard.test.sh && tests/evals.test.sh`
 - Apply locally: `./install.sh` (idempotent)
 

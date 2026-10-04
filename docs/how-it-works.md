@@ -10,7 +10,7 @@ Paths come from each tool's documentation and live in `targets.txt` (add a line 
 | Tool | Global instructions | Skills | Agents and hooks |
 | --- | --- | --- | --- |
 | Claude Code | `~/.claude/CLAUDE.md` | `~/.claude/skills` | ✔ |
-| Codex | `~/.codex/AGENTS.md` | `~/.codex/skills` | — |
+| Codex | `~/.codex/AGENTS.md` | `~/.codex/skills` | ✔ (generated `~/.codex/agents/*.toml`, hooks in `~/.codex/hooks.json`) |
 | Gemini CLI | `~/.gemini/GEMINI.md` | `~/.agents/skills` | — |
 | GitHub Copilot (CLI, and Copilot Chat in VS Code) | `~/.copilot/copilot-instructions.md` | `~/.copilot/skills` | — |
 | OpenCode | `~/.config/opencode/AGENTS.md` | `~/.agents/skills` | — |
@@ -22,7 +22,7 @@ Claude Code and Codex are always configured; the others only when installed. The
 ### VS Code
 
 - **Claude Code and Codex extensions** use the same configuration as their CLIs (`~/.claude`, `~/.codex`), so they get the harness's instructions, skills, agents, hooks and mods without extra steps.
-- **GitHub Copilot Chat** reads the user instructions in `~/.copilot/copilot-instructions.md` and the skills in `~/.agents/skills`, `~/.claude/skills` and `~/.copilot/skills`, all installed by the harness. In a project, it also reads `AGENTS.md` when the `chat.useAgentsMdFile` setting is on. Claude Code hooks, mods and subagents do not apply to Copilot; the git hooks still do.
+- **GitHub Copilot Chat** reads the user instructions in `~/.copilot/copilot-instructions.md` and the skills in `~/.agents/skills`, `~/.claude/skills` and `~/.copilot/skills`, all installed by the harness. In a project, it also reads `AGENTS.md` when the `chat.useAgentsMdFile` setting is on, which the installer turns on. Claude Code hooks, mods and subagents do not apply to Copilot; the git hooks still do.
 
 ### `targets.txt` columns
 One line per tool; `-` means unsupported or none. Files with only the first five columns still work.
@@ -52,6 +52,7 @@ Codex 0.160.0 supports both (`codex features list`: `hooks` and `multi_agent` st
 | Command | Links `bin/harness` into `~/.local/bin`, and the repo into `~/.agents/harness`. |
 | Plugins | Adds the marketplaces in `plugins.txt` and installs or updates each plugin. |
 | Mods | Adds the local marketplace `agent-harness-mods` (the repo's `plugins/` folder) and installs or updates each mod in it, so Claude Code loads them in every session without flags. |
+| VS Code | When `code`, `code-insiders` or `codium` is on `PATH`, adds `"chat.useAgentsMdFile": true` to that editor's user `settings.json` so Copilot Chat loads each project's `AGENTS.md`. It creates the file if absent, never changes an existing value, and leaves a file with comments or trailing commas alone (with a warning). Skip it with `git config --global harness.vscodeAgentsMd false`; `--skip-plugins` does not skip it. Uninstall removes the key only if it still holds the installed value, and deletes a file the installer created only if nothing else is in it. |
 | Migration | Cleans up installs from when the project was called agent-config. |
 
 Safety: existing files are moved to `<name>.bak-<timestamp>`, never overwritten; an invalid `settings.json` is left untouched; links of deleted skills are pruned; missing tools are skipped with a warning; a failed step doesn't stop the rest and makes the exit code non-zero. Re-running is always safe. `--skip-plugins` works offline.

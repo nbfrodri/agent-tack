@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Validate private ownership records and conservatively undo installed changes."""
 import copy
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -11,9 +12,14 @@ import subprocess
 import sys
 import tempfile
 
+import vscode_settings
+
 MISSING = object()
+VSCODE_PRODUCTS = ("Code", "Code - Insiders", "VSCodium")
 MOD_NAME = re.compile(r"[a-z0-9][a-z0-9._-]*")
 MOD_ID = re.compile(r"[a-z0-9][a-z0-9._-]*@[a-z0-9][a-z0-9._-]*")
+GENERATED_NAME = re.compile(r"[a-z0-9][a-z0-9-]*\.toml")
+SHA256 = re.compile(r"[0-9a-f]{64}")
 
 
 def read(path):
@@ -58,6 +64,14 @@ def expected_link(path, target, home, repo, declaration):
     if parent == home + "/.claude/agents" and name.endswith(".md"):
         return target == repo + "/agents/" + name
     return False
+
+
+def vscode_settings_paths(home):
+    home = home.rstrip("/")
+    config = os.environ.get("XDG_CONFIG_HOME", home + "/.config")
+    return {base + "/" + product + "/User/settings.json"
+            for base in (config, home + "/Library/Application Support")
+            for product in VSCODE_PRODUCTS}
 
 
 def validate(state, home):
@@ -112,7 +126,7 @@ def validate(state, home):
                 if not plain_path(backup) or not backup.startswith(path + ".bak-") or "/" in backup[len(path):]:
                     raise ValueError("backup is not adjacent to its managed path")
         elif kind == "settings":
-            if path != home.rstrip("/") + "/.claude/settings.json":
+            if path not in (home.rstrip("/") + "/.claude/settings.json", home.rstrip("/") + "/.codex/hooks.json"):
                 raise ValueError("unexpected settings path")
             for name in ("before", "after", "managed"):
                 with (entry / name).open() as stream:
@@ -127,11 +141,20 @@ def validate(state, home):
                 raise ValueError("unexpected Git config path")
             if "\n" in (entry / "before").read_text():
                 raise ValueError("unsupported multiline Git baseline")
+        elif kind == "generated":
+            parent, name = os.path.split(path)
+            if parent != home.rstrip("/") + "/.codex/agents" or not GENERATED_NAME.fullmatch(name):
+                raise ValueError("unexpected generated file")
+            if not SHA256.fullmatch(read(entry / "sha256")):
+                raise ValueError("invalid generated file checksum")
         elif kind in ("mod", "modmarket"):
             name = read(entry / ("plugin" if kind == "mod" else "marketplace"))
             pattern = MOD_ID if kind == "mod" else MOD_NAME
             if not pattern.fullmatch(name) or path != home.rstrip("/") + "/.claude/plugins/" + name:
                 raise ValueError("unexpected mod record")
+        elif kind == "vscode":
+            if path not in vscode_settings_paths(home) or read(entry / "created") not in ("0", "1"):
+                raise ValueError("unexpected VS Code settings record")
         else:
             raise ValueError("unknown ownership kind")
     return sorted(entries.iterdir(), key=lambda p: int(p.name))
@@ -311,6 +334,17 @@ def uninstall_entry(entry, dry_run):
     if not same_parent(entry, path):
         print(f"preserved changed parent: {path}")
         return False
+    if kind == "generated":
+        if not path.is_file() or path.is_symlink():
+            print(f"generated file already removed: {path}")
+            return True
+        if hashlib.sha256(path.read_bytes()).hexdigest() != read(entry / "sha256"):
+            print(f"preserved edited generated file: {path}")
+            return False
+        print(f"{'would remove' if dry_run else 'remove'} generated file: {path}")
+        if not dry_run:
+            path.unlink()
+        return True
     if kind == "link":
         if not path.is_symlink() or os.readlink(path) != read(entry / "target"):
             print(f"preserved changed or missing link: {path}")
@@ -332,6 +366,14 @@ def uninstall_entry(entry, dry_run):
     if path.is_symlink() or not path.is_file():
         print(f"preserved changed or missing {kind} file: {path}")
         return False
+    if kind == "vscode":
+        outcome = vscode_settings.remove(str(path), read(entry / "created") == "1", dry_run)
+        if outcome == "preserved":
+            print(f"preserved VS Code settings (value changed or not plain JSON): {path}")
+            return False
+        verb = {"deleted": "delete created file", "removed": "remove chat.useAgentsMdFile from"}[outcome]
+        print(f"{'would ' if dry_run else ''}{verb} {path}")
+        return True
     if kind == "settings":
         with path.open() as stream:
             current = json.load(stream)

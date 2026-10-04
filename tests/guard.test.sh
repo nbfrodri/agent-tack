@@ -26,14 +26,14 @@ guard = repo / "hooks/claude/guard-bash.sh"
 failed = 0
 passed = 0
 
-def expect(expected, command, name=None, path=None, reason=None, script=None, cwd=None):
+def expect(expected, command, name=None, path=None, reason=None, script=None, cwd=None, args=()):
     global failed, passed
     environment = dict(os.environ)
     if path is not None:
         environment["PATH"] = str(path)
     try:
         result = subprocess.run(
-            ["bash", str(script or guard)],
+            ["bash", str(script or guard), *args],
             input=json.dumps({"tool_input": {"command": command}, "cwd": str(cwd or work)}),
             text=True, capture_output=True, env=environment, timeout=8,
         )
@@ -166,6 +166,11 @@ expect("ask", "git reset --hard HEAD~1", "an invalid mode keeps asking", cwd=pro
 subprocess.run(["git", "-C", str(project), "config", "harness.enabled", "false"], check=True)
 subprocess.run(["git", "-C", str(project), "config", "harness.mode", "unleash"], check=True)
 expect("ask", "git reset --hard HEAD~1", "unleash needs the workflow enabled", cwd=project)
+# Codex runs a command when a hook answers "ask", so under --codex every ask becomes a deny.
+expect("deny", "git reset --hard HEAD~1", "codex: an ask becomes a deny", reason="confirmation", args=("--codex",))
+expect("deny", "cat <<'EOF' | python3\nprint(1)\nEOF", "codex: opaque commands are refused", args=("--codex",))
+expect("deny", "git commit --no-verify -m 'fix: x'", "codex: deny rules stay deny", args=("--codex",))
+expect("allow", "git status", "codex: safe commands pass", args=("--codex",))
 bare = work / "bare-guard"
 (bare / "lib").mkdir(parents=True)
 (bare / "guard-bash.sh").write_text(guard.read_text())

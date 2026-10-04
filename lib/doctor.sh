@@ -15,6 +15,8 @@ fail() { [ "$QUIET" -eq 1 ] || printf 'FAIL %s\n' "$1"; FAILURES=$((FAILURES + 1
 has() { command -v "$1" >/dev/null 2>&1; }
 # shellcheck source=lib/mods.sh
 source "$REPO/lib/mods.sh"
+# shellcheck source=lib/vscode.sh
+source "$REPO/lib/vscode.sh"
 expand_home() {
   case "$1" in '~'/*) printf '%s/%s' "$HOME" "${1#\~/}" ;; *) printf '%s' "$1" ;; esac
 }
@@ -128,7 +130,7 @@ run_smoke() {
   else "$command" "${args[@]}" </dev/null >/dev/null 2>&1; fi
 }
 check_tool_capabilities() {
-  local tool="$1" when="$2" instructions="$3" skills_dir="$4" agents_dir="$5" before="$FAILURES" source
+  local tool="$1" when="$2" instructions="$3" skills_dir="$4" agents_dir="$5" before="$FAILURES" source name
   QUIET=1
   if [ "$instructions" != - ]; then
     if [ -L "$(expand_home "$instructions")" ] || [ "$when" = always ]; then
@@ -138,8 +140,12 @@ check_tool_capabilities() {
   if [ "$skills_dir" != - ] && [ -d "$(expand_home "$skills_dir")" ]; then check_skills "$(expand_home "$skills_dir")"; fi
   if [ "$agents_dir" != - ] && [ -d "$(expand_home "$agents_dir")" ]; then
     check_stale_links "$(expand_home "$agents_dir")"
+    # Agents are symlinked Markdown for Claude Code and generated TOML for Codex.
     for source in "$REPO"/agents/*.md; do
-      [ -f "$source" ] && check_link "$source" "$(expand_home "$agents_dir")/${source##*/}"
+      [ -f "$source" ] || continue
+      name="${source##*/}"
+      [ -f "$(expand_home "$agents_dir")/${name%.md}.toml" ] && continue
+      check_link "$source" "$(expand_home "$agents_dir")/$name"
     done
   fi
   QUIET=0
@@ -313,7 +319,7 @@ check_ownership() {
         case "$target" in "$REPO"|"$REPO"/*) ;; *) fail 'installation ownership source is outside this checkout'; continue ;; esac
         check_link "$target" "$path"
         ;;
-      settings|git|mod|modmarket) ;;
+      settings|git|mod|modmarket|vscode|generated) ;;
       *) fail 'installation ownership entry type is unsupported' ;;
     esac
   done
@@ -333,6 +339,24 @@ check_mods() {
       *) warn "mod state unknown: $mod (claude plugin list failed)" ;;
     esac
   done
+}
+check_vscode() {
+  local command product path state found=0
+  if ! vscode_enabled; then ok 'VS Code setting disabled (git config harness.vscodeAgentsMd is false)'; return; fi
+  while IFS='|' read -r command product <&4; do
+    has "$command" || continue
+    found=1
+    path="$(vscode_settings_path "$product")"
+    if ! has python3; then warn "VS Code ($product): python3 not found; settings not checked"; continue; fi
+    state="$(vscode_state "$path")"
+    case "$state" in
+      true) ok "VS Code ($product): $VSCODE_KEY is true" ;;
+      false) warn "VS Code ($product): $VSCODE_KEY is false; Copilot Chat ignores AGENTS.md (your choice, or set it to true)" ;;
+      absent|unset) warn "VS Code ($product): $VSCODE_KEY is not set; run ./install.sh" ;;
+      *) warn "VS Code ($product): settings.json is not plain JSON (comments?) or the value is unusual; set \"$VSCODE_KEY\": true yourself" ;;
+    esac
+  done 4< <(vscode_products)
+  [ "$found" -eq 1 ] || ok 'VS Code: not installed, skipped'
 }
 check_project() {
   has git || return
@@ -367,6 +391,7 @@ else
   check_settings
   check_git_hooks
   check_mods
+  check_vscode
   check_project
 fi
 printf 'Summary: %s error(s), %s warning(s); only checked installation components are reported.\n' "$FAILURES" "$WARNINGS"

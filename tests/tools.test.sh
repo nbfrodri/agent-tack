@@ -62,7 +62,7 @@ doctor_tools
 check 'healthy tools exit 0' test "$RC" -eq 0
 check 'version is detected' grep -q 'OK   claude: version 2.1.288' "$WORK/report"
 check 'capabilities are listed' grep -q 'claude: capabilities instructions skills agents hooks' "$WORK/report"
-check 'unsupported capabilities are omitted' grep -q 'codex: capabilities instructions skills$' "$WORK/report"
+check 'declared capabilities are listed' grep -q 'codex: capabilities instructions skills agents hooks$' "$WORK/report"
 check 'smoke check passes' grep -q 'OK   codex: smoke check passed' "$WORK/report"
 check 'tool output and secrets are never printed' test -z "$(grep -E 'SECRET123|token=' "$WORK/report")"
 

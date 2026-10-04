@@ -14,7 +14,7 @@
 #
 # tool      when      commands              instructions                          skills              agents            hooks                    min_version  smoke
 claude      always    claude                ~/.claude/CLAUDE.md                   ~/.claude/skills    ~/.claude/agents  ~/.claude/settings.json  -            doctor
-codex       always    codex                 ~/.codex/AGENTS.md                    ~/.codex/skills     -                 -                        -            doctor,--summary
+codex       always    codex                 ~/.codex/AGENTS.md                    ~/.codex/skills     ~/.codex/agents   ~/.codex/hooks.json      -            doctor,--summary
 gemini      detect    gemini                ~/.gemini/GEMINI.md                   -                   -                 -                        -            -
 copilot     detect    copilot,code,code-insiders,codium ~/.copilot/copilot-instructions.md    ~/.copilot/skills   -                 -                        -            -
 opencode    detect    opencode              ~/.config/opencode/AGENTS.md          -                   -                 -                        -            -

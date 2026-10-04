@@ -145,6 +145,14 @@ ownership_git() {
   )
 }
 
+# Records a file the installer generated, with the checksum it wrote; uninstall removes it
+# only while the checksum still matches, so later edits are preserved.
+ownership_generated() {
+  local path="$1" sha="$2"
+  ownership_begin generated "$path" || return 1
+  (umask 077; printf '%s\n' "$sha" > "$OWN_ENTRY/sha256")
+}
+
 # Records a Claude Code plugin (id@marketplace) this installer installed. The entry path is a
 # stable anchor under ~/.claude/plugins; the owned thing is the plugin registration itself.
 ownership_mod() {
@@ -159,4 +167,12 @@ ownership_modmarket() {
   mkdir -p "$HOME/.claude/plugins" || return 1
   ownership_begin modmarket "$path" || return 1
   (umask 077; printf '%s\n' "$name" > "$OWN_ENTRY/marketplace")
+}
+
+# Records a VS Code user settings file where the installer added chat.useAgentsMdFile (created=1
+# when the installer created the file). Call it only after the write succeeded.
+ownership_vscode() {
+  local path="$1" created="$2"
+  ownership_begin vscode "$path" || return 1
+  (umask 077; printf '%s\n' "$created" > "$OWN_ENTRY/created")
 }
