@@ -24,8 +24,11 @@ client=claude
 . "$(dirname "$0")/lib/activity-log.sh"
 
 cwd="$(field .cwd)"
-[ "$(field .stop_hook_active)" = true ] && exit 0
 [ -n "$cwd" ] && [ -d "$cwd" ] || exit 0
+# Turn metrics for the activity log come first: they are recording, not advice, so neither a
+# second stop nor turning off this hook's checks skips them.
+record_turn "$cwd" "$client" "$(field .session_id)" "$(field .transcript_path)"
+[ "$(field .stop_hook_active)" = true ] && exit 0
 # shellcheck source=SCRIPTDIR/lib/hook-control.sh
 . "$(dirname "$0")/lib/hook-control.sh"
 ! hook_disabled "$cwd" stop-check || exit 0
