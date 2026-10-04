@@ -36,7 +36,7 @@ Claude Code subagents (`~/.claude/agents`); other tools follow the same files as
 | `implementer` | Implements one task on its own branch or worktree |
 | `code-reviewer` | Reviews a diff, branch or whole scope |
 | `test-writer` | Adds tests to existing code; never touches production code |
-| `docs-writer` | Keeps docs in sync and logs AI work |
+| `docs-writer` | Keeps docs in sync and logs AI work; runs on an economical model and takes doc updates spanning 3 or more files |
 | `evaluator` | Scores a project 0–10 per dimension with evidence (`auto-improve`) |
 | `architecture-reviewer` | Layering, coupling, boundaries, debt hot spots |
 | `security-auditor` | OWASP Top 10, auth, secrets, dependencies, CI |
@@ -54,7 +54,7 @@ Claude Code mods shipped in `plugins/` and installed by `./install.sh` (opt out 
 
 | Mod | Purpose |
 | --- | --- |
-| `usage-band` | Band above the prompt with the 5-hour and weekly limits, context fill and session cost; `/usage-band` toggles it |
+| `usage-band` | Band above the prompt with the active tack mode, the 5-hour and weekly limits, context fill and session cost; `/usage-band` toggles it |
 | `agent-activity` | Live pane of tool calls, skills, subagents and permission decisions; `/activity` opens it |
 
 Browser control is built into Claude Code and Codex, so no browser MCP is installed. Read-only database MCP servers are set up per project (`skills/database/references/mcp.md`).
