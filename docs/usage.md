@@ -210,6 +210,12 @@ Claude Code's SessionStart hook supplies the activation status and mode plus the
 
 The combined document content is capped at 6,000 bytes, with per-file line limits. Claude Code also receives it again after compacting the conversation. Missing files and symlinks outside the checkout are skipped. Read the referenced documents in full when needed. Disable the extra context with `git config tack.context false`; activation messages remain available.
 
+To bound everything SessionStart adds (activation line, mode rules, settings and project context), set a character cap, useful for small-context or local models. Past the cap the project context goes first, then the mode rules; the activation line always stays, and a final line points to `tack mode show` and `tack context` for the rest:
+
+```bash
+tack config session-context-max-chars 4000 --global
+```
+
 A shared `.tack` file enables workflow instructions but does not authorise execution of project code. Run `tack trust` only for a checkout whose formatter binaries and configuration you trust. Formatting requires both activation and explicit local trust; global trust settings are ignored. `tack trust --revoke` removes that execution permission.
 
 `tack status` shows both settings, for example:

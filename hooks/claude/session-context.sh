@@ -35,21 +35,45 @@ if (cd "$cwd" && "$cli" status --quiet); then
   else
     level="Apply the $mode mode rules below to every task unless the user asks for another mode."
   fi
-  context="tack: ENABLED for this project (mode: $mode). $level At every level: work on a branch off main, test the change, and make a Conventional Commit for each verified milestone. Ask the user whenever you have a real doubt."
+  head="tack: ENABLED for this project (mode: $mode). $level At every level: work on a branch off main, test the change, and make a Conventional Commit for each verified milestone. Ask the user whenever you have a real doubt."
   mode_rules="$(cd "$cwd" && "$cli" mode show)" || mode_rules=''
-  [ -z "$mode_rules" ] || context="$context"$'\n'"$mode_rules"
   setting() { local value; value="$(cd "$cwd" && "$cli" config "$1" 2>/dev/null)"; printf '%s' "${value%% *}"; }
   tokens=''
   [ "$(setting reply-style)" != terse ] || tokens="$tokens Keep replies terse: what changed, the commit and what is pending, in a few lines."
   [ "$(setting skill-loading)" != minimal ] || tokens="$tokens Load a skill only when the task cannot be done without it; prefer the rules already in context."
   [ "$(setting subagent-model)" != economical ] || tokens="$tokens When delegating, use the most economical model that can do the task."
-  [ -z "$tokens" ] || context="$context"$'\n'"Token settings:$tokens"
   workflow=''
   [ "$(setting ci-watch)" != false ] || workflow="$workflow Do not wait for CI after a push unless the user asks; merges still need green checks."
-  [ -z "$workflow" ] || context="$context"$'\n'"Workflow settings:$workflow"
+  settings=''
+  [ -z "$tokens" ] || settings="Token settings:$tokens"
+  [ -z "$workflow" ] || settings="${settings:+$settings$'\n'}Workflow settings:$workflow"
   activity_log "$cwd" "$client" session-start "mode=$mode"
   project_context="$(cd "$cwd" && "$cli" context)" || project_context=''
-  [ -z "$project_context" ] || context="$context"$'\n'"$project_context"
+
+  context="$head"
+  for part in "$mode_rules" "$settings" "$project_context"; do
+    [ -z "$part" ] || context="$context"$'\n'"$part"
+  done
+  # session-context-max-chars: past the cap, keep parts by priority (activation line, settings,
+  # mode rules, project context), trim the first that does not fit and say where the rest is.
+  cap="$(setting session-context-max-chars)"
+  case "$cap" in '' | *[!0-9]*) cap=0 ;; esac
+  if [ "$cap" -gt 0 ] && [ "${#context}" -gt "$cap" ]; then
+    pointer="[Context capped at $cap characters by tack config session-context-max-chars; run 'tack mode show' and 'tack context' for the rest.]"
+    remaining=$((cap - ${#head} - ${#pointer} - 1))
+    context="$head"
+    for part in "$settings" "$mode_rules" "$project_context"; do
+      [ -n "$part" ] && [ "$remaining" -gt 1 ] || continue
+      if [ $((${#part} + 1)) -le "$remaining" ]; then
+        context="$context"$'\n'"$part"
+        remaining=$((remaining - ${#part} - 1))
+      else
+        context="$context"$'\n'"${part:0:$((remaining - 1))}"
+        remaining=0
+      fi
+    done
+    context="$context"$'\n'"$pointer"
+  fi
 else
   context="tack: NOT enabled for this project. Work normally without the workflow ceremony; only the always-on rules apply (no AI attribution, safety). The user can enable it with 'tack enable'."
 fi

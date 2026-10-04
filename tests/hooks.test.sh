@@ -430,6 +430,21 @@ check "token toggles: economical subagents are requested" "session '$WORK/repo' 
 git -C "$WORK/repo" config --unset harness.replyStyle
 git -C "$WORK/repo" config --unset harness.skillLoading
 git -C "$WORK/repo" config --unset harness.subagentModel
+context_of() { session "$1" | python3 -c 'import json,sys; print(json.load(sys.stdin)["hookSpecificOutput"]["additionalContext"])'; }
+printf '# AGENTS.md\n%s\n' "$(printf 'project rule %.0s' $(seq 1 60))" > "$WORK/repo/AGENTS.md"
+# shellcheck disable=SC2034 # Read inside check's eval strings.
+uncapped="$(context_of "$WORK/repo")"
+git -C "$WORK/repo" config tack.sessionContextMaxChars 100000
+check "context cap: a generous cap leaves the context unchanged" "[ \"\$(context_of '$WORK/repo')\" = \"\$uncapped\" ]"
+git -C "$WORK/repo" config tack.sessionContextMaxChars 600
+# shellcheck disable=SC2034 # Read inside check's eval strings.
+capped="$(context_of "$WORK/repo")"
+check "context cap: the context stays within the cap" "[ \${#capped} -le 600 ]"
+check "context cap: the activation line is always kept" "printf '%s' \"\$capped\" | grep -q 'ENABLED for this project'"
+check "context cap: the project context goes first" "! printf '%s' \"\$capped\" | grep -q 'project rule'"
+check "context cap: it says where to read the rest" "printf '%s' \"\$capped\" | grep -q 'tack context'"
+git -C "$WORK/repo" config --unset tack.sessionContextMaxChars
+rm "$WORK/repo/AGENTS.md"
 check "ci-watch: the default adds no setting line" "! session '$WORK/repo' | grep -q 'Workflow settings'"
 git -C "$WORK/repo" config tack.ciWatch false
 check "ci-watch: turning it off tells the assistant not to wait for CI" "session '$WORK/repo' | grep -q 'Workflow settings:.*Do not wait for CI'"
