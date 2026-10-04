@@ -224,7 +224,9 @@ check "global-only features refuse a project value" expect_exit 2 "$CLI" config 
 check "global-only features accept a global value" expect_exit 0 "$CLI" config mods false --global
 git config --global --unset tack.mods
 # shellcheck disable=SC2016 # Expanded by eval inside check.
-check "config does not expose safety checks as toggles" eval '! "$CLI" config | grep -qi "secret\|guard"'
+# Counts toggle names only, from the complete output: grep -q could stop the listing early and,
+# under pipefail, a SIGPIPE in tack would hide a match.
+check "config does not expose safety checks as toggles" eval '[ "$("$CLI" config | awk "NR > 1 { print \$1 }" | grep -ci "secret\|guard")" = 0 ]'
 cd "$WORK" || exit 1
 check "project config requires a repository" expect_exit 2 "$CLI" config delegation off
 cd "$WORK/project" || exit 1
