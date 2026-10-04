@@ -42,6 +42,8 @@
 
 - Documentation drift: a per-project impact map as data (e.g. `docs-map.txt`: code paths → docs to review); a non-blocking pre-commit or Stop hook compares the diff with the map and tells the agent which docs it left untouched, so it updates them in the same commit; drift tests for generated parts (e.g. `harness help` against the CLI section of `docs/usage.md`). No AI runs inside git hooks.
 
+- Claude Code mods shipped by the harness: a usage band (5-hour and weekly limits, context fill, cost) and an agent activity pane (tool calls, skills, subagents, permission decisions), prototyped outside the repo on 2026-10-04; install them as plugins through the installer, with tests in CI.
+
 ## Added during implementation (approved)
 
 - Startup context loads documents on demand: `auto` and `standard` index architecture and the active handoff; `strict` keeps excerpts.
