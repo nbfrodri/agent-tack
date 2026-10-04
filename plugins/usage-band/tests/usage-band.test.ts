@@ -1,6 +1,20 @@
 import { expect, test } from 'claude-code/testing'
 
-import { bar, colorFor, crossedWarning, resetLabel, toUsage } from '../hooks/register'
+import { bar, colorFor, costLimit, crossedWarning, overBudget, resetLabel, toUsage } from '../hooks/register'
+
+test('cost limit applies only in project-only modes with a positive amount', () => {
+  expect(costLimit('WARNING: unleash mode is active\nMode unleash rules:', '5 (local)\n')).toBe(5)
+  expect(costLimit('WARNING: unleash mode is active', '2.50 (global)')).toBe(2.5)
+  expect(costLimit('Mode lite rules:', '5 (local)')).toBeUndefined()
+  expect(costLimit('WARNING: unleash mode is active', 'none (default)')).toBeUndefined()
+})
+
+test('over budget once the cost reaches the limit', () => {
+  expect(overBudget(4.99, 5)).toBe(false)
+  expect(overBudget(5, 5)).toBe(true)
+  expect(overBudget(undefined, 5)).toBe(false)
+  expect(overBudget(9, undefined)).toBe(false)
+})
 
 test('bar fills one cell per ten percent and clamps', () => {
   expect(bar(0)).toBe('░░░░░░░░░░')

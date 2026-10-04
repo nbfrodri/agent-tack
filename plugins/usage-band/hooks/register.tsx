@@ -52,11 +52,42 @@ export function crossedWarning(before: UsageWindow[], after: UsageWindow[]): str
   return undefined
 }
 
+// A cost limit applies only in a project-only mode (harness prints a WARNING line for those)
+// and only when `harness config unleash-max-cost` holds a positive amount.
+export function costLimit(modeShow: string, configValue: string): number | undefined {
+  if (!modeShow.startsWith('WARNING:')) return undefined
+  const amount = Number(configValue.trim().split(' ')[0])
+  return Number.isFinite(amount) && amount > 0 ? amount : undefined
+}
+
+export function overBudget(costUsd: number | undefined, limitUsd: number | undefined): boolean {
+  return limitUsd !== undefined && costUsd !== undefined && costUsd >= limitUsd
+}
+
 export const register: Register = on => {
+  let limitUsd: number | undefined
+
   on('session.start', async ($, e, next) => {
     const { context, rateLimits, cost } = await $.session.usage()
     await update($, usage, () => toUsage(context, rateLimits, cost))
     await $.command.register({ name: 'usage-band', description: 'Show or hide the usage band above the prompt' })
+    try {
+      const mode = await $.process.run(['harness', 'mode', 'show'], { timeoutMs: 5000 })
+      const config = await $.process.run(['harness', 'config', 'unleash-max-cost'], { timeoutMs: 5000 })
+      limitUsd = mode.exitCode === 0 && config.exitCode === 0 ? costLimit(mode.stdout, config.stdout) : undefined
+    } catch {
+      limitUsd = undefined
+    }
+    return next(e)
+  })
+
+  on('tool.call', async ($, e, next) => {
+    const current = await read($, usage)
+    if (overBudget(current.costUsd, limitUsd)) {
+      return {
+        deny: `This autonomous session reached its cost limit of $${limitUsd} (harness config unleash-max-cost). Stop, update the handoff and summarise what is done, what is pending and the assumptions made.`,
+      }
+    }
     return next(e)
   })
 
