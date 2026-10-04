@@ -4,12 +4,19 @@
 set -u
 
 input="$(cat)"
-cwd=""
-if command -v jq >/dev/null 2>&1; then
-  cwd="$(printf '%s' "$input" | jq -r '.cwd // empty' 2>/dev/null)"
-elif command -v python3 >/dev/null 2>&1; then
-  cwd="$(printf '%s' "$input" | python3 -c 'import json, sys; print(json.load(sys.stdin).get("cwd") or "")' 2>/dev/null)"
-fi
+field() {
+  if command -v jq >/dev/null 2>&1; then
+    printf '%s' "$input" | jq -r "$1 // empty" 2>/dev/null
+  elif command -v python3 >/dev/null 2>&1; then
+    printf '%s' "$input" | python3 -c 'import json, sys
+try:
+    value = json.load(sys.stdin).get(sys.argv[1].lstrip("."))
+except Exception:
+    value = None
+print(value if isinstance(value, str) else "")' "$1" 2>/dev/null
+  fi
+}
+cwd="$(field .cwd)"
 [ -n "$cwd" ] && [ -d "$cwd" ] || cwd="$PWD"
 
 client=claude
@@ -24,8 +31,12 @@ cli="$(cd "$(dirname "$0")/../../bin" && pwd)/tack"
 retention="$(cd "$cwd" && "$cli" config state-retention-days 2>/dev/null)"
 retention="${retention%% *}"
 case "$retention" in '' | *[!0-9]*) retention=30 ;; esac
-state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/agent-tack/budget"
-[ ! -d "$state_dir" ] || find "$state_dir" -type f -mtime +"$retention" -exec rm -f {} + 2>/dev/null
+for state_dir in budget turns; do
+  state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/agent-tack/$state_dir"
+  [ ! -d "$state_dir" ] || find "$state_dir" -type f -mtime +"$retention" -exec rm -f {} + 2>/dev/null
+done
+# Turn metrics start counting from here, so earlier history is not logged as new work.
+start_turns "$cwd" "$client" "$(field .session_id)" "$(field .transcript_path)"
 
 # shellcheck source=SCRIPTDIR/lib/hook-control.sh
 . "$(dirname "$0")/lib/hook-control.sh"

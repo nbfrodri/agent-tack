@@ -31,6 +31,10 @@ Commands:
   doctor              Diagnose installation and project state without changes
   log [N]             Print the last N (default 20) activity log entries; turn the
                       log on with: tack config activity-log true
+  log --cost|--skills|--levels [--days N] [--csv]
+                      Summarise the last N days (default 30): tokens and USD per
+                      day, project, tool and model; skill and agent use; the
+                      workflow level stated per task
   context             Print project instructions plus an index (or, in strict
                       mode, excerpts) of architecture and the active handoff
   help                Show this help (also works outside a Git repository)
@@ -255,17 +259,40 @@ case "$cmd" in
     exit
     ;;
   log)
-    count="${1:-20}"
-    if [ "$#" -gt 1 ] || ! printf '%s' "$count" | grep -qE '^[1-9][0-9]*$'; then
-      echo "tack: log takes an optional positive number of entries (see --help)" >&2
-      exit 2
+    report='' days='' csv=0 count=''
+    log_usage() { echo "tack: $1 (see --help)" >&2; exit 2; }
+    while [ "$#" -gt 0 ]; do
+      case "$1" in
+        --cost | --skills | --levels) [ -z "$report" ] || log_usage 'log takes one report'; report="${1#--}" ;;
+        --csv) csv=1 ;;
+        --days) days="${2:-}"; [ "$#" -gt 1 ] && shift ;;
+        -*) log_usage "unknown option for log: $1" ;;
+        *) [ -z "$count" ] || log_usage 'log takes one number of entries'; count="$1" ;;
+      esac
+      shift
+    done
+    # A count belongs to the plain listing; --days and --csv to a report.
+    if [ -n "$report" ]; then
+      [ -z "$count" ] || log_usage 'a number of entries does not apply to a report; use --days'
+    else
+      if [ "$csv" -eq 1 ] || [ -n "$days" ]; then log_usage '--csv and --days need --cost, --skills or --levels'; fi
+    fi
+    count="${count:-20}" days="${days:-30}"
+    if ! printf '%s' "$count" | grep -qE '^[1-9][0-9]*$' || ! printf '%s' "$days" | grep -qE '^[1-9][0-9]*$'; then
+      log_usage 'log takes a positive number of entries, and --days a positive number of days'
     fi
     log_file="${XDG_STATE_HOME:-$HOME/.local/state}/agent-tack/activity.log"
     if [ ! -s "$log_file" ]; then
       echo "No activity recorded. Turn the log on with: tack config activity-log true"
       exit 0
     fi
-    tail -n "$count" "$log_file"
+    if [ -z "$report" ]; then
+      tail -n "$count" "$log_file"
+      exit 0
+    fi
+    command -v python3 >/dev/null 2>&1 || fail "log reports need python3"
+    python3 "$HARNESS_ROOT/lib/log-report.py" "$report" "$log_file" "$days" "$csv" \
+      "${XDG_CONFIG_HOME:-$HOME/.config}/agent-tack/pricing.txt" "$HARNESS_ROOT"
     ;;
   doctor)
     allowed_option='--tools'; check_args "$@"
