@@ -36,6 +36,8 @@
 - Feedback hooks: PostToolUse running fast lint/tests and returning failures to the agent; Stop hook warning about uncommitted work or failing tests.
 - Installer robustness for tool churn: `harness doctor --tools` smoke test against installed CLIs; weekly CI job installing the latest Claude Code and Codex to run it; per-tool adapters as data with minimum versions and capabilities (start with Codex hooks and agents if confirmed).
 
+- Customization from the CLI: `harness config` to list and set feature toggles (value, source, description, whether a hook enforces it or it is an instruction) declared in a data file; safety checks (secrets, guard, protected `main`) stay outside general toggles and keep their one-off overrides. User-defined modes as data files (`modes/<name>.md`), created with `harness mode new <name> --from <mode>`, injected at session start and selectable by `auto`. Shares the configuration-as-data mechanism with the guard policy.
+
 ## Added during implementation (approved)
 
 - Startup context loads documents on demand: `auto` and `standard` index architecture and the active handoff; `strict` keeps excerpts.
