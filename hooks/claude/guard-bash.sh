@@ -272,6 +272,45 @@ check_harness() {
   esac
 }
 
+# merge-requires-green: `gh pr merge` waits for green CI. Failing or pending checks deny, so the
+# assistant fixes or waits and retries; when gh cannot report the checks, the user decides.
+check_gh() {
+  [ "${1:-}" = pr ] && [ "${2:-}" = merge ] || return 0
+  shift 2
+  local selector=() repo=() skip_next=0 prev="" a setting buckets limit=()
+  for a in "$@"; do
+    if [ "$skip_next" -eq 1 ]; then
+      skip_next=0
+      case "$prev" in -R | --repo) repo=(--repo "$a") ;; esac
+      continue
+    fi
+    case "$a" in
+      -R | --repo | -b | --body | -F | --body-file | -t | --subject | -A | --author-email | --match-head-commit)
+        prev="$a"; skip_next=1 ;;
+      --repo=*) repo=(--repo "${a#--repo=}") ;;
+      -*) ;;
+      *) [ "${#selector[@]}" -gt 0 ] || selector=("$a") ;;
+    esac
+  done
+  setting="$(cd "$cwd" && "$(dirname "$0")/../../bin/tack" config merge-requires-green 2>/dev/null)"
+  [ "${setting%% *}" != false ] || return 0
+  case "${selector[*]-} ${repo[*]-}" in
+    *'__subst__'* | *'$'* | *'`'*) ask "Cannot confirm CI for a pull request chosen at run time; check that its checks passed before merging."; return 0 ;;
+  esac
+  if ! command -v gh >/dev/null 2>&1; then
+    ask "Cannot confirm the pull request's CI checks passed (gh is not available); check them before merging."
+    return 0
+  fi
+  command -v timeout >/dev/null 2>&1 && limit=(timeout 6)
+  buckets="$(cd "$cwd" && ${limit[@]+"${limit[@]}"} gh pr checks ${selector[@]+"${selector[@]}"} ${repo[@]+"${repo[@]}"} \
+    --json bucket --jq '.[].bucket' 2>/dev/null)"
+  case "$buckets" in
+    '') ask "Cannot confirm the pull request's CI checks passed (gh reported none); check them before merging." ;;
+    *fail* | *cancel*) deny "The pull request's CI checks are failing. Read the failed job's log (gh run view --log-failed), fix it and push before merging." ;;
+    *pending*) deny "The pull request's CI checks are still running. Wait for them (gh pr checks --watch) and merge once they pass." ;;
+  esac
+}
+
 check_rm() {
   local recursive=0 after_dashdash=0 targets=() a t real
   for a in "$@"; do
@@ -467,6 +506,7 @@ check_command() {
     *'__subst__'* | *'$'* | *'`'*) ask "Dynamic executable name requires review." ;;
     git) check_git "${args[@]+"${args[@]}"}" ;;
     rm) check_rm "${args[@]+"${args[@]}"}" ;;
+    gh) check_gh "${args[@]+"${args[@]}"}" ;;
     cd | pushd | popd) ACTS_ELSEWHERE=1 ;;
     harness | tack) check_harness "${args[@]+"${args[@]}"}" ;;
     bash | sh | zsh | dash | ksh)

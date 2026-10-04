@@ -179,6 +179,35 @@ expect("deny", "git reset --hard HEAD~1", "codex: an ask becomes a deny", reason
 expect("deny", "cat <<'EOF' | python3\nprint(1)\nEOF", "codex: opaque commands are refused", args=("--codex",))
 expect("deny", "git commit --no-verify -m 'fix: x'", "codex: deny rules stay deny", args=("--codex",))
 expect("allow", "git status", "codex: safe commands pass", args=("--codex",))
+
+# merge-requires-green: a stub gh reports the PR's check buckets; red or pending CI blocks the merge.
+def gh_stub(name, body):
+    stub = work / "gh" / name
+    stub.mkdir(parents=True)
+    (stub / "gh").write_text("#!/usr/bin/env bash\n" + body + "\n")
+    (stub / "gh").chmod(0o755)
+    return f"{stub}:{os.environ['PATH']}"
+
+green = gh_stub("green", "printf 'pass\\nskipping\\npass\\n'")
+red = gh_stub("red", "printf 'pass\\nfail\\n'")
+pending = gh_stub("pending", "printf 'pass\\npending\\n'; exit 8")
+unknown = gh_stub("unknown", "echo 'no checks reported' >&2; exit 1")
+selector = gh_stub("selector", '[ "$*" = "pr checks 42 --repo o/r --json bucket --jq .[].bucket" ] || exit 1; echo pass')
+expect("allow", "gh pr merge --merge --delete-branch", "merge: green checks allow the merge", path=green)
+expect("deny", "gh pr merge 42 --squash", "merge: failing checks deny the merge", path=red, reason="failing")
+expect("deny", "gh pr merge --merge", "merge: pending checks deny until CI finishes", path=pending, reason="still running")
+expect("ask", "gh pr merge --merge", "merge: checks gh cannot report ask", path=unknown, reason="cannot confirm")
+expect("ask", "gh pr merge --merge", "merge: without gh the guard asks", path=work / "no-python", reason="cannot confirm")
+expect("allow", "gh pr merge 42 -R o/r --merge --body 'x y'", "merge: the PR and repository are forwarded", path=selector)
+expect("ask", "gh pr merge $(gh pr list -q .[0].number) --merge", "merge: a dynamic PR selector asks", path=green)
+expect("allow", "gh pr view 42", "merge: other gh commands pass", path=red)
+expect("allow", "echo 'gh pr merge 42'", "merge: quoted text stays data", path=red)
+expect("deny", "gh pr merge --merge", "codex: pending checks deny", path=pending, reason="still running", args=("--codex",))
+expect("deny", "gh pr merge --merge", "codex: unknown checks deny and leave it to the user", path=unknown, reason="confirmation", args=("--codex",))
+relaxed = work / "relaxed"
+subprocess.run(["git", "init", "-q", str(relaxed)], check=True)
+subprocess.run(["git", "-C", str(relaxed), "config", "tack.mergeRequiresGreen", "false"], check=True)
+expect("allow", "gh pr merge --merge", "merge: the toggle off skips the check", path=red, cwd=relaxed)
 bare = work / "bare-guard"
 (bare / "lib").mkdir(parents=True)
 (bare / "guard-bash.sh").write_text(guard.read_text())
