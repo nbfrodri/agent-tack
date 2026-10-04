@@ -52,7 +52,7 @@ Apply the level from `harness mode`, or classify the task in `auto`. Plan as the
 Check `git status` first so unrelated changes don't get mixed in, then branch: `feat/short-description`, `fix/…`, `refactor/…`, `docs/…`, `chore/…`.
 
 ### 4. Implement
-At standard and strict, red → green → refactor for all logic with behaviour. At lite, add or update a test when logic changes. Design with SOLID and, where there's a real business domain, DDD; follow `references/conventions.md`. Details: `references/tdd.md` and `references/design.md`.
+At standard and strict, red → green → refactor for all logic with behaviour. At lite, add or update a test when logic changes. Design with SOLID and, where there's a real business domain, DDD; follow `references/conventions.md` and only the stack file you touch in `references/languages/`. Details: `references/tdd.md` and `references/design.md`.
 
 ### 5. Commit
 Commit each coherent verified milestone immediately in Conventional Commits. Recommend an integration method from the branch history in the existing merge confirmation; preserve commits unless the user explicitly chooses squash. Details: `references/git-github.md`.

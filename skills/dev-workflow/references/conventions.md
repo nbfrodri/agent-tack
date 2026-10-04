@@ -78,34 +78,5 @@ Never write:
 
 When editing existing code, don't add comments to explain your change, and remove comments that your change made wrong.
 
-## TypeScript / JavaScript (React, Next.js, Node)
-| Topic | Convention |
-| --- | --- |
-| Package manager | **pnpm** for new projects (`pnpm-lock.yaml`, `packageManager` field in `package.json` via Corepack). In existing projects, the one its lockfile says. |
-| Language | TypeScript with `"strict": true`; no `any` (use `unknown` and narrow it); `import type` for type-only imports. |
-| Formatting and linting | The project's tool. New projects: Biome, or ESLint + Prettier when a framework preset needs ESLint (e.g. `eslint-config-next`). |
-| File names | **kebab-case** for every file: `user-profile.tsx`, `use-cart.ts`, `order-service.ts`. Next.js special files keep their names (`page.tsx`, `layout.tsx`, `route.ts`). |
-| Identifiers | `PascalCase` components, classes, types and interfaces (no `I` prefix); `camelCase` variables and functions; `useSomething` hooks; `UPPER_SNAKE_CASE` true constants. |
-| Exports | Named exports. Default exports only where the framework requires them (Next.js `page`, `layout`, `route`, config files). |
-| Imports | Path alias `@/` for project files instead of long `../../..` chains. |
-| Components | Function components; props type named `<Component>Props`; one exported component per file (small private helpers may live alongside). |
-
-## Python (FastAPI, Django, scripts)
-| Topic | Convention |
-| --- | --- |
-| Tooling | **uv** (dependencies, virtualenv, running); **Ruff** for lint and format (PEP 8); **mypy** or **pyright** (strict in new projects). |
-| Layout | `src/<package>/` with `tests/` alongside (Django: the standard project/app layout). |
-| Identifiers | `snake_case` modules, functions and variables; `PascalCase` classes; `UPPER_SNAKE_CASE` constants; leading `_` for private. |
-| Types | Type hints on every public function and method; `X \| None` rather than `Optional[X]`; Pydantic models or dataclasses rather than bare dicts for structured data. |
-| Docstrings | Google style, on public modules, classes and functions whose purpose isn't obvious from the name and types. |
-| Idioms | `pathlib` over `os.path`; f-strings; context managers for resources; `logging`, not `print`, in application code. |
-
-## PHP (Laravel)
-| Topic | Convention |
-| --- | --- |
-| Tooling | **Composer**; **Laravel Pint** (PSR-12 plus the Laravel preset); **Larastan** at the highest level the project can sustain; Pest for tests. |
-| Laravel naming | Models singular `PascalCase` (`Order`); tables plural `snake_case` (`order_items`); controllers singular plus `Controller` (`OrderController`); Form Requests `StoreOrderRequest`/`UpdateOrderRequest`; Actions as verb + noun (`CreateOrder`); Resources `OrderResource`; route URIs plural kebab-case (`/order-items`); route names dotted (`orders.show`). |
-| Code | `declare(strict_types=1);` in domain and application classes; typed properties, parameters and return types everywhere; constructor property promotion; backed enums instead of string constants. |
-
-## SQL and data
-Tables plural `snake_case`; columns `snake_case`; foreign keys `<singular>_id`; timestamps `created_at`/`updated_at`; indexes `idx_<table>_<columns>`. See the `database` skill.
+## Language and stack specifics
+Read only the file for the stack you are touching: `languages/typescript.md` (TypeScript, JavaScript, React, Next.js, Node), `languages/python.md`, `languages/php.md` (Laravel) or `languages/sql.md` (SQL and data).
