@@ -120,9 +120,10 @@ tool_version() {
 }
 run_smoke() {
   local command="$1" smoke="$2"
-  set -- $(printf '%s' "$smoke" | tr ',' ' ')
-  if has timeout; then timeout 60 "$command" "$@" </dev/null >/dev/null 2>&1
-  else "$command" "$@" </dev/null >/dev/null 2>&1; fi
+  local -a args
+  IFS=, read -r -a args <<< "$smoke"
+  if has timeout; then timeout 60 "$command" "${args[@]}" </dev/null >/dev/null 2>&1
+  else "$command" "${args[@]}" </dev/null >/dev/null 2>&1; fi
 }
 check_tool_capabilities() {
   local tool="$1" when="$2" instructions="$3" skills_dir="$4" agents_dir="$5" before="$FAILURES" source

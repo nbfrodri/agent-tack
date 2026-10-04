@@ -25,6 +25,7 @@ export PATH="$WORK/stubs:$BASE_PATH"
 
 # stub NAME VERSION SMOKE_RC: prints a version, and a secret-looking line on any other call
 stub() {
+  # shellcheck disable=SC2016
   printf '#!/bin/sh\nif [ "$1" = --version ]; then echo "%s (stub)"; exit 0; fi\necho "token=SECRET123 path=$HOME"\nexit %s\n' "$2" "$3" > "$WORK/stubs/$1"
   chmod +x "$WORK/stubs/$1"
 }
