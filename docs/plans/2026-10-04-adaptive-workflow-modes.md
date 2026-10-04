@@ -40,6 +40,8 @@
 
 - Token efficiency rules for every level in `dev-workflow` (plus one line in the global instructions): search before reading and read only needed ranges, no re-reading or re-verifying, batch independent tool calls, trim command output, targeted tests before one full run, concise replies and docs, economical models for mechanical delegated work, avoid commands the guard asks about. Measure with the next benchmark against this phase's results.
 
+- Documentation drift: a per-project impact map as data (e.g. `docs-map.txt`: code paths → docs to review); a non-blocking pre-commit or Stop hook compares the diff with the map and tells the agent which docs it left untouched, so it updates them in the same commit; drift tests for generated parts (e.g. `harness help` against the CLI section of `docs/usage.md`). No AI runs inside git hooks.
+
 ## Added during implementation (approved)
 
 - Startup context loads documents on demand: `auto` and `standard` index architecture and the active handoff; `strict` keeps excerpts.
