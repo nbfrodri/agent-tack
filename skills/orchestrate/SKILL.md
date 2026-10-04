@@ -1,6 +1,6 @@
 ---
 name: orchestrate
-description: Delegate complex separable tasks using available models and isolated worktrees, then integrate and verify. Use for subagents or parallel work, or automatically for complex independent tasks in enabled projects unless harness.delegation is off.
+description: Delegate complex separable tasks using available models and isolated worktrees, then integrate and verify. Use for subagents or parallel work, or automatically for complex independent strict-level tasks in enabled projects unless harness.delegation is off.
 ---
 
 # Orchestrate
@@ -9,7 +9,7 @@ You plan, delegate, integrate and verify. Delegation pays off when a complex tas
 
 ## 1. Check mode, plan and split
 
-In an enabled project, read `git config --get harness.delegation`: absent or `auto` enables automatic delegation; `off` disables automatic delegation. Treat any other value as off and explain the invalid setting. Outside enabled projects, suggest delegation and wait for approval unless the user requested it. An explicit request for subagents authorises delegation for that task even when automatic mode is off.
+In an enabled project, automatic delegation applies only to tasks at the strict workflow level (`dev-workflow`); at lite and standard, suggest it and wait for approval. Then read `git config --get harness.delegation`: absent or `auto` allows automatic delegation; `off` disables it. Treat any other value as off and explain the invalid setting. Outside enabled projects, suggest delegation and wait for approval unless the user requested it. An explicit request for subagents authorises delegation for that task even when automatic mode is off.
 
 - Follow the approved scope and planning requirements in `dev-workflow`. Automatic delegation does not authorise an unapproved large or risky implementation plan.
 - After the plan is approved, automatically delegate complex separable work in auto mode. Show the task, owner, files, model, effort and reason in a concise progress update; do not ask again for delegation approval.

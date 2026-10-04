@@ -9,12 +9,12 @@ For every AI assistant (Claude Code, Codex, etc.). Project-level instructions (A
 - When I ask for a review or what could be improved, ask me the scope and focus areas first (`improve` skill) and change nothing until I choose. When I ask for subagents or parallel work, use `orchestrate`; outside enabled projects, suggest delegation for large separable tasks and wait for my OK. When I ask for autonomous improvement, use `auto-improve`. When I correct how you worked or state a lasting preference, save it with `lessons`.
 
 ## Only in projects where the harness is enabled
-The full workflow is opt-in per project. It's enabled when `harness status` prints `enabled` (a `.harness` file in the repo root, or `git config harness.enabled true`); Claude Code also says so at session start. Elsewhere, work normally without this ceremony.
+The workflow is opt-in per project: enabled when `harness status` prints `enabled` (a `.harness` file in the repo root, or `git config harness.enabled true`); Claude Code also says so at session start, with the mode. Elsewhere, work normally without this ceremony.
 
-- For any task that writes, changes, designs or debugs code, or touches git/GitHub or docs, follow the `dev-workflow` skill: plan first, TDD, SOLID/DDD, Conventional Commits (enforced by the commit-msg hook), conventions, docs.
-- For complex separable work under an approved plan, delegate automatically through `orchestrate` using available models and effort by complexity; keep small work direct. Read `git config harness.delegation`: absent/auto enables this, off disables automatic delegation.
-- Commit each coherent verified milestone as work progresses; do not accumulate a whole task for one final commit. Recommend a merge method from the branch history and offer the choice in the integration confirmation; preserve commits unless I explicitly choose squash.
-- At session start, check `harness status`; when enabled, run `harness context` unless SessionStart already supplied the project context. Read referenced documents in full only when the task needs them.
-- Write self-explanatory code instead of comments: no comments that restate code, narrate steps or describe your change; comment only the non-obvious *why*.
-- Document for humans (`README`, `docs/`) and for AIs (`AGENTS.md`): simple, precise, concise. Document the repository architecture in `docs/architecture.md` and keep it current. Keep plans, audits and handoffs in `docs/`, and log significant AI work in `docs/ai/log.md` (`project-docs` skill).
-- Sessions can stop without warning (usage limits, context): on non-trivial tasks keep a handoff in `docs/handoffs/` updated at every milestone, refresh it at once if usage or context looks low, and read any in-progress handoff before starting.
+- For any task that writes, changes, designs or debugs code, or touches git/GitHub or docs, follow `dev-workflow` at the level set by `harness mode`: `auto` (default) picks lite, standard or strict per task and states it in one line; a fixed mode applies that level. I can change the level for any task.
+- Ask me whenever you have a real doubt about scope, behaviour, design or risk; don't guess. Decide alone only purely conventional details, and say what you chose.
+- Delegate automatically through `orchestrate` only at the strict level, after the plan is approved, unless `git config harness.delegation` is `off`; at lite and standard, suggest delegation and wait for my OK.
+- Commit each coherent verified milestone as work progresses. Recommend a merge method from the branch history and offer the choice in the integration confirmation; preserve commits unless I explicitly choose squash.
+- At session start, check `harness status`; when enabled, run `harness context` unless SessionStart already supplied it. Read referenced documents in full only when the task needs them.
+- Write self-explanatory code instead of comments; comment only the non-obvious *why*.
+- Docs, plans, handoffs and the AI log scale with the level as `dev-workflow` defines; keep `docs/architecture.md` current when structure changes.
