@@ -1,6 +1,6 @@
 # Configuration as data, feedback loops and tool robustness
 
-- Status: implemented and measured (`docs/benchmarks/2026-10-04-modes-final.md`); integration pending the owner's approval. Approved 2026-10-04 (including the proposed delegation); mods install by default for Claude Code with `--skip-mods` and `harness config` opt-outs. Codex hook and agent adapters were researched but not written (they need a converter, ownership tracking and a payload check).
+- Status: done (PR #34, merged as `331422b`); measured in `docs/benchmarks/2026-10-04-modes-final.md`. Approved 2026-10-04 (including the proposed delegation); mods install by default for Claude Code with `--skip-mods` and `harness config` opt-outs. Codex hook and agent adapters were researched but not written (they need a converter, ownership tracking and a payload check).
 - Level: strict (several modules, installer and hooks)
 - Goal: make the harness configurable without code edits, give the agent fast deterministic feedback, survive AI tool changes, and measure the result once.
 - Base: `main` after PR #33.
