@@ -224,7 +224,7 @@ expect("ask", "GH_REPO=o/r gh pr merge 5", "merge: a repository chosen through t
 expect("allow", "gh pr merge 5 --auto --squash", "merge: --auto may wait for pending checks", path=pending, cwd=merging)
 expect("deny", "gh pr merge 5 --auto --squash", "merge: --auto still refuses failing checks", path=red, reason="failing", cwd=merging)
 expect("allow", "gh pr merge 5 --disable-auto", "merge: turning auto-merge off needs no checks", path=red, cwd=merging)
-slow = bin_without("no-timeout", ("timeout",), "sleep 30; echo pass")
+slow = bin_without("no-timeout", ("timeout",), "exec sleep 30")
 expect("ask", "gh pr merge --merge", "merge: without timeout a slow gh is cut off and asks", path=slow, reason="cannot confirm", cwd=merging)
 expect("allow", "gh pr view 42", "merge: other gh commands pass", path=red, cwd=merging)
 expect("allow", "echo 'gh pr merge 42'", "merge: quoted text stays data", path=red, cwd=merging)
