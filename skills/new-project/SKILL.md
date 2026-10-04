@@ -15,7 +15,7 @@ Language/runtime and framework, project type (API, web, CLI, library), database 
 
 Recommend the option that fits: compose when there's a database or other services, a production image when the target is a VPS or AWS, none for libraries and Vercel. Propose sensible defaults and the plan, then wait for approval, since scaffolding is a big change.
 
-Follow `dev-workflow` → `references/conventions.md` (pnpm for JS/TS, uv for Python, Composer + Pint for PHP, English code, kebab-case files in TS). Prefer the ecosystem's official generator (e.g. `npm create vite`, `uv init`, `cargo new`, `go mod init`, `dotnet new`) over writing boilerplate by hand, and current stable versions of tools.
+Follow `dev-workflow` → `references/conventions.md` and the stack's file in `references/languages/` (pnpm for JS/TS, uv for Python, Composer + Pint for PHP, English code, kebab-case files in TS). Prefer the ecosystem's official generator (e.g. `npm create vite`, `uv init`, `cargo new`, `go mod init`, `dotnet new`) over writing boilerplate by hand, and current stable versions of tools.
 
 ## 2. Foundations checklist
 - `git init -b main`, plus a `.gitignore` for the language, editor and OS. Ignore `.env`.

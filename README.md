@@ -5,12 +5,12 @@
 [![CI](https://github.com/nbfrodri/agent-harness/actions/workflows/ci.yml/badge.svg)](https://github.com/nbfrodri/agent-harness/actions/workflows/ci.yml)
 
 ## Why
-Out of the box, AI assistants forget your conventions every session, skip tests, write giant commits signed by the AI, and can force-push `main`. This harness gives them one consistent workflow (plan → TDD → small commits → docs → review) and **enforces** the rules that matter with hooks, opt-in per project. [More →](docs/why.md)
+Out of the box, AI assistants forget your conventions every session, skip tests, write giant commits signed by the AI, and can force-push `main`. This harness gives them one consistent workflow (plan → TDD → small commits → docs → review), scaled to each task, and **enforces** the rules that matter with hooks, opt-in per project. [More →](docs/why.md)
 
 ## At a glance
 | | |
 | --- | --- |
-| **Workflow** | `dev-workflow` with code, git and release conventions |
+| **Workflow** | `dev-workflow` with lite, standard and strict levels (auto-selected by default) and code, git and release conventions |
 | **Process skills** | `new-project`, `debugging`, `testing`, `git-history`, `release`, `github-issues`, `project-docs`, `improve`, `orchestrate`, `auto-improve`, `lessons` |
 | **Stack skills** | `frontend`, `api-design`, `database`, `auth`, `e2e-testing`, `deployment`, `observability` |
 | **Agents** | `planner`, `implementer`, `code-reviewer`, `test-writer`, `docs-writer`, `evaluator`, `architecture-reviewer`, `security-auditor`, `performance-analyzer`, `ui-reviewer` |
@@ -37,10 +37,12 @@ To uninstall, run `./uninstall.sh --dry-run` first, then `./uninstall.sh` from t
 ## Use
 ```bash
 cd ~/Projects/my-app
-harness enable      # turn the full workflow on for this project (off by default)
+harness enable      # turn the workflow on for this project (off by default)
+harness mode        # auto by default; also lite, standard or strict
 ```
-Project instructions, architecture and an active handoff are loaded as bounded startup context. Automatic formatting also needs `harness trust` for the local checkout; `harness status` shows both activation and formatter trust. Run `harness help` for commands and examples. [Context and trust →](docs/usage.md#startup-context-and-formatter-trust)
-Complex independent tasks are delegated automatically using available models after any required plan approval. Disable automatic delegation with `git config harness.delegation off`; small tasks stay direct. [Delegation and integration choices →](docs/usage.md#automatic-delegation-and-integration-choices)
+**Workflow modes:** in `auto` the assistant picks a level per task (lite for small changes, standard for bounded features and fixes, strict for risky or multi-module work) and says which. Lighter levels skip plans, handoffs, logs and subagents to save tokens and time; hooks enforce the same safety rules in every mode. Set your default with `harness mode lite --global` and override it per project with `harness mode strict`. [Modes →](docs/usage.md#workflow-modes)
+Project instructions load at startup; architecture and an active handoff are indexed and read only when a task needs them (strict mode loads excerpts). Automatic formatting also needs `harness trust` for the local checkout; `harness status` shows both activation and formatter trust. Run `harness help` for commands and examples. [Context and trust →](docs/usage.md#startup-context-and-formatter-trust)
+Complex independent strict-level tasks are delegated automatically after plan approval; lighter levels suggest delegation and ask. Disable it with `git config harness.delegation off`. [Delegation and integration choices →](docs/usage.md#automatic-delegation-and-integration-choices)
 Then work as usual: "Add Google login", "Work on issue #12", "What would you improve?", "Improve it autonomously until it scores 8/10", "Prepare a release". `harness disable` turns it off. [Usage →](docs/usage.md)
 
 Update with `git pull && ./install.sh`. Sharing it with someone else: [sharing](docs/sharing.md).
@@ -49,7 +51,7 @@ Update with `git pull && ./install.sh`. Sharing it with someone else: [sharing](
 Make the harness your own after cloning it: change the rules, workflow, skills, agents, supported tools, plugins and hooks to fit your preferences. Keep personal changes in your own clone or fork. [Customization guide →](docs/customization.md)
 
 ## Results
-Historical results from 12 real sessions with the original grading heuristics (including a test-order metric since corrected) ([method, full tables and limitations](docs/results.md)):
+Workflow modes are not measured yet (a [pilot](docs/benchmarks/2026-10-04-modes-pilot.md) found defects, since fixed). Historical results of the earlier single workflow, from 12 real sessions with the original grading heuristics (including a test-order metric since corrected) ([method, full tables and limitations](docs/results.md)):
 
 | | Plain assistant | With the harness |
 | --- | --- | --- |

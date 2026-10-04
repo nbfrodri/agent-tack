@@ -7,7 +7,7 @@ Open Agent Skills format (`SKILL.md`), read by every supported tool.
 
 | Skill | Purpose |
 | --- | --- |
-| `dev-workflow` | The workflow: plan, TDD, SOLID/DDD, code, git and release conventions, docs |
+| `dev-workflow` | The workflow at lite, standard or strict level: impact mapping, minimal modular changes, architecture fit, plan, TDD, SOLID/DDD, code, git and release conventions, docs |
 | `new-project` | Scaffold a project with tests, lint, CI, docs, templates, release-please |
 | `debugging` | Reproduce → regression test → isolate → verify → fix the root cause |
 | `testing` | What and how to test per layer; pytest, Pest/PHPUnit, Vitest/Jest |
@@ -16,7 +16,7 @@ Open Agent Skills format (`SKILL.md`), read by every supported tool.
 | `github-issues` | From an issue to a PR that closes it; writing and splitting issues |
 | `project-docs` | Docs for humans and AIs, ADRs, plans, audits, handoffs, AI log |
 | `improve` | Prioritised improvement review with read-only reviewers |
-| `orchestrate` | Multi-agent delegation with model and effort per task |
+| `orchestrate` | Multi-agent delegation with model and effort per task; automatic only for strict-level work |
 | `auto-improve` | Autonomous score → fix → re-score loop up to a target score |
 | `lessons` | Turn corrections into versioned rules |
 | `frontend` | React/Next.js components, state, forms, accessibility |

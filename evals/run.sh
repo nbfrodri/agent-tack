@@ -2,9 +2,10 @@
 # Runs one behaviour eval: a real `claude -p` (or `codex exec`) session on a throwaway repo.
 # Uses real model tokens.
 #
-# Usage: evals/run.sh <scenario> [harness|baseline] [repetition]
+# Usage: evals/run.sh <scenario> [condition] [repetition]
 #   scenarios:  new-project | bug-fix | release | codex-new-project
-#   harness:    the full setup, with the project enabled (default)
+#   conditions: auto | lite | standard | strict: the full setup, with the project enabled at
+#               that workflow mode; harness (default) is an alias for auto
 #   baseline:   Claude Code as shipped: no user settings, skills or instructions, and git
 #               without the global hooks (same repo and prompt)
 # Results go to $EVALS_OUT (default: $TMPDIR/agent-harness-evals)/<scenario>/<condition>-<rep>;
@@ -24,8 +25,10 @@ case "$name" in
     ;;
 esac
 case "$condition" in
-  harness | baseline) ;;
-  *) echo "unknown condition '$condition' (harness | baseline)" >&2; exit 2 ;;
+  baseline) mode='' ;;
+  harness) mode=auto ;;
+  auto | lite | standard | strict) mode="$condition" ;;
+  *) echo "unknown condition '$condition' (baseline | harness | auto | lite | standard | strict)" >&2; exit 2 ;;
 esac
 case "$rep" in *[!0-9]* | '') echo "repetition must be a number" >&2; exit 2 ;; esac
 
@@ -58,7 +61,9 @@ if [ "$condition" = baseline ]; then
   git config --file "$GIT_CONFIG_GLOBAL" init.defaultBranch main
 fi
 
-NEW_PROJECT_PROMPT='Create a small Python library (use uv) to calculate a shopping cart total: price times quantity, a 10% volume discount for 10 or more units of the same product, and 21% VAT on the total. This is a new project in this directory. You do not need to ask me questions; choose reasonable defaults.'
+# Sessions are non-interactive: a question would end them, so every prompt waives questions.
+NO_QUESTIONS='You do not need to ask me questions; choose reasonable defaults.'
+NEW_PROJECT_PROMPT='Create a small Python library (use uv) to calculate a shopping cart total: price times quantity, a 10% volume discount for 10 or more units of the same product, and 21% VAT on the total. This is a new project in this directory. '"$NO_QUESTIONS"
 
 seed_bug_repo() {
   cd "$dir" || exit 1
@@ -153,17 +158,21 @@ case "$name" in
   release) seed_release_repo ;;
 esac
 cd "$dir" || exit 1
-[ "$condition" = harness ] && "$HARNESS_REPO/bin/harness" enable >/dev/null
+if [ -n "$mode" ]; then
+  "$HARNESS_REPO/bin/harness" enable >/dev/null
+  # Set locally so the user's global default mode cannot leak into the comparison.
+  "$HARNESS_REPO/bin/harness" mode "$mode" >/dev/null
+fi
 
 case "$name" in
   new-project | codex-new-project) prompt="$NEW_PROJECT_PROMPT" ;;
-  bug-fix) prompt='When the cart is empty, average_price raises ZeroDivisionError. It should return 0. Fix it.' ;;
-  release) prompt='Prepare the next release of the project. No remote is configured yet.' ;;
+  bug-fix) prompt="When the cart is empty, average_price raises ZeroDivisionError. It should return 0. Fix it. $NO_QUESTIONS" ;;
+  release) prompt="Prepare the next release of the project. No remote is configured yet. $NO_QUESTIONS" ;;
 esac
 printf '%s\n' "$prompt" > "$out/prompt.txt"
 
-allowed_tools=("Bash(git *)" "Bash(uv *)" "Bash(python3 *)" "Bash(ls *)" "Bash(cat *)"
-  "Bash(mkdir *)" "Bash(pytest *)" "Bash(harness *)" "Bash(find *)" "Bash(grep *)" "Bash(head *)" "Bash(sed -n *)"
+allowed_tools=("Bash(git *)" "Bash(uv *)" "Bash(python3 *)" "Bash(python *)" "Bash(PYTHONPATH=*)" "Bash(ls *)" "Bash(cat *)"
+  "Bash(mkdir *)" "Bash(pytest *)" "Bash(tail *)" "Bash(harness *)" "Bash(find *)" "Bash(grep *)" "Bash(head *)" "Bash(sed -n *)"
   Read Write Edit Glob Grep Skill Agent TodoWrite)
 provider=claude
 [ "$name" = codex-new-project ] && provider=codex

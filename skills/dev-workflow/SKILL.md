@@ -1,60 +1,78 @@
 ---
 name: dev-workflow
-description: The user's engineering workflow for projects with harness enabled: plan first, TDD, SOLID/DDD, code and git conventions (Conventional Commits, branches, PRs) and docs. Use whenever writing, changing or debugging code, committing or opening PRs in such projects (implement, fix, commit).
+description: The user's engineering workflow for projects with harness enabled, scaled by workflow level (lite, standard, strict): planning, TDD, SOLID/DDD, code and git conventions (Conventional Commits, branches, PRs) and docs. Use whenever writing, changing or debugging code, committing or opening PRs in such projects (implement, fix, commit).
 ---
 
 # Dev Workflow
 
 Applies in projects where the harness is enabled (`harness status`; Claude Code says so at session start). Elsewhere, work normally without this ceremony unless the user asks for it.
 
-The goal: every request ends as a small change that is tested, documented and recorded in a clean git history anyone can follow later. It works the same with any assistant (Claude, Codex or another).
+The goal: every request ends as a small, tested change in a clean git history, with only as much process as the task deserves. It works the same with any assistant (Claude, Codex or another).
 
 - **Language, attribution and what to ask before doing:** as in the global instructions; the git details are in `references/git-github.md`.
 - **Code and git conventions:** `references/conventions.md` (style, naming, formatting, PR merging).
 - **The project's own conventions win.** If the repo has its own CONTRIBUTING, AGENTS.md, CLAUDE.md, linter, commit format or folder structure, follow them over this guide. This skill fills the gaps; it doesn't override what exists.
 
+## Workflow levels
+
+`harness mode` sets the level: `auto` (the default) picks one per task; `lite`, `standard` or `strict` fix it for every task. A project setting overrides the user's global default (`harness mode --global`). The user can change the level for any task in conversation ("do this in strict").
+
+In `auto`, classify each request before acting and state it in one line, for example `Level: standard (bounded bug fix in one module)`:
+- **lite:** questions, typos, renames, config tweaks, a one-line fix, small scripts or prototypes.
+- **standard:** a bounded feature or bug fix inside one area, following existing patterns.
+- **strict:** several modules, architecture or public API changes, data migrations, deleting things, auth, payments or security, debatable design, or anything the user calls important or risky.
+
+If a task turns out larger or riskier than its level, say so and move up before continuing; never move down silently.
+
+| | lite | standard | strict |
+| --- | --- | --- | --- |
+| Plan | none | short plan in the tool's task list; not saved | written plan saved in `docs/plans/`; **wait for approval** |
+| Branch | off `main`/`master`/`develop` for any change | same | same |
+| Commits | Conventional Commits | each verified milestone | each verified milestone, SHAs in the handoff |
+| Tests | a test for changed logic; run the affected suite | TDD: red, green, refactor | TDD |
+| Docs | only if the change contradicts existing docs | docs affected by changed behaviour; `docs/architecture.md` if structure changes | full checklist in `references/documentation.md`, ADRs |
+| Handoff | none | only if work spans sessions or context or usage looks low | from the start, updated every milestone |
+| AI log | none | none | one row in `docs/ai/log.md` |
+| Review | read your own diff | `code-reviewer` for large or risky diffs | `code-reviewer` before offering to push |
+| Delegation | suggest and wait | suggest and wait | automatic after approval unless `harness.delegation` is `off` |
+
+Every level keeps the hooks' guarantees (Conventional Commits, no AI attribution, no secrets, protected `main` and tags) and the rules on what to ask before doing.
+
 ## The flow for every request
 
 ### 1. Understand
-If `docs/handoffs/` has an in-progress handoff for this branch or task, read it first and continue from there. If the request comes from a GitHub issue ("issue #12", an issue URL), read it with its comments and use its acceptance criteria as the definition of done (`github-issues` skill).
+When starting or resuming a session, always look for an in-progress or paused handoff in `docs/handoffs/` (startup context lists it with a freshness check). Read it, then check it against `git log`, `git status` and the current branch: if work happened after its last update or it names another branch, tell the user what differs and refresh it before continuing. If the request comes from a GitHub issue ("issue #12", an issue URL), read it with its comments and use its acceptance criteria as the definition of done (`github-issues` skill).
 
-Read the relevant code, tests and docs before proposing anything. If the request is ambiguous in a way that changes the result, ask, grouping all questions in one round. If there's a reasonable default, use it and say so.
+Read the relevant code, tests and docs before proposing anything. **Ask whenever you have a real doubt** about scope, behaviour, design or risk, grouping all questions in one round; don't guess. Decide alone only purely conventional details, and say what you chose.
 
-### 2. Size the task
-- **Trivial** (typo, rename, one-line tweak, a question): just do it, no formal plan.
-- **Normal** (a bounded feature or bug): write a short plan and carry it out without waiting.
-- **Large or risky** (several modules, architecture changes, data migrations, deleting things, public API changes, debatable design decisions): present the plan and **wait for the user's approval** before touching code. For complex independent parts, include a delegation breakdown through `orchestrate`; automatic delegation starts only after the plan is approved and respects `harness.delegation`.
+### 2. Map the impact
+Before changing anything, list what the change touches beyond the obvious file: callers and dependants, tests, CLI help and usage text, README and `docs/` pages that describe the behaviour, `docs/architecture.md`, configuration and its examples, schemas and migrations, installer or setup steps, CI, translations. Search for the names you are changing (`grep` for the function, flag, setting or command) rather than relying on memory. Every affected item is updated in the same change or listed as pending; adding a mode to a CLI, for example, also means its `--help`, its validation, its tests and its usage docs. At lite this is a quick search; at standard and strict, put the list in the plan.
 
-### 3. Plan
-Short and concrete, using the tool's task or plan feature if there is one (TodoWrite, plan mode, update_plan…):
-- the goal in one sentence and acceptance criteria ("done when…");
-- ordered steps, each ending in a commit;
-- which tests come first;
-- which docs need updating;
-- risks and open questions;
-- for large plans that split into independent parts: a delegation section with file ownership and recommended available model/effort per task, as in `orchestrate`; respect the project's delegation mode and the approved plan.
+Aim for the **smallest change that does the job**: touch as few files and lines as possible, extend through the existing extension points (data files, interfaces, registries, configuration) instead of editing many call sites, and keep unrelated refactors out (note them as suggestions). If the smallest correct change still has to touch many files, that is a design signal: see step 3.
 
-For normal or large tasks, also create the task's handoff and keep it current at every milestone (`project-docs` → continuous handoffs), in case the session stops.
+### 3. Check that the design still fits
+While reading the code, look for signs that the architecture will not scale with this request or the project's growth: a change that needs edits in many places, files or functions with too many responsibilities, duplicated logic, dependencies pointing the wrong way, hard-coded variation that should be data, hot paths or data volumes the current design cannot handle. Don't restructure silently: tell the user what you found, its cost now and later, and the options (do the minimal change now, or refactor first), and ask. At strict, record an accepted architecture change as an ADR and update `docs/architecture.md`. Details: `references/design.md`.
 
-### 4. Branch
-On `main`/`master`/`develop` with a non-trivial change, create a branch: `feat/short-description`, `fix/…`, `refactor/…`, `docs/…`, `chore/…`. Check `git status` first so unrelated changes don't get mixed in.
+### 4. Pick the level and plan
+Apply the level from `harness mode`, or classify the task in `auto`. Plan as the table says: ordered steps, each ending in a commit; tests first; docs to update; risks and open questions. A strict plan that splits into independent parts also has a delegation section with file ownership and model/effort per task, as in `orchestrate`.
 
-### 5. Implement with TDD
-Red → green → refactor for all logic with behaviour: a test that fails for the right reason, the minimal code to pass it, then clean up. Design with SOLID and, where there's a real business domain, DDD. Write code following `references/conventions.md`. Be pragmatic: one-off scripts, config and prototypes don't need the full ceremony, but they still need some test or verification. Details: `references/tdd.md` and `references/design.md`.
+### 5. Branch
+Check `git status` first so unrelated changes don't get mixed in, then branch: `feat/short-description`, `fix/…`, `refactor/…`, `docs/…`, `chore/…`.
 
-### 6. Atomic commits
-Commit each coherent verified milestone immediately, in Conventional Commits: tests plus the behavior they verify, a focused refactor, or related documentation. Do not wait for the task to finish before committing all its changes. Record milestone SHAs in the handoff. Recommend an integration method from the branch history and offer the user a choice in the existing merge confirmation; preserve commits unless the user explicitly chooses squash. Details: `references/git-github.md`.
+### 6. Implement
+At standard and strict, red → green → refactor for all logic with behaviour. At lite, add or update a test when logic changes. Keep code modular so future changes touch few files: SOLID and, where there's a real business domain, DDD; follow `references/conventions.md` and only the stack file you touch in `references/languages/`. Details: `references/tdd.md` and `references/design.md`.
 
-### 7. Document
-Simple, precise and concise docs for humans (`README`, `docs/`) and AIs (`AGENTS.md`), following `project-docs`. Save approved plans, relevant audits and, if the task is left unfinished, a handoff in `docs/`; add a row to `docs/ai/log.md` for each significant task. Go through the checklist in `references/documentation.md` before closing the task, and record significant architecture decisions as ADRs.
+### 7. Commit
+Commit each coherent verified milestone immediately in Conventional Commits. Recommend an integration method from the branch history in the existing merge confirmation; preserve commits unless the user explicitly chooses squash. Details: `references/git-github.md`.
 
-Every enabled project should have `docs/architecture.md`, linked from its README and documentation index. If it is missing in an existing project, add it during the first significant task after reading the code. Document the actual components, responsibilities, dependency direction and key flows; update it whenever those change. Use `project-docs` for the format.
+### 8. Document
+Update everything on the impact list, plus what the level requires, following `project-docs`. Every enabled project should have `docs/architecture.md`; if it is missing, add it during the first strict task after reading the code.
 
-### 8. Verify
-Run the project's tests, linter, formatter and type checker. Never say something works without having checked it; if something fails or couldn't run, say so clearly, with the output.
+### 9. Verify
+Run the project's tests, linter, formatter and type checker. Re-run the impact search on the final diff to catch help text, docs or callers that still describe the old behaviour. Never say something works without having checked it; if something fails or couldn't run, say so clearly, with the output.
 
-### 9. Close
-Summarise for the user: what changed, in which commits, how it was verified, which docs were updated, and what's pending or risky. Offer to push or open the PR where it applies.
+### 10. Close
+Summarise briefly: what changed, the commits, what else the change affected and how it was covered, how it was verified and what's pending. Offer to push or open the PR where it applies.
 
 ## Related skills and agents
 Use them when the current tool has them:
@@ -66,13 +84,13 @@ Use them when the current tool has them:
 - `github-issues`: working from an issue, writing issues, splitting a plan into issues, recording bugs found along the way.
 - `project-docs`: `docs/` structure, templates, technical sheet, architecture, plans, audits, handoffs and the AI usage log.
 - `improve`: reviewing existing code or projects and proposing prioritised improvements; always asks scope and focus first.
-- `orchestrate`: for explicit requests or automatic complex separable work; checks delegation mode, routes by complexity using available models, and verifies the integrated result.
+- `orchestrate`: for explicit requests, or automatically for separable strict work; routes by complexity using available models and verifies the integrated result.
 - `auto-improve`: only when the user asks for autonomous improvement; an evaluator scores the project and you lead agents until a target score, on its own branch.
 - `lessons`: when the user corrects you or sets a lasting preference, save it as a rule.
 - Stack skills when the task touches that layer: `frontend`, `api-design`, `database`, `auth`, `e2e-testing`, `deployment`, `observability`.
-- Agent `planner`: delegate the plan for normal or large tasks (step 3).
-- Agent `code-reviewer`: review the diff before offering to push (between steps 8 and 9).
-- Agent `docs-writer`: update docs (step 7) when a change affects several documents.
+- Agent `planner`: for strict tasks that need a deep plan (step 4).
+- Agent `code-reviewer`: as the level's review row says (between steps 9 and 10).
+- Agent `docs-writer`: strict tasks whose change affects several documents (step 8).
 - Agent `security-auditor`: before releases and after changes to auth, payments, file uploads or input handling.
 - Agent `performance-analyzer`: when something is slow, or before launching something performance-sensitive.
 - Agent `test-writer`: adding tests to existing untested code or before refactoring it. Not for new code: there you write the test first (TDD).

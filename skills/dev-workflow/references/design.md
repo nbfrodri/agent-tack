@@ -37,6 +37,11 @@ src/
 ```
 Dependencies point inwards: `interfaces → application → domain`, and `infrastructure → domain`. The domain never imports infrastructure. Adapt folder names to the language's, framework's and project's conventions.
 
+## Minimal, modular change
+- **Smallest diff that solves the problem:** fewer files and lines mean less risk and easier review. Don't reformat, rename or reorganise code you aren't changing.
+- **Change in one place:** a new variant (a mode, a provider, a rule) should be a new entry in data or a new implementation of an existing interface, not edits scattered across call sites. If it can't be, the missing extension point is the design problem to raise.
+- **Signals that the architecture needs attention:** shotgun surgery (one feature touches many files), god files or functions, cyclic or inward-pointing dependencies, copy-pasted logic, configuration hard-coded in code, and load or data growth the current design can't absorb. Report them with evidence and options; refactor only with the user's agreement.
+
 ## Other practices
 - **DRY** with judgement: duplicate rather than couple things that only look alike by accident.
 - **Composition over inheritance.**

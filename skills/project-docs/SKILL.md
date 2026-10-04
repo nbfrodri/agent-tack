@@ -52,10 +52,11 @@ Templates for every document are in this skill's `assets/` (`assets/README.md`, 
 
 ## Working documents (plans, audits, handoffs)
 These are committed so the reasons behind the work stay in history and anyone can pick the work up from another machine.
-- **Plans:** when a plan is approved (from you or the `planner` agent), save it to `docs/plans/` with `Status: approved`. Update the status to `done` (or `abandoned`, with the reason) when the work finishes. Commit as `docs(plans): …`.
+- **Plans:** at the strict workflow level, when a plan is approved (from you or the `planner` agent), save it to `docs/plans/` with `Status: approved`. Update the status to `done` (or `abandoned`, with the reason) when the work finishes. Commit as `docs(plans): …`.
 - **Audits:** reports from `code-reviewer`, `security-auditor` and `performance-analyzer` (or manual reviews) that matter beyond the current conversation, such as pre-release audits or large reviews, go to `docs/audits/`, with findings and their status. The agents are read-only, so the main agent saves the file. Commit as `docs(audits): …`.
 - **Handoffs (continuous checkpoints):** a session can stop at any moment (usage limits, context running out, a crash), and the AI cannot query the remaining usage, so don't wait until the end to write the handoff:
-  - For any normal or large task, create `docs/handoffs/YYYY-MM-DD-slug.md` when the work starts (template in `assets/`), with `Status: in progress`.
+  - At the strict workflow level, create `docs/handoffs/YYYY-MM-DD-slug.md` when the work starts (template in `assets/`), with `Status: in progress`.
+  - At the standard level, create one only when the work will span sessions or context or usage looks low; lite never needs one.
   - Update it at every milestone (each commit or plan step): done, next step, open questions, how to verify. This is just a file edit, with no commit each time; the file survives on disk even if the session dies.
   - Refresh it **immediately** when there are signs the session may end soon: a low remaining-context or token budget, a usage-limit warning, a very long session, or before a risky or long-running step.
   - Commit it (`docs(handoffs): …`) when stopping without finishing, before switching machine or AI tool, or when the user asks for a handoff.
@@ -66,7 +67,7 @@ These are committed so the reasons behind the work stay in history and anyone ca
 ## AI usage
 The project documents how AI is used. This is the place for it: commits stay free of AI attribution (as the user decided), and this log is where AI involvement is recorded.
 - `docs/ai/README.md`: which assistants are used and with which configuration (skills, hooks, MCP servers), what the AI may do on its own and what needs human review.
-- `docs/ai/log.md`: after each significant AI-assisted task (a feature, a fix, a refactor, an audit; not typo-level changes), append one row: date, tool and model, task, outcome (with links to PRs and commits), what a human reviewed. Keep the newest entries at the top.
+- `docs/ai/log.md`: after each strict-level task (and any audit), append one row: date, tool and model, task, outcome (with links to PRs and commits), what a human reviewed. Keep the newest entries at the top.
 - `docs/ai/prompts.md`: when a prompt or request worked notably well for this project, offer to save it (one line saying when to use it, then the prompt).
 
 ## Architecture docs

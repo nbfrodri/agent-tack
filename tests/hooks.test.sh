@@ -409,6 +409,14 @@ session() { printf '{"cwd":"%s"}' "$1" | bash "$SESSION"; }
 check "enabled project: says ENABLED" "session '$WORK/repo' | grep -q 'ENABLED for this project'"
 check "disabled project: says NOT enabled" "session '$R' | grep -q 'NOT enabled'"
 check "output is valid JSON for SessionStart" "session '$R' | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d[\"hookSpecificOutput\"][\"hookEventName\"]==\"SessionStart\"'"
+check "auto mode: asks the assistant to pick a level per task" "session '$WORK/repo' | grep -q 'mode: auto.*pick the workflow level'"
+check "every mode: asks the assistant to ask when in doubt" "session '$WORK/repo' | grep -q 'Ask the user whenever you have a real doubt'"
+check "every mode: states the core rules without loading the skill" "session '$WORK/repo' | grep -q 'At every level: work on a branch off main, test the change, and make a Conventional Commit for each verified milestone'"
+git -C "$WORK/repo" config harness.mode lite
+check "fixed mode: names the level to apply" "session '$WORK/repo' | grep -q 'mode: lite.*Apply the lite level'"
+git -C "$WORK/repo" config harness.mode turbo
+check "invalid mode: falls back to auto" "session '$WORK/repo' | grep -q 'mode: auto'"
+git -C "$WORK/repo" config --unset harness.mode
 
 echo "Claude hook: format-file"
 FORMAT="$REPO/hooks/claude/format-file.sh"

@@ -24,11 +24,13 @@ expect_exit() {
   [ "$actual" -eq "$expected" ]
 }
 contains() { grep -qF -- "$1" "$WORK/output"; }
+output_is() { [ "$(cat "$WORK/output")" = "$1" ]; }
+expect_mode() { expect_exit 0 "$CLI" mode && output_is "$1"; }
 expect_status() {
   local expected_exit="$1" workflow="$2" trust="$3" expected
   shift 3
   expect_exit "$expected_exit" "$CLI" "$@" || return 1
-  expected="$(printf '%s\nformatter trust: %s' "$workflow" "$trust")"
+  expected="$(printf '%s\nmode: %s\nformatter trust: %s' "$workflow" "${EXPECTED_MODE:-auto (default)}" "$trust")"
   [ "$(cat "$WORK/output")" = "$expected" ]
 }
 excludes_completed() { ! grep -qF 'Do not include completed work' "$WORK/output"; }
@@ -96,15 +98,87 @@ check "standalone trusted query prints trusted" test "$(cat "$WORK/output")" = t
 check "trust can be revoked" expect_exit 0 "$CLI" trust --revoke
 check "revoked trust refuses execution" expect_exit 1 "$CLI" trusted --quiet
 
+check "mode defaults to auto" expect_mode 'auto (default)'
+check "global mode can be set" expect_exit 0 "$CLI" mode lite --global
+check "global mode applies to the project" expect_mode 'lite (global)'
+check "project mode can be set" expect_exit 0 "$CLI" mode strict
+check "project mode is stored locally" test "$(git config --local --get harness.mode)" = strict
+check "project mode overrides the global default" expect_mode 'strict (local)'
+check "global query ignores the project mode" expect_exit 0 "$CLI" mode --global
+check "global query shows the global default" output_is 'lite (global)'
+EXPECTED_MODE='strict (local)'
+check "status shows the effective mode and its source" expect_status 0 enabled untrusted status
+unset EXPECTED_MODE
+check "project mode can be unset" expect_exit 0 "$CLI" mode --unset
+check "unset project mode falls back to the global default" expect_mode 'lite (global)'
+check "global option may come first" expect_exit 0 "$CLI" mode --global standard
+check "global mode can be changed" expect_mode 'standard (global)'
+check "global mode can be unset" expect_exit 0 "$CLI" mode --unset --global
+check "unset global mode falls back to auto" expect_mode 'auto (default)'
+check "unknown modes are rejected" expect_exit 2 "$CLI" mode turbo
+check "rejected mode is not stored" test -z "$(git config --get harness.mode)"
+check "extra mode arguments are rejected" expect_exit 2 "$CLI" mode lite strict
+check "unknown mode options are rejected" expect_exit 2 "$CLI" mode --typo
+git config --local harness.mode turbo
+check "invalid stored mode behaves as auto and is reported" expect_mode "auto (invalid local value: turbo)"
+git config --local --unset harness.mode
+: > .git/config.lock
+check "mode reports config write failure" expect_exit 1 "$CLI" mode lite
+rm .git/config.lock
+cd "$WORK" || exit 1
+check "project mode requires a repository" expect_exit 2 "$CLI" mode lite
+check "global mode works outside a repository" expect_exit 0 "$CLI" mode strict --global
+check "mode outside a repository shows the global default" expect_mode 'strict (global)'
+git config --global --unset harness.mode
+check "help documents mode" expect_exit 0 "$CLI" help
+check "help includes mode syntax" contains 'mode [MODE] [--global]'
+cd "$WORK/project" || exit 1
+
 printf 'Project "instructions"\\path\n' > AGENTS.md
 printf 'Architecture context\n' > docs/architecture.md
 printf '# Handoff\nStatus: in progress\nNext: implement feature\n' > docs/handoffs/2026-10-03-active.md
 printf '# Old handoff\nStatus: complete\nDo not include completed work\n' > docs/handoffs/2026-10-04-complete.md
 check "context succeeds in enabled projects" expect_exit 0 "$CLI" context
 check "context includes project instructions" contains 'Project "instructions"'
-check "context includes architecture" contains 'Architecture context'
-check "context includes an active handoff" contains 'Next: implement feature'
+check "auto context indexes architecture instead of loading it" contains '- docs/architecture.md (1 lines)'
+check "auto context omits architecture text" eval '! contains "Architecture context"'
+check "auto context indexes the active handoff" contains '- Active handoff: docs/handoffs/2026-10-03-active.md'
+check "auto context shows the handoff's next step" contains 'Next: implement feature'
+check "auto context omits the handoff body" eval '! contains "# Handoff"'
 check "context excludes completed handoffs" excludes_completed
+git config --local harness.mode standard
+check "standard context succeeds" expect_exit 0 "$CLI" context
+check "standard context is an index too" contains '- docs/architecture.md (1 lines)'
+git config --local --unset harness.mode
+git config --local harness.mode lite
+check "lite context succeeds" expect_exit 0 "$CLI" context
+check "lite context keeps project instructions" contains 'Project "instructions"'
+check "lite context skips architecture" eval '! contains "Architecture context"'
+check "lite context still indexes the active handoff" contains '- Active handoff: docs/handoffs/2026-10-03-active.md'
+check "lite context skips the handoff body" eval '! contains "# Handoff"'
+git config --local harness.mode strict
+check "strict context includes architecture" expect_exit 0 "$CLI" context
+check "strict context includes architecture text" contains 'Architecture context'
+check "strict context includes the handoff body" contains '# Handoff'
+check "strict context reports handoff freshness" contains 'up to date: no commits since its last update'
+git config --local --unset harness.mode
+check "fresh handoff is reported up to date" expect_exit 0 "$CLI" context
+check "fresh handoff says so" contains 'up to date: no commits since its last update'
+touch -t 202001010000 docs/handoffs/2026-10-03-active.md
+git -c user.name=T -c user.email=t@example.com commit -q --allow-empty -m 'feat: later work'
+check "handoff older than new commits is flagged" expect_exit 0 "$CLI" context
+check "stale handoff names the commit count" contains 'may be stale: 1 commit(s) since its last update'
+touch -t 202001010000 docs/handoffs/2026-10-03-active.md
+git add docs/handoffs/2026-10-03-active.md
+git -c user.name=T -c user.email=t@example.com commit -q -m 'docs(handoffs): refresh'
+check "committing the handoff itself counts as an update" expect_exit 0 "$CLI" context
+check "committed handoff is up to date" contains 'up to date: no commits since its last update'
+touch docs/handoffs/2026-10-03-active.md
+# shellcheck disable=SC2016 # Literal Markdown backticks.
+printf 'Branch: `feat/other`\n' >> docs/handoffs/2026-10-03-active.md
+check "handoff for another branch is flagged" expect_exit 0 "$CLI" context
+check "branch mismatch names both branches" contains "handoff names branch feat/other; current branch is $(git branch --show-current)"
+printf '# Handoff\nStatus: in progress\nNext: implement feature\n' > docs/handoffs/2026-10-03-active.md
 check "SessionStart returns valid JSON with project context" expect_exit 0 session
 check "SessionStart preserves quotes and backslashes" session_has_instructions
 mkdir -p "$HOME/.local/bin"
@@ -113,7 +187,7 @@ check "context works through the installed symlink" expect_exit 0 "$HOME/.local/
 mkdir nested
 cd nested || exit 1
 check "context finds root from a nested directory" expect_exit 0 "$CLI" context
-check "nested context includes architecture" contains 'Architecture context'
+check "nested context indexes architecture" contains '- docs/architecture.md'
 cd .. || exit 1
 git config harness.context false
 check "context can be disabled independently" expect_exit 0 "$CLI" context
