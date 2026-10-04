@@ -424,6 +424,29 @@ git -C "$WORK/repo" config harness.mode turbo
 check "invalid mode: falls back to auto" "session '$WORK/repo' | grep -q 'mode: auto'"
 git -C "$WORK/repo" config --unset harness.mode
 
+echo "Claude hook: budget"
+BUDGET="$REPO/hooks/claude/budget.sh"
+export XDG_STATE_HOME="$WORK/state"
+budget() { printf '{"session_id":"%s","cwd":"%s","tool_name":"Read"}' "$1" "$2" | bash "$BUDGET"; }
+B="$WORK/budget-repo"
+git init -q "$B"
+git -C "$B" config harness.enabled true
+git -C "$B" config harness.mode unleash
+git -C "$B" config harness.unleashMaxToolCalls 2
+check "budget: calls under the limit pass" "[ -z \"\$(budget s1 '$B')\" ] && [ -z \"\$(budget s1 '$B')\" ]"
+check "budget: the call past the limit is denied" "budget s1 '$B' | grep -q '\"permissionDecision\":\"deny\"'"
+check "budget: the reason names the limit" "budget s1 '$B' | grep -q 'limit of 2 tool calls'"
+check "budget: each session has its own count" "[ -z \"\$(budget s2 '$B')\" ]"
+check "budget: the count lives in the state directory" "[ -f '$WORK/state/agent-harness/budget/s1' ]"
+check "budget: unsafe session ids are ignored" "[ -z \"\$(budget '../escape' '$B')\" ] && [ ! -e '$WORK/state/agent-harness/escape' ]"
+git -C "$B" config harness.mode lite
+check "budget: other modes are never limited" "[ -z \"\$(budget s1 '$B')\" ]"
+git -C "$B" config harness.mode unleash
+git -C "$B" config --unset harness.unleashMaxToolCalls
+check "budget: no limit configured means no limit" "[ -z \"\$(budget s1 '$B')\" ]"
+check "budget: malformed input is ignored" "[ -z \"\$(printf 'not json' | bash '$BUDGET')\" ]"
+check "budget: registered for every tool" "grep -q 'budget.sh' '$REPO/claude/settings.json'"
+
 echo "Claude hook: format-file"
 FORMAT="$REPO/hooks/claude/format-file.sh"
 P="$WORK/project"

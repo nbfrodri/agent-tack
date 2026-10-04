@@ -131,11 +131,11 @@ check "guard hook points at this repo" "grep -q \"$REPO/hooks/claude/guard-bash.
 check "your own hooks are kept" "grep -q my-own-hook '$S'"
 check "outdated tagged hooks are replaced" "! grep -q /old/path '$S'"
 check "events left empty are removed" "! grep -q '\"Stop\"' '$S'"
-check "exactly one guard hook" "[ \"\$(count_ours '$S' PreToolUse)\" = 1 ]"
+check "one guard and one budget hook" "[ \"\$(count_ours '$S' PreToolUse)\" = 2 ]"
 check "exactly one format hook" "[ \"\$(count_ours '$S' PostToolUse)\" = 1 ]"
 check "exactly one session-start hook" "[ \"\$(count_ours '$S' SessionStart)\" = 1 ]"
 run_install "$H"
-check "no duplicates after re-running" "[ \"\$(count_ours '$S' PreToolUse)\" = 1 ] && [ \"\$(count_ours '$S' PostToolUse)\" = 1 ]"
+check "no duplicates after re-running" "[ \"\$(count_ours '$S' PreToolUse)\" = 2 ] && [ \"\$(count_ours '$S' PostToolUse)\" = 1 ]"
 
 echo "Settings merge with jq only (no python3)"
 if command -v jq >/dev/null 2>&1; then
@@ -154,7 +154,7 @@ if command -v jq >/dev/null 2>&1; then
   check "jq merge keeps your keys" "[ \"\$(jq -r .theme '$H/.claude/settings.json')\" = dark ]"
   check "jq merge keeps your hooks" "grep -q my-own-hook '$H/.claude/settings.json'"
   check "jq merge replaces tagged hooks" "! grep -q /old/x.sh '$H/.claude/settings.json'"
-  check "jq merge leaves one guard hook" "[ \"\$(count_ours '$H/.claude/settings.json' PreToolUse)\" = 1 ]"
+  check "jq merge leaves the guard and budget hooks once" "[ \"\$(count_ours '$H/.claude/settings.json' PreToolUse)\" = 2 ]"
 else
   echo "  - skipped (jq not installed)"
 fi
@@ -179,7 +179,7 @@ cat >"$H/.claude/settings.json" <<JSON
 JSON
 git_global "$H" core.hooksPath "$OLD/git-hooks"
 check "exits 0" "run_install '$H'"
-check "hooks tagged with the old name are replaced" "! grep -q '#agent-config' '$H/.claude/settings.json' && [ \"\$(count_ours '$H/.claude/settings.json' PreToolUse)\" = 1 ]"
+check "hooks tagged with the old name are replaced" "! grep -q '#agent-config' '$H/.claude/settings.json' && [ \"\$(count_ours '$H/.claude/settings.json' PreToolUse)\" = 2 ]"
 check "the user's own hooks survive the migration" "grep -q my-own-hook '$H/.claude/settings.json'"
 check "old agent-config command link removed" "[ ! -L '$H/.local/bin/agent-config' ]"
 check "old ~/.agents/agent-config link removed" "[ ! -L '$H/.agents/agent-config' ]"

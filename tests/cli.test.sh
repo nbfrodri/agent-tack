@@ -169,9 +169,9 @@ check "a deleted user mode falls back to auto" eval 'git config --local harness.
 git config --local --unset harness.mode
 
 check "config lists every registered feature" expect_exit 0 "$CLI" config
-check "config listing shows value, source and enforcement" contains 'conventional-commits  true      default  hook'
-check "config listing includes instruction toggles" contains 'delegation            auto      default  instruction'
-check "config listing includes installer toggles" contains 'mods                  true      default  installer'
+check "config listing shows value, source and enforcement" contains 'conventional-commits    true      default  hook'
+check "config listing includes instruction toggles" contains 'delegation              auto      default  instruction'
+check "config listing includes installer toggles" contains 'mods                    true      default  installer'
 check "config shows one feature" expect_exit 0 "$CLI" config delegation
 check "config shows the default value and source" output_is 'auto (default)'
 check "config sets a project value" expect_exit 0 "$CLI" config delegation off
@@ -187,6 +187,15 @@ check "config rejects unknown features" expect_exit 2 "$CLI" config turbo
 check "config rejects invalid values" expect_exit 2 "$CLI" config delegation sometimes
 check "rejected value is not stored" test -z "$(git config --get harness.delegation)"
 check "config rejects non-boolean values for boolean features" expect_exit 2 "$CLI" config context maybe
+check "limits default to none" expect_mode_like 'none (default)' "$CLI" config unleash-max-tool-calls
+check "number features accept positive integers" expect_exit 0 "$CLI" config unleash-max-tool-calls 200
+check "number features reject decimals" expect_exit 2 "$CLI" config unleash-max-tool-calls 2.5
+check "number features reject zero" expect_exit 2 "$CLI" config unleash-max-tool-calls 0
+check "decimal features accept amounts" expect_exit 0 "$CLI" config unleash-max-cost 4.50
+check "decimal features reject text" expect_exit 2 "$CLI" config unleash-max-cost cheap
+check "decimal features reject zero" expect_exit 2 "$CLI" config unleash-max-cost 0.0
+git config --local --unset harness.unleashMaxToolCalls
+git config --local --unset harness.unleashMaxCost
 check "global-only features refuse a project value" expect_exit 2 "$CLI" config mods false
 check "global-only features accept a global value" expect_exit 0 "$CLI" config mods false --global
 git config --global --unset harness.mods

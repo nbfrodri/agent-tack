@@ -31,20 +31,31 @@ current() {
 }
 
 is_allowed() {
-  if [ "$values" = bool ]; then
-    case "$1" in true | false) return 0 ;; *) return 1 ;; esac
-  fi
+  case "$values" in
+    bool) case "$1" in true | false) return 0 ;; *) return 1 ;; esac ;;
+    number) printf '%s' "$1" | grep -qE '^[1-9][0-9]*$'; return ;;
+    decimal) printf '%s' "$1" | grep -qE '^[0-9]+(\.[0-9]+)?$' && printf '%s' "$1" | grep -qE '[1-9]'; return ;;
+  esac
   case "|$values|" in *"|$1|"*) return 0 ;; *) return 1 ;; esac
+}
+
+allowed_text() {
+  case "$values" in
+    bool) echo 'true|false' ;;
+    number) echo 'a positive integer' ;;
+    decimal) echo 'a positive amount such as 5 or 2.50' ;;
+    *) echo "$values" ;;
+  esac
 }
 
 list() {
   local shown source name key default values scope enforcement description
-  printf '%-22s%-10s%-9s%-12s%s\n' NAME VALUE SOURCE ENFORCEMENT DESCRIPTION
+  printf '%-24s%-10s%-9s%-12s%s\n' NAME VALUE SOURCE ENFORCEMENT DESCRIPTION
   while read -r name key default values scope enforcement description; do
     case "$name" in '' | '#'*) continue ;; esac
     shown="$(current)"
     source="${shown##*(}"
-    printf '%-22s%-10s%-9s%-12s%s\n' "$name" "${shown% (*}" "${source%)}" "$enforcement" "$description"
+    printf '%-24s%-10s%-9s%-12s%s\n' "$name" "${shown% (*}" "${source%)}" "$enforcement" "$description"
   done < "$registry"
 }
 
@@ -89,6 +100,6 @@ if [ "$unset" = true ]; then
   printf 'Removed the %s setting for %s; now %s.\n' "$target_scope" "$name" "$(current)"
   exit 0
 fi
-is_allowed "$value" || usage_error "invalid value for $name: $value (allowed: ${values/bool/true|false})"
+is_allowed "$value" || usage_error "invalid value for $name: $value (allowed: $(allowed_text))"
 git config "--$target_scope" "$key" "$value" || fail "cannot set $name"
 printf 'Set %s to %s (%s).\n' "$name" "$value" "$target_scope"
