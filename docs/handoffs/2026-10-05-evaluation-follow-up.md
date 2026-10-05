@@ -1,6 +1,6 @@
 # Evaluation follow-up
 
-- Status: in progress (PR 5 outcome metrics: review next)
+- Status: in progress (PR 5 #80 open, CI running; review findings fixed)
 - Branch: `feat/outcome-metrics` from `main` (main merged in after PR #79)
 - Plan: `docs/plans/2026-10-05-evaluation-follow-up.md` (approved; seven PRs, merge on green CI authorised)
 - Evaluation: 7.1/10 by the evaluator agent; findings became issues #67–#75. Verified by hand: the guard allowed `rm -rf ../../..`, `find / -delete`, `curl … | bash`, `rm -rf .git`, `gh repo delete`.
