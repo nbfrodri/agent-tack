@@ -48,6 +48,8 @@ expect_failure "an unclosed frontmatter" "not closed" \
   "printf -- '---\nname: broken\ndescription: x\n' > skills/testing/SKILL.md && mkdir -p skills/broken && cp skills/testing/SKILL.md skills/broken/"
 expect_failure "a description over budget" "max 400" \
   "python3 -c \"import re;p='skills/testing/SKILL.md';s=open(p).read();open(p,'w').write(re.sub(r'^description: .*\$','description: '+'x'*401,s,count=1,flags=re.M))\""
+expect_failure "CI and the development docs naming different ShellCheck versions" "ShellCheck v0.10.0 in CI" \
+  "sed 's/SHELLCHECK_VERSION: v0.11.0/SHELLCHECK_VERSION: v0.10.0/' .github/workflows/ci.yml > tmp && mv tmp .github/workflows/ci.yml"
 expect_failure "global instructions naming a skill that may not be installed" "global/AGENTS.md names 'release'" \
   "printf -- '- Releases: \`release\`.\n' >> global/AGENTS.md"
 expect_failure "a group line for a skill that no longer exists" "skill-groups.txt: 'gone-skill' has no folder" \

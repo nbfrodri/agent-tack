@@ -21,7 +21,7 @@ tests/safety.test.sh     # final index scanning, exact paths and formatter trust
 tests/guard.test.sh      # executable shell syntax, boundaries and long inputs
 tests/evals.test.sh      # offline runner, transcript metrics and report fixtures
 ```
-CI runs ShellCheck and content validation on Linux, the installer and hook regression suites on Linux and macOS, and `claude plugin validate`/`test` for each mod on Linux when the claude CLI is available (it skips otherwise). Rules for contributors (bash 3.2, isolated tests…) are in [`AGENTS.md`](../AGENTS.md).
+CI runs ShellCheck 0.11.0 (pinned by checksum in `.github/workflows/ci.yml`; use the same version locally, as the runner's default one reports different warnings) and content validation on Linux, the installer and hook regression suites on Linux and macOS, and `claude plugin validate`/`test` for each mod on Linux when the claude CLI is available (it skips otherwise). Rules for contributors (bash 3.2, isolated tests…) are in [`AGENTS.md`](../AGENTS.md).
 
 ## Adding a skill, agent or tool
 1. Create `skills/<name>/SKILL.md` or `agents/<name>.md` with `name` and `description` (what it does and when to use it, within the budget `validate.sh` enforces), or add a line to `targets.txt` for a new AI tool.
