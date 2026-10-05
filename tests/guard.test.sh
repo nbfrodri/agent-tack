@@ -16,6 +16,7 @@ for tool in bash cat dirname tr python3 git; do
 done
 python3 - "$REPO" "$WORK" <<'PY'
 import json
+import re
 import os
 from pathlib import Path
 import shutil
@@ -365,6 +366,28 @@ for name in ("shell-parse.sh", "shell-parse.py"):
     if source.exists():
         (bare / "lib" / name).write_text(source.read_text())
 expect("ask", "echo hi", "missing shipped policy asks for review", reason="policy", script=bare / "guard-bash.sh")
+# With its policy but without its rule libraries, the guard asks instead of allowing.
+(bare / "guard-policy.txt").write_text((repo / "hooks/claude/guard-policy.txt").read_text())
+expect("ask", "echo hi", "a missing rule library asks for review", reason="The guard library lib/guard-", script=bare / "guard-bash.sh")
+# The guard stays readable: no function longer than 60 lines in the dispatcher or its libraries.
+long_functions = []
+for path in [guard, *sorted((repo / "hooks/claude/lib").glob("guard-*.sh"))]:
+    start = name = None
+    for number, line in enumerate(path.read_text().splitlines(), 1):
+        match = re.match(r"([A-Za-z_][A-Za-z0-9_]*)\(\) *\{", line)
+        if match:
+            # A one-line function closes on its own line.
+            name, start = (None, None) if line.rstrip().endswith("}") else (match.group(1), number)
+        elif line == "}" and name:
+            if number - start + 1 > 60:
+                long_functions.append(f"{path.name}:{name} ({number - start + 1} lines)")
+            name = None
+if long_functions:
+    failed += 1
+    print("  FAIL functions longer than 60 lines: " + ", ".join(long_functions))
+else:
+    passed += 1
+    print("  PASS no guard function is longer than 60 lines")
 print(f"\n{passed} passed, {failed} failed")
 sys.exit(bool(failed))
 PY

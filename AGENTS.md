@@ -20,6 +20,6 @@ Architecture and execution flows: `docs/architecture.md`; keep it current when c
 
 ## Design
 - tack must serve any model and any editor or agent: put rules in `AGENTS.md` and skills, enforcement in tool-neutral scripts with thin per-tool adapters, and never name a vendor's model in workflow rules.
-- One responsibility per file: `install.sh` orchestrates steps; JSON merging lives in `lib/settings-merge.{py,jq}`; command parsing in `hooks/claude/lib/shell-parse.{py,sh}` and the guard's policy in `guard-bash.sh` (structural rules) and `guard-policy.txt` (pattern rules); startup rendering in `lib/project-context.sh`.
+- One responsibility per file: `install.sh` orchestrates steps; JSON merging lives in `lib/settings-merge.{py,jq}`; command parsing in `hooks/claude/lib/shell-parse.{py,sh}` and the guard dispatches from `guard-bash.sh` to structural rules in `hooks/claude/lib/guard-{git,files,exec,infra,wrappers}.sh` and pattern rules in `guard-policy.txt`; startup rendering in `lib/project-context.sh`.
 - Extend through data, not code: AI tools in `targets.txt`, plugins in `plugins.txt`, feature toggles in `features.txt`, workflow modes in `modes/`, skills and agents as folders and files.
 - Hooks ask `bin/tack status` whether a project is enabled and `bin/tack mode` for its workflow mode; nothing else reads the markers or `tack.mode` directly.
