@@ -2,7 +2,23 @@
 
 What tack changes in practice, measured on real sessions: the same tasks with and without it.
 
-> **Model and tool.** The workflow-modes and lean benchmarks ran in Claude Code 2.1.288 with `claude-sonnet-5-5` (Claude Sonnet 5.5). Results depend on the model and the tool: another model (a different Claude model, GPT, DeepSeek, Qwen and others) or another AI tool can follow instructions more or less closely, take more or fewer turns and cost differently, so treat these numbers as one measurement, not a guarantee. Git hooks behave the same with any model; instruction-based rules vary.
+> **Model and tool.** The outcome, workflow-modes and lean benchmarks ran in Claude Code 2.1.288 with `claude-sonnet-5-5` (Claude Sonnet 5.5). Results depend on the model and the tool: another model (a different Claude model, GPT, DeepSeek, Qwen and others) or another AI tool can follow instructions more or less closely, take more or fewer turns and cost differently, so treat these numbers as one measurement, not a guarantee. Git hooks behave the same with any model; instruction-based rules vary.
+
+## Outcomes (2026-10-05)
+
+Process compliance is not quality, so the evals now also run hidden acceptance tests the agent never sees, and `evals/outcomes.py` reads defects from git history ([benchmark](benchmarks/2026-10-05-outcomes.md), [what each step caught](benchmarks/2026-10-05-step-value.md)).
+
+| Outcome (8 sessions, `claude-sonnet-5-5`) | Baseline | Auto |
+| --- | --- | --- |
+| bug-fix: hidden acceptance tests all pass (5 tests) | 2/2 | 2/2 |
+| new-project: hidden acceptance tests all pass (6 tests) | 2/2 | 2/2 |
+| Branch and commit | 0/4 | 4/4 |
+| Cost (mean) | $0.05 (1×) | $0.13–0.18 (2.6–3.3×) |
+
+- On these small tasks the plain assistant's code was already correct: tack changed the process, not the outcome. Harder scenarios are needed before claiming a quality gain or ruling one out.
+- In this repository, 14 of 104 features (13%) needed a `fix:` after reaching `main`, linked by the lines the fix changed; 16 fixes landed on the feature's own branch before its merge, after review or CI.
+
+Limits: two runs per condition, one model, two Python scenarios; the history covers one repository and three days.
 
 ## Workflow modes (2026-10-04)
 
