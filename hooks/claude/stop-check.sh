@@ -57,8 +57,23 @@ if "$cli" trusted --quiet; then
   fi
 fi
 
-case "$("$cli" context 2>/dev/null)" in
-  *"Handoff check: may be stale"* | *"Handoff check: handoff names branch"*) add "the handoff may be stale: refresh it before stopping." ;;
+# A handoff a commit or two behind mid-task is normal; refreshing it after every commit costs a
+# commit (and a CI run once pushed). Ask once it is handoff-stale-commits code commits behind,
+# or as soon as that work is pushed, since others can then see the branch.
+handoff_check="$("$cli" context 2>/dev/null | grep '^Handoff check:')"
+case "$handoff_check" in
+  *"handoff names branch"*) add "the handoff may be stale: refresh it before stopping." ;;
+  *"may be stale: "*)
+    behind="${handoff_check#*may be stale: }"
+    behind="${behind%% *}"
+    threshold="$("$cli" config handoff-stale-commits 2>/dev/null)"
+    threshold="${threshold%% *}"
+    case "$threshold" in '' | *[!0-9]*) threshold=3 ;; esac
+    unpushed="$(git rev-list --count '@{u}..HEAD' 2>/dev/null)" || unpushed=''
+    if [ "${behind:-0}" -ge "$threshold" ] 2>/dev/null || [ "$unpushed" = 0 ]; then
+      add "the handoff may be stale: refresh it before stopping."
+    fi
+    ;;
 esac
 
 # Kept out of $( ) because bash 3.2 misparses a case pattern's ")" inside command substitution.

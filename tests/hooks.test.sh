@@ -600,7 +600,21 @@ touch -t 202001010000 "$P2/docs/handoffs/2026-10-04-x.md"
 printf 'later\n' > "$P2/later.txt"
 git -C "$P2" add later.txt
 GIT_COMMITTER_DATE="2030-01-01T00:00:00" git -C "$P2" commit -q -m "feat: later work"
-check "stop-check: a stale handoff is reported" "stopping | grep -q 'handoff may be stale'"
+check "stop-check: a handoff one commit behind on an unpushed branch is left alone" "! stopping | grep -q 'handoff may be stale'"
+printf 'more\n' >> "$P2/later.txt"
+git -C "$P2" add later.txt
+GIT_COMMITTER_DATE="2030-01-01T00:00:01" git -C "$P2" commit -q -m "feat: more work"
+printf 'even more\n' >> "$P2/later.txt"
+git -C "$P2" add later.txt
+GIT_COMMITTER_DATE="2030-01-01T00:00:02" git -C "$P2" commit -q -m "feat: even more work"
+check "stop-check: a handoff three code commits behind is reported" "stopping | grep -q 'handoff may be stale'"
+git -C "$P2" config tack.handoffStaleCommits 5
+check "stop-check: the threshold follows tack config handoff-stale-commits" "! stopping | grep -q 'handoff may be stale'"
+git init -q --bare "$WORK/stop-remote.git"
+git -C "$P2" remote add origin "$WORK/stop-remote.git"
+git -C "$P2" push -q -u origin feat/x 2>/dev/null
+check "stop-check: work already pushed past the handoff is reported at once" "stopping | grep -q 'handoff may be stale'"
+git -C "$P2" config --unset tack.handoffStaleCommits
 git -C "$P2" config harness.stopCheck false
 check "stop-check: can be turned off" "[ -z \"\$(stopping)\" ]"
 git -C "$P2" config --unset harness.stopCheck
