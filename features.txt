@@ -28,6 +28,7 @@ skill-loading         tack.skillLoading         normal   normal|minimal    any  
 subagent-model        tack.subagentModel        inherit  inherit|economical any instruction  Delegate to the most economical capable model instead of inheriting the main one
 memory                tack.memory               true     bool      global  hook         Load the shared user memory (tack memory) at session start in Claude Code and Codex
 memory-max-chars      tack.memoryMaxChars       2000     number    global  hook         Cap the notes of the shared user memory added at session start at this many characters, keeping the newest
+visual-review         tack.visualReview         true     bool      any     instruction  For UI changes in standard and strict, capture before and after screenshots (tack shots) and have ui-reviewer score them
 check-fast            tack.checkFast            none     text      any     hook         Shell command run after each edit in trusted projects; its failures are shown to the assistant
 unleash-max-tool-calls tack.unleashMaxToolCalls none    number    any     hook         In a project-only mode such as unleash, refuse tool calls after this many in one session
 unleash-max-cost      tack.unleashMaxCost       none     decimal   any     mod          In a project-only mode such as unleash, refuse tool calls once the session cost passes this many USD

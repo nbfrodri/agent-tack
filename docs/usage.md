@@ -319,6 +319,23 @@ tack trace docs/plans/2026-10-01-login.md
 
 It lists each requirement as `covered` with the test files that name it, or `MISSING` with its text, warns about tests naming a requirement the plan no longer has, and exits 1 when one is missing, so CI can run it. Test files are found by the usual conventions (`tests/`, `spec/`, `test_*`, `*.test.*`, `*_test.*`).
 
+## Visual review of UI changes
+
+At standard and strict, a change to UI files (components, styles, templates) gets before and after screenshots and an independent score. The assistant captures the affected pages before editing and again after, at mobile (390×844) and desktop (1440×900) widths:
+
+```bash
+tack shots --before http://localhost:3000/          # before changing anything
+tack shots --after http://localhost:3000/ --name home
+tack shots --dir                                    # this branch's folder for today
+tack shots --index                                  # rebuild index.html after score.md is written
+```
+
+Everything goes to `.tack-screenshots/<date>-<branch>/` in the repository, with `before/`, `after/` and an `index.html` that shows them side by side; open that file in a browser. The folder ignores itself in git, so nothing is committed; the assistant may attach the after shots to the pull request. (`.tack` is the shared marker file, so the screenshots cannot live under it.)
+
+`ui-reviewer`, in a fresh context, scores the after shots on a fixed rubric (hierarchy, consistency, spacing and alignment, accessibility signals, responsiveness) and the assistant saves its `score.md` next to them; below 7/10 it fixes the findings and captures and scores once more before reporting. Tools without subagents run the scoring as a separate prompt over the same folder. `lite` and `lean` skip all of this, and `tack config visual-review false` turns it off.
+
+Capturing needs Playwright in the project (`npm i -D playwright && npx playwright install chromium`); `TACK_PLAYWRIGHT` names another command. Without it, `tack shots` says how to install it and exits 1.
+
 ## What to ask
 Talk normally, in your language:
 

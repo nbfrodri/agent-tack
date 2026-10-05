@@ -34,6 +34,7 @@ If a task turns out larger or riskier than its level, say so and move up before 
 | Handoff | none | only if work spans sessions or context or usage looks low | only if work spans sessions, is delegated, or context or usage looks low; updated at milestones (a merged PR, a plan step), not every commit |
 | AI log | none | none | one row in `docs/ai/log.md`, in the same commit as the change it records |
 | Review | read your own diff | `code-reviewer` for large or risky diffs | `code-reviewer` before offering to push |
+| Visual review | none | UI changes: `tack shots --before`/`--after`, `ui-reviewer` scores them; below 7/10 fix and repeat once | same |
 | CI | none | after a push or new PR, wait for CI in the background, report it and fix failures from the log | same |
 | Delegation | suggest and wait | suggest and wait | automatic after approval unless `tack.delegation` is `off` |
 

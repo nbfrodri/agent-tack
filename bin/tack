@@ -39,6 +39,9 @@ Commands:
   memory [show | add TEXT | path]
                       Notes about you shared by Claude Code and Codex, loaded at
                       session start (refuses secrets; edit the file to remove)
+  shots [--before|--after] [--name NAME] URL... | --index | --dir
+                      Screenshots of a visual change at mobile and desktop widths,
+                      side by side in .tack-screenshots/ (needs Playwright)
   trace [PLAN]        Check that every requirement the plan numbers (R1, R2…) has
                       a test naming it (default: the newest docs/plans file);
                       exits 1 when one has none
@@ -328,6 +331,10 @@ case "$cmd" in
     ;;
   memory)
     bash "$HARNESS_ROOT/lib/memory.sh" "$HARNESS_ROOT" "$@"
+    exit
+    ;;
+  shots)
+    bash "$HARNESS_ROOT/lib/shots.sh" "$HARNESS_ROOT" "$@"
     exit
     ;;
   trace)

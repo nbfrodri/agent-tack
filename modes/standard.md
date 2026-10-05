@@ -8,5 +8,6 @@ Context: index
 - Docs: everything the changed behaviour affects; `docs/architecture.md` if structure changes.
 - Handoff: only if the work spans sessions or context or usage looks low. AI log: none.
 - Review: `code-reviewer` for large or risky diffs.
+- Visual review: when the change touches UI files (components, styles, templates), run `tack shots --before URL` before editing and `tack shots --after URL` after, then have `ui-reviewer` score `tack shots --dir` and save its `score.md` there (`tack shots --index` adds it to `index.html`); below 7/10, fix the findings and repeat once. Skip it when `tack config visual-review` is `false`.
 - CI: after a push or a new pull request, wait for CI in the background, report the result and fix failures from the log before continuing.
 - Delegation: suggest it and wait for approval.
