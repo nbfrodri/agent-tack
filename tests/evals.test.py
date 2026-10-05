@@ -234,9 +234,15 @@ class Outcomes(unittest.TestCase):
         return subprocess.run(['git', *args], cwd=cwd or self.repo, env=env, check=True, capture_output=True, text=True).stdout
 
     def commit(self, day, subject, path):
-        (self.repo / path).parent.mkdir(parents=True, exist_ok=True)
-        with open(self.repo / path, 'a') as handle:
-            handle.write(subject + '\n')
+        """Adds a line to path; a fix: rewrites the file's last line, as a correction would."""
+        target = self.repo / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        lines = target.read_text().splitlines() if target.exists() else []
+        if subject.startswith('fix') and lines:
+            lines[-1] = subject
+        else:
+            lines.append(subject)
+        target.write_text('\n'.join(lines) + '\n')
         self.git('add', '-A')
         self.git('commit', '-q', '-m', subject, day=day)
 
@@ -274,10 +280,36 @@ class Outcomes(unittest.TestCase):
         metrics = self.report(14)
         self.assertEqual(metrics['commits'], 7)
         self.assertEqual(metrics['fixes'], 2)
+        self.assertEqual(metrics['fixes_before_merge'], 0)
         self.assertEqual(metrics['reverts'], 1)
         self.assertEqual(metrics['bookkeeping_commits'], 1)
         self.assertEqual(metrics['merges'], 1)
         self.assertEqual(metrics['median_lead_time_hours'], 24)
+
+    def test_a_fix_before_the_merge_is_caught_not_escaped(self):
+        self.commit(0, 'chore: start', 'README.md')
+        self.git('switch', '-q', '-c', 'feat/d')
+        self.commit(0, 'feat: add d', 'd.py')
+        self.commit(1, 'fix: review finding in d', 'd.py')
+        self.git('switch', '-q', 'main')
+        self.git('merge', '-q', '--no-ff', '-m', 'Merge branch feat/d', 'feat/d', day=2)
+        metrics = self.report(14)
+        self.assertEqual(metrics['escaped_defects'], 0)
+        self.assertEqual(metrics['fixes_before_merge'], 1)
+
+    def test_shared_docs_and_tests_do_not_link_a_fix_to_a_feature(self):
+        self.commit(0, 'feat: add e', 'docs/usage.md')
+        self.commit(0, 'feat: add e code', 'e.py')
+        self.commit(1, 'fix: unrelated, same docs and tests', 'docs/usage.md')
+        self.commit(1, 'test: cover f', 'tests/test_e.py')
+        metrics = self.report(14)
+        self.assertEqual(metrics['escaped_defects'], 0)
+
+    def test_a_fix_that_only_adds_lines_is_not_linked(self):
+        self.commit(0, 'feat: add g', 'g.py')
+        (self.repo / 'g.py').write_text((self.repo / 'g.py').read_text() + 'extra guard\n')
+        self.git('commit', '-qam', 'fix: add a missing guard', day=1)
+        self.assertEqual(self.report(14)['escaped_defects'], 0)
 
     def test_cli_prints_a_table_and_json(self):
         self.build()
