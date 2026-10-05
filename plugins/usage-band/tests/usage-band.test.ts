@@ -1,12 +1,24 @@
 import { expect, test } from 'claude-code/testing'
 
-import { bar, colorFor, costLimit, crossedWarning, modeChip, overBudget, resetLabel, toUsage } from '../hooks/register'
+import { bar, chipNeedsRetry, colorFor, costLimit, crossedWarning, modeChip, overBudget, resetLabel, toUsage } from '../hooks/register'
 
 test('mode chip names the active mode, or off when tack is not enabled', () => {
   expect(modeChip(0, 'auto (default)\n')).toBe('tack · auto')
   expect(modeChip(0, 'unleash (local)')).toBe('tack · unleash')
   expect(modeChip(1, 'auto (default)')).toBe('tack · off')
-  expect(modeChip(0, '')).toBe('tack · off')
+})
+
+test('mode chip says it does not know when tack could not answer', () => {
+  expect(modeChip(127, '')).toBe('tack · ?')
+  expect(modeChip(2, '')).toBe('tack · ?')
+  expect(modeChip(0, '')).toBe('tack · ?')
+})
+
+test('an unknown or pending chip is asked again, a known one is not', () => {
+  expect(chipNeedsRetry('tack · …')).toBe(true)
+  expect(chipNeedsRetry('tack · ?')).toBe(true)
+  expect(chipNeedsRetry('tack · off')).toBe(false)
+  expect(chipNeedsRetry('tack · auto')).toBe(false)
 })
 
 test('cost limit applies only in project-only modes with a positive amount', () => {
