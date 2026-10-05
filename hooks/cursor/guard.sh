@@ -24,7 +24,7 @@ if not command:
 request = {"tool_name": "Bash", "tool_input": {"command": command}}
 if isinstance(event.get("cwd"), str):
     request["cwd"] = event["cwd"]
-result = subprocess.run(["bash", guard], input=json.dumps(request), capture_output=True, text=True, timeout=9)
+result = subprocess.run(["bash", guard, "--cursor"], input=json.dumps(request), capture_output=True, text=True, timeout=9)
 try:
     decision = json.loads(result.stdout)["hookSpecificOutput"] if result.stdout.strip() else {}
 except (ValueError, KeyError):

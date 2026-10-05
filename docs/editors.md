@@ -55,7 +55,7 @@ Restart the tool or editor after installing or updating so it reloads instructio
 ## Cursor
 
 - **One manual step:** Cursor keeps global rules in its settings, not in a file. Copy the contents of `global/AGENTS.md` from your checkout into *Cursor Settings → Rules* (User Rules) once; the installer reminds you. Paste again after updates that change that file.
-- **Command guard:** the installer registers `hooks/cursor/guard.sh` for `beforeShellExecution` in `~/.cursor/hooks.json`, next to your own hooks. It translates Cursor's hook format to the shared guard and back, so Cursor refuses or asks about the same commands as Claude Code. The other agent hooks (startup context, checks after edits and before stopping) do not run in Cursor yet.
+- **Command guard:** the installer registers `hooks/cursor/guard.sh` for `beforeShellExecution` in `~/.cursor/hooks.json`, next to your own hooks. It translates Cursor's hook format to the shared guard and back, so Cursor refuses or asks about the same commands as Claude Code. The adapter needs `python3`; without it Cursor runs commands unchecked. The other agent hooks (startup context, checks after edits and before stopping) do not run in Cursor yet.
 - **Skills:** from `~/.agents/skills`.
 - **`cursor-agent`** (terminal) uses the same rules and skills.
 - **Check:** `tack doctor` shows "cursor: detected but not configured by this installation" until you paste the rules; the warning stays because tack cannot see Cursor's settings.

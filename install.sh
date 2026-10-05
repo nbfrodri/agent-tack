@@ -255,6 +255,15 @@ d = json.load(open(sys.argv[1])); d.pop("hooks", None); json.dump(d, open(sys.ar
   fi
 }
 
+# only_version FILE: succeeds when a JSON settings file holds nothing but a "version" key.
+only_version() {
+  if has python3; then
+    python3 -c 'import json, sys; sys.exit(0 if set(json.load(open(sys.argv[1]))) <= {"version"} else 1)' "$1" 2>/dev/null
+  else
+    jq -e 'del(.version) == {}' "$1" >/dev/null 2>&1
+  fi
+}
+
 # Registers each tool's hooks from targets.txt: a tool with a hooks file there and a template at
 # <tool>/<same file name> in the repo, when the tool is wanted. Adding a tool is data only.
 merge_settings() {
@@ -270,6 +279,8 @@ merge_settings() {
       # Other settings (Claude Code's attribution, permissions) still apply without hooks.
       without_hooks "$template" "$WORKDIR/$tool-no-hooks.json" || { fail "cannot prepare $tool settings without hooks"; continue; }
       template="$WORKDIR/$tool-no-hooks.json"
+      # A file that would hold nothing but its format version is not created.
+      if [ ! -e "$dest" ] && only_version "$template"; then continue; fi
     fi
     merge_json "$tool hooks and settings" "$template" "$dest"
   done 3< "$REPO/targets.txt"

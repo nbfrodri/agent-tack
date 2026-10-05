@@ -141,7 +141,12 @@ def validate(state, home):
                 if not plain_path(backup) or not backup.startswith(path + ".bak-") or "/" in backup[len(path):]:
                     raise ValueError("backup is not adjacent to its managed path")
         elif kind == "settings":
-            if path not in settings_paths(home.rstrip("/"), Path(entry_repo) / "targets.txt"):
+            # The tool list recorded at install time, so a later change to the checkout cannot
+            # make an earlier install's settings file look foreign.
+            declaration = entry / "targets"
+            if not declaration.exists():
+                declaration = Path(entry_repo) / "targets.txt"
+            if path not in settings_paths(home.rstrip("/"), declaration):
                 raise ValueError("unexpected settings path")
             for name in ("before", "after", "managed"):
                 with (entry / name).open() as stream:

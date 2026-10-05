@@ -300,7 +300,22 @@ check "cursor: the command guard is registered in ~/.cursor/hooks.json" "[ \"\$(
 python3 -c 'import json,sys; p=sys.argv[1]; d=json.load(open(p)); d["hooks"]["beforeShellExecution"].append({"command":"./my-own-check.sh"}); json.dump(d,open(p,"w"))' "$H/.cursor/hooks.json"
 HOME="$H" XDG_CONFIG_HOME="$H/.config" GIT_CONFIG_NOSYSTEM=1 PATH="$TOOLS:$MINBIN" "$REPO/install.sh" --skip-plugins >"$H.log" 2>&1
 check "cursor: a reinstall keeps one guard and the user's own hooks" "[ \"\$(cursor_guards '$H/.cursor/hooks.json')\" = 1 ] && grep -q 'my-own-check.sh' '$H/.cursor/hooks.json'"
-check "cursor not installed: no Cursor hooks file is created" "[ ! -e '$WORK/explain/.cursor/hooks.json' ]"
+cursor_record_keeps_targets() {
+  local entry
+  entry="$(grep -lx "$H/.cursor/hooks.json" "$H"/.local/state/agent-tack/ownership/entries/*/path 2>/dev/null | head -n 1)"
+  [ -n "$entry" ] && [ -f "$(dirname "$entry")/targets" ]
+}
+check "cursor: its settings record keeps the tool list it was installed from" cursor_record_keeps_targets
+HOME="$H" XDG_CONFIG_HOME="$H/.config" GIT_CONFIG_NOSYSTEM=1 PATH="$TOOLS:$MINBIN" "$REPO/uninstall.sh" >"$H.uninstall.log" 2>&1
+check "cursor: uninstall removes tack's guard and keeps the user's own hooks" "[ \"\$(cursor_guards '$H/.cursor/hooks.json')\" = 0 ] && grep -q 'my-own-check.sh' '$H/.cursor/hooks.json'"
+H="$WORK/no-cursor"
+mkdir -p "$H"
+HOME="$H" XDG_CONFIG_HOME="$H/.config" GIT_CONFIG_NOSYSTEM=1 PATH="$MINBIN" "$REPO/install.sh" --skip-plugins >"$H.log" 2>&1
+check "cursor not installed: no Cursor hooks file is created" "[ ! -e '$H/.cursor/hooks.json' ]"
+H="$WORK/cursor-no-hooks"
+mkdir -p "$H"
+HOME="$H" XDG_CONFIG_HOME="$H/.config" GIT_CONFIG_NOSYSTEM=1 PATH="$TOOLS:$MINBIN" "$REPO/install.sh" --skip-plugins --no-hooks >"$H.log" 2>&1
+check "cursor with --no-hooks: no empty hooks file is created" "[ ! -e '$H/.cursor/hooks.json' ]"
 check "opencode not installed: nothing created for it" "[ ! -e '$H/.config/opencode' ]"
 check "crush not installed: ~/.config/AGENTS.md not created" "[ ! -e '$H/.config/AGENTS.md' ]"
 check "claude and codex are always configured" "[ -L '$H/.claude/CLAUDE.md' ] && [ -L '$H/.codex/AGENTS.md' ]"

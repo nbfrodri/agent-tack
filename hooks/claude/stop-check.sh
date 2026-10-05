@@ -69,8 +69,11 @@ case "$handoff_check" in
     threshold="$("$cli" config handoff-stale-commits 2>/dev/null)"
     threshold="${threshold%% *}"
     case "$threshold" in '' | *[!0-9]*) threshold=3 ;; esac
+    # Some of the commits past the handoff are on the remote when fewer than all of them are local.
     unpushed="$(git rev-list --count '@{u}..HEAD' 2>/dev/null)" || unpushed=''
-    if [ "${behind:-0}" -ge "$threshold" ] 2>/dev/null || [ "$unpushed" = 0 ]; then
+    pushed=0
+    if [ -n "$unpushed" ] && [ "${behind:-0}" -gt "$unpushed" ] 2>/dev/null; then pushed=1; fi
+    if [ "${behind:-0}" -ge "$threshold" ] 2>/dev/null || [ "$pushed" -eq 1 ]; then
       add "the handoff may be stale: refresh it before stopping."
     fi
     ;;

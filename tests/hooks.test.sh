@@ -623,6 +623,10 @@ git init -q --bare "$WORK/stop-remote.git"
 git -C "$P2" remote add origin "$WORK/stop-remote.git"
 git -C "$P2" push -q -u origin feat/x 2>/dev/null
 check "stop-check: work already pushed past the handoff is reported at once" "stopping | grep -q 'handoff may be stale'"
+printf 'local only\n' >> "$P2/later.txt"
+git -C "$P2" add later.txt
+GIT_COMMITTER_DATE="2030-01-01T00:00:03" git -C "$P2" commit -q -m "feat: local work"
+check "stop-check: work partly pushed past the handoff is still reported" "stopping | grep -q 'handoff may be stale'"
 git -C "$P2" config --unset tack.handoffStaleCommits
 git -C "$P2" config harness.stopCheck false
 check "stop-check: can be turned off" "[ -z \"\$(stopping)\" ]"
@@ -648,6 +652,8 @@ check "activity log: guard decisions are recorded" "grep -q 'claude.*guard deny.
 deny_in --codex
 check "activity log: only the user can read it (it may hold commands)" "[ \"\$(ls -l '$LOG' | cut -c1-10)\" = '-rw-------' ]"
 check "activity log: Codex runs are labelled" "grep -q 'codex.*guard deny' '$LOG'"
+printf '{"command":"git commit --no-verify","cwd":"%s"}' "$A" | bash "$CURSOR_GUARD" >/dev/null
+check "activity log: Cursor runs are labelled" "grep -q 'cursor.*guard deny' '$LOG'"
 printf '{"cwd":"%s"}' "$A" | bash "$SESSION" >/dev/null
 check "activity log: session starts are recorded with the mode" "grep -q 'session-start.*mode=auto' '$LOG'"
 printf 'x\n' > "$A/dirty.txt"
@@ -659,7 +665,7 @@ check "activity log: tack log N limits the entries" "[ \"\$(log_cmd 1 | wc -l | 
 check "activity log: tack log rejects a bad count" "log_cmd nope >/dev/null 2>&1; [ \$? -eq 2 ]"
 git -C "$A" config tack.activityLog false
 deny_in
-check "activity log: turning it off stops recording" "[ \"\$(grep -c 'guard deny' '$LOG')\" = 2 ]"
+check "activity log: turning it off stops recording" "[ \"\$(grep -c 'guard deny' '$LOG')\" = 3 ]"
 
 echo "Turn metrics from transcripts (activity log)"
 git -C "$A" config tack.activityLog true
