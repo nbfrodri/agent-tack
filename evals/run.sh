@@ -3,7 +3,7 @@
 # Uses real model tokens.
 #
 # Usage: evals/run.sh <scenario> [condition] [repetition]
-#   scenarios:  new-project | bug-fix | release | codex-new-project
+#   scenarios:  new-project | bug-fix | release | codex-new-project | vague-requirement
 #   conditions: auto | lite | lean | standard | strict: the full setup, with the project enabled at
 #               that workflow mode; harness (default) is an alias for auto
 #   baseline:   Claude Code as shipped: no user settings, skills or instructions, and git
@@ -18,9 +18,9 @@ name="${1:?scenario name required}"
 condition="${2:-harness}"
 rep="${3:-1}"
 case "$name" in
-  new-project | bug-fix | release | codex-new-project) ;;
+  new-project | bug-fix | release | codex-new-project | vague-requirement) ;;
   *)
-    echo "unknown scenario '$name' (new-project | bug-fix | release | codex-new-project)" >&2
+    echo "unknown scenario '$name' (new-project | bug-fix | release | codex-new-project | vague-requirement)" >&2
     exit 2
     ;;
 esac
@@ -154,7 +154,7 @@ PY
 
 case "$name" in
   new-project | codex-new-project) (cd "$dir" && git init -q -b main) ;;
-  bug-fix) seed_bug_repo ;;
+  bug-fix | vague-requirement) seed_bug_repo ;;
   release) seed_release_repo ;;
 esac
 cd "$dir" || exit 1
@@ -168,6 +168,8 @@ case "$name" in
   new-project | codex-new-project) prompt="$NEW_PROJECT_PROMPT" ;;
   bug-fix) prompt="When the cart is empty, average_price raises ZeroDivisionError. It should return 0. Fix it. $NO_QUESTIONS" ;;
   release) prompt="Prepare the next release of the project. No remote is configured yet. $NO_QUESTIONS" ;;
+  # Deliberately vague: the workflow should turn it into measurable criteria before any code.
+  vague-requirement) prompt="Make the cart faster and more robust. $NO_QUESTIONS" ;;
 esac
 printf '%s\n' "$prompt" > "$out/prompt.txt"
 

@@ -4,7 +4,7 @@ set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/agent-harness-guard.XXXXXX")"
 trap 'rm -rf "$WORK"' EXIT
-export HOME="$WORK/home" XDG_CONFIG_HOME="$WORK/home/.config" GIT_CONFIG_NOSYSTEM=1
+export HOME="$WORK/home" XDG_CONFIG_HOME="$WORK/home/.config" XDG_STATE_HOME="$WORK/home/.local/state" GIT_CONFIG_NOSYSTEM=1
 mkdir -p "$HOME" "$WORK/no-python" "$WORK/no-jq"
 for tool in bash cat dirname tr jq; do
   executable="$(command -v "$tool" || true)"
@@ -129,6 +129,12 @@ expect("deny", "kubectl delete namespace prod", "user policy adds a deny rule", 
 expect("allow", "terraform plan", "user rules match only their pattern")
 expect("deny", "git commit --no-verify", "user policy cannot allow what the guard denies")
 expect("allow", "echo hi", "malformed user lines are ignored")
+user_policy.unlink()
+# The lessons skill shows the rule it proposes for a prohibition; that exact line must work.
+lesson_rules = [line for line in (repo / "skills/lessons/SKILL.md").read_text().splitlines() if line.startswith("command | ")]
+user_policy.write_text("\n".join(lesson_rules) + "\n")
+expect("deny", "npm publish --access public", "the lessons skill's example rule is a working deny rule", reason="publish")
+expect("allow", "npm pack", "the lessons skill's example rule matches only its command")
 user_policy.unlink()
 legacy_policy = Path(os.environ["XDG_CONFIG_HOME"]) / "agent-harness/guard-policy.txt"
 legacy_policy.parent.mkdir(parents=True, exist_ok=True)

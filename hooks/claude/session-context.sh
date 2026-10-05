@@ -64,9 +64,12 @@ if (cd "$cwd" && "$cli" status --quiet); then
   [ -z "$workflow" ] || settings="${settings:+$settings$'\n'}Workflow settings:$workflow"
   activity_log "$cwd" "$client" session-start "mode=$mode"
   project_context="$(cd "$cwd" && "$cli" context)" || project_context=''
+  # Corrections seen repeatedly but not yet saved as rules (docs/adr/0001-candidate-lessons.md).
+  lessons="$(cd "$cwd" && "$cli" lesson top 3 2>/dev/null)" || lessons=''
+  [ -z "$lessons" ] || lessons="Candidate lessons (corrections seen repeatedly, not yet confirmed as rules; follow them when they fit and ask before saving one):"$'\n'"$lessons"
 
   context="$head"
-  for part in "$mode_rules" "$settings" "$project_context"; do
+  for part in "$mode_rules" "$settings" "$project_context" "$lessons"; do
     [ -z "$part" ] || context="$context"$'\n'"$part"
   done
   # context-max-chars: past the cap, keep parts by priority (activation line, settings, mode
@@ -79,7 +82,7 @@ if (cd "$cwd" && "$cli" status --quiet); then
     [ $((${#head} + ${#pointer} + 1)) -le "$cap" ] || pointer=''
     remaining=$((cap - ${#head} - ${#pointer} - 1))
     context="$head"
-    for part in "$settings" "$mode_rules" "$project_context"; do
+    for part in "$settings" "$mode_rules" "$project_context" "$lessons"; do
       if [ -z "$part" ] || [ "$remaining" -le 1 ]; then continue; fi
       if [ $((${#part} + 1)) -le "$remaining" ]; then
         context="$context"$'\n'"$part"

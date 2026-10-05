@@ -51,6 +51,40 @@ class Metrics(unittest.TestCase):
                           use('Write', file_path='tests/test_cart.py', content='def test_empty():\n    assert total([]) == 0')])
         self.assertIs(m['test_written_before_code'], False)
 
+    def measure_with_bodies(self, bodies, scenario='bug-fix'):
+        def fake_git(repo, *args):
+            return bodies if '--format=%B' in args else ''
+        with tempfile.TemporaryDirectory() as temp:
+            directory = Path(temp) / scenario / 'baseline-1'
+            (directory / 'repo').mkdir(parents=True)
+            (directory / 'repo' / 'pyproject.toml').write_text('[project]\nname = "cart"\n')
+            (directory / 'transcript.jsonl').write_text('')
+            (directory / 'run.txt').write_text('exit=0 seconds=1')
+            with patch.object(grade, 'git', side_effect=fake_git), patch.object(
+                grade.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, '1 passed', '')):
+                return grade.grade(directory)
+
+    def test_red_and_green_evidence_in_commit_bodies(self):
+        bodies = 'fix: handle empty carts\n\nRed: uv run pytest -q -> 1 failed (test_empty)\nGreen: uv run pytest -q -> 3 passed\n'
+        self.assertTrue(self.measure_with_bodies(bodies)['red_evidence_recorded'])
+        self.assertFalse(self.measure_with_bodies('fix: handle empty carts\n')['red_evidence_recorded'])
+        self.assertIsNone(self.measure_with_bodies(bodies, scenario='release')['red_evidence_recorded'])
+
+    def test_measurable_criteria_before_code(self):
+        def text(words):
+            return {'type': 'assistant', 'message': {'content': [{'type': 'text', 'text': words}]}}
+        stated = [text('Acceptance criteria:\n- R1: total() of 10,000 lines runs in under 50 ms'),
+                  use('Write', file_path='src/cart/__init__.py', content='x = 1')]
+        self.assertTrue(self.measure(stated, scenario='vague-requirement')['criteria_before_code'])
+        skipped = [use('Write', file_path='src/cart/__init__.py', content='x = 1'), text('R1: it is faster now')]
+        self.assertFalse(self.measure(skipped, scenario='vague-requirement')['criteria_before_code'])
+        self.assertIsNone(self.measure(stated, scenario='bug-fix')['criteria_before_code'])
+        planned = [use('Write', file_path='docs/plans/2026-10-05-speed.md', content='- R1: total() of 10,000 lines under 50 ms'),
+                   use('Write', file_path='src/cart/__init__.py', content='x = 1')]
+        self.assertTrue(self.measure(planned, scenario='vague-requirement')['criteria_before_code'])
+        shelled = [use('Bash', command='cat > src/cart/fast.py <<EOF\nx = 1\nEOF'), text('R1: it is faster now')]
+        self.assertFalse(self.measure(shelled, scenario='vague-requirement')['criteria_before_code'])
+
     def test_missing_evidence_is_unknown(self):
         m = self.measure([])
         for key in ('test_written_before_code', 'red_green_verified', 'cost_usd', 'input_tokens', 'planned', 'pushed_or_bypassed'):
@@ -223,7 +257,7 @@ class Runner(unittest.TestCase):
 
     def test_successful_claude_scenarios_have_baseline_flags(self):
         self.stub('claude', 'printf "%s\\n" "$@"; exit 0')
-        for scenario in ('new-project', 'bug-fix', 'release'):
+        for scenario in ('new-project', 'bug-fix', 'release', 'vague-requirement'):
             with self.subTest(scenario=scenario):
                 outcome = self.run_eval(scenario)
                 self.assertEqual(outcome.returncode, 0, outcome.stderr)

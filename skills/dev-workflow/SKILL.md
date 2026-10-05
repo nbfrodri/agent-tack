@@ -55,6 +55,8 @@ Every level keeps the hooks' guarantees (Conventional Commits, no AI attribution
 ### 1. Understand
 When starting or resuming a session, always look for an in-progress or paused handoff in `docs/handoffs/` (startup context lists it with a freshness check). Read it, then check it against `git log`, `git status` and the current branch: if work happened after its last update or it names another branch, tell the user what differs and refresh it before continuing. If the request comes from a GitHub issue ("issue #12", an issue URL), read it with its comments and use its acceptance criteria as the definition of done (`github-issues` skill).
 
+At standard and strict, number the acceptance criteria (`R1`, `R2`…) and check them for verifiability, consistency, completeness and traceability before any code; tests name the requirement they prove and `tack trace` checks the coverage (`references/requirements.md`).
+
 Read the relevant code, tests and docs before proposing anything. **Ask whenever you have a real doubt** about scope, behaviour, design or risk, grouping all questions in one round; don't guess. Decide alone only purely conventional details, and say what you chose.
 
 ### 2. Map the impact

@@ -401,5 +401,94 @@ printf 'm1 | \377 | 2 | 0 | 0\n' > "$XDG_CONFIG_HOME/agent-tack/pricing.txt"
 check "a price file in another encoding never crashes the report" expect_exit 0 "$CLI" log --cost
 rm -f "$LOG_FILE" "$XDG_CONFIG_HOME/agent-tack/pricing.txt"
 
+# tack lesson: candidate lessons counted across sessions (docs/adr/0001-candidate-lessons.md).
+LESSONS="$XDG_STATE_HOME/agent-tack/lessons.tsv"
+is_private() { [ -n "$(find "$1" -perm 600 2>/dev/null)" ]; }
+rm -f "$LESSONS"
+cd "$WORK/project" || exit 1
+check "a first note records a candidate" expect_exit 0 "$CLI" lesson note use-pnpm "Use pnpm, not npm: the workspace depends on it."
+check "notes are private to the user" is_private "$LESSONS"
+check "listing shows the candidate once seen" expect_exit 0 "$CLI" lesson list
+check "a candidate shows its count and text" out_matches "^use-pnpm +project +1 +0 +Use pnpm, not npm"
+"$CLI" lesson note use-pnpm "Use pnpm, not npm: the workspace depends on it." >/dev/null
+"$CLI" lesson note use-pnpm "Use pnpm, not npm, in this monorepo." >/dev/null
+check "repeats add up and keep the newest wording" expect_exit 0 "$CLI" lesson list
+check "three sightings make a candidate ready to promote" out_matches "^use-pnpm +project +3 +0 +ready +Use pnpm, not npm, in this monorepo\.$"
+check "contradicting a candidate records evidence against it" expect_exit 0 "$CLI" lesson contradict use-pnpm
+check "listing after a contradiction runs" expect_exit 0 "$CLI" lesson list
+check "contradicted candidates are no longer ready" out_matches "^use-pnpm +project +3 +1 +Use pnpm"
+check "user-wide notes are kept apart from project ones" expect_exit 0 "$CLI" lesson note terse-replies "Keep replies short." --global
+check "listing with a user-wide note runs" expect_exit 0 "$CLI" lesson list
+check "user-wide notes are listed as global" out_matches "^terse-replies +global +1"
+check "keys must be kebab-case" expect_exit 2 "$CLI" lesson note "Use pnpm" "text"
+check "a note needs its text" expect_exit 2 "$CLI" lesson note use-pnpm
+check "forgetting removes a candidate" expect_exit 0 "$CLI" lesson forget use-pnpm
+check "listing after forgetting runs" expect_exit 0 "$CLI" lesson list
+check "a forgotten candidate is gone" out_lacks "use-pnpm"
+check "forgetting an unknown key fails" expect_exit 1 "$CLI" lesson forget nope
+check "unknown lesson commands are rejected" expect_exit 2 "$CLI" lesson teach
+check "backslashes in a rule are kept as written" expect_exit 0 "$CLI" lesson note win-paths 'Use C:\new\temp and \\server paths.'
+line_count_is() { [ "$(grep -c "" "$1")" = "$2" ]; }
+check "the store keeps one line per candidate" line_count_is "$LESSONS" 2
+check "listing a backslash rule runs" expect_exit 0 "$CLI" lesson list
+check "a backslash rule is listed verbatim" contains 'Use C:\new\temp and \\server paths.'
+check "contradict finds a user-wide candidate without --global" expect_exit 0 "$CLI" lesson contradict terse-replies
+check "forget finds a user-wide candidate without --global" expect_exit 0 "$CLI" lesson forget terse-replies
+"$CLI" lesson forget win-paths >/dev/null
+printf 'other-key\t/elsewhere/repo\t3\t0\t2026-10-01\tSomeone else.\n' >> "$LESSONS"
+check "listing with only other projects' candidates runs" expect_exit 0 "$CLI" lesson list
+check "a project without candidates says so" contains 'No candidate lessons'
+# $WORK holds a dot; the same path with that dot replaced only matches if the scope is a regex.
+printf 'dot-key\t%s\t1\t0\t2026-10-01\tA lookalike path.\n' "$(printf '%s' "$WORK/project" | tr '.' 'x')" >> "$LESSONS"
+check "a scope that only matches as a pattern is not this project's" expect_exit 1 "$CLI" lesson forget dot-key
+rm -f "$LESSONS"
+cd "$HOME" || exit 1
+
+# tack trace: requirement IDs in the plan against the tests that name them.
+TRACE="$WORK/trace-repo"
+git init -q "$TRACE"
+mkdir -p "$TRACE/docs/plans" "$TRACE/tests" "$TRACE/src"
+cat > "$TRACE/docs/plans/2026-10-01-login.md" <<'EOF'
+# Login
+## Acceptance criteria
+- R1: a wrong password is rejected with 401
+- **R2**: five failures lock the account for 15 minutes
+- R3: a locked account says when it unlocks
+Later prose mentions R1 again; that is not a new requirement.
+EOF
+printf 'def test_wrong_password_R1():\n    pass\n' > "$TRACE/tests/test_login.py"
+printf '// R2: lockout after five failures\ntest("locks", () => {})\n' > "$TRACE/tests/lockout.test.js"
+printf '# R3 is mentioned in code, not in a test\n' > "$TRACE/src/login.py"
+printf 'def test_old_R9():\n    pass\n' > "$TRACE/tests/test_legacy.py"
+git -C "$TRACE" add -A
+trace() { (cd "$TRACE" && "$CLI" trace "$@"); }
+check "trace fails when a requirement has no test" expect_exit 1 trace
+check "trace lists covered requirements with their tests" out_matches "^R1 +covered +tests/test_login.py"
+check "trace lists every test that names a requirement" out_matches "^R2 +covered +tests/lockout.test.js"
+check "trace names the requirement without a test" out_matches "^R3 +MISSING +a locked account says when it unlocks"
+check "trace ignores IDs outside test files" out_lacks "src/login.py"
+check "trace warns about tests tied to a requirement the plan lacks" contains 'R9 is named in tests/test_legacy.py but not in the plan'
+printf 'def test_unlock_message_R3():\n    pass\n' > "$TRACE/tests/test_unlock.py"
+git -C "$TRACE" add -A
+check "trace passes once every requirement has a test" expect_exit 0 trace
+check "trace takes a plan path" expect_exit 0 trace docs/plans/2026-10-01-login.md
+check "trace rejects a missing plan" expect_exit 2 trace docs/plans/nope.md
+trace_from_docs() { (cd "$TRACE/docs" && "$CLI" trace "$@"); }
+check "trace resolves a relative plan from the current directory" expect_exit 0 trace_from_docs plans/2026-10-01-login.md
+cat > "$TRACE/docs/plans/2026-10-02-checklist.md" <<'EOF'
+## Acceptance criteria
+- [ ] R1: a wrong password is rejected with 401
+- [x] **R2**: five failures lock the account
+1. R3: a locked account says when it unlocks
+EOF
+check "trace reads checkbox and numbered requirements" expect_exit 0 trace docs/plans/2026-10-02-checklist.md
+check "checkbox requirements are listed" out_matches "^R1 +covered"
+printf 'def test_R4a_variant():\n    pass\n' > "$TRACE/tests/test_variant.py"
+printf -- '- R4: exports a report\n' >> "$TRACE/docs/plans/2026-10-02-checklist.md"
+git -C "$TRACE" add -A
+check "an ID followed by a letter does not cover the requirement" expect_exit 1 trace docs/plans/2026-10-02-checklist.md
+rm -rf "$TRACE/docs/plans"
+check "trace without a plan explains itself" expect_exit 2 trace
+
 printf '\n%s passed, %s failed\n' "$PASSED" "$FAILED"
 [ "$FAILED" -eq 0 ]

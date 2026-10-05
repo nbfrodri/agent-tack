@@ -18,6 +18,8 @@ ROWS = [
     ("tests_count", "Tests", "mean"),
     ("test_written_before_code", "Test written before code", "rate"),
     ("red_green_verified", "Failing test before fix and passing test after", "rate"),
+    ("red_evidence_recorded", "Red and Green evidence in the commit body", "rate"),
+    ("criteria_before_code", "Measurable criteria before code (vague request)", "rate"),
     ("planned", "Wrote a plan", "rate"),
     ("worked_on_branch", "Worked on a branch", "rate"),
     ("readme", "README", "rate"),

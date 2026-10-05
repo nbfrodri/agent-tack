@@ -22,7 +22,7 @@ Clone it into any directory you choose and install from that checkout, as shown 
 | Installed marketplaces and plugins | `plugins.txt` |
 | Mods shipped by tack | `plugins/<name>/` (turn them off with `./install.sh --skip-mods` or `git config --global tack.mods false`) |
 | Git checks and command or formatting policies | `git-hooks/` and `hooks/claude/` |
-| Commands the guard asks about or refuses | `hooks/claude/guard-policy.txt` (shared rules) or, for your machine only, `~/.config/agent-tack/guard-policy.txt` with the same `scope \| decision \| pattern \| reason` format; personal rules can only add ask or deny decisions |
+| Commands the guard asks about or refuses | `hooks/claude/guard-policy.txt` (shared rules) or, for your machine only, `~/.config/agent-tack/guard-policy.txt` with the same `scope \| decision \| pattern \| reason` format; personal rules can only add ask or deny decisions. When you tell the assistant "never run X", the `lessons` skill proposes such a line and adds it once you agree |
 
 You can add or remove skills, agents and plugins, choose different conventions, or change the workflow itself. Keep the [architecture](architecture.md), component list and usage documentation consistent with your choices. Project-level instructions take precedence over the global rules, so preferences for a single project belong in that project's `AGENTS.md`.
 

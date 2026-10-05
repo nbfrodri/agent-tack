@@ -5,6 +5,16 @@
 2. **Green:** write the minimal code that makes it pass. No speculative functionality.
 3. **Refactor:** with the tests green, remove duplication and improve names and structure. Tests stay green after every step.
 
+### Record the evidence
+At standard and strict, a commit that changes behaviour carries two lines in its body, so a reviewer (or `code-reviewer`) can check the cycle without rerunning it:
+
+```text
+Red: uv run pytest -q tests/test_cart.py -> 1 failed (test_empty_cart_totals_zero)
+Green: uv run pytest -q -> 14 passed
+```
+
+`Red:` is the run that failed for the expected reason before the change, naming the failing tests; `Green:` is the run that passed after it. Docs, config and refactors that keep behaviour need neither line; a refactor says `Green:` only.
+
 Repeat in small steps: one behaviour per cycle, not the whole test suite at once. Start with the simplest case and add edge cases as you go. Short cycles mean every failure points at a single change.
 
 In a new module, the first red is usually an `ImportError`, which proves nothing about behaviour. Create the minimal interface first (signatures that raise `NotImplementedError` or return an empty value) so the test fails on the assertion.

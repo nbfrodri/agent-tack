@@ -64,6 +64,13 @@ for agent in "$REPO"/agents/*.md; do
   check_file "$agent" "$(basename "$agent" .md)" "$AGENT_DESC_MAX"
   echo "  ✔ $(basename "$agent" .md)"
 done
+# Tests never touch the real HOME: one that moves HOME must also move or unset XDG_STATE_HOME,
+# which many desktops set and which the hooks and tack write to.
+for test_file in "$REPO"/tests/*.test.sh; do
+  grep -qE '^[[:space:]]*export HOME=' "$test_file" || continue
+  grep -qE 'XDG_STATE_HOME=|unset XDG_STATE_HOME' "$test_file" \
+    || err "tests/$(basename "$test_file"): exports HOME but not XDG_STATE_HOME, so a user's real state directory would be written"
+done
 # tack config prints names in a 24-character column; a longer name runs into its value.
 while read -r feature _; do
   case "$feature" in '' | '#'*) continue ;; esac
