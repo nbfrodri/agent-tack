@@ -229,7 +229,7 @@ Add `--global` to make any of them your default. [Results](results.md) compares 
 What stays, whatever the mode:
 
 - every `deny` rule: hook bypasses, `core.hooksPath` overrides, force-push to `main`, tag changes, catastrophic deletes;
-- asks about deleting outside the project, rewriting remote history, database commands, your own guard rules, and opaque or unanalysable commands (heredocs to interpreters, loops, dynamic commands), because hiding a command inside them would otherwise skip the deny rules;
+- asks about deleting outside the project (paths with `..` are resolved) or the `.git` folder, rewriting remote history, database and infrastructure commands, code piped into a shell, your own guard rules, and opaque or unanalysable commands (heredocs to interpreters, loops, dynamic commands), because hiding a command inside them would otherwise skip the deny rules;
 - never merging to `main`, tagging, releasing or rewriting published history.
 
 It is project-only and branch-only: `tack mode unleash --global` is refused, a global value set by hand is ignored, and selecting it on `main` or `master` is refused (`tack doctor` warns if you switch back to them later). Session start shows a warning and `tack doctor` reports it. Claude Code's own permission prompts are separate: for unattended runs also choose a permissive permission mode in Claude Code.

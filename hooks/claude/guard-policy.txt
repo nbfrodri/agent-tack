@@ -36,3 +36,11 @@ command | ask | prisma migrate reset | This wipes or resets a database. Confirm 
 command | ask | prisma db push --force-reset | This wipes or resets a database. Confirm it targets a local/dev database.
 command | ask | alembic downgrade base | This wipes or resets a database. Confirm it targets a local/dev database.
 command | ask | manage.py flush | This wipes or resets a database. Confirm it targets a local/dev database.
+
+# Infrastructure and devices: hard or impossible to undo, and often shared with other people.
+command | ask | gh repo delete | This deletes a GitHub repository with its issues and pull requests. Confirm the repository.
+command | ask | terraform destroy | terraform destroy deletes infrastructure. Confirm the workspace and environment.
+command | ask | tofu destroy | tofu destroy deletes infrastructure. Confirm the workspace and environment.
+command | ask | kubectl delete | kubectl delete removes cluster resources. Confirm the context and namespace.
+command | ask | mkfs | This formats a disk or partition and erases what is on it. Confirm the device.
+command | ask | of=/dev/ | dd writing to a device overwrites it. Confirm the device.

@@ -348,8 +348,72 @@ check_gh() {
   esac
 }
 
+# resolve_path PATH: prints PATH made absolute against $cwd with ".", ".." and a leading ~ or
+# $HOME resolved lexically (the disk is not read). Prints nothing for a path it cannot judge
+# this way (globs or other variables), which keeps the literal rules for those.
+resolve_path() {
+  local path="$1" segment out='' IFS=/
+  # shellcheck disable=SC2016 # $HOME is matched as typed, not expanded.
+  case "$path" in
+    *'*'* | *'?'* | *'['* | *'$'*)
+      case "$path" in '$HOME' | '$HOME/'* | '${HOME}' | '${HOME}/'*) ;; *) return 0 ;; esac ;;
+  esac
+  # shellcheck disable=SC2016,SC2088
+  case "$path" in
+    '~' | '$HOME' | '${HOME}') path="$HOME" ;;
+    '~/'*) path="$HOME/${path#'~/'}" ;;
+    '$HOME/'*) path="$HOME/${path#'$HOME/'}" ;;
+    '${HOME}/'*) path="$HOME/${path#'${HOME}/'}" ;;
+    /*) ;;
+    *) path="$cwd/$path" ;;
+  esac
+  set -f
+  for segment in $path; do
+    case "$segment" in
+      '' | .) ;;
+      ..) out="${out%/*}" ;;
+      *) out="$out/$segment" ;;
+    esac
+  done
+  set +f
+  printf '%s\n' "${out:-/}"
+}
+
+# Deny a recursive delete of the filesystem root, of HOME or of any folder that holds HOME.
+too_broad() {
+  case "$HOME/" in "${1%/}/"*) return 0 ;; esac
+  return 1
+}
+
+# project_dir: the working directory, or nothing when it is HOME or above it (not a project).
+project_dir() {
+  if too_broad "${cwd%/}"; then printf '//no-project\n'; else printf '%s\n' "${cwd%/}"; fi
+}
+
+# find ... -delete removes whatever matches under its start paths; outside the project it asks.
+check_find() {
+  local a starts=() deletes=0 options=0 start real project
+  for a in "$@"; do
+    case "$a" in
+      -delete) deletes=1 ;;
+      -* | '(' | '!' | ')') options=1 ;;
+      *) [ "$options" -eq 1 ] || starts+=("$a") ;;
+    esac
+  done
+  [ "$deletes" -eq 1 ] || return 0
+  [ "${#starts[@]}" -gt 0 ] || starts=(.)
+  project="$(project_dir)"
+  for start in "${starts[@]}"; do
+    real="$(resolve_path "$start")"
+    case "${real:-?}/" in
+      "$project/" | "$project"/*) ;;
+      *) ask "find -delete outside the project directory: $start" ;;
+    esac
+  done
+}
+
 check_rm() {
-  local recursive=0 after_dashdash=0 targets=() a t real
+  local recursive=0 after_dashdash=0 targets=() a t real project
   for a in "$@"; do
     if [ "$after_dashdash" -eq 1 ]; then targets+=("$a"); continue; fi
     case "$a" in
@@ -366,6 +430,24 @@ check_rm() {
   # Targets are matched literally as typed (~, $HOME), so these patterns must not expand
   # shellcheck disable=SC2016,SC2088
   for t in "${targets[@]+"${targets[@]}"}"; do
+    # Judge the resolved path first, so ".." cannot climb out of the project unnoticed.
+    real="$(resolve_path "$t")"
+    if [ -n "$real" ]; then
+      if too_broad "$real"; then deny "Recursive delete of '$t' is too broad. Delete specific paths instead."; fi
+      # Losing .git loses every commit not pushed; no mode waives that question.
+      case "$real" in */.git) ask "Recursive delete of the git history ($t): commits that were not pushed are lost." ;; esac
+      # Working in HOME or above it is not working in a project.
+      project="$(project_dir)"
+      case "$real/" in
+        "$project/") ask_local "Recursive delete of everything in the current directory ($t)." ;;
+        "$project"/*) ;;
+        # Inside HOME but outside the project always asks, even when HOME sits under a temp folder.
+        "${HOME%/}"/*) ask "Recursive delete outside the project directory: $t" ;;
+        /tmp/* | /var/tmp/* | "${TMPDIR:-/tmp}"/*) ;;
+        *) ask "Recursive delete outside the project directory: $t" ;;
+      esac
+      continue
+    fi
     case "$t" in
       '/' | '/*' | '/.' | '~' | '~/' | '~/*' | '$HOME' | '$HOME/' | '$HOME/*' | '${HOME}' | '${HOME}/' | '${HOME}/*' | '..' | '../' | '../*' | "$HOME" | "$HOME/")
         deny "Recursive delete of '$t' is too broad. Delete specific paths instead." ;;
@@ -554,13 +636,15 @@ check_command() {
     *'__subst__'* | *'$'* | *'`'*) ask "Dynamic executable name requires review." ;;
     git) check_git "${args[@]+"${args[@]}"}" ;;
     rm) check_rm "${args[@]+"${args[@]}"}" ;;
+    find) check_find "${args[@]+"${args[@]}"}" ;;
     gh) check_gh "${args[@]+"${args[@]}"}" ;;
     cd | pushd | popd) ACTS_ELSEWHERE=1 ;;
     harness | tack) check_harness "${args[@]+"${args[@]}"}" ;;
     bash | sh | zsh | dash | ksh)
-      local k=0 shell_string=0
+      local k=0 shell_string=0 script=0
       while [ "$k" -lt "${#args[@]}" ]; do
         case "${args[$k]}" in
+          --version | --help) script=1; break ;;
           -c | -*c)
             shell_string=1
             if [ $((k + 1)) -lt "${#args[@]}" ]; then
@@ -570,12 +654,30 @@ check_command() {
             fi
             break ;;
           -*) ;;
-          *) break ;;
+          *) script=1; break ;;
         esac
         k=$((k + 1))
       done
-      if [ "$shell_string" -eq 0 ] && [ "$has_redir" -eq 1 ]; then
-        ask "Shell stdin script or here-string requires review."
+      # Without -c or a script file, the shell runs whatever reaches its standard input: a
+      # heredoc, a here-string or a download piped into it (curl ... | bash).
+      if [ "$shell_string" -eq 0 ] && { [ "$has_redir" -eq 1 ] || [ "$script" -eq 0 ]; }; then
+        ask "A shell reading a script from standard input (a pipe, heredoc or here-string) requires review."
+      fi
+      ;;
+    python | python2 | python3 | python3.* | node | perl | ruby | php)
+      # Inline code (-c, -e, -m, -r, -p) or a script file is visible here; standard input is not.
+      local k=0 source=0
+      while [ "$k" -lt "${#args[@]}" ]; do
+        case "${args[$k]}" in
+          --version | -V | --help | -h | -c | -e | -E | -m | -r | -p | -c?* | -m?*) source=1; break ;;
+          -) break ;;
+          -*) ;;
+          *) source=1; break ;;
+        esac
+        k=$((k + 1))
+      done
+      if [ "$source" -eq 0 ]; then
+        ask "$base reading code from standard input (a pipe or heredoc) requires review."
       fi
       ;;
     eval) analyze "${args[*]+"${args[*]}"}" ;;
