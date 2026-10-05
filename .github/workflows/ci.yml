@@ -64,14 +64,16 @@ jobs:
           tests/evals.test.sh
 
   mods:
-    # claude plugin validate/test need the Claude Code CLI; the job skips itself when it is not available
+    # Unit tests always run with Node; claude plugin validate/test need the Claude Code CLI and warn when it is missing
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Validate and test the mods
+      - name: Unit-test the mods with Node
+        run: tests/mods-unit.sh
+      - name: Validate and test the mods with the Claude Code CLI
         run: |
           if ! command -v claude >/dev/null 2>&1; then
-            echo "claude CLI not available; skipping mod validation"
+            echo "::warning::claude CLI not available: plugin manifests were not validated (unit tests ran above)"
             exit 0
           fi
           claude plugin validate plugins

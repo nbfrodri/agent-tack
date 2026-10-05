@@ -14,6 +14,7 @@ tests/tools.test.sh      # targets.txt columns, `doctor --tools` and the weekly 
 tests/mods.test.sh       # mods step: install, opt-outs, dry run, uninstall and doctor (fake claude CLI)
 tests/vscode.test.sh     # VS Code step: chat.useAgentsMdFile install, opt-out, dry run, uninstall and doctor
 claude plugin validate plugins && claude plugin test plugins/usage-band && claude plugin test plugins/agent-activity   # the mods themselves (needs the claude CLI)
+tests/mods-unit.sh                    # the mods' unit tests with Node only (esbuild via npx), as CI runs them
 tests/hooks.test.sh      # git and Claude Code hooks, in throwaway repos
 tests/cli.test.sh        # activation, modes, config, startup context and the help-vs-docs drift check
 tests/settings.test.sh   # mixed user and tack hook groups in Python and jq
