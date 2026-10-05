@@ -17,7 +17,7 @@ json_field() {
   if command -v jq >/dev/null 2>&1; then
     printf '%s' "$input" | jq -r "$1 // empty" 2>/dev/null
   elif command -v python3 >/dev/null 2>&1; then
-    printf '%s' "$input" | python3 -c '
+    printf '%s' "$input" | python3 -S -c '
 import json, sys
 data = json.load(sys.stdin)
 for key in sys.argv[1].lstrip(".").split("."):
@@ -632,13 +632,15 @@ check_dd() {
 }
 
 POLICY_SCOPES=() POLICY_DECISIONS=() POLICY_PATTERNS=() POLICY_REASONS=()
-trim() { local value="$1"; value="${value#"${value%%[![:space:]]*}"}"; printf '%s' "${value%"${value##*[![:space:]]}"}"; }
+# trim NAME: strips surrounding whitespace from the variable NAME in place; no subshell, since the
+# policy file is read before every command and a subshell per field cost about 90 ms.
+trim() { local value="${!1}"; value="${value#"${value%%[![:space:]]*}"}"; printf -v "$1" '%s' "${value%"${value##*[![:space:]]}"}"; }
 
 # Loads "scope | decision | pattern | reason" rules; malformed lines and relaxing rules are skipped.
 load_policy() {
   local file="$1" scope decision pattern reason
   while IFS='|' read -r scope decision pattern reason; do
-    scope="$(trim "$scope")" decision="$(trim "$decision")" pattern="$(trim "$pattern")" reason="$(trim "$reason")"
+    trim scope; trim decision; trim pattern; trim reason
     case "$scope" in client) ;; sql | data | command) case "$decision" in ask | deny) ;; *) continue ;; esac ;; *) continue ;; esac
     [ -n "$pattern" ] || continue
     POLICY_SCOPES+=("$scope") POLICY_DECISIONS+=("$decision") POLICY_PATTERNS+=("$pattern") POLICY_REASONS+=("${reason:-Matches a guard policy rule: $pattern}")

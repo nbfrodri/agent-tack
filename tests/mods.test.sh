@@ -184,6 +184,25 @@ check "the marketplace registered at the old path is removed" "called 'plugin ma
 check "the marketplace is re-added from the new checkout" "grep -qxF '$REPO/plugins' '$STATE/market-path' && grep -qx '$MARKET' '$STATE/markets'"
 check "the install reports the move" "grep -q 'the checkout moved' '$H.log'"
 
+echo "Mod unit tests without the Claude Code CLI (tests/mods-unit.sh)"
+# npx caches esbuild under HOME by default; keep it in the test's own folder.
+export npm_config_cache="$WORK/npm-cache"
+if ! command -v node >/dev/null 2>&1 || ! command -v npx >/dev/null 2>&1; then
+  echo "  - skipped: node and npx are not installed (the CI mods job runs the shipped mods' tests)"
+elif ! npx --yes esbuild@0.25.10 --version >/dev/null 2>&1; then
+  echo "  - skipped: npx cannot fetch esbuild (offline?)"
+else
+  FIXTURE="$WORK/fixture-mod"
+  mkdir -p "$FIXTURE/hooks" "$FIXTURE/tests"
+  printf "export const double = (n: number): number => n * 2\n" > "$FIXTURE/hooks/register.ts"
+  printf "import { expect, test } from 'claude-code/testing'\nimport { double } from '../hooks/register'\ntest('doubles', () => { expect(double(2)).toBe(4) })\n" > "$FIXTURE/tests/ok.test.ts"
+  check "a passing mod test passes" "'$REPO/tests/mods-unit.sh' '$FIXTURE' >'$WORK/unit.log' 2>&1"
+  printf "import { expect, test } from 'claude-code/testing'\nimport { double } from '../hooks/register'\ntest('doubles wrongly', () => { expect(double(2)).toBe(5) })\n" > "$FIXTURE/tests/bad.test.ts"
+  check "a failing mod test fails the run" "! '$REPO/tests/mods-unit.sh' '$FIXTURE' >'$WORK/unit.log' 2>&1 && grep -q 'doubles wrongly' '$WORK/unit.log'"
+  printf "import { double } from '../hooks/register'\nexport const unused = double(1)\n" > "$FIXTURE/tests/bad.test.ts"
+  check "a test file that registers no tests fails the run" "! '$REPO/tests/mods-unit.sh' '$FIXTURE' >'$WORK/unit.log' 2>&1 && grep -q 'ran no tests' '$WORK/unit.log'"
+fi
+
 echo
 echo "$PASSED passed, $FAILED failed"
 [ "$FAILED" -eq 0 ]

@@ -4,11 +4,10 @@ This repo is the user's AI configuration (skills, agents, hooks, installer). Hum
 Architecture and execution flows: `docs/architecture.md`; keep it current when components, dependencies or flows change.
 
 ## Commands
-- Lint: `shellcheck -x install.sh uninstall.sh bin/tack bin/tack lib/*.sh tests/*.sh evals/run.sh git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push git-hooks/pre-commit hooks/claude/*.sh hooks/claude/lib/*.sh hooks/cursor/*.sh`
-- Validate skills, agents and cross-references: `tests/validate.sh` (its own tests: `tests/validate.test.sh`)
-- Test lifecycle and diagnostics: `tests/lifecycle.test.sh && tests/doctor.test.sh`
-- Test installer, tools and hooks: `tests/install.test.sh && tests/tools.test.sh && tests/hooks.test.sh && tests/mods.test.sh && tests/vscode.test.sh && tests/codex.test.sh`
-- Audit regressions and context: `tests/cli.test.sh && tests/settings.test.sh && tests/safety.test.sh && tests/guard.test.sh && tests/evals.test.sh`
+- Lint shell and Python: `tests/lint.sh` (ShellCheck and ruff at the versions CI pins; CI runs the same script)
+- Run every suite in parallel: `tests/run-all.sh` (`-j N` to limit it; about half the serial time)
+- Validate skills, agents and cross-references alone: `tests/validate.sh` (its own tests: `tests/validate.test.sh`)
+- One suite at a time: `tests/<name>.test.sh` (`tests/run-all.sh --list` names them)
 - Apply locally: `./install.sh` (idempotent)
 
 ## Rules for this repo

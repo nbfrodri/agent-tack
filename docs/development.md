@@ -4,7 +4,8 @@ How to change this repo safely: commands, adding skills or agents, and measuring
 
 ## Commands
 ```bash
-shellcheck -x install.sh uninstall.sh bin/tack lib/*.sh tests/*.sh evals/run.sh git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push git-hooks/pre-commit hooks/claude/*.sh hooks/claude/lib/*.sh hooks/cursor/*.sh
+tests/lint.sh            # ShellCheck on every script and ruff on the Python (ruff through uvx at the pinned version when uv is installed)
+tests/run-all.sh         # every suite below, in parallel (-j N), with a one-line summary each
 tests/validate.sh        # skills, agents, cross-references, components list coverage, budgets
 tests/validate.test.sh   # the validator catches each kind of error
 tests/install.test.sh    # installer, in throwaway HOME directories
@@ -14,6 +15,7 @@ tests/tools.test.sh      # targets.txt columns, `doctor --tools` and the weekly 
 tests/mods.test.sh       # mods step: install, opt-outs, dry run, uninstall and doctor (fake claude CLI)
 tests/vscode.test.sh     # VS Code step: chat.useAgentsMdFile install, opt-out, dry run, uninstall and doctor
 claude plugin validate plugins && claude plugin test plugins/usage-band && claude plugin test plugins/agent-activity   # the mods themselves (needs the claude CLI)
+tests/mods-unit.sh                    # the mods' unit tests with Node only (esbuild via npx), as CI runs them
 tests/hooks.test.sh      # git and Claude Code hooks, in throwaway repos
 tests/cli.test.sh        # activation, modes, config, startup context and the help-vs-docs drift check
 tests/settings.test.sh   # mixed user and tack hook groups in Python and jq

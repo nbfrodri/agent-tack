@@ -148,7 +148,7 @@ tokenize() {
         E) PARSE_ERROR="$value" ;;
         Z) complete=1 ;;
       esac
-    done < <(printf '%s' "$1" | python3 "$SHELL_PARSE_HELPER" 2>/dev/null)
+    done < <(printf '%s' "$1" | python3 -S "$SHELL_PARSE_HELPER" 2>/dev/null)
     [ "$complete" -eq 1 ] || PARSE_ERROR="Shell parser failed; review the complete command."
     return 0
   fi

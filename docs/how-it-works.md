@@ -112,4 +112,4 @@ tests/  evals/        # automated tests and behaviour evals
 docs/                 # this documentation, audits and AI log
 ```
 
-The guard's Python parser supports commands up to 65,536 characters, with limits on tokens, substitutions, policy checks and nesting. The Bash-only fallback accepts short inputs up to 1,024 characters and asks for review of uncertain syntax. These checks supplement normal tool permissions; they do not execute or fully interpret arbitrary shell programs.
+The guard's Python parser supports commands up to 65,536 characters, with limits on tokens, substitutions, policy checks and nesting. The Bash-only fallback accepts short inputs up to 1,024 characters and asks for review of uncertain syntax. These checks supplement normal tool permissions; they do not execute or fully interpret arbitrary shell programs. The guard runs before every shell command, so it is kept fast: about 110 ms for a compound command on Linux, and `tests/guard.test.sh` fails when the median of five runs exceeds 200 ms (`TACK_GUARD_BUDGET_MS`; CI and `tests/run-all.sh` allow 500 ms for slower or busy machines).
