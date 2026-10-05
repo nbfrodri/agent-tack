@@ -64,6 +64,12 @@ for agent in "$REPO"/agents/*.md; do
   check_file "$agent" "$(basename "$agent" .md)" "$AGENT_DESC_MAX"
   echo "  ✔ $(basename "$agent" .md)"
 done
+# The ShellCheck on CI's runners reports SC2015 for "[ a ] && [ b ] || command" even where newer
+# local versions do not; only exit, return and assignments may follow. Write the rest as if.
+sc2015="$(cd "$REPO" && grep -nE '\] && \[[^]]*\] \|\| ' install.sh uninstall.sh bin/tack lib/*.sh tests/*.sh hooks/claude/*.sh hooks/claude/lib/*.sh git-hooks/_chain 2>/dev/null \
+  | grep -vE '^tests/validate(\.test)?\.sh:|^[^:]*:[0-9]+:[[:space:]]*#|\|\| (exit|return)([ ;]|$)|\|\| [A-Za-z_][A-Za-z0-9_]*=')"
+[ -z "$sc2015" ] || err "use if instead of '[ a ] && [ b ] || command' (CI's ShellCheck rejects it):
+$sc2015"
 # Every tool that gets agents maps all three tiers, and agents name only inherit or a mapped model.
 while read -r tool _ _ _ _ agents_dir _; do
   case "$tool" in '' | '#'*) continue ;; esac
