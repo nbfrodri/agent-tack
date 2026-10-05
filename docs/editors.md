@@ -25,6 +25,7 @@ Restart the tool or editor after installing or updating so it reloads instructio
 - **Global instructions** carry your preferences and the workflow for enabled projects, including the mode rules.
 - **Git hooks** enforce Conventional Commits, no AI attribution, no secrets and protected `main` and tags for every tool, because git runs them whoever commits.
 - **Agent hooks** (command guard with green-only merges, startup context, fast check, check before stopping, tool-call limit, opt-in activity log) run in Claude Code and Codex; Cursor gets the command guard through a thin adapter (`hooks/cursor/guard.sh`) registered in `~/.cursor/hooks.json`. **Mods** (usage band, activity pane) exist only in Claude Code. Other tools follow the same rules as instructions, without enforcement.
+- **Shared memory:** Claude Code and Codex both load your notes from `~/.config/agent-tack/memory.md` at session start, in every project, so switching between them keeps what you told one ([usage](usage.md#shared-memory), [ADR 0002](adr/0002-shared-memory.md)). Each keeps its own memory as well; other tools read the file only when asked.
 - **Startup context:** Claude Code receives it automatically. Other tools are told by the global instructions to run `tack status` and `tack context` at the start of a session; if a tool skips it, ask it to ("run tack context").
 
 ## Claude Code

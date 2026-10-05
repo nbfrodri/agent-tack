@@ -453,6 +453,30 @@ check "malformed user lines are reported" contains 'ignored'
 rm -f "$XDG_CONFIG_HOME/agent-tack/model-tiers.txt"
 check "an unknown tier is rejected" expect_exit 2 "$CLI" models fastest
 
+# tack memory: user-level notes shared by Claude Code and Codex (docs/adr/0002-shared-memory.md).
+MEMORY="$XDG_CONFIG_HOME/agent-tack/memory.md"
+rm -f "$MEMORY"
+check "memory path names the shared file" expect_exit 0 "$CLI" memory path
+check "the path is under the config directory" out_matches "^$MEMORY\$"
+check "showing an empty memory succeeds" expect_exit 0 "$CLI" memory
+check "an empty memory says how to add a note" out_matches "tack memory add"
+check "adding a note succeeds" expect_exit 0 "$CLI" memory add "Prefers pnpm over npm in every project."
+check "the memory file is private to the user" eval "[ -n \"\$(find '$MEMORY' -perm 600)\" ]"
+check "the note is a dated bullet" eval "grep -qE '^- [0-9]{4}-[0-9]{2}-[0-9]{2}: Prefers pnpm over npm in every project\.$' '$MEMORY'"
+check "showing the memory lists the note" expect_exit 0 "$CLI" memory
+check "the listing has the note" out_matches "Prefers pnpm"
+printf '\n## Machines\nLaptop: Arch; desktop: macOS.\n' >> "$MEMORY"
+"$CLI" memory add "Second note." >/dev/null
+check "adding keeps text the user wrote by hand" eval "grep -q 'Laptop: Arch' '$MEMORY'"
+check "the newest note comes first" eval "grep -m1 '^- ' '$MEMORY' | grep -q 'Second note'"
+# Built at run time so the pre-commit secret scan does not see a token in this file.
+fake_token="gh""p_0123456789abcdefghijklmnopqrstuvwxyzAB"
+check "a note that looks like a secret is refused" expect_exit 1 "$CLI" memory add "deploy token $fake_token"
+check "the refused note is not stored" eval "! grep -q ghp_ '$MEMORY'"
+check "a password assignment is refused" expect_exit 1 "$CLI" memory add "db password=hunter2hunter2"
+check "an empty note is a usage error" expect_exit 2 "$CLI" memory add ""
+check "an unknown memory command is a usage error" expect_exit 2 "$CLI" memory frobnicate
+
 # tack lesson: candidate lessons counted across sessions (docs/adr/0001-candidate-lessons.md).
 LESSONS="$XDG_STATE_HOME/agent-tack/lessons.tsv"
 is_private() { [ -n "$(find "$1" -perm 600 2>/dev/null)" ]; }

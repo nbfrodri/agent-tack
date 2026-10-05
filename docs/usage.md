@@ -296,6 +296,18 @@ tack lesson forget use-pnpm               # after it was saved as a rule, or dec
 
 After three sightings with little against it, a candidate is marked `ready` and the assistant asks you whether to save it as a rule. Session start shows up to three of the strongest as unconfirmed hints, last in priority under `context-max-chars`. Candidates live only on this machine, in `~/.local/state/agent-tack/lessons.tsv` (readable only by you); the rules you approve are what travel, through the config repository.
 
+## Shared memory
+
+Notes about you that are not rules and not about one project (your machine, your accounts, a preference you have not made a rule) live in one Markdown file that Claude Code and Codex both read at session start, in every project ([ADR 0002](adr/0002-shared-memory.md)):
+
+```bash
+tack memory                                # print the notes
+tack memory add "Runs Arch Linux; use pacman, not apt."   # a dated note at the top
+tack memory path                           # ~/.config/agent-tack/memory.md: edit it to change or remove notes
+```
+
+Each tool keeps its own memory too; this file is the part they share. Notes that look like credentials are refused, and the file is readable only by you. Session start adds the newest notes up to `memory-max-chars` (2000 by default) and says where the rest is; `tack config memory false --global` turns it off. Rules that should apply everywhere still belong in `global/AGENTS.md`, through `lessons`.
+
 ## Requirements and traceability
 
 At standard and strict, the plan or issue numbers each acceptance criterion (`R1`, `R2`…) and checks them for verifiability, consistency, completeness and traceability before any code (`dev-workflow` → `references/requirements.md`); each test names the requirement it proves (`test_lockout_R2`, or a `R2` comment), and the pull request lists requirement → tests → commit. `tack trace` checks the result in any language:

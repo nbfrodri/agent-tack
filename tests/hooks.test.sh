@@ -458,6 +458,25 @@ check "context cap: it says where to read the rest" "printf '%s' \"\$capped\" | 
 git -C "$WORK/repo" config tack.contextMaxChars 50
 check "context cap: a cap below the activation line drops the pointer, never the line" "[ \"\$(context_of '$WORK/repo')\" = \"\$(context_of '$WORK/repo' | head -n 1)\" ] && context_of '$WORK/repo' | grep -q 'ENABLED'"
 git -C "$WORK/repo" config --unset tack.contextMaxChars
+
+echo "Shared user memory (docs/adr/0002-shared-memory.md)"
+MEMORY="$XDG_CONFIG_HOME/agent-tack/memory.md"
+check "memory: nothing is said without a memory file" "! context_of '$WORK/repo' | grep -q 'User memory'"
+mkdir -p "$(dirname "$MEMORY")"
+printf '# Memory\n\n- 2026-10-05: Prefers pnpm over npm in every project.\n' > "$MEMORY"
+check "memory: an enabled project loads it" "context_of '$WORK/repo' | grep -q 'Prefers pnpm'"
+check "memory: a project without tack loads it too" "context_of '$R' | grep -q 'Prefers pnpm'"
+check "memory: it is labelled as the user's notes, not rules" "context_of '$WORK/repo' | grep -q 'User memory (notes from'"
+check "memory: Codex gets the same notes" "printf '{\"cwd\":\"%s\"}' '$WORK/repo' | bash '$SESSION' --codex | grep -q 'Prefers pnpm'"
+for n in $(seq 1 80); do printf -- '- 2026-10-05: older note number %s about something.\n' "$n" >> "$MEMORY"; done
+check "memory: long memories are cut at the default cap" "[ \"\$(context_of '$R' | grep -c 'older note number')\" -lt 80 ] && context_of '$R' | grep -q 'tack memory'"
+git config --global tack.memoryMaxChars 120
+check "memory: the cap is configurable" "[ \"\$(context_of '$R' | grep -c 'older note number')\" -le 2 ]"
+git config --global --unset tack.memoryMaxChars
+git config --global tack.memory false
+check "memory: the toggle turns it off" "! context_of '$WORK/repo' | grep -q 'Prefers pnpm'"
+git config --global --unset tack.memory
+rm -f "$MEMORY"
 git -C "$WORK/repo" config tack.replyStyle terse
 git -C "$WORK/repo" config tack.ciWatch false
 check "settings: token and workflow settings sit on separate lines" "context_of '$WORK/repo' | grep -q '^Token settings:' && context_of '$WORK/repo' | grep -q '^Workflow settings:'"

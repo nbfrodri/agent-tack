@@ -26,6 +26,8 @@ stop-check          tack.stopCheck            true     bool      any     hook   
 reply-style           tack.replyStyle           normal   normal|terse      any  instruction  Ask the assistant for terse replies to save output tokens
 skill-loading         tack.skillLoading         normal   normal|minimal    any  instruction  Load skills only when a task cannot be done without them, to save input tokens
 subagent-model        tack.subagentModel        inherit  inherit|economical any instruction  Delegate to the most economical capable model instead of inheriting the main one
+memory                tack.memory               true     bool      global  hook         Load the shared user memory (tack memory) at session start in Claude Code and Codex
+memory-max-chars      tack.memoryMaxChars       2000     number    global  hook         Cap the shared user memory added at session start at this many characters, keeping the newest notes
 check-fast            tack.checkFast            none     text      any     hook         Shell command run after each edit in trusted projects; its failures are shown to the assistant
 unleash-max-tool-calls tack.unleashMaxToolCalls none    number    any     hook         In a project-only mode such as unleash, refuse tool calls after this many in one session
 unleash-max-cost      tack.unleashMaxCost       none     decimal   any     mod          In a project-only mode such as unleash, refuse tool calls once the session cost passes this many USD

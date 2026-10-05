@@ -36,6 +36,9 @@ Commands:
   lesson note KEY TEXT | contradict KEY | forget KEY | list   [--global]
                       Count corrections not yet saved as rules; list marks
                       the ones seen often enough to ask about (lessons skill)
+  memory [add TEXT | path]
+                      Notes about you shared by Claude Code and Codex, loaded at
+                      session start (refuses secrets; edit the file to remove)
   trace [PLAN]        Check that every requirement the plan numbers (R1, R2…) has
                       a test naming it (default: the newest docs/plans file);
                       exits 1 when one has none
@@ -321,6 +324,10 @@ case "$cmd" in
     ;;
   lesson)
     bash "$HARNESS_ROOT/lib/lessons.sh" "$@"
+    exit
+    ;;
+  memory)
+    bash "$HARNESS_ROOT/lib/memory.sh" "$HARNESS_ROOT" "$@"
     exit
     ;;
   trace)

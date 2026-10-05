@@ -42,6 +42,16 @@ check "reinstall leaves unchanged agents identical" "cmp -s '$WORK/docs-writer.b
 printf '\n# my tweak\n' >> "$H/.codex/agents/test-writer.toml"
 check "reinstall after a user edit succeeds" "run install.sh --skip-plugins"
 check "a user-edited agent is preserved on reinstall" "grep -q 'my tweak' '$H/.codex/agents/test-writer.toml'"
+echo "Shared user memory at Codex session start"
+mkdir -p "$H/.config/agent-tack"
+printf -- '- 2026-10-05: Runs the checks with make check.\n' > "$H/.config/agent-tack/memory.md"
+codex_session_start() {
+  local command
+  command="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["hooks"]["SessionStart"][0]["hooks"][0]["command"])' "$H/.codex/hooks.json")"
+  printf '{"cwd":"%s"}' "$WORK" | HOME="$H" XDG_CONFIG_HOME="$H/.config" XDG_STATE_HOME="$H/.local/state" \
+    GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL="$H/.gitconfig" bash -c "$command"
+}
+check "the installed Codex SessionStart hook loads the shared memory" "codex_session_start | grep -q 'make check'"
 check "uninstall succeeds" "run uninstall.sh"
 check "unchanged agents are removed" "[ ! -e '$H/.codex/agents/code-reviewer.toml' ] && [ ! -e '$H/.codex/agents/docs-writer.toml' ]"
 check "a user-edited agent is kept on uninstall" "grep -q 'my tweak' '$H/.codex/agents/test-writer.toml'"
