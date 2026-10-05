@@ -15,6 +15,8 @@ env:
   # The ShellCheck developers use (docs/development.md); the runner's own is older and differs.
   SHELLCHECK_VERSION: v0.11.0
   SHELLCHECK_SHA256: 8c3be12b05d5c177a04c29e3c78ce89ac86f1595681cab149b65b97c4e227198
+  # The guard runs before every shell command; tests/guard.test.sh fails above this average.
+  TACK_GUARD_BUDGET_MS: "500"
 
 jobs:
   lint:

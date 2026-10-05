@@ -336,6 +336,20 @@ expect("allow", "gh pr merge --merge", "merge: the toggle off skips the check", 
 # Environment assignments are skipped by their name, whatever their value holds.
 expect("deny", "X=a/b git commit --no-verify -m x", "an assignment with a slash still reaches the command")
 expect("deny", "/usr/bin/env X=a/b git commit --no-verify -m x", "env with a slash assignment still reaches the command")
+# Latency budget: the guard runs before every shell command, so a typical one must stay quick.
+import time
+budget_ms = float(os.environ.get("TACK_GUARD_BUDGET_MS", "200"))  # CI sets a wider budget for slower runners
+payload = json.dumps({"tool_input": {"command": 'git add -A && git commit -m "fix: x" && git push'}, "cwd": str(work)})
+started = time.monotonic()
+for _ in range(5):
+    subprocess.run(["bash", str(guard)], input=payload, text=True, capture_output=True, timeout=8)
+average_ms = (time.monotonic() - started) * 1000 / 5
+if average_ms <= budget_ms:
+    passed += 1
+    print(f"  PASS latency: a compound command takes {average_ms:.0f} ms (budget {budget_ms:.0f} ms)")
+else:
+    failed += 1
+    print(f"  FAIL latency: a compound command takes {average_ms:.0f} ms (budget {budget_ms:.0f} ms)")
 bare = work / "bare-guard"
 (bare / "lib").mkdir(parents=True)
 (bare / "guard-bash.sh").write_text(guard.read_text())
