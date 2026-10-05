@@ -42,6 +42,9 @@ start_turns "$cwd" "$client" "$(field .session_id)" "$(field .transcript_path)"
 . "$(dirname "$0")/lib/hook-control.sh"
 ! hook_disabled "$cwd" session-context || exit 0
 
+# The user's own notes, shared with Codex; loaded in every project (docs/adr/0002-shared-memory.md).
+memory="$(cd "$cwd" && "$cli" memory context 2>/dev/null)" || memory=''
+
 if (cd "$cwd" && "$cli" status --quiet); then
   mode="$(cd "$cwd" && "$cli" mode)" || mode=auto
   mode="${mode%% *}"
@@ -69,20 +72,20 @@ if (cd "$cwd" && "$cli" status --quiet); then
   [ -z "$lessons" ] || lessons="Candidate lessons (corrections seen repeatedly, not yet confirmed as rules; follow them when they fit and ask before saving one):"$'\n'"$lessons"
 
   context="$head"
-  for part in "$mode_rules" "$settings" "$project_context" "$lessons"; do
+  for part in "$mode_rules" "$settings" "$memory" "$project_context" "$lessons"; do
     [ -z "$part" ] || context="$context"$'\n'"$part"
   done
   # context-max-chars: past the cap, keep parts by priority (activation line, settings, mode
-  # rules, project context), trim the first that does not fit and say where the rest is. The
+  # rules, user memory, project context, candidate lessons), trim the first that does not fit and say where the rest is. The
   # activation line always stays; the pointer is dropped when even it does not fit.
   cap="$(setting context-max-chars)"
   case "$cap" in '' | *[!0-9]*) cap=0 ;; esac
   if [ "$cap" -gt 0 ] && [ "${#context}" -gt "$cap" ]; then
-    pointer="[Context capped at $cap characters by tack config context-max-chars; run 'tack mode show' and 'tack context' for the rest.]"
+    pointer="[Context capped at $cap characters by tack config context-max-chars; run 'tack mode show', 'tack memory' and 'tack context' for the rest.]"
     [ $((${#head} + ${#pointer} + 1)) -le "$cap" ] || pointer=''
     remaining=$((cap - ${#head} - ${#pointer} - 1))
     context="$head"
-    for part in "$settings" "$mode_rules" "$project_context" "$lessons"; do
+    for part in "$settings" "$mode_rules" "$memory" "$project_context" "$lessons"; do
       if [ -z "$part" ] || [ "$remaining" -le 1 ]; then continue; fi
       if [ $((${#part} + 1)) -le "$remaining" ]; then
         context="$context"$'\n'"$part"
@@ -96,6 +99,7 @@ if (cd "$cwd" && "$cli" status --quiet); then
   fi
 else
   context="tack: NOT enabled for this project. Work normally without the workflow ceremony; only the always-on rules apply (no AI attribution, safety). The user can enable it with 'tack enable'."
+  [ -z "$memory" ] || context="$context"$'\n'"$memory"
 fi
 if command -v jq >/dev/null 2>&1; then
   jq -cn --arg context "$context" '{hookSpecificOutput:{hookEventName:"SessionStart",additionalContext:$context}}'
