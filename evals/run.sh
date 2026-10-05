@@ -174,7 +174,7 @@ esac
 printf '%s\n' "$prompt" > "$out/prompt.txt"
 
 allowed_tools=("Bash(git *)" "Bash(uv *)" "Bash(python3 *)" "Bash(python *)" "Bash(PYTHONPATH=*)" "Bash(ls *)" "Bash(cat *)"
-  "Bash(mkdir *)" "Bash(pytest *)" "Bash(tail *)" "Bash(harness *)" "Bash(find *)" "Bash(grep *)" "Bash(head *)" "Bash(sed -n *)"
+  "Bash(mkdir *)" "Bash(pytest *)" "Bash(tail *)" "Bash(tack *)" "Bash(harness *)" "Bash(find *)" "Bash(grep *)" "Bash(head *)" "Bash(sed -n *)"
   Read Write Edit Glob Grep Skill Agent TodoWrite)
 provider=claude
 [ "$name" = codex-new-project ] && provider=codex

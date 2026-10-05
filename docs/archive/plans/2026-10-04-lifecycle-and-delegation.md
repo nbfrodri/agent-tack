@@ -1,6 +1,6 @@
 # Lifecycle tools, automatic delegation and reevaluation
 
-- Status: implementation complete; benchmark paused at the owner's request
+- Status: done (implementation complete; the paused benchmark was replaced by the workflow-modes benchmark)
 - Approval: owner requested a new evaluation and implementation of doctor, installation preview, safe uninstall and a new benchmark; chose automatic delegation by complexity and six real runs of one representative scenario.
 - Baseline: `422cfd4`; previous initial audit score 7.4/10. Reevaluation must score current evidence, not planned work.
 

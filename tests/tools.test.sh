@@ -101,7 +101,7 @@ WF="$REPO/.github/workflows/tools-compat.yml"
 check 'runs weekly and on demand' grep -q 'cron:' "$WF"
 check 'can be started manually' grep -q 'workflow_dispatch' "$WF"
 check 'installs without plugins in a temp HOME' grep -q 'install.sh --skip-plugins' "$WF"
-check 'runs the tool checks' grep -q 'harness doctor --tools' "$WF"
+check 'runs the tool checks' grep -q 'tack doctor --tools' "$WF"
 check 'uses no secrets' test -z "$(grep 'secrets\.' "$WF")"
 
 printf '\n%s passed, %s failed\n' "$PASSED" "$FAILED"

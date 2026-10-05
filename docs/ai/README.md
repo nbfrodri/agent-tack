@@ -17,6 +17,6 @@ How AI assistants are used to build and maintain agent-tack. Records: [log.md](l
 | Record | Where |
 | --- | --- |
 | Work log | [log.md](log.md) |
-| Audits and their fixes | [../audits/](../audits/) |
+| Audits and their fixes | [../archive/audits/](../archive/audits/) |
 | Handoffs of unfinished work | [../handoffs/](../handoffs/) |
 | Measured behaviour | [../results.md](../results.md) |

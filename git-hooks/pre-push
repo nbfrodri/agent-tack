@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Global pre-push hook:
 #   - refuses to rewrite or delete main/master on any remote (force pushes, deletions);
-#   - in projects where the harness is enabled, only lets annotated vX.Y.Z tags (and
+#   - in projects where tack is enabled, only lets annotated vX.Y.Z tags (and
 #     -alpha.N/-beta.N/-rc.N pre-releases) through, and never moves or deletes a published tag;
 #   - then runs the repository's own pre-push hook, if any.
 #
 # Deliberate one-off overrides:
-#   HARNESS_ALLOW_FORCE_PUSH=1 git push --force ...   (main/master)
-#   HARNESS_ALLOW_TAG=1 git push ...                  (tags)
+#   TACK_ALLOW_FORCE_PUSH=1 git push --force ...   (main/master)
+#   TACK_ALLOW_TAG=1 git push ...                  (tags)
 set -u
 
 HOOK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -22,7 +22,7 @@ cat > "$stdin_file"
 is_zero() { case "$1" in *[!0]*) return 1 ;; *) return 0 ;; esac; }
 
 check_tags=0
-if [ "${HARNESS_ALLOW_TAG:-}" != "1" ] && "$HOOK_DIR/../bin/tack" status --quiet; then
+if ! override_set TAG && "$HOOK_DIR/../bin/tack" status --quiet; then
   check_tags=1
 fi
 
@@ -31,7 +31,7 @@ tag_error() {
 pre-push: $1
 Release tags are annotated vX.Y.Z (or vX.Y.Z-alpha.N / -beta.N / -rc.N) and never change once
 published. Create one with: git tag -a v1.2.3 -m "v1.2.3"
-(Deliberate override: HARNESS_ALLOW_TAG=1 git push ...)
+(Deliberate override: TACK_ALLOW_TAG=1 git push ...)
 EOF
   exit 1
 }
@@ -52,7 +52,7 @@ while read -r _local_ref local_sha remote_ref remote_sha; do
       continue
       ;;
     refs/heads/main | refs/heads/master)
-      [ "${HARNESS_ALLOW_FORCE_PUSH:-}" != "1" ] || continue
+      ! override_set FORCE_PUSH || continue
       ;;
     *) continue ;;
   esac
@@ -73,7 +73,7 @@ while read -r _local_ref local_sha remote_ref remote_sha; do
 pre-push: refusing to rewrite '$branch' on $remote_name (not a fast-forward).
 Rewriting the history of $branch can destroy other people's work.
 Use 'git revert' to undo published commits, or pull/rebase your local changes first.
-(Deliberate override: HARNESS_ALLOW_FORCE_PUSH=1 git push ...)
+(Deliberate override: TACK_ALLOW_FORCE_PUSH=1 git push ...)
 EOF
     exit 1
   fi

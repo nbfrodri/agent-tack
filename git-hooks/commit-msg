@@ -2,12 +2,12 @@
 # Global commit-msg hook:
 #   1. removes AI attribution (Co-Authored-By trailers of AI tools, "Generated with ..." lines),
 #      in every repository
-#   2. enforces Conventional Commits on the subject line, in projects where the harness is
-#      enabled (`harness enable`)
+#   2. enforces Conventional Commits on the subject line, in projects where tack is
+#      enabled (`tack enable`)
 #   3. runs the repository's own commit-msg hook, if any
 #
 # Opt out of the format check in an enabled repository that uses other conventions:
-#   tack config conventional-commits false   (git key: harness.conventionalCommits)
+#   tack config conventional-commits false   (git key: tack.conventionalCommits)
 set -u
 
 HOOK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

@@ -11,7 +11,7 @@ import json
 import sys
 
 # Hooks this repo installs; "#agent-config" is the tag of older versions
-TAGS = ("#tack", "#harness", "#agent-config")
+TAGS = ("#tack", "#harness", "#agent-config")  # "#harness" and "#agent-config" are former tags
 
 def merge(base, extra):
     for key, value in extra.items():

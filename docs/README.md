@@ -13,5 +13,5 @@
 | [results.md](results.md) | Measured behaviour with vs without tack |
 | [sharing.md](sharing.md) | Using it on someone else's machine |
 | [development.md](development.md) | Tests, evals, adding skills, agents and tools |
-| [audits/](audits/) | Improvement and review reports |
+| [archive/](archive/) | Finished plans, handoffs and audits; open audits (improvement and review reports) go in `audits/` |
 | [ai/](ai/README.md) | How AI is used in this project, and the AI work log |

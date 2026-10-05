@@ -55,7 +55,7 @@ check 'a local hook staging .env blocks an actual commit' refuses_secret
 check 'the initial commit remains the tip' test "$(git -C "$R" log -1 --format=%s)" = 'chore: initial commit'
 printf '#!/usr/bin/env bash\nexit 42\n' > "$R/.git/hooks/pre-commit"
 check 'local hook failures preserve their exit status' status_is 42
-check 'the deliberate override still respects local hook failure' status_with_env 42 HARNESS_ALLOW_SECRETS=1
+check 'the deliberate override still respects local hook failure' status_with_env 42 TACK_ALLOW_SECRETS=1
 rm "$R/.git/hooks/pre-commit"
 
 echo 'pre-commit: filenames are exact and do not depend on diff headers'
@@ -98,7 +98,7 @@ printf '%s\n' "$KEY" > "$R/unstaged.txt"
 check 'unstaged credentials do not block safe staged data' commit
 reset || exit 1
 stage 'historical.txt' "$KEY"
-HARNESS_ALLOW_SECRETS=1 commit || exit 1
+TACK_ALLOW_SECRETS=1 commit || exit 1
 printf 'safe new line\n' >> "$R/historical.txt"
 git -C "$R" add historical.txt
 check 'an unchanged historical credential is outside the added-content policy' commit

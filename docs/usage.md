@@ -133,7 +133,7 @@ After each file edit, Claude Code runs the command from the repository root. Whe
 
 Before Claude Code's assistant ends a turn in an enabled project, a Stop hook looks for unfinished business: uncommitted changes, a failing fast check, a stale handoff, and code changed on the branch without the docs that `docs-map.txt` pairs with it. If it finds any, the assistant gets the list once and either fixes it or explains why it stays; the next stop always goes through. Turn it off with `tack config stop-check false`.
 
-A handoff a commit or two behind is normal mid-task, so it is reported only once it is `handoff-stale-commits` code commits behind (default 3; commits that only touch plans or handoffs do not count), or as soon as that work is pushed, or when it names another branch:
+A handoff a commit or two behind is normal mid-task, so it is reported only once it is `handoff-stale-commits` code commits behind (default 3; commits that only touch plans, handoffs or `docs/archive/` do not count), or as soon as that work is pushed, or when it names another branch:
 
 ```bash
 tack config handoff-stale-commits 5   # ask less often in this project
@@ -197,8 +197,8 @@ The mode decides how much process each task gets. `auto` is the default: before 
 | Plan | None | Short plan in the task list | Saved in `docs/plans/`; waits for your approval |
 | Tests | For changed logic | TDD | TDD |
 | Docs | Only if they become wrong | What changed behaviour affects | Full checklist and ADRs |
-| Handoff | None | Only for multi-session work or low context | Kept from the start |
-| AI log | None | None | One row per task |
+| Handoff | None | Only for multi-session work or low context | Only for multi-session or delegated work, updated at milestones |
+| AI log | None | None | One row per task, in the same commit as the change |
 | Review | Self-review | `code-reviewer` for large or risky diffs | `code-reviewer` before offering to push |
 | Delegation | Suggested, waits for OK | Suggested, waits for OK | Automatic after approval |
 
@@ -347,7 +347,7 @@ The assistant commits coherent verified milestones as it works. Before integrati
 
 ## Moving between tools and machines
 
-Every supported tool reads the same installed instructions and skills, so you can switch tools mid-task. Before switching, ask for a handoff (or let the strict level keep one); the next tool reads it at session start.
+Every supported tool reads the same installed instructions and skills, so you can switch tools mid-task. Before switching, ask for a handoff (or let the mode keep one when the work spans sessions); the next tool reads it at session start.
 
 - **Claude Code to Codex:** the installer already configures Codex. Codex's own `/import` can bring recent chats and projects from Claude Code; when it offers configuration, skills, agents or hooks, skip them, because copies would duplicate tack's symlinked versions and would not update with `git pull` or be recognised by `doctor` and `uninstall.sh`.
 - **Windows:** use WSL2. Clone inside the Linux file system (for example `~/Projects`, not `/mnt/c`), install the AI tools inside WSL and run `./install.sh` there. Native Windows shells are not supported.
@@ -357,9 +357,9 @@ Every supported tool reads the same installed instructions and skills, so you ca
 | Situation | Command |
 | --- | --- |
 | A repo with other commit conventions | `tack config conventional-commits false` |
-| A deliberate force-push to `main` | `HARNESS_ALLOW_FORCE_PUSH=1 git push --force …` |
-| A deliberate tag change | `HARNESS_ALLOW_TAG=1 git push …` |
-| A false positive in the secrets check | `HARNESS_ALLOW_SECRETS=1 git commit …` |
+| A deliberate force-push to `main` | `TACK_ALLOW_FORCE_PUSH=1 git push --force …` |
+| A deliberate tag change | `TACK_ALLOW_TAG=1 git push …` |
+| A false positive in the secrets check | `TACK_ALLOW_SECRETS=1 git commit …` |
 
 Secret scanning runs after the local pre-commit hook and keeps the added-line policy. Renamed files are treated as new content, so moving a file containing an old credential can also be refused. Git inspection errors block the commit rather than silently accepting it.
 
@@ -378,5 +378,6 @@ The project was called agent-harness and its command `harness`. After `git pull 
 - Settings move from `harness.*` to `tack.*` git keys. Old keys keep working: the new one wins when both exist, and changing a setting writes the new key and removes the old one in that scope.
 - A project's `.harness` marker still enables it; `tack enable --shared` writes `.tack`.
 - The installer moves `~/.config/agent-harness` (your modes and guard rules) and `~/.local/state/agent-harness` (installation records) to `agent-tack`, re-tags hooks from `#harness` to `#tack`, and replaces the `agent-harness-mods` marketplace with `agent-tack-mods`.
+- The git hooks' overrides are `TACK_ALLOW_*`; the former `HARNESS_ALLOW_*` variables still work.
 - Codex sees new hook commands, so run `/hooks` in Codex and approve them again.
 - Other machines keep working with the old names until you update them the same way.

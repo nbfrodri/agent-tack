@@ -166,7 +166,7 @@ case "$cmd" in
     allowed_option=''; check_args "$@"
     require_repo
     key_set local enabled false || fail "cannot disable this clone"
-    for marker in .tack .harness; do
+    for marker in .tack .harness; do  # .harness is the former marker
       [ -f "$root/$marker" ] || continue
       rm -f "$root/$marker" || fail "cannot remove the shared marker"
       echo "Removed $root/$marker — commit the removal to share it."

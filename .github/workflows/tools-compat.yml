@@ -33,4 +33,4 @@ jobs:
         run: |
           export HOME="$RUNNER_TEMP/home"
           export PATH="$HOME/.local/bin:$PATH"
-          harness doctor --tools
+          tack doctor --tools

@@ -105,7 +105,7 @@ echo "Toggle"
 fresh_home toggle-off
 git_global harness.vscodeAgentsMd false
 check "exits 0" "install"
-check "false skips the step" "[ ! -e '$SETTINGS' ] && grep -q 'harness.vscodeAgentsMd' '$H.log'"
+check "false skips the step" "[ ! -e '$SETTINGS' ] && grep -q 'tack.vscodeAgentsMd' '$H.log'"
 fresh_home toggle-on
 git_global harness.vscodeAgentsMd true
 check "true applies the step, even with --skip-plugins" "install && [ -f '$SETTINGS' ]"

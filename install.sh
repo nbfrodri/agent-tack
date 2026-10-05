@@ -6,9 +6,9 @@
 #   - global git hooks from git-hooks/ (Conventional Commits, no AI attribution, protect main)
 #   - Claude Code marketplaces and plugins from plugins.txt (installed or updated to latest)
 #   - Claude Code mods from plugins/ through a local marketplace (opt out with --skip-mods or
-#     git config --global harness.mods false; --skip-plugins skips them too)
+#     git config --global tack.mods false; --skip-plugins skips them too)
 #   - when VS Code is installed, "chat.useAgentsMdFile": true in its user settings so Copilot Chat
-#     loads each project's AGENTS.md (opt out with git config --global harness.vscodeAgentsMd false)
+#     loads each project's AGENTS.md (opt out with git config --global tack.vscodeAgentsMd false)
 #   - --no-hooks installs instructions, skills, agents and settings but no git, Claude Code or Codex
 #     hooks, removing tack's agent hooks from an earlier install (git hooks: ./uninstall.sh)
 #
@@ -228,7 +228,7 @@ EOF
   link "$REPO/bin/harness" "$HOME/.local/bin/harness"
   case ":$PATH:" in
     *":$HOME/.local/bin:"*) ;;
-    *) warn "$HOME/.local/bin is not in PATH: add it to use 'harness enable|disable|status'" ;;
+    *) warn "$HOME/.local/bin is not in PATH: add it to use 'tack enable|disable|status'" ;;
   esac
 
   section "Subagents (Claude Code)"
@@ -565,7 +565,7 @@ main() {
   printf '%sInstalling tack from %s%s\n' "$C_HEAD" "$REPO" "$C_OFF"
   if [ "$DRY_RUN" -eq 0 ]; then
     migrate_tool_dir "${XDG_STATE_HOME:-$HOME/.local/state}" || { fail "cannot move the former state directory to agent-tack"; exit 1; }
-    migrate_tool_dir "${XDG_CONFIG_HOME:-$HOME/.config}" || warn "could not move ~/.config/agent-harness to agent-tack; it is still read"
+    migrate_tool_dir "${XDG_CONFIG_HOME:-$HOME/.config}" || warn "could not move ~/.config/agent-harness (the former name) to agent-tack; it is still read"
   fi
   # The hooks are explained the first time they are registered: no tagged hooks exist yet.
   HAD_HOOKS=0
