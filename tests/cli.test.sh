@@ -597,7 +597,9 @@ EOF_STUB
 chmod +x "$STUB"
 export STUB_LOG="$WORK/stub.log"
 shots() { (cd "$SHOTS" && TACK_PLAYWRIGHT="$STUB" "$CLI" shots "$@"); }
-SHOT_DIR="$SHOTS/.tack-screenshots/$(date +%Y-%m-%d)-feat-new-button"
+# git reports the physical path (macOS temp folders sit behind /var -> /private/var).
+SHOTS_ROOT="$(git -C "$SHOTS" rev-parse --show-toplevel)"
+SHOT_DIR="$SHOTS_ROOT/.tack-screenshots/$(date +%Y-%m-%d)-feat-new-button"
 check "shots --before captures a page" expect_exit 0 shots --before "file://$SHOTS/page.html"
 check "before shots exist at mobile and desktop widths" test -s "$SHOT_DIR/before/page-mobile.png" -a -s "$SHOT_DIR/before/page-desktop.png"
 check "mobile is 390 wide and desktop 1440" grep -q 'viewport-size=1440,900' "$STUB_LOG"
@@ -636,7 +638,7 @@ check "Playwright's error reaches the user" grep -q "Executable doesn't exist" "
 check "a failed capture leaves no stale screenshot" test ! -e "$SHOT_DIR/after/page-desktop.png"
 git -C "$SHOTS" switch -q -c feat/later-day
 mkdir -p "$SHOTS/.tack-screenshots/2000-01-01-feat-later-day/before"
-check "a branch keeps using its first folder on later days" eval "[ \"\$(shots --dir)\" = '$SHOTS/.tack-screenshots/2000-01-01-feat-later-day' ]"
+check "a branch keeps using its first folder on later days" eval "[ \"\$(shots --dir)\" = '$SHOTS_ROOT/.tack-screenshots/2000-01-01-feat-later-day' ]"
 git -C "$SHOTS" switch -q feat/new-button
 if (cd "$SHOTS" && npx --no-install playwright --version) >/dev/null 2>&1; then
   check "real Playwright captures the fixture" eval "(cd '$SHOTS' && '$CLI' shots --after --name real 'file://$SHOTS/page.html') >/dev/null 2>&1 && [ \"\$(head -c 4 '$SHOT_DIR/after/real-mobile.png' | tail -c 3)\" = PNG ]"

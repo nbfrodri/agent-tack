@@ -69,9 +69,9 @@ expect_failure "a former subcommand in a line that only mentions a performer" "d
 expect_failure "a section added after the upgrade notes" "docs/usage.md: names the former 'harness'" \
   "printf '\\n## Later\\n\\nRun harness doctor.\\n' >> docs/usage.md"
 expect_failure "a finished handoff left among the open ones" "docs/handoffs/2026-01-01-old.md is closed; move it to docs/archive/handoffs/" \
-  "printf '# Old\\n- Status: done (merged)\\n' > docs/handoffs/2026-01-01-old.md"
+  "mkdir -p docs/handoffs && printf '# Old\\n- Status: done (merged)\\n' > docs/handoffs/2026-01-01-old.md"
 expect_failure "a finished plan left among the open ones" "docs/plans/2026-01-01-old.md is closed; move it to docs/archive/plans/" \
-  "printf '# Old\\n- **Status**: merged\\n' > docs/plans/2026-01-01-old.md"
+  "mkdir -p docs/plans && printf '# Old\\n- **Status**: merged\\n' > docs/plans/2026-01-01-old.md"
 expect_failure "global instructions naming a skill that may not be installed" "global/AGENTS.md names 'release'" \
   "printf -- '- Releases: \`release\`.\n' >> global/AGENTS.md"
 expect_failure "a group line for a skill that no longer exists" "skill-groups.txt: 'gone-skill' has no folder" \
