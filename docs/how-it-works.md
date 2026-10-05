@@ -104,7 +104,7 @@ skills/<name>/        # Agent Skills (SKILL.md + references/ + assets/)
 agents/<name>.md      # Claude Code subagents
 targets.txt           # supported AI tools and their paths
 claude/settings.json  # Claude Code settings and hooks
-hooks/claude/         # Claude hooks (lib/shell-parse.py plus .sh bridge/fallback: parsing)
+hooks/claude/         # Claude hooks (guard-bash.sh dispatches to lib/guard-*.sh rule libraries; lib/shell-parse.py plus .sh bridge/fallback: parsing)
 git-hooks/            # global git hooks
 bin/tack           # per-project switch
 plugins.txt           # Claude Code plugins

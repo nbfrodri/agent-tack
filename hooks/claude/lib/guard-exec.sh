@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # Guard rules for code that a shell or interpreter runs: -c strings are analysed, standard input
 # is not visible and asks. Sourced by guard-bash.sh, which defines ask and analyze.
-# shellcheck disable=SC2034,SC2154 # The decision state and $cwd are shared with guard-bash.sh.
 
 # reads_stdin PATH: succeeds for the names of standard input itself.
 reads_stdin() {

@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # Guard rules for infrastructure and devices: kubectl delete, terraform destroy, dd to a device.
 # Sourced by guard-bash.sh, which defines ask and resolve_path (guard-files.sh).
-# shellcheck disable=SC2034,SC2154 # The decision state and $cwd are shared with guard-bash.sh.
 
 # kubectl delete, after any global flags such as -n or --context.
 check_kubectl() {

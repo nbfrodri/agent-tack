@@ -4,11 +4,11 @@
 # check_command, tokenize and the analysis limits.
 # The skip_* functions work on the caller's words array and index i (bash's dynamic scope): they
 # move i past the wrapper and its options, and return 1 when the command needs no further checks.
-# shellcheck disable=SC2034,SC2154 # words and i belong to check_command; the rest is shared with guard-bash.sh.
 
 # skip_wrappers: moves i to the command that the assignments and wrappers at words[i] run.
 skip_wrappers() {
   local w
+  # shellcheck disable=SC2154 # words and i belong to check_command.
   while [ "$i" -lt "${#words[@]}" ]; do
     w="${words[$i]}"
     # An assignment is recognised by its name: its value may hold slashes (X=a/b).
@@ -17,6 +17,7 @@ skip_wrappers() {
         case "${w%%=*}" in
           *[!A-Za-z0-9_]*) ;;
           *)
+            # shellcheck disable=SC2034 # Read by check_gh in guard-git.sh.
             case "${w%%=*}" in GH_REPO | GH_HOST) GH_REPO_FROM_ENV=1 ;; esac
             i=$((i + 1))
             continue ;;
@@ -124,6 +125,7 @@ skip_xargs() {
 }
 
 check_env_split() {
+  # shellcheck disable=SC2034 # SUBS shadows the caller's parse results for tokenize.
   local split="$1" token TOKENS SUBS PARSE_ERROR
   shift
   if [ "$DEPTH" -ge 4 ]; then

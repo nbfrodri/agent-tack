@@ -374,9 +374,10 @@ long_functions = []
 for path in [guard, *sorted((repo / "hooks/claude/lib").glob("guard-*.sh"))]:
     start = name = None
     for number, line in enumerate(path.read_text().splitlines(), 1):
-        match = re.match(r"([a-z_]+)\(\) *\{", line)
+        match = re.match(r"([A-Za-z_][A-Za-z0-9_]*)\(\) *\{", line)
         if match:
-            name, start = match.group(1), number
+            # A one-line function closes on its own line.
+            name, start = (None, None) if line.rstrip().endswith("}") else (match.group(1), number)
         elif line == "}" and name:
             if number - start + 1 > 60:
                 long_functions.append(f"{path.name}:{name} ({number - start + 1} lines)")

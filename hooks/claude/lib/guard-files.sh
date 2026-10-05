@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # Guard rules for deleting files: path resolution, rm -r and find -delete. Sourced by
 # guard-bash.sh, which defines deny, ask, ask_local, normalize_abs, $cwd and $HOME_DIR.
-# shellcheck disable=SC2034,SC2154 # The decision state and $cwd are shared with guard-bash.sh.
 
 # resolve_path PATH: prints PATH made absolute against $cwd with ".", ".." and a leading ~ or
 # $HOME resolved lexically (the disk is not read); glob characters are kept as typed. Prints
@@ -14,7 +13,8 @@ resolve_path() {
     *__subst__* | *'{'* | *'}'* | *'`'* | '~'[!/]*) return 0 ;;
     *'$'*) case "$path" in '$HOME' | '$HOME/'* | '${HOME}' | '${HOME}/'*) ;; *) return 0 ;; esac ;;
   esac
-  # shellcheck disable=SC2016,SC2088
+  # cwd is set by guard-bash.sh.
+  # shellcheck disable=SC2016,SC2088,SC2154
   case "$path" in
     '~' | '$HOME' | '${HOME}') path="$HOME" ;;
     '~/'*) path="$HOME/${path#'~/'}" ;;

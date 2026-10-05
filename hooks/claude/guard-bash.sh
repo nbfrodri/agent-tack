@@ -9,7 +9,8 @@
 # rules in lib/guard-*.sh (git, files, exec, infra, wrappers); pattern rules come from guard-policy.txt.
 #
 # Input: the hook JSON on stdin. Output: a permission decision as JSON, or nothing.
-# Fails open (allows) if the input can't be parsed, so a broken hook never blocks work.
+# Fails open (allows) if the input can't be parsed, so broken input never blocks work; a missing
+# or broken rule library fails safe instead and every command asks.
 set -u
 
 input="$(cat)"
@@ -93,6 +94,7 @@ normalize_abs() {
 # Delete targets are compared after normalisation, so the working directory and HOME are too:
 # macOS's TMPDIR ends in "/" and leaves "//" in temp paths.
 cwd="$(normalize_abs "$cwd")"
+# shellcheck disable=SC2034 # Read by too_broad and place_of in lib/guard-files.sh.
 HOME_DIR="$(normalize_abs "$HOME")"
 
 # shellcheck source=SCRIPTDIR/lib/shell-parse.sh
@@ -101,7 +103,7 @@ HOME_DIR="$(normalize_abs "$HOME")"
 # shellcheck source=SCRIPTDIR/lib/activity-log.sh
 . "$(dirname "$0")/lib/activity-log.sh" 2>/dev/null || activity_log() { :; }
 
-# The rules live in libraries next to the parser. A missing one fails safe: every command asks.
+# The rules live in libraries next to the parser. A missing or broken one fails safe: every command asks.
 GUARD_LIB_MISSING=""
 GUARD_LIB_DIR="$(dirname "$0")/lib"
 # shellcheck source=SCRIPTDIR/lib/guard-git.sh
@@ -133,7 +135,7 @@ load_policy() {
 
 POLICY_FILE="$(dirname "$0")/guard-policy.txt"
 if [ -f "$POLICY_FILE" ]; then load_policy "$POLICY_FILE"
-else ask "The guard policy file is missing; review the command."; fi
+else ask "The guard policy file is missing or failed to load; review the command."; fi
 # User rules: agent-tack, plus the directory from before the rename if it is still there.
 # The directory's former name is still read until the installer moves it.
 FORMER_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/agent-harness"
@@ -188,7 +190,6 @@ check_command() {
   cmd="${words[$i]}"
   base="${cmd##*/}"
   local args=("${words[@]:$((i + 1))}")
-
 
   case "$base" in
     *'__subst__'* | *'$'* | *'`'*) ask "Dynamic executable name requires review." ;;

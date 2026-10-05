@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Guard rules for git, gh and tack's own settings. Sourced by guard-bash.sh, which defines
 # deny, ask, ask_local, the decision state and $cwd.
-# shellcheck disable=SC2034,SC2154 # The decision state and $cwd are shared with guard-bash.sh.
 
 current_branch() {
+  # shellcheck disable=SC2154 # cwd is set by guard-bash.sh.
   git -C "$cwd" branch --show-current 2>/dev/null
 }
 
@@ -213,6 +213,7 @@ check_harness() {
       for a in "$@"; do
         case "$a" in --unset) positional=2 ;; --global) ;; *) positional=$((positional + 1)) ;; esac
       done
+      # shellcheck disable=SC2034 # Read by guard-bash.sh after the analysis.
       [ "$positional" -lt 2 ] || SETTINGS_WRITE="Changing tack's settings is the user's decision in this mode." ;;
   esac
 }
