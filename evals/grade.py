@@ -6,6 +6,7 @@ Prints the metrics and writes <run dir>/metrics.json. evals/report.py aggregates
 Ordering uses explicit Claude writes and Codex file_change events; opaque shell writes remain unknown.
 """
 import json
+import os
 import re
 import subprocess
 import sys
@@ -14,6 +15,9 @@ from pathlib import Path
 CONVENTIONAL = re.compile(r"^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([\w./-]+\))?!?: \S")
 AI_ATTRIBUTION = re.compile(r"co-authored-by:.*(claude|anthropic|openai|codex|copilot|gemini|cursor)|generated with|🤖", re.I)
 SEEDED_COMMITS = {"new-project": 0, "codex-new-project": 0, "bug-fix": 1, "release": 5, "vague-requirement": 1}
+HIDDEN = Path(__file__).resolve().parent / "hidden"
+# The project's own environment (uv) runs the hidden tests, so its dependencies are installed.
+HIDDEN_RUNNER = ["uv", "run", "--quiet", "python"]
 
 
 def git(repo, *args):
@@ -143,6 +147,30 @@ def ordering_metrics(entries):
     return order, verified
 
 
+def hidden_acceptance(repo, scenario):
+    """(passed, total) for the scenario's hidden tests run against the repo, or (None, None)."""
+    tests = HIDDEN / scenario.replace("codex-", "") / "test_hidden.py"
+    if not tests.exists() or not repo.is_dir():
+        return None, None
+    total = len(re.findall(r"^def test_", tests.read_text(), re.M))
+    # src/ layouts and flat packages both import, installed or not.
+    env = dict(os.environ, PYTHONPATH=os.pathsep.join([str(repo / "src"), str(repo)]))
+    try:
+        result = subprocess.run([*HIDDEN_RUNNER, str(HIDDEN / "run.py"), str(tests)], cwd=repo, env=env,
+                                capture_output=True, text=True, timeout=600)
+    except (OSError, subprocess.TimeoutExpired):
+        return None, total
+    # The runner's summary is its last line; the agent's code may print anything before it.
+    lines = result.stdout.strip().splitlines()
+    passed = re.fullmatch(r"(\d+) passed, \d+ failed", lines[-1]) if lines else None
+    return (int(passed.group(1)) if passed else 0), total
+
+
+def hidden_verdict(passed, total):
+    """True when every hidden test passed, False when one failed, None when they could not run."""
+    return passed == total if passed is not None and total else None
+
+
 def provider_metrics(evs, run_dir):
     provider = "codex" if any(e.get("type") in ("thread.started", "turn.completed", "item.completed") for e in evs) else (
         "claude" if any(e.get("type") in ("assistant", "result", "system") for e in evs) else None)
@@ -188,6 +216,7 @@ def grade(run_dir: Path):
         tests_error = None
     except (OSError, subprocess.TimeoutExpired) as exc:
         tests_pass, tests_count, tests_error = None, None, str(exc)
+    hidden_passed, hidden_total = hidden_acceptance(repo, scenario)
     paths = written_paths(evs)
     order, red_green = ordering_metrics(entries)
     branches = git(repo, "branch", "--format=%(refname:short)").splitlines()
@@ -203,6 +232,10 @@ def grade(run_dir: Path):
         "tests_pass": tests_pass,
         "tests_count": tests_count,
         "tests_error": tests_error,
+        # Outcome, not process: tests the agent never saw, run against what it built.
+        "hidden_passed": hidden_passed,
+        "hidden_total": hidden_total,
+        "hidden_pass": hidden_verdict(hidden_passed, hidden_total),
         "test_written_before_code": order if scenario in ("new-project", "codex-new-project", "bug-fix") else None,
         "red_green_verified": red_green if scenario in ("new-project", "codex-new-project", "bug-fix") else None,
         # dev-workflow asks for "Red:" and "Green:" lines in the commit body of a behaviour change.

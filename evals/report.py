@@ -11,6 +11,9 @@ from collections import defaultdict
 from pathlib import Path
 
 ROWS = [
+    # Outcomes first: hidden tests the agent never saw, run against what it built.
+    ("hidden_pass", "Hidden acceptance tests: all pass", "rate"),
+    ("hidden_passed", "Hidden acceptance tests passed (mean count)", "mean"),
     ("commits", "Commits", "mean"),
     ("conventional_commits_pct", "Conventional Commits (%)", "mean"),
     ("ai_attribution_in_history", "AI attribution in history", "rate"),
