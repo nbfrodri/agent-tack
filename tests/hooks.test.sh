@@ -228,6 +228,15 @@ printf '#!/usr/bin/env bash\necho rejected >&2\nexit 1\n' > "$BARE/hooks/pre-rec
 setup_commit "feat: rejected by the server"
 check "a failing pre-receive still rejects the push" "! push deploy main"
 
+echo "Cursor adapter: the command guard in Cursor's own hook format"
+CURSOR_GUARD="$REPO/hooks/cursor/guard.sh"
+cursor_shell() { printf '{"hook_event_name":"beforeShellExecution","command":"%s","cwd":"%s"}' "$1" "$WORK" | bash "$CURSOR_GUARD"; }
+check "cursor: a safe command is allowed" "cursor_shell 'git status' | grep -q '\"permission\": *\"allow\"'"
+check "cursor: a hook bypass is denied" "cursor_shell 'git commit --no-verify -m x' | grep -q '\"permission\": *\"deny\"'"
+check "cursor: the reason reaches the agent" "cursor_shell 'git commit --no-verify -m x' | grep -q '\"agent_message\": *\".*no-verify'"
+check "cursor: a destructive command asks the user" "cursor_shell 'git reset --hard HEAD~1' | grep -q '\"permission\": *\"ask\"'"
+check "cursor: unreadable input is allowed rather than blocking the editor" "printf 'not json' | bash '$CURSOR_GUARD' | grep -q '\"permission\": *\"allow\"'"
+
 echo "Claude hook: guard-bash"
 GUARD="$REPO/hooks/claude/guard-bash.sh"
 R="$WORK/guard"

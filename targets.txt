@@ -19,4 +19,4 @@ gemini      detect    gemini                ~/.gemini/GEMINI.md                 
 copilot     detect    copilot,code,code-insiders,codium ~/.copilot/copilot-instructions.md    ~/.copilot/skills   -                 -                        -            -
 opencode    detect    opencode              ~/.config/opencode/AGENTS.md          -                   -                 -                        -            -
 crush       detect    crush                 ~/.config/AGENTS.md                   -                   -                 -                        -            -
-cursor      detect    cursor,cursor-agent   -                                     -                   -                 -                        -            -
+cursor      detect    cursor,cursor-agent   -                                     -                   -                 ~/.cursor/hooks.json     -            -

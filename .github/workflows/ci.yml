@@ -29,7 +29,7 @@ jobs:
           rm -rf shellcheck.tar.xz "shellcheck-${SHELLCHECK_VERSION}"
           shellcheck --version
       - name: ShellCheck
-        run: shellcheck -x install.sh uninstall.sh bin/tack bin/harness lib/*.sh tests/*.sh evals/run.sh git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push git-hooks/pre-commit hooks/claude/*.sh hooks/claude/lib/*.sh
+        run: shellcheck -x install.sh uninstall.sh bin/tack bin/harness lib/*.sh tests/*.sh evals/run.sh git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push git-hooks/pre-commit hooks/claude/*.sh hooks/claude/lib/*.sh hooks/cursor/*.sh
       - name: Validate skills, agents, cross-references and plugins.txt
         run: tests/validate.sh
       - name: Test the validator

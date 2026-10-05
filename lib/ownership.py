@@ -41,6 +41,20 @@ def no_symlink_ancestors(path, floor):
     return True
 
 
+def settings_paths(home, declaration):
+    """Settings files the installer may merge: each tool's hooks file in targets.txt."""
+    paths = {home + "/.claude/settings.json", home + "/.codex/hooks.json"}
+    try:
+        lines = declaration.read_text().splitlines()
+    except OSError:
+        return paths
+    for line in lines:
+        fields = line.split()
+        if len(fields) >= 7 and not fields[0].startswith("#") and fields[6] != "-":
+            paths.add(fields[6].replace("~", home, 1) if fields[6].startswith("~/") else fields[6])
+    return paths
+
+
 def expected_link(path, target, home, repo, declaration):
     fixed = {home + "/.agents/harness": repo, home + "/.agents/tack": repo,
              home + "/.local/bin/tack": repo + "/bin/tack",
@@ -127,7 +141,7 @@ def validate(state, home):
                 if not plain_path(backup) or not backup.startswith(path + ".bak-") or "/" in backup[len(path):]:
                     raise ValueError("backup is not adjacent to its managed path")
         elif kind == "settings":
-            if path not in (home.rstrip("/") + "/.claude/settings.json", home.rstrip("/") + "/.codex/hooks.json"):
+            if path not in settings_paths(home.rstrip("/"), Path(entry_repo) / "targets.txt"):
                 raise ValueError("unexpected settings path")
             for name in ("before", "after", "managed"):
                 with (entry / name).open() as stream:

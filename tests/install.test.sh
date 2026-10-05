@@ -295,6 +295,12 @@ check "gemini: global instructions in ~/.gemini/GEMINI.md" "[ \"\$(readlink '$H/
 check "copilot: global instructions in ~/.copilot/copilot-instructions.md" "[ \"\$(readlink '$H/.copilot/copilot-instructions.md')\" = '$REPO/global/AGENTS.md' ]"
 check "copilot: skills in ~/.copilot/skills" "[ \"\$(find '$H/.copilot/skills' -maxdepth 1 -type l | wc -l | tr -d ' ')\" = '$skill_count' ]"
 check "cursor: told how to add the global instructions" "grep -q 'cursor: no file for global instructions' '$H.log'"
+cursor_guards() { python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); print(sum("#tack" in h.get("command","") for h in d.get("hooks",{}).get("beforeShellExecution",[])))' "$1"; }
+check "cursor: the command guard is registered in ~/.cursor/hooks.json" "[ \"\$(cursor_guards '$H/.cursor/hooks.json')\" = 1 ] && grep -q 'hooks/cursor/guard.sh' '$H/.cursor/hooks.json'"
+python3 -c 'import json,sys; p=sys.argv[1]; d=json.load(open(p)); d["hooks"]["beforeShellExecution"].append({"command":"./my-own-check.sh"}); json.dump(d,open(p,"w"))' "$H/.cursor/hooks.json"
+HOME="$H" XDG_CONFIG_HOME="$H/.config" GIT_CONFIG_NOSYSTEM=1 PATH="$TOOLS:$MINBIN" "$REPO/install.sh" --skip-plugins >"$H.log" 2>&1
+check "cursor: a reinstall keeps one guard and the user's own hooks" "[ \"\$(cursor_guards '$H/.cursor/hooks.json')\" = 1 ] && grep -q 'my-own-check.sh' '$H/.cursor/hooks.json'"
+check "cursor not installed: no Cursor hooks file is created" "[ ! -e '$WORK/explain/.cursor/hooks.json' ]"
 check "opencode not installed: nothing created for it" "[ ! -e '$H/.config/opencode' ]"
 check "crush not installed: ~/.config/AGENTS.md not created" "[ ! -e '$H/.config/AGENTS.md' ]"
 check "claude and codex are always configured" "[ -L '$H/.claude/CLAUDE.md' ] && [ -L '$H/.codex/AGENTS.md' ]"
