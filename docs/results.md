@@ -16,7 +16,7 @@ Process compliance is not quality, so the evals now also run hidden acceptance t
 | Cost (mean) | $0.05 (1×) | $0.13–0.18 (2.6–3.3×) |
 
 - On these small tasks the plain assistant's code was already correct: tack changed the process, not the outcome. Harder scenarios are needed before claiming a quality gain or ruling one out.
-- In this repository, 14 of 104 features (13%) needed a `fix:` after reaching `main`, linked by the lines the fix changed; 16 fixes landed on the feature's own branch before its merge, after review or CI.
+- In this repository (`main` at `fa069ff`), 14 of 103 features (14%) needed a `fix:` after reaching `main`, linked by the lines the fix changed; 16 fixes landed on the feature's own branch before its merge, after review or CI.
 
 Limits: two runs per condition, one model, two Python scenarios; the history covers one repository and three days.
 

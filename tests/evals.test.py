@@ -210,6 +210,23 @@ class HiddenAcceptance(unittest.TestCase):
         self.assertEqual(passed, 0)
         self.assertGreater(total, 0)
 
+    def test_a_missing_runner_is_unknown_not_a_failure(self):
+        with tempfile.TemporaryDirectory() as temp:
+            (Path(temp) / 'repo').mkdir()
+            with patch.object(grade, 'HIDDEN_RUNNER', ['/nonexistent/uv']):
+                self.assertEqual(grade.hidden_acceptance(Path(temp) / 'repo', 'bug-fix')[0], None)
+        self.assertIsNone(grade.hidden_verdict(None, 5))
+        self.assertFalse(grade.hidden_verdict(3, 5))
+        self.assertTrue(grade.hidden_verdict(5, 5))
+
+    def test_a_float_only_new_project_passes(self):
+        passed, total = self.run_hidden('new-project', (
+            'def cart_total(items):\n'
+            '    if any(not isinstance(p, float) for p, _ in items):\n'
+            '        raise ValueError("prices must be floats")\n'
+            '    return sum(p * q * (0.9 if q >= 10 else 1) for p, q in items) * 1.21\n'))
+        self.assertEqual(passed, total)
+
     def test_scenarios_without_hidden_tests_report_nothing(self):
         self.assertEqual(grade.hidden_acceptance(Path('/nonexistent'), 'release'), (None, None))
 
@@ -246,11 +263,13 @@ class Outcomes(unittest.TestCase):
         self.git('add', '-A')
         self.git('commit', '-q', '-m', subject, day=day)
 
-    def report(self, *args):
+    def report(self, *args, **kwargs):
         spec = importlib.util.spec_from_file_location('outcomes', ROOT / 'evals/outcomes.py')
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
-        return module.measure(self.repo, *args)
+        # measure() runs git in this process: keep it away from the real HOME and git config.
+        with patch.dict(os.environ, self.env):
+            return module.measure(self.repo, *args, **kwargs)
 
     def build(self):
         self.commit(0, 'feat: add a', 'a.py')
@@ -310,6 +329,34 @@ class Outcomes(unittest.TestCase):
         (self.repo / 'g.py').write_text((self.repo / 'g.py').read_text() + 'extra guard\n')
         self.git('commit', '-qam', 'fix: add a missing guard', day=1)
         self.assertEqual(self.report(14)['escaped_defects'], 0)
+
+    def test_the_measured_ref_excludes_a_feature_branch_s_own_fixes(self):
+        self.commit(0, 'chore: start', 'README.md')
+        self.git('switch', '-q', '-c', 'feat/h')
+        self.commit(1, 'feat: add h', 'h.py')
+        self.commit(2, 'fix: review finding in h', 'h.py')
+        self.assertEqual(self.report(14, ref='main')['features'], 0)
+        self.assertEqual(self.report(14, ref='feat/h')['features'], 1)
+
+    def test_paths_with_spaces_and_user_diff_settings_still_link(self):
+        self.git('config', 'diff.noprefix', 'true')
+        self.git('config', 'color.diff', 'always')
+        self.commit(0, 'feat: add spaced', 'sp ace.py')
+        self.commit(1, 'chore: next step', 'other.py')
+        self.commit(2, 'fix: correct spaced', 'sp ace.py')
+        self.assertEqual(self.report(14)['escaped_defects'], 1)
+
+    def test_empty_repositories_and_root_fixes_report_without_errors(self):
+        self.assertEqual(self.report(14)['commits'], 0)
+        self.commit(0, 'fix: first commit', 'a.py')
+        self.assertEqual(self.report(14)['fixes'], 1)
+
+    def test_cli_rejects_bad_options_without_a_traceback(self):
+        for args in (['--days'], ['--days', 'abc']):
+            result = subprocess.run([sys.executable, str(ROOT / 'evals/outcomes.py'), str(self.repo), *args],
+                                    env=self.env, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 2)
+            self.assertNotIn('Traceback', result.stderr)
 
     def test_cli_prints_a_table_and_json(self):
         self.build()

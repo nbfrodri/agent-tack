@@ -160,8 +160,15 @@ def hidden_acceptance(repo, scenario):
                                 capture_output=True, text=True, timeout=600)
     except (OSError, subprocess.TimeoutExpired):
         return None, total
-    passed = re.search(r"(\d+) passed", result.stdout)
+    # The runner's summary is its last line; the agent's code may print anything before it.
+    lines = result.stdout.strip().splitlines()
+    passed = re.fullmatch(r"(\d+) passed, \d+ failed", lines[-1]) if lines else None
     return (int(passed.group(1)) if passed else 0), total
+
+
+def hidden_verdict(passed, total):
+    """True when every hidden test passed, False when one failed, None when they could not run."""
+    return passed == total if passed is not None and total else None
 
 
 def provider_metrics(evs, run_dir):
@@ -228,7 +235,7 @@ def grade(run_dir: Path):
         # Outcome, not process: tests the agent never saw, run against what it built.
         "hidden_passed": hidden_passed,
         "hidden_total": hidden_total,
-        "hidden_pass": hidden_passed == hidden_total if hidden_total else None,
+        "hidden_pass": hidden_verdict(hidden_passed, hidden_total),
         "test_written_before_code": order if scenario in ("new-project", "codex-new-project", "bug-fix") else None,
         "red_green_verified": red_green if scenario in ("new-project", "codex-new-project", "bug-fix") else None,
         # dev-workflow asks for "Red:" and "Green:" lines in the commit body of a behaviour change.

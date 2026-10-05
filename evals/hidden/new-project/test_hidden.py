@@ -10,7 +10,7 @@ from cart import cart_total
 def total_of(lines):
     try:
         return float(cart_total([(Decimal(str(price)), quantity) for price, quantity in lines]))
-    except TypeError:
+    except (TypeError, ValueError):
         return float(cart_total([(float(price), quantity) for price, quantity in lines]))
 
 
