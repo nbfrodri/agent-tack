@@ -192,12 +192,13 @@ EOF
       elif [ -L "$dir/$name" ] && [ "$(readlink "$dir/$name")" = "${skill%/}" ]; then
         # Only tack's own link to a skill of a deselected group is removed, and only where it
         # took nothing's place; one that replaced the user's skill waits for uninstall.
-        if [ "$DRY_RUN" -eq 1 ]; then
+        if ownership_link_replaced "$dir/$name"; then
+          if [ "$DRY_RUN" -eq 1 ]; then ok "would keep $dir/$name: it replaced a skill of yours, which ./uninstall.sh restores"
+          else warn "kept $dir/$name: it replaced a skill of yours, which ./uninstall.sh restores"; fi
+        elif [ "$DRY_RUN" -eq 1 ]; then
           ok "would remove $dir/$name (group not selected)"
         elif ownership_release_link "$dir/$name"; then
           rm -f "$dir/$name" && ok "removed $dir/$name (group not selected)"
-        else
-          warn "kept $dir/$name: it replaced a skill of yours, which ./uninstall.sh restores"
         fi
       fi
     done <<EOF

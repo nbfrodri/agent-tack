@@ -27,6 +27,8 @@ skill_selected() {
   done < "$REPO/skill-groups.txt"
   [ -n "${name:-}" ] || group=core
   case "$group" in core) return 0 ;; esac
-  case ", $(skill_groups_selected)," in *", $group,"*) return 0 ;; esac
+  # Read the setting once per run: this is called for every skill in every tool's folder.
+  [ -n "${SKILL_GROUPS_CACHE:-}" ] || SKILL_GROUPS_CACHE="$(skill_groups_selected)"
+  case ", $SKILL_GROUPS_CACHE," in *", $group,"*) return 0 ;; esac
   return 1
 }

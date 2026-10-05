@@ -89,7 +89,7 @@ Run the project's tests, linter, formatter and type checker. Re-run the impact s
 Summarise briefly: what changed, the commits, what else the change affected and how it was covered, how it was verified and what's pending. Offer to push or open the PR where it applies. After a push, follow the CI row unless `tack config ci-watch` is `false`; the guard refuses `gh pr merge` while checks fail or are pending (`merge-requires-green`).
 
 ## Related skills and agents
-Use them when the current tool has them:
+Use them when the current tool has them. The `process` and `stack` groups may not be installed (`tack config skill-groups`); when a skill named here is missing, follow the rules in this skill instead and say which one was not available.
 - `new-project`: a project from scratch, or adding missing basics (tests, CI, lint, README).
 - `debugging`: any bug, error, failing test or failing CI.
 - `git-history`: fixing, combining or undoing commits; tidying history before a push.

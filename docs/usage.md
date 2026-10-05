@@ -22,7 +22,7 @@ tack doctor --tools                # check each installed AI tool instead of the
 ./uninstall.sh                         # restore recorded unchanged state
 ```
 
-Skills come in groups (`skill-groups.txt`): `core` (the workflow, always installed), `process` (reviews, delegation, releases, new projects) and `stack` (frontend, APIs, databases, auth, end-to-end tests, deployment, observability). Fewer skills mean fewer descriptions in every session of every tool. Choose the optional groups once, then re-run the installer; it removes only its own links to the skills you left out:
+Skills come in groups (`skill-groups.txt`): `core` (the workflow, reviews and delegation, always installed), `process` (releases, new projects) and `stack` (frontend, APIs, databases, auth, end-to-end tests, deployment, observability). Fewer skills mean fewer descriptions in every session of every tool. Choose the optional groups once, then re-run the installer; it removes only its own links to the skills you left out:
 
 ```bash
 tack config skill-groups process --global   # core and process; or core, stack, or all (the default)
@@ -61,6 +61,7 @@ tack status --quiet    # no output; exit 0 when enabled, 1 when disabled
 tack enable            # this clone only (git config; nothing added to the repo)
 tack enable --scaffold # also add the missing AGENTS.md, CLAUDE.md, docs/architecture.md, docs-map.txt,
                        # and plan, handoff and AI-log templates, never overwriting a file
+                       # (CLAUDE.md only points to AGENTS.md, so it is harmless for other tools)
 tack enable --shared   # commit a .tack file so every clone has it
 tack disable
 tack mode              # effective mode and its source

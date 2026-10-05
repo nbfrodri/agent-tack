@@ -436,6 +436,11 @@ mkdir -p "$XDG_CONFIG_HOME/agent-tack"
 printf 'codex strongest my-big-model\n' > "$XDG_CONFIG_HOME/agent-tack/model-tiers.txt"
 check "user tiers win over the shipped ones" expect_exit 0 "$CLI" models strongest
 check "a user-named Codex model is shown" out_matches "^codex +strongest +my-big-model"
+printf 'codex strongest\nclaude fastest foo\n' > "$XDG_CONFIG_HOME/agent-tack/model-tiers.txt"
+check "models with malformed user lines still runs" expect_exit 0 "$CLI" models
+check "a user line without a model does not blank the shipped one" out_matches "^codex +strongest +inherit"
+check "a user line with an unknown tier is ignored" out_lacks "foo"
+check "malformed user lines are reported" contains 'ignored'
 rm -f "$XDG_CONFIG_HOME/agent-tack/model-tiers.txt"
 check "an unknown tier is rejected" expect_exit 2 "$CLI" models fastest
 

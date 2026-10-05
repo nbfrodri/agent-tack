@@ -16,7 +16,8 @@ Clone it into any directory you choose and install from that checkout, as shown 
 | Which skills are installed | `tack config skill-groups --global` (`all`, or `core` plus `process` and/or `stack`), then `./install.sh` |
 | Automatic delegation, complexity routing and model fallbacks | `skills/orchestrate/` (per-project opt-out: `tack config delegation off`) |
 | Feature toggles shown by `tack config` | `features.txt`: one line per toggle (name of at most 23 characters, git key, default, allowed values such as `bool`, `number`, `text`, `auto|off` or `list:a|b` for a comma-separated list, scope, enforcement, description). Code that honours a new toggle reads its git key; keep safety checks out of the registry |
-| Agent responsibilities and defaults | `agents/*.md` (`docs-writer` must keep an economical `model:`, `sonnet` or `haiku`, because large doc updates are delegated to it) |
+| Agent responsibilities and defaults | `agents/*.md` (`model:` is `inherit` or a Claude Code model from `model-tiers.txt`; `docs-writer` uses the `economical` tier because large doc updates are delegated to it) |
+| Which model each tool uses for a tier | `model-tiers.txt` (`economical`, `balanced`, `strongest` per tool), or for your machine only `~/.config/agent-tack/model-tiers.txt`; check with `tack models` |
 | CI after a push, green-only merges and the activity log | `tack config ci-watch`, `merge-requires-green` and `activity-log` ([usage](usage.md#ci-wait-for-it-merge-only-when-green)) |
 | Supported tools and installation paths | `targets.txt` |
 | Claude Code settings and registered hooks | `claude/settings.json` |

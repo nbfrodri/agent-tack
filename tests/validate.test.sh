@@ -48,6 +48,12 @@ expect_failure "an unclosed frontmatter" "not closed" \
   "printf -- '---\nname: broken\ndescription: x\n' > skills/testing/SKILL.md && mkdir -p skills/broken && cp skills/testing/SKILL.md skills/broken/"
 expect_failure "a description over budget" "max 400" \
   "python3 -c \"import re;p='skills/testing/SKILL.md';s=open(p).read();open(p,'w').write(re.sub(r'^description: .*\$','description: '+'x'*401,s,count=1,flags=re.M))\""
+expect_failure "global instructions naming a skill that may not be installed" "global/AGENTS.md names 'release'" \
+  "printf -- '- Releases: \`release\`.\n' >> global/AGENTS.md"
+expect_failure "a group line for a skill that no longer exists" "skill-groups.txt: 'gone-skill' has no folder" \
+  "printf 'gone-skill       stack\n' >> skill-groups.txt"
+expect_failure "docs-writer off the economical tier" "docs-writer must use the economical tier" \
+  "sed 's/^model: .*/model: opus/' agents/docs-writer.md > tmp && mv tmp agents/docs-writer.md"
 expect_failure "a test chain ending in a command that CI's ShellCheck rejects" "lib/keys.sh:" \
   "printf '[ -n \"\$x\" ] && [ -f \"\$x\" ] || continue\n' >> lib/keys.sh"
 expect_failure "a tool with agents but a tier left out" "model-tiers.txt: claude has no 'balanced' tier" \
@@ -64,7 +70,7 @@ expect_failure "a test that moves HOME but leaves the real state directory" "tes
   "printf 'export HOME=/tmp/x\n' > tests/leaky.test.sh"
 expect_failure "a toggle name too long for the tack config table" "features.txt: name" \
   "printf 'a-toggle-name-far-too-long tack.x none bool any hook Too long\n' >> features.txt"
-expect_failure "docs-writer inheriting the main model" "docs-writer must pin an economical model" \
+expect_failure "docs-writer inheriting the main model" "docs-writer must use the economical tier" \
   "sed 's/^model: .*/model: inherit/' agents/docs-writer.md > agents/tmp && mv agents/tmp agents/docs-writer.md"
 expect_failure "a missing references/ file of the skill itself" "testing/references/python.md" \
   "rm skills/testing/references/python.md"
