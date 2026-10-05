@@ -332,9 +332,11 @@ tack shots --index                                  # rebuild index.html after s
 
 Everything goes to `.tack-screenshots/<date>-<branch>/` in the repository, with `before/`, `after/` and an `index.html` that shows them side by side; open that file in a browser. The folder ignores itself in git, so nothing is committed; the assistant may attach the after shots to the pull request. (`.tack` is the shared marker file, so the screenshots cannot live under it.)
 
-`ui-reviewer`, in a fresh context, scores the after shots on a fixed rubric (hierarchy, consistency, spacing and alignment, accessibility signals, responsiveness) and the assistant saves its `score.md` next to them; below 7/10 it fixes the findings and captures and scores once more before reporting. Tools without subagents run the scoring as a separate prompt over the same folder. `lite` and `lean` skip all of this, and `tack config visual-review false` turns it off.
+`ui-reviewer`, in a fresh context, scores the after shots on a fixed rubric (hierarchy, consistency, spacing and alignment, accessibility signals, responsiveness) and the assistant saves its `score.md` next to them; below 7/10 it fixes the findings and captures and scores once more before reporting. Tools without subagents run the scoring as a separate prompt over the same folder. `standard`, `strict` and `unleash` do it; `lite` and `lean` skip it, and `tack config visual-review false` turns it off. Capture local or preview URLs with test data: the assistant asks before attaching shots that show personal data to a pull request.
 
-Capturing needs Playwright in the project (`npm i -D playwright && npx playwright install chromium`); `TACK_PLAYWRIGHT` names another command. Without it, `tack shots` says how to install it and exits 1.
+A branch keeps the folder of its first capture, so before and after pair up even on different days; take the before shots after creating the branch. A page is named by its path and query, not its host, so before on one port and after on another still pair; two URLs that would share a name are refused (use `--name`). The mobile shot is a 390×844 viewport, not a full device emulation. Add `.tack-screenshots/` to `.dockerignore` or a package's `files` list if those do not already exclude dot folders.
+
+Capturing needs Playwright in the project (`npm i -D playwright && npx playwright install chromium`); `TACK_PLAYWRIGHT` names another command, split on spaces. Without it, `tack shots` says how to install it and exits 1; a capture that fails shows Playwright's last error line and exits 1.
 
 ## What to ask
 Talk normally, in your language:

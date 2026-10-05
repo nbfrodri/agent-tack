@@ -615,6 +615,29 @@ check "shots without a URL is a usage error" expect_exit 2 shots --after
 check "an unknown shots option is a usage error" expect_exit 2 shots --sideways "file://$SHOTS/page.html"
 check "outside a git repository shots explains itself" expect_exit 2 env TACK_PLAYWRIGHT="$STUB" "$CLI" shots --dir
 check "missing Playwright gives install instructions" eval "(cd '$SHOTS' && TACK_PLAYWRIGHT=/nonexistent/playwright '$CLI' shots --after 'file://$SHOTS/page.html') > '$WORK/output' 2>&1; [ \$? -eq 1 ] && grep -q 'npx playwright install chromium' '$WORK/output'"
+check "a name cannot leave the screenshots folder" eval "shots --after --name ../../escaped 'file://$SHOTS/page.html' >/dev/null 2>&1 && [ -s '$SHOT_DIR/after/escaped-mobile.png' ] && [ ! -e '$SHOTS/escaped-mobile.png' ] && [ ! -e '$SHOTS/.tack-screenshots/escaped-mobile.png' ]"
+check "two URLs with the same name are refused" expect_exit 2 shots --after "http://localhost:3000/a-b?x=1" "http://localhost:3000/a/b?x=1"
+check "the host and port do not split a page" eval "shots --before http://localhost:3000/cart >/dev/null 2>&1 && shots --after http://localhost:5173/cart >/dev/null 2>&1 && [ -s '$SHOT_DIR/before/cart-mobile.png' ] && [ -s '$SHOT_DIR/after/cart-mobile.png' ]"
+check "--before and --after together are a usage error" expect_exit 2 shots --before --after "file://$SHOTS/page.html"
+check "--dir with a URL is a usage error" expect_exit 2 shots --dir "file://$SHOTS/page.html"
+check "an empty TACK_PLAYWRIGHT is reported, not a crash" eval "(cd '$SHOTS' && TACK_PLAYWRIGHT=' ' '$CLI' shots --after 'file://$SHOTS/page.html') > '$WORK/output' 2>&1; [ \$? -eq 1 ] && grep -q 'Playwright is not available' '$WORK/output'"
+FAILING_STUB="$WORK/playwright-failing"
+cat > "$FAILING_STUB" <<'EOF_STUB'
+#!/usr/bin/env bash
+[ "$1" != --version ] || exit 0
+case "$*" in *1440,900*) echo "browserType.launch: Executable doesn't exist" >&2; exit 1 ;; esac
+for last in "$@"; do :; done
+printf 'PNG' > "$last"
+EOF_STUB
+chmod +x "$FAILING_STUB"
+printf 'stale' > "$SHOT_DIR/after/page-desktop.png"
+check "a failed capture exits 1" eval "(cd '$SHOTS' && TACK_PLAYWRIGHT='$FAILING_STUB' '$CLI' shots --after 'file://$SHOTS/page.html') > '$WORK/output' 2>&1; [ \$? -eq 1 ]"
+check "Playwright's error reaches the user" grep -q "Executable doesn't exist" "$WORK/output"
+check "a failed capture leaves no stale screenshot" test ! -e "$SHOT_DIR/after/page-desktop.png"
+git -C "$SHOTS" switch -q -c feat/later-day
+mkdir -p "$SHOTS/.tack-screenshots/2000-01-01-feat-later-day/before"
+check "a branch keeps using its first folder on later days" eval "[ \"\$(shots --dir)\" = '$SHOTS/.tack-screenshots/2000-01-01-feat-later-day' ]"
+git -C "$SHOTS" switch -q feat/new-button
 if (cd "$SHOTS" && npx --no-install playwright --version) >/dev/null 2>&1; then
   check "real Playwright captures the fixture" eval "(cd '$SHOTS' && '$CLI' shots --after --name real 'file://$SHOTS/page.html') >/dev/null 2>&1 && [ \"\$(head -c 4 '$SHOT_DIR/after/real-mobile.png' | tail -c 3)\" = PNG ]"
 else

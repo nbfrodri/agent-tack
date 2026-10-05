@@ -1,6 +1,6 @@
 ---
 name: ui-reviewer
-description: Reviews a running web app in the browser at mobile and desktop widths: hierarchy, consistency, states, forms and accessibility, with screenshots. Used by improve or on request.
+description: Reviews a running web app at mobile and desktop widths (hierarchy, consistency, states, forms, accessibility), or scores tack shots before and after screenshots on a fixed rubric. Used by improve, the visual review of UI changes, or on request.
 model: inherit
 ---
 

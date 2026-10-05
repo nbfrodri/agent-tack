@@ -36,10 +36,10 @@ def main(folder):
             rows.append(f"<tr><th>{html.escape(page)}<br><small>{width}</small></th>"
                         f"{cell(folder, 'before', page, width)}{cell(folder, 'after', page, width)}</tr>")
     score = folder / "score.md"
-    score_html = (f"<h2>Score</h2><pre>{html.escape(score.read_text(errors='replace'))}</pre>"
+    score_html = (f"<h2>Score</h2><pre>{html.escape(score.read_text(encoding='utf-8', errors='replace'))}</pre>"
                   if score.exists() else "<p>No score yet: the reviewer writes score.md here.</p>")
     title = html.escape(folder.name)
-    (folder / "index.html").write_text(f"""<!doctype html>
+    (folder / "index.html").write_text(encoding="utf-8", data=f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Screenshots {title}</title>
 <style>

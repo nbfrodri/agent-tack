@@ -510,7 +510,7 @@ git -C "$WORK/repo" config --unset tack.ciWatch
 git -C "$WORK/repo" config tack.visualReview false
 check "visual-review: turning it off tells the assistant to skip it" "session '$WORK/repo' | grep -q 'Workflow settings:.*Skip the visual review'"
 git -C "$WORK/repo" config --unset tack.visualReview
-for review_mode in standard strict; do
+for review_mode in standard strict unleash; do
   git -C "$WORK/repo" config tack.mode "$review_mode"
   check "visual-review: $review_mode mode captures and scores UI changes" "session '$WORK/repo' | grep -q 'Visual review: .*tack shots'"
 done
