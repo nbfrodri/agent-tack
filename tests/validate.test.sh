@@ -56,6 +56,8 @@ expect_failure "a supported tool missing from the capability map" "docs/editors.
   "grep -v '(\`crush\`' docs/editors.md > tmp && mv tmp docs/editors.md"
 expect_failure "CI and the development docs naming different ShellCheck versions" "ShellCheck v0.10.0 in CI" \
   "sed 's/SHELLCHECK_VERSION: v0.11.0/SHELLCHECK_VERSION: v0.10.0/' .github/workflows/ci.yml > tmp && mv tmp .github/workflows/ci.yml"
+expect_failure "CI and tests/lint.sh pinning different ruff versions" "ruff 0.13.0 in CI does not match tests/lint.sh" \
+  "sed 's/ruff==0.14.0/ruff==0.13.0/' .github/workflows/ci.yml > tmp && mv tmp .github/workflows/ci.yml"
 expect_failure "global instructions naming a skill that may not be installed" "global/AGENTS.md names 'release'" \
   "printf -- '- Releases: \`release\`.\n' >> global/AGENTS.md"
 expect_failure "a group line for a skill that no longer exists" "skill-groups.txt: 'gone-skill' has no folder" \

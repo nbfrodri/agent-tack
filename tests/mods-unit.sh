@@ -31,7 +31,13 @@ for plugin in "$@"; do
       failed=1
       continue
     fi
-    node "$bundle" || failed=1
+    # A file that registers no tests exits 0 silently; the shim's summary line proves they ran.
+    if ! node "$bundle" > "$WORK/out" 2>&1; then failed=1; fi
+    cat "$WORK/out"
+    if ! grep -qE '^[0-9]+ passed, [0-9]+ failed$' "$WORK/out"; then
+      echo "  ✘ ran no tests"
+      failed=1
+    fi
   done
 done
 if [ "$ran" -eq 0 ]; then

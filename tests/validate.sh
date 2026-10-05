@@ -80,6 +80,10 @@ done
 ci_shellcheck="$(sed -n 's/^ *SHELLCHECK_VERSION: *v\{0,1\}//p' "$REPO/.github/workflows/ci.yml")"
 grep -q "ShellCheck ${ci_shellcheck:-missing} " "$REPO/docs/development.md" \
   || err "ShellCheck v${ci_shellcheck:-?} in CI does not match docs/development.md"
+# CI and tests/lint.sh pin the same ruff release.
+ci_ruff="$(sed -n 's/.*pipx install ruff==\([0-9.]*\).*/\1/p' "$REPO/.github/workflows/ci.yml")"
+grep -qx "RUFF_VERSION=${ci_ruff:-missing}" "$REPO/tests/lint.sh" \
+  || err "ruff ${ci_ruff:-?} in CI does not match tests/lint.sh"
 # The ShellCheck on CI's runners reports SC2015 for "[ a ] && [ b ] || command" even where newer
 # local versions do not; only exit, return and assignments may follow. Write the rest as if.
 sc2015="$(cd "$REPO" && grep -nE '\] && \[[^]]*\] \|\| ' install.sh uninstall.sh bin/tack bin/harness lib/*.sh tests/*.sh evals/run.sh hooks/claude/*.sh hooks/claude/lib/*.sh hooks/cursor/*.sh git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push git-hooks/pre-commit 2>/dev/null \

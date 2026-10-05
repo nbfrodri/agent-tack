@@ -2,7 +2,7 @@
 # Runs every test suite, several at a time, and prints one line per suite plus a summary. Each
 # suite already works in its own temp HOME, so they can run side by side.
 # Usage: tests/run-all.sh [-j N] [--list]   (N defaults to the number of CPUs, at least 1)
-# Exit code: 0 when every suite passes, 1 otherwise.
+# Exit codes: 0 every suite passed, 1 a suite failed (its log is kept), 2 bad options.
 set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -22,7 +22,8 @@ done
 case "$jobs" in '' | *[!0-9]* | 0) echo "run-all: -j needs a positive number" >&2; exit 2 ;; esac
 
 LOGS="$(mktemp -d "${TMPDIR:-/tmp}/tack-run-all.XXXXXX")" || exit 1
-trap 'rm -rf "$LOGS"' EXIT
+# Suites share the CPUs here, so the guard's latency test gets the wider budget CI uses.
+export TACK_GUARD_BUDGET_MS="${TACK_GUARD_BUDGET_MS:-500}"
 start=$(date +%s)
 
 # Batches of N: bash 3.2 has no `wait -n`, so each batch finishes before the next starts.
@@ -42,8 +43,18 @@ for suite in "${SUITES[@]}"; do
   else
     failed=1
     printf '%-20s FAILED (exit %s)\n' "$suite" "$rc"
-    grep -E '✘|FAIL' "$LOGS/$suite.log" | head -n 10 | sed 's/^/    /'
+    # Failure markers when the suite printed them, else the end of its output (a crash, set -e).
+    if grep -qE '✘|FAIL|ERROR' "$LOGS/$suite.log"; then
+      grep -E '✘|FAIL|ERROR' "$LOGS/$suite.log" | head -n 10 | sed 's/^/    /'
+    else
+      tail -n 20 "$LOGS/$suite.log" | sed 's/^/    /'
+    fi
   fi
 done
-printf '%s in %ss\n' "$([ "$failed" -eq 0 ] && echo 'all suites passed' || echo 'some suites failed')" "$(( $(date +%s) - start ))"
+if [ "$failed" -eq 0 ]; then
+  rm -rf "$LOGS"
+  printf 'all suites passed in %ss\n' "$(( $(date +%s) - start ))"
+else
+  printf 'some suites failed in %ss; full logs in %s\n' "$(( $(date +%s) - start ))" "$LOGS"
+fi
 exit "$failed"

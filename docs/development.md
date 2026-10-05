@@ -4,7 +4,7 @@ How to change this repo safely: commands, adding skills or agents, and measuring
 
 ## Commands
 ```bash
-tests/lint.sh            # ShellCheck on every script and ruff on the Python, at the versions CI pins
+tests/lint.sh            # ShellCheck on every script and ruff on the Python (ruff through uvx at the pinned version when uv is installed)
 tests/run-all.sh         # every suite below, in parallel (-j N), with a one-line summary each
 tests/validate.sh        # skills, agents, cross-references, components list coverage, budgets
 tests/validate.test.sh   # the validator catches each kind of error

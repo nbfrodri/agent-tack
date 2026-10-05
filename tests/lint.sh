@@ -17,18 +17,25 @@ shellcheck -x install.sh uninstall.sh bin/tack bin/harness lib/*.sh tests/*.sh e
   git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push git-hooks/pre-commit \
   hooks/claude/*.sh hooks/claude/lib/*.sh hooks/cursor/*.sh || status=1
 
-# ruff: the installed one, or the pinned release through uvx.
-if command -v ruff >/dev/null 2>&1; then
-  ruff=(ruff)
-elif command -v uvx >/dev/null 2>&1; then
+# ruff: the pinned release through uvx when uv is there, otherwise the installed one (a warning
+# when its version differs, since findings can change between releases).
+if command -v uvx >/dev/null 2>&1; then
   ruff=(uvx "ruff@$RUFF_VERSION")
+elif command -v ruff >/dev/null 2>&1; then
+  ruff=(ruff)
+  case "$(ruff --version 2>/dev/null)" in
+    *" $RUFF_VERSION") ;;
+    *) echo "lint: warning: ruff is not $RUFF_VERSION, the version CI pins; findings may differ" >&2 ;;
+  esac
 else
   echo "lint: ruff is missing; install ruff $RUFF_VERSION or uv" >&2
   exit 2
 fi
 python_files=()
 while IFS= read -r file; do python_files+=("$file"); done < <(git ls-files '*.py')
-"${ruff[@]}" check --output-format concise "${python_files[@]}" || status=1
+if [ "${#python_files[@]}" -gt 0 ]; then
+  "${ruff[@]}" check --output-format concise "${python_files[@]}" || status=1
+fi
 
 [ "$status" -ne 0 ] || echo "lint: clean"
 exit "$status"

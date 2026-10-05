@@ -340,16 +340,23 @@ expect("deny", "/usr/bin/env X=a/b git commit --no-verify -m x", "env with a sla
 import time
 budget_ms = float(os.environ.get("TACK_GUARD_BUDGET_MS", "200"))  # CI sets a wider budget for slower runners
 payload = json.dumps({"tool_input": {"command": 'git add -A && git commit -m "fix: x" && git push'}, "cwd": str(work)})
-started = time.monotonic()
-for _ in range(5):
-    subprocess.run(["bash", str(guard)], input=payload, text=True, capture_output=True, timeout=8)
-average_ms = (time.monotonic() - started) * 1000 / 5
-if average_ms <= budget_ms:
+# One warm-up run, then the median of five, so a single slow run on a busy machine does not fail it.
+timings = []
+try:
+    for run in range(6):
+        started = time.monotonic()
+        subprocess.run(["bash", str(guard)], input=payload, text=True, capture_output=True, timeout=8)
+        if run:
+            timings.append((time.monotonic() - started) * 1000)
+    median_ms = sorted(timings)[2]
+except subprocess.TimeoutExpired:
+    median_ms = float("inf")
+if median_ms <= budget_ms:
     passed += 1
-    print(f"  PASS latency: a compound command takes {average_ms:.0f} ms (budget {budget_ms:.0f} ms)")
+    print(f"  PASS latency: a compound command takes {median_ms:.0f} ms (budget {budget_ms:.0f} ms)")
 else:
     failed += 1
-    print(f"  FAIL latency: a compound command takes {average_ms:.0f} ms (budget {budget_ms:.0f} ms)")
+    print(f"  FAIL latency: a compound command takes {median_ms:.0f} ms (budget {budget_ms:.0f} ms)")
 bare = work / "bare-guard"
 (bare / "lib").mkdir(parents=True)
 (bare / "guard-bash.sh").write_text(guard.read_text())

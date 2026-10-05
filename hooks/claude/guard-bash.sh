@@ -17,7 +17,7 @@ json_field() {
   if command -v jq >/dev/null 2>&1; then
     printf '%s' "$input" | jq -r "$1 // empty" 2>/dev/null
   elif command -v python3 >/dev/null 2>&1; then
-    printf '%s' "$input" | python3 -c '
+    printf '%s' "$input" | python3 -S -c '
 import json, sys
 data = json.load(sys.stdin)
 for key in sys.argv[1].lstrip(".").split("."):
