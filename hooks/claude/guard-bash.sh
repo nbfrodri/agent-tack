@@ -73,6 +73,25 @@ cwd="$(json_field .cwd)"
 [ -n "$command" ] || exit 0
 [ -n "$cwd" ] && [ -d "$cwd" ] || cwd="$PWD"
 
+# normalize_abs PATH: collapses "//", "." and ".." in an absolute path, without reading the disk.
+normalize_abs() {
+  local segment out='' IFS=/
+  set -f
+  for segment in $1; do
+    case "$segment" in
+      '' | .) ;;
+      ..) out="${out%/*}" ;;
+      *) out="$out/$segment" ;;
+    esac
+  done
+  set +f
+  printf '%s\n' "${out:-/}"
+}
+# Delete targets are compared after normalisation, so the working directory and HOME are too:
+# macOS's TMPDIR ends in "/" and leaves "//" in temp paths.
+cwd="$(normalize_abs "$cwd")"
+HOME_DIR="$(normalize_abs "$HOME")"
+
 # shellcheck source=SCRIPTDIR/lib/shell-parse.sh
 . "$(dirname "$0")/lib/shell-parse.sh"
 # The bare-script copy in the guard tests has no log library; logging is optional.
@@ -304,6 +323,10 @@ pr_buckets() {
 # the pull request being merged, the user decides. --auto lets GitHub wait for pending checks.
 GH_REPO_FROM_ENV=0
 check_gh() {
+  if [ "${1:-}" = repo ] && [ "${2:-}" = delete ]; then
+    ask "This deletes a GitHub repository with its issues and pull requests. Confirm the repository."
+    return 0
+  fi
   [ "${1:-}" = pr ] && [ "${2:-}" = merge ] || return 0
   shift 2
   local selector=() repo=() skip_next=0 prev="" a setting buckets auto=0 cli
@@ -348,8 +371,126 @@ check_gh() {
   esac
 }
 
+# resolve_path PATH: prints PATH made absolute against $cwd with ".", ".." and a leading ~ or
+# $HOME resolved lexically (the disk is not read); glob characters are kept as typed. Prints
+# nothing for a path whose value is only known when the shell runs it: substitutions, other
+# variables, brace expansion, backticks or another user's home (~user).
+resolve_path() {
+  local path="$1"
+  # shellcheck disable=SC2016 # $HOME is matched as typed, not expanded.
+  case "$path" in
+    *__subst__* | *'{'* | *'}'* | *'`'* | '~'[!/]*) return 0 ;;
+    *'$'*) case "$path" in '$HOME' | '$HOME/'* | '${HOME}' | '${HOME}/'*) ;; *) return 0 ;; esac ;;
+  esac
+  # shellcheck disable=SC2016,SC2088
+  case "$path" in
+    '~' | '$HOME' | '${HOME}') path="$HOME" ;;
+    '~/'*) path="$HOME/${path#'~/'}" ;;
+    '$HOME/'*) path="$HOME/${path#'$HOME/'}" ;;
+    '${HOME}/'*) path="$HOME/${path#'${HOME}/'}" ;;
+    /*) ;;
+    *) path="$cwd/$path" ;;
+  esac
+  normalize_abs "$path"
+}
+
+# fixed_part PATH: the folder a glob path starts from (the path itself when it has no glob).
+fixed_part() {
+  local path="$1"
+  case "$path" in *'*'* | *'?'* | *'['*) ;; *) printf '%s\n' "$path"; return ;; esac
+  path="${path%%[*?[]*}"
+  path="${path%/*}"
+  printf '%s\n' "${path:-/}"
+}
+
+# Deny a recursive delete of the filesystem root, of HOME or of any folder that holds HOME.
+too_broad() {
+  case "$HOME_DIR/" in "${1%/}/"*) return 0 ;; esac
+  return 1
+}
+
+# project_dir: the working directory, or a placeholder when it is HOME or above it (no project).
+project_dir() {
+  if too_broad "${cwd%/}"; then printf '//no-project\n'; else printf '%s\n' "${cwd%/}"; fi
+}
+
+# place_of REAL: project-root, project, home (outside the project), temp or outside. A temp
+# folder itself (/tmp) is outside; only what is inside it counts as temp.
+place_of() {
+  local real="${1%/}" project tmp="${TMPDIR:-/tmp}"
+  project="$(project_dir)"
+  tmp="${tmp%/}"
+  case "$real" in
+    "$project") echo project-root ;;
+    "$project"/*) echo project ;;
+    # Inside HOME but outside the project is never temp, even when HOME sits under /tmp.
+    "${HOME_DIR%/}"/*) echo home ;;
+    /tmp/* | /var/tmp/* | "$tmp"/*) echo temp ;;
+    *) echo outside ;;
+  esac
+}
+
+# judge_delete TARGET WHAT: the shared decision for rm -r and find -delete on one target.
+judge_delete() {
+  # A third argument "root-ok" accepts the project root itself (find . -name x -delete).
+  local t="$1" what="$2" root="${3:-}" real fixed
+  real="$(resolve_path "$t")"
+  if [ -z "$real" ]; then
+    ask "$what of '$t', which the guard cannot resolve before the shell expands it: confirm what it deletes."
+    return
+  fi
+  fixed="$(fixed_part "$real")"
+  if too_broad "$real" || too_broad "$fixed"; then
+    # find narrows what it deletes with its tests (-name ...), so a broad start asks rather than denies.
+    [ "$root" = root-ok ] || deny "$what of '$t' is too broad. Delete specific paths instead."
+    ask "$what outside the project directory: $t"
+    return
+  fi
+  # Losing .git loses every commit not pushed; no mode waives that question.
+  case "$real" in
+    */.git | */.git/*) ask "$what of the git history ($t): commits that were not pushed are lost." ;;
+  esac
+  case "$(place_of "$fixed")" in
+    project-root) [ "$root" = root-ok ] || ask_local "$what of everything in the current directory ($t)." ;;
+    project | temp) ;;
+    *) ask "$what outside the project directory: $t" ;;
+  esac
+}
+
+# find ... -delete, or -exec rm, removes what matches under its start paths.
+check_find() {
+  local args=("$@") i=0 n=$# starts=() deletes=0 exec_command start
+  # Global options come before the start paths: -H, -L, -P, -D debugopts, -Olevel.
+  while [ "$i" -lt "$n" ]; do
+    case "${args[$i]}" in
+      -H | -L | -P | -O*) i=$((i + 1)) ;;
+      -D) i=$((i + 2)) ;;
+      *) break ;;
+    esac
+  done
+  while [ "$i" -lt "$n" ]; do
+    case "${args[$i]}" in -* | '(' | '!' | ')') break ;; esac
+    starts+=("${args[$i]}")
+    i=$((i + 1))
+  done
+  while [ "$i" -lt "$n" ]; do
+    case "${args[$i]}" in
+      -delete) deletes=1 ;;
+      -exec | -execdir | -ok | -okdir)
+        exec_command="${args[$((i + 1))]:-}"
+        case "${exec_command##*/}" in rm | unlink | shred) deletes=1 ;; esac ;;
+    esac
+    i=$((i + 1))
+  done
+  [ "$deletes" -eq 1 ] || return 0
+  [ "${#starts[@]}" -gt 0 ] || starts=(.)
+  for start in "${starts[@]}"; do
+    judge_delete "$start" "find deleting" root-ok
+  done
+}
+
 check_rm() {
-  local recursive=0 after_dashdash=0 targets=() a t real
+  local recursive=0 after_dashdash=0 targets=() a t
   for a in "$@"; do
     if [ "$after_dashdash" -eq 1 ]; then targets+=("$a"); continue; fi
     case "$a" in
@@ -369,16 +510,123 @@ check_rm() {
     case "$t" in
       '/' | '/*' | '/.' | '~' | '~/' | '~/*' | '$HOME' | '$HOME/' | '$HOME/*' | '${HOME}' | '${HOME}/' | '${HOME}/*' | '..' | '../' | '../*' | "$HOME" | "$HOME/")
         deny "Recursive delete of '$t' is too broad. Delete specific paths instead." ;;
-      '.' | './' | '*' | './*') ask_local "Recursive delete of everything in the current directory ($t)." ;;
-      /*)
-        real="${t%/}"
-        case "$real" in
-          "$cwd"/* | /tmp/* | /var/tmp/* | "${TMPDIR:-/tmp}"/*) ;;
-          *) ask "Recursive delete outside the project directory: $t" ;;
-        esac
-        ;;
-      '~/'* | '$HOME/'* | '${HOME}/'* | "$HOME"/*)
-        ask "Recursive delete outside the project directory: $t" ;;
+    esac
+    judge_delete "$t" "Recursive delete"
+  done
+}
+
+# reads_stdin PATH: succeeds for the names of standard input itself.
+reads_stdin() {
+  case "$1" in - | /dev/stdin | /dev/fd/0 | /proc/self/fd/0) return 0 ;; esac
+  return 1
+}
+
+# A shell runs the string after -c, a script file, or whatever reaches its standard input: a
+# heredoc, a here-string or a download piped into it (curl ... | bash).
+check_shell() {
+  local args=("$@") k=0 n=$# string=0 stdin=0 script=0 a
+  while [ "$k" -lt "$n" ]; do
+    a="${args[$k]}"
+    case "$a" in
+      --version | --help) return 0 ;;
+      -o | -O | +o | +O | --rcfile | --init-file) k=$((k + 2)); continue ;;
+      --*) ;;
+      -* | +*)
+        # Short options combine (-euo pipefail, -ec): o and O take the next word, c a command
+        # string after the options, s reads the script from standard input.
+        case "$a" in *[oO]*) k=$((k + 1)) ;; esac
+        case "$a" in -*c*) string=1 ;; esac
+        case "$a" in -*s*) stdin=1 ;; esac ;;
+      *)
+        if [ "$string" -eq 1 ]; then analyze "$a"; return 0; fi
+        if [ "$stdin" -eq 1 ] || reads_stdin "$a"; then break; fi
+        script=1
+        break ;;
+    esac
+    k=$((k + 1))
+  done
+  if [ "$string" -eq 1 ]; then ask "Missing shell command string requires review."; return 0; fi
+  [ "$script" -eq 1 ] || ask "A shell reading a script from standard input (a pipe, heredoc or here-string) requires review."
+}
+
+# source or . with standard input runs whatever was piped in.
+check_source() {
+  if [ "$#" -eq 0 ] || reads_stdin "$1"; then
+    ask "Sourcing a script from standard input (a pipe) requires review."
+  fi
+}
+
+# Interpreters run inline code (visible to the guard), a script file, or standard input (not
+# visible). Each lists its options that take a value, so the value is not mistaken for a script.
+check_interpreter() {
+  local name="$1" with_value inline benign a k=0 n
+  shift
+  local args=("$@")
+  n=$#
+  case "$name" in
+    python*) with_value='-X -W -Q'; inline='-c -m'; benign='--version -V -h --help' ;;
+    node) with_value='-r --require --import --loader -C --conditions'; inline='-e --eval -p --print'; benign='-v --version -h --help --test -c --check' ;;
+    perl) with_value='-I -M -m'; inline='-e -E'; benign='-v --version -V -h' ;;
+    ruby) with_value='-I -r -C -E'; inline='-e'; benign='-v --version -h --help' ;;
+    php) with_value='-d -c -z'; inline='-r'; benign='-v --version -h --help -l -m -i' ;;
+  esac
+  while [ "$k" -lt "$n" ]; do
+    a="${args[$k]}"
+    case " $benign $inline " in *" $a "*) return 0 ;; esac
+    case " $with_value " in *" $a "*) k=$((k + 2)); continue ;; esac
+    if reads_stdin "$a"; then break; fi
+    case "$a" in
+      --*) ;;
+      -?*)
+        # Attached inline code such as -cprint(1) or -mpytest is visible too.
+        case " $inline " in *" ${a:0:2} "*) return 0 ;; esac ;;
+      *) return 0 ;;
+    esac
+    k=$((k + 1))
+  done
+  ask "$name reading code from standard input (a pipe or heredoc) requires review."
+}
+
+# kubectl delete, after any global flags such as -n or --context.
+check_kubectl() {
+  local skip=0 a
+  for a in "$@"; do
+    if [ "$skip" -eq 1 ]; then skip=0; continue; fi
+    case "$a" in
+      -n | --namespace | --context | --kubeconfig | --cluster | --user | -s | --server | --token | --as | --as-group | --request-timeout) skip=1 ;;
+      -*) ;;
+      delete) ask "kubectl delete removes cluster resources. Confirm the context and namespace."; return ;;
+      *) return ;;
+    esac
+  done
+}
+
+# terraform or tofu destroy, also after -chdir, and apply -destroy.
+check_terraform() {
+  local name="$1" a sub=''
+  shift
+  for a in "$@"; do
+    case "$a" in
+      -*) [ -z "$sub" ] || case "$a" in -destroy) [ "$sub" != apply ] || ask "$name apply -destroy deletes infrastructure. Confirm the workspace and environment." ;; esac ;;
+      *)
+        [ -z "$sub" ] || continue
+        sub="$a"
+        [ "$sub" != destroy ] || ask "$name destroy deletes infrastructure. Confirm the workspace and environment." ;;
+    esac
+  done
+}
+
+# dd writing to a device; the null, zero and standard streams are not devices to protect.
+check_dd() {
+  local a target
+  for a in "$@"; do
+    case "$a" in
+      of=*)
+        target="$(resolve_path "${a#of=}")"
+        case "$target" in
+          /dev/null | /dev/zero | /dev/stdout | /dev/stderr | /dev/fd/*) ;;
+          /dev/*) ask "dd writing to $target overwrites the device. Confirm it." ;;
+        esac ;;
     esac
   done
 }
@@ -437,10 +685,10 @@ check_command() {
     ask "Shell command count limit exceeded; review the complete command."
     return 0
   fi
-  local words=() w skip_redir=0 has_redir=0 i=0 cmd base
+  local words=() w skip_redir=0 i=0 cmd base
   for w in "$@"; do
     if [ "$skip_redir" -eq 1 ]; then skip_redir=0; continue; fi
-    if [ "$w" = "$REDIR" ]; then skip_redir=1; has_redir=1; continue; fi
+    if [ "$w" = "$REDIR" ]; then skip_redir=1; continue; fi
     words+=("$w")
   done
   [ "${#words[@]}" -gt 0 ] || return 0
@@ -554,30 +802,17 @@ check_command() {
     *'__subst__'* | *'$'* | *'`'*) ask "Dynamic executable name requires review." ;;
     git) check_git "${args[@]+"${args[@]}"}" ;;
     rm) check_rm "${args[@]+"${args[@]}"}" ;;
+    find) check_find "${args[@]+"${args[@]}"}" ;;
     gh) check_gh "${args[@]+"${args[@]}"}" ;;
     cd | pushd | popd) ACTS_ELSEWHERE=1 ;;
     harness | tack) check_harness "${args[@]+"${args[@]}"}" ;;
-    bash | sh | zsh | dash | ksh)
-      local k=0 shell_string=0
-      while [ "$k" -lt "${#args[@]}" ]; do
-        case "${args[$k]}" in
-          -c | -*c)
-            shell_string=1
-            if [ $((k + 1)) -lt "${#args[@]}" ]; then
-              analyze "${args[$((k + 1))]}"
-            else
-              ask "Missing shell command string requires review."
-            fi
-            break ;;
-          -*) ;;
-          *) break ;;
-        esac
-        k=$((k + 1))
-      done
-      if [ "$shell_string" -eq 0 ] && [ "$has_redir" -eq 1 ]; then
-        ask "Shell stdin script or here-string requires review."
-      fi
-      ;;
+    bash | sh | zsh | dash | ksh) check_shell "${args[@]+"${args[@]}"}" ;;
+    source | .) check_source "${args[@]+"${args[@]}"}" ;;
+    python | python2 | python3 | python3.* | node | perl | ruby | php) check_interpreter "$base" "${args[@]+"${args[@]}"}" ;;
+    kubectl) check_kubectl "${args[@]+"${args[@]}"}" ;;
+    terraform | tofu) check_terraform "$base" "${args[@]+"${args[@]}"}" ;;
+    dd) check_dd "${args[@]+"${args[@]}"}" ;;
+    mkfs | mkfs.* | mke2fs | mkswap | wipefs) ask "$base formats or wipes a disk or partition and erases what is on it. Confirm the device." ;;
     eval) analyze "${args[*]+"${args[*]}"}" ;;
   esac
 

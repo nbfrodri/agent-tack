@@ -86,6 +86,15 @@ With `tack config activity-log true`, `session-context.sh`, `guard-bash.sh` and 
 
 Repos with their own local `core.hooksPath` (e.g. Husky) use only their hooks; there, Claude's `attribution` setting still prevents its trailers.
 
+### What the command guard covers, and what it does not
+
+The guard is a safety net for an assistant's mistakes, not a sandbox against a determined one. It judges each shell command before it runs:
+
+- **Refuses:** hook bypasses (`--no-verify`, `core.hooksPath`), force-pushing or deleting `main`, recursive deletes of `/`, `HOME` or a folder that holds it (paths are resolved, so `rm -rf ../../..` counts).
+- **Asks:** recursive deletes, `find -delete` or `find -exec rm` outside the project, deletes whose target only the shell can work out (`$(…)`, variables, `{a,b}`, `~user`), anything inside `.git`, rewriting remote history, merges with red or pending CI, database wipes, infrastructure and device commands (`gh repo delete`, `terraform`/`tofu destroy` and `apply -destroy`, `kubectl delete`, `mkfs`, `dd` to a device), code a shell or interpreter reads from standard input (`curl … | bash`, `bash -s`, `| python3`, `source /dev/stdin`), your own rules, and commands it cannot analyse (loops, dynamic commands).
+
+It does **not** cover: overwriting files through redirection (`> ~/.bashrc`, `truncate`, `cp /dev/null …`), moving files out of the way (`mv ~/.ssh …`), `rsync --delete`, destructive commands of tools it does not know, interpreters outside its list (`deno`, `bun`, `pypy`, `fish`, `busybox sh`), anything run inside a script file, and actions taken through tools other than the shell (editors, MCP servers). Add rules for your own risky commands in `~/.config/agent-tack/guard-policy.txt`; for untrusted work, use a container or VM.
+
 ## Repository layout
 ```
 global/AGENTS.md      # global instructions for every AI tool
