@@ -306,7 +306,7 @@ tack memory add "Runs Arch Linux; use pacman, not apt."   # a dated note at the 
 tack memory path                           # ~/.config/agent-tack/memory.md: edit it to change or remove notes
 ```
 
-Each tool keeps its own memory too; this file is the part they share. Notes that look like credentials are refused, and the file is readable only by you. Session start adds the newest notes up to `memory-max-chars` (2000 by default) and says where the rest is; `tack config memory false --global` turns it off. Rules that should apply everywhere still belong in `global/AGENTS.md`, through `lessons`.
+Only lines starting with `- ` are loaded; other text you write in the file is kept but not loaded. The assistant shows you a note and waits for your OK before adding it. Each tool keeps its own memory too; this file is the part they share. Notes that look like credentials are refused, and the file is readable only by you. Session start adds the newest notes up to `memory-max-chars` (2000 by default) and says where the rest is; `tack config memory false --global` turns it off. Rules that should apply everywhere still belong in `global/AGENTS.md`, through `lessons`.
 
 ## Requirements and traceability
 

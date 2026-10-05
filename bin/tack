@@ -36,7 +36,7 @@ Commands:
   lesson note KEY TEXT | contradict KEY | forget KEY | list   [--global]
                       Count corrections not yet saved as rules; list marks
                       the ones seen often enough to ask about (lessons skill)
-  memory [add TEXT | path]
+  memory [show | add TEXT | path]
                       Notes about you shared by Claude Code and Codex, loaded at
                       session start (refuses secrets; edit the file to remove)
   trace [PLAN]        Check that every requirement the plan numbers (R1, R2…) has

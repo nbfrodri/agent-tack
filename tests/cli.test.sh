@@ -474,6 +474,20 @@ fake_token="gh""p_0123456789abcdefghijklmnopqrstuvwxyzAB"
 check "a note that looks like a secret is refused" expect_exit 1 "$CLI" memory add "deploy token $fake_token"
 check "the refused note is not stored" eval "! grep -q ghp_ '$MEMORY'"
 check "a password assignment is refused" expect_exit 1 "$CLI" memory add "db password=hunter2hunter2"
+"$CLI" memory add 'Paths look like C:\new\tmp on Windows.' >/dev/null
+check "backslashes in a note are stored as typed" eval "grep -qF 'C:\\new\\tmp on Windows.' '$MEMORY'"
+for ordinary in "Uses disk-encryption-everywhere-on-laptops." "Prefers task-management-tooling-with-kanban." "GitHub token: stored in 1Password."; do
+  check "an ordinary note is accepted: $ordinary" expect_exit 0 "$CLI" memory add "$ordinary"
+done
+fake_google="AI""zaSyA0123456789abcdefghijklmnopqrstuv"
+for secret in "password is hunter2hunter2" "key $fake_google" "gitlab gl""pat-0123456789abcdefghij"; do
+  check "a secret is refused: ${secret%% *}" expect_exit 1 "$CLI" memory add "$secret"
+done
+real_memory="$WORK/dotfiles-memory.md"
+mv "$MEMORY" "$real_memory" && ln -s "$real_memory" "$MEMORY"
+"$CLI" memory add "Through a symlink." >/dev/null
+check "a symlinked memory file stays a symlink" eval "[ -L '$MEMORY' ] && grep -q 'Through a symlink' '$real_memory'"
+rm -f "$MEMORY" && mv "$real_memory" "$MEMORY"
 check "an empty note is a usage error" expect_exit 2 "$CLI" memory add ""
 check "an unknown memory command is a usage error" expect_exit 2 "$CLI" memory frobnicate
 

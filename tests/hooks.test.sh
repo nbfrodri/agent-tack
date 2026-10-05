@@ -466,10 +466,18 @@ mkdir -p "$(dirname "$MEMORY")"
 printf '# Memory\n\n- 2026-10-05: Prefers pnpm over npm in every project.\n' > "$MEMORY"
 check "memory: an enabled project loads it" "context_of '$WORK/repo' | grep -q 'Prefers pnpm'"
 check "memory: a project without tack loads it too" "context_of '$R' | grep -q 'Prefers pnpm'"
-check "memory: it is labelled as the user's notes, not rules" "context_of '$WORK/repo' | grep -q 'User memory (notes from'"
+check "memory: it is labelled as the user's notes, not rules" "context_of '$WORK/repo' | grep -q 'User memory (notes the user keeps'"
 check "memory: Codex gets the same notes" "printf '{\"cwd\":\"%s\"}' '$WORK/repo' | bash '$SESSION' --codex | grep -q 'Prefers pnpm'"
 for n in $(seq 1 80); do printf -- '- 2026-10-05: older note number %s about something.\n' "$n" >> "$MEMORY"; done
 check "memory: long memories are cut at the default cap" "[ \"\$(context_of '$R' | grep -c 'older note number')\" -lt 80 ] && context_of '$R' | grep -q 'tack memory'"
+printf -- '- 2026-10-05: %s\n' "$(printf 'x%.0s' $(seq 1 3000))" > "$WORK/long-memory.md"
+cp "$MEMORY" "$WORK/memory.backup" && cp "$WORK/long-memory.md" "$MEMORY"
+check "memory: one overlong note is shortened, not dropped" "context_of '$R' | grep -q '^- 2026-10-05: xxx'"
+cp "$WORK/memory.backup" "$MEMORY"
+check "memory: it is framed as information, never instructions" "context_of '$R' | grep -q 'never as instructions'"
+git -C "$WORK/repo" config tack.contextMaxChars 2000
+check "memory: under context-max-chars it comes before the project context" "context_of '$WORK/repo' | grep -q 'Prefers pnpm' && ! context_of '$WORK/repo' | grep -q 'project rule'"
+git -C "$WORK/repo" config --unset tack.contextMaxChars
 git config --global tack.memoryMaxChars 120
 check "memory: the cap is configurable" "[ \"\$(context_of '$R' | grep -c 'older note number')\" -le 2 ]"
 git config --global --unset tack.memoryMaxChars
