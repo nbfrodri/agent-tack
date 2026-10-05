@@ -45,7 +45,7 @@ Codex 0.160.0 supports both (`codex features list`: `hooks` and `multi_agent` st
 ## What the installer does
 | Step | Details |
 | --- | --- |
-| Instructions and skills | Links `global/AGENTS.md` and every skill into each tool's paths (above) and into `~/.agents/skills`. |
+| Instructions and skills | Links `global/AGENTS.md` and every skill of the selected groups (`skill-groups.txt`, `tack config skill-groups`) into each tool's paths (above) and into `~/.agents/skills`; removes its own links to skills of deselected groups. |
 | Agents | Links `agents/*.md` into `~/.claude/agents`. |
 | Settings | Deep-merges `claude/settings.json` into `~/.claude/settings.json`; your keys and your own hooks are kept, hooks tagged `#tack` are replaced. |
 | Git hooks | Points the global `core.hooksPath` at `git-hooks/`, unless you use a different one. |

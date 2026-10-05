@@ -342,6 +342,33 @@ echo '{broken' > "$H/.claude/settings.json"
 run_install "$H"
 check "no hook summary when registering the hooks failed" "! grep -q 'Hooks installed' '$H.log'"
 
+echo "Skill groups (tack config skill-groups)"
+H="$WORK/groups"
+run_install "$H"
+check "by default every skill group is installed" "[ -L '$H/.agents/skills/frontend' ] && [ -L '$H/.agents/skills/improve' ] && [ -L '$H/.agents/skills/dev-workflow' ]"
+git_global "$H" tack.skillGroups process
+run_install "$H"
+check "a deselected group's skills are removed" "[ ! -e '$H/.agents/skills/frontend' ] && [ ! -e '$H/.claude/skills/frontend' ]"
+check "selected groups stay" "[ -L '$H/.agents/skills/improve' ]"
+check "core skills are always installed" "[ -L '$H/.agents/skills/dev-workflow' ] && [ -L '$H/.agents/skills/lessons' ]"
+check "the installer says which groups it installed" "grep -q 'skill groups: core, process' '$H.log'"
+H2="$WORK/groups-own"
+mkdir -p "$H2/.agents/skills/frontend"
+printf 'my own frontend notes\n' > "$H2/.agents/skills/frontend/SKILL.md"
+run_install "$H2"
+check "a skill of the user's is backed up when tack's takes its name" "[ -L '$H2/.agents/skills/frontend' ]"
+git_global "$H2" tack.skillGroups core
+run_install "$H2" --dry-run
+check "a dry run says the link that replaced the user's skill stays" "grep -q 'would keep $H2/.agents/skills/frontend' '$H2.log' && ! grep -q 'would remove $H2/.agents/skills/frontend' '$H2.log'"
+run_install "$H2"
+check "the link that replaced the user's skill stays until uninstall" "[ -L '$H2/.agents/skills/frontend' ] && grep -q 'kept $H2/.agents/skills/frontend' '$H2.log'"
+check "links that took nothing's place are removed" "[ ! -e '$H2/.claude/skills/frontend' ]"
+check "uninstall gives the user's own skill back" "HOME='$H2' XDG_CONFIG_HOME='$H2/.config' GIT_CONFIG_NOSYSTEM=1 '$REPO/uninstall.sh' >'$H2.uninstall.log' 2>&1 && grep -q 'my own frontend notes' '$H2/.agents/skills/frontend/SKILL.md'"
+git_global "$H" --unset tack.skillGroups
+run_install "$H"
+check "selecting a group again installs it again" "[ -L '$H/.agents/skills/frontend' ]"
+check "uninstall still restores after groups changed" "HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 '$REPO/uninstall.sh' >'$H.uninstall.log' 2>&1 && [ ! -e '$H/.agents/skills/dev-workflow' ]"
+
 echo
 echo "$PASSED passed, $FAILED failed"
 if [ "$FAILED" -gt 0 ]; then

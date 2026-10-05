@@ -1,0 +1,5 @@
+# Which docs should change with which code. Before the assistant stops, tack reports a changed
+# file whose docs did not change on the branch. One rule per line: code glob | doc, doc
+# Examples (remove the leading # to use them):
+# src/api/* | docs/api.md, README.md
+# migrations/* | docs/architecture.md

@@ -20,7 +20,7 @@ git clone https://github.com/nbfrodri/agent-tack.git ~/Projects/agent-tack
 ~/Projects/agent-tack/install.sh      # keep the checkout there: installed files link to it
 
 cd ~/Projects/my-app
-tack enable                           # turn the workflow on for this project
+tack enable                           # turn the workflow on for this project (--scaffold: add the docs skeleton too)
 ```
 
 Restart your AI tools, then work as usual: *"Add Google login"*, *"Fix issue #12"*, *"What would you improve?"*, *"Prepare a release"*.

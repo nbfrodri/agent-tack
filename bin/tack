@@ -24,11 +24,15 @@ Commands:
   config [NAME [VALUE]] [--global]
                       List feature toggles, show one, or set it for this project
                       (or user-wide with --global); config NAME --unset removes it
-  enable [--shared]    Enable this clone, or use a shareable .tack marker
+  enable [--shared] [--scaffold]
+                      Enable this clone, or use a shareable .tack marker;
+                      --scaffold adds the missing docs structure (never overwrites)
   disable             Disable this clone and remove the shared marker
   trust [--revoke]     Allow or revoke project formatter execution in this clone
   trusted [--quiet]    Query local formatter trust independently of activation
   doctor              Diagnose installation and project state without changes
+  models [TIER]       The model each tool uses for a tier (economical, balanced,
+                      strongest), from model-tiers.txt and your own overrides
   lesson note KEY TEXT | contradict KEY | forget KEY | list   [--global]
                       Count corrections not yet saved as rules; list marks
                       the ones seen often enough to ask about (lessons skill)
@@ -134,9 +138,19 @@ cmd="${1:-status}"
 
 case "$cmd" in
   enable)
-    allowed_option=--shared; check_args "$@"
+    shared=0 scaffold=0
+    for arg in "$@"; do
+      case "$arg" in
+        --shared) shared=1 ;;
+        --scaffold) scaffold=1 ;;
+        *) echo "tack: unsupported arguments for enable (see --help)" >&2; exit 2 ;;
+      esac
+    done
     require_repo
-    if [ "${1:-}" = "--shared" ]; then
+    if [ "$scaffold" -eq 1 ]; then
+      bash "$HARNESS_ROOT/lib/scaffold.sh" "$HARNESS_ROOT" "$root" || fail "cannot create the docs structure"
+    fi
+    if [ "$shared" -eq 1 ]; then
       printf '# This project uses the tack workflow (https://github.com/nbfrodri/agent-tack).\n' > "$root/.tack" \
         || fail "cannot write the shared marker"
       if key_scope local enabled; then
@@ -299,6 +313,11 @@ case "$cmd" in
     command -v python3 >/dev/null 2>&1 || fail "log reports need python3"
     python3 "$HARNESS_ROOT/lib/log-report.py" "$report" "$log_file" "$days" "$csv" \
       "${XDG_CONFIG_HOME:-$HOME/.config}/agent-tack/pricing.txt" "$HARNESS_ROOT"
+    ;;
+  models)
+    [ "$#" -le 1 ] || { echo "tack: models takes at most one tier (see --help)" >&2; exit 2; }
+    bash "$HARNESS_ROOT/lib/models.sh" "$HARNESS_ROOT" "$@"
+    exit
     ;;
   lesson)
     bash "$HARNESS_ROOT/lib/lessons.sh" "$@"

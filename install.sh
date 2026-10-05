@@ -63,6 +63,8 @@ source "$REPO/lib/ownership.sh"
 source "$REPO/lib/keys.sh"
 # shellcheck source=lib/mods.sh
 source "$REPO/lib/mods.sh"
+# shellcheck source=lib/skill-groups.sh
+source "$REPO/lib/skill-groups.sh"
 # shellcheck source=lib/vscode.sh
 source "$REPO/lib/vscode.sh"
 # shellcheck source=lib/codex.sh
@@ -180,11 +182,25 @@ $(expand_home "$skills_dir")"
   done <<EOF
 $skill_dirs
 EOF
+  ok "skill groups: $(skill_groups_selected) (tack config skill-groups --global)"
   for skill in "$REPO"/skills/*/; do
     [ -f "$skill/SKILL.md" ] || { warn "skipping $skill (no SKILL.md)"; continue; }
     name="$(basename "$skill")"
     while IFS= read -r dir; do
-      link "${skill%/}" "$dir/$name"
+      if skill_selected "$name"; then
+        link "${skill%/}" "$dir/$name"
+      elif [ -L "$dir/$name" ] && [ "$(readlink "$dir/$name")" = "${skill%/}" ]; then
+        # Only tack's own link to a skill of a deselected group is removed, and only where it
+        # took nothing's place; one that replaced the user's skill waits for uninstall.
+        if ownership_link_replaced "$dir/$name"; then
+          if [ "$DRY_RUN" -eq 1 ]; then ok "would keep $dir/$name: it replaced a skill of yours, which ./uninstall.sh restores"
+          else warn "kept $dir/$name: it replaced a skill of yours, which ./uninstall.sh restores"; fi
+        elif [ "$DRY_RUN" -eq 1 ]; then
+          ok "would remove $dir/$name (group not selected)"
+        elif ownership_release_link "$dir/$name"; then
+          rm -f "$dir/$name" && ok "removed $dir/$name (group not selected)"
+        fi
+      fi
     done <<EOF
 $skill_dirs
 EOF

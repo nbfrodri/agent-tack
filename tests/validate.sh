@@ -64,6 +64,38 @@ for agent in "$REPO"/agents/*.md; do
   check_file "$agent" "$(basename "$agent" .md)" "$AGENT_DESC_MAX"
   echo "  ✔ $(basename "$agent" .md)"
 done
+# The ShellCheck on CI's runners reports SC2015 for "[ a ] && [ b ] || command" even where newer
+# local versions do not; only exit, return and assignments may follow. Write the rest as if.
+sc2015="$(cd "$REPO" && grep -nE '\] && \[[^]]*\] \|\| ' install.sh uninstall.sh bin/tack bin/harness lib/*.sh tests/*.sh evals/run.sh hooks/claude/*.sh hooks/claude/lib/*.sh git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push git-hooks/pre-commit 2>/dev/null \
+  | grep -vE '^tests/validate(\.test)?\.sh:|^[^:]*:[0-9]+:[[:space:]]*#|\|\| (exit|return)([ ;]|$)|\|\| [A-Za-z_][A-Za-z0-9_]*=')"
+[ -z "$sc2015" ] || err "use if instead of '[ a ] && [ b ] || command' (CI's ShellCheck rejects it):
+$sc2015"
+# Every tool that gets agents maps all three tiers, and agents name only inherit or a mapped model.
+while read -r tool _ _ _ _ agents_dir _; do
+  case "$tool" in '' | '#'*) continue ;; esac
+  [ "${agents_dir:--}" != - ] || continue
+  for tier in economical balanced strongest; do
+    grep -qE "^${tool}[[:space:]]+${tier}[[:space:]]+[^[:space:]]" "$REPO/model-tiers.txt" \
+      || err "model-tiers.txt: $tool has no '$tier' tier"
+  done
+done < "$REPO/targets.txt"
+for agent in "$REPO"/agents/*.md; do
+  agent_model="$(sed -n 's/^model: *//p' "$agent" | head -n 1)"
+  [ -z "$agent_model" ] || [ "$agent_model" = inherit ] \
+    || grep -qE "^claude[[:space:]]+[a-z]+[[:space:]]+$agent_model$" "$REPO/model-tiers.txt" \
+    || err "agents/$(basename "$agent"): model '$agent_model' is not a Claude Code tier model (model-tiers.txt)"
+done
+# Every skill belongs to a group the installer knows; the core workflow can never be left out.
+for skill_dir in "$REPO"/skills/*/; do
+  skill_name="$(basename "$skill_dir")"
+  skill_group="$(sed -n "s/^${skill_name}[[:space:]][[:space:]]*\([a-z]*\).*/\1/p" "$REPO/skill-groups.txt")"
+  case "$skill_group" in
+    core | process | stack) ;;
+    '') err "skill-groups.txt: skill '$skill_name' has no group" ;;
+    *) err "skill-groups.txt: '$skill_name' is in unknown group '$skill_group'" ;;
+  esac
+done
+grep -qE '^dev-workflow[[:space:]]+core$' "$REPO/skill-groups.txt" || err "skill-groups.txt: dev-workflow must be core"
 # Tests never touch the real HOME: one that moves HOME must also move or unset XDG_STATE_HOME,
 # which many desktops set and which the hooks and tack write to.
 for test_file in "$REPO"/tests/*.test.sh; do
@@ -76,11 +108,23 @@ while read -r feature _; do
   case "$feature" in '' | '#'*) continue ;; esac
   [ "${#feature}" -le 23 ] || err "features.txt: name '$feature' is over 23 characters and breaks the tack config table"
 done < "$REPO/features.txt"
-# Large doc updates are delegated to docs-writer to save tokens, so it must not inherit the main model.
-case "$(sed -n 's/^model: *//p' "$REPO/agents/docs-writer.md")" in
-  sonnet | haiku) ;;
-  *) err "agents/docs-writer.md: docs-writer must pin an economical model (sonnet or haiku)" ;;
-esac
+# Large doc updates are delegated to docs-writer to save tokens: it runs on Claude Code's
+# economical tier (model-tiers.txt), not the main model.
+economical_model="$(sed -n 's/^claude[[:space:]][[:space:]]*economical[[:space:]][[:space:]]*\([^[:space:]]*\).*/\1/p' "$REPO/model-tiers.txt")"
+[ "$(sed -n 's/^model: *//p' "$REPO/agents/docs-writer.md")" = "${economical_model:-missing}" ] \
+  || err "agents/docs-writer.md: docs-writer must use the economical tier's model (${economical_model:-none} in model-tiers.txt)"
+# Global instructions load in every session, so the skills they name must always be installed.
+# shellcheck disable=SC2016 # The backticks are Markdown code spans, not command substitution.
+for named in $(grep -oE '`[a-z0-9-]+`' "$REPO/global/AGENTS.md" | tr -d '`' | sort -u); do
+  [ -d "$REPO/skills/$named" ] || continue
+  grep -qE "^${named}[[:space:]]+core$" "$REPO/skill-groups.txt" \
+    || err "global/AGENTS.md names '$named', which is not in the core group (skill-groups.txt) and may not be installed"
+done
+# Every group line names a skill that exists.
+while read -r grouped _; do
+  case "$grouped" in '' | '#'*) continue ;; esac
+  [ -d "$REPO/skills/$grouped" ] || err "skill-groups.txt: '$grouped' has no folder in skills/"
+done < "$REPO/skill-groups.txt"
 
 echo "Cross-references and components list"
 # Paths like ~/.agents/skills/<skill>/... and ~/.agents/tack/... (or the former ~/.agents/harness/...) are what agents and skills

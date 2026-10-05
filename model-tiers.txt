@@ -1,0 +1,16 @@
+# Provider-neutral model tiers and the model each tool uses for them. Workflow rules and skills
+# speak only in tiers; `tack models [TIER]` turns a tier into the current tool's model. Override
+# or extend this per machine in ~/.config/agent-tack/model-tiers.txt (same columns; your lines win).
+#   economical  fast and cheap: mechanical, well-specified work (docs, renames, fixtures)
+#   balanced    standard implementation following existing patterns
+#   strongest   design-heavy or risky work (architecture, security, tricky bugs)
+# "inherit" means the tool keeps its current model: set your account's model names when you know
+# them. Every tool with an agents directory in targets.txt needs all three tiers (tests/validate.sh).
+#
+# tool    tier        model
+claude    economical  haiku
+claude    balanced    sonnet
+claude    strongest   opus
+codex     economical  inherit
+codex     balanced    inherit
+codex     strongest   inherit

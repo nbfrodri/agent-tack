@@ -22,6 +22,13 @@ tack doctor --tools                # check each installed AI tool instead of the
 ./uninstall.sh                         # restore recorded unchanged state
 ```
 
+Skills come in groups (`skill-groups.txt`): `core` (the workflow, reviews and delegation, always installed), `process` (releases, new projects) and `stack` (frontend, APIs, databases, auth, end-to-end tests, deployment, observability). Fewer skills mean fewer descriptions in every session of every tool. Choose the optional groups once, then re-run the installer; it removes only its own links to the skills you left out:
+
+```bash
+tack config skill-groups process --global   # core and process; or core, stack, or all (the default)
+./install.sh
+```
+
 The first install that registers hooks ends with a short list of them and what each does (from `hooks/summary.txt`), and how to turn them off; later installs skip it. `--no-hooks` registers no git, Claude Code or Codex hooks and removes tack's Claude Code and Codex hooks from an earlier install (your own hooks stay); global git hooks from an earlier install remain until `./uninstall.sh`, which restores your former `core.hooksPath`. Without hooks the rules apply only as instructions.
 
 Doctor checks required tools, managed links, Claude settings and hook registration, ownership metadata, effective Git hooks, project activation and formatter trust. Missing optional CLIs and deliberate foreign hooks paths produce warnings. Broken managed components produce errors (exit 1); a healthy checked installation exits 0. Doctor works outside Git and never runs plugins or prints restoration snapshots or credentials. It diagnoses configuration rather than proving every external tool works. Doctor also warns when the claude CLI is missing or a tack mod is not installed or is disabled, and reports `chat.useAgentsMdFile` for each VS Code install it finds.
@@ -52,6 +59,9 @@ tack help              # CLI reference; aliases: --help and -h
 tack status            # workflow activation, mode and local formatter trust
 tack status --quiet    # no output; exit 0 when enabled, 1 when disabled
 tack enable            # this clone only (git config; nothing added to the repo)
+tack enable --scaffold # also add the missing AGENTS.md, CLAUDE.md, docs/architecture.md, docs-map.txt,
+                       # and plan, handoff and AI-log templates, never overwriting a file
+                       # (CLAUDE.md only points to AGENTS.md, so it is harmless for other tools)
 tack enable --shared   # commit a .tack file so every clone has it
 tack disable
 tack mode              # effective mode and its source
@@ -314,6 +324,13 @@ In enabled projects, complex strict-level work with independent parts is delegat
 tack config delegation off     # disable automatic delegation in this project
 tack config delegation --unset # restore the default automatic policy
 tack config delegation         # shows auto (default) when unset
+```
+
+Delegation picks a tier, never a vendor's model: `economical` for mechanical work, `balanced` for standard implementation, `strongest` for design-heavy or risky work. `tack models` shows the model each tool uses for each tier, from `model-tiers.txt`; Codex tiers say `inherit` until you name your account's models in `~/.config/agent-tack/model-tiers.txt` (same columns; your lines win):
+
+```bash
+tack models              # every tool and tier
+tack models economical   # one tier
 ```
 
 Documentation is delegated separately, at every level: when a committed change leaves docs pending in 3 or more files, the assistant hands them to the `docs-writer` agent, which runs on an economical model, then reviews its result. Smaller updates, ADRs and design decisions stay with the main assistant.

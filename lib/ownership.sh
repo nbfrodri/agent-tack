@@ -88,6 +88,29 @@ ownership_begin() {
     { [ "$kind" != link ] || cp "$REPO/targets.txt" "$OWN_ENTRY/targets"; })
 }
 
+# ownership_release_link PATH: drops the record of a link tack created where nothing was before,
+# once the link is removed on purpose. Fails, keeping the record, when the link replaced something
+# of the user's: only uninstall may put that back.
+ownership_release_link() {
+  local index=0
+  ownership_link_replaced "$1" && return 1
+  [ -n "$OWN_ENTRY" ] || return 0
+  rm -rf "$OWN_ENTRY" || return 1
+  # Forget it in memory too, so a later entry reusing the number is not mistaken for this path.
+  while [ "$index" -lt "$OWN_COUNT" ]; do
+    if [ "${OWN_ENTRIES[$index]}" = "$OWN_ENTRY" ]; then OWN_PATHS[index]='' OWN_KINDS[index]=''; fi
+    index=$((index + 1))
+  done
+}
+
+# ownership_link_replaced PATH: succeeds when tack's link at PATH took the place of something of
+# the user's (a file, folder or other link), which only uninstall may restore.
+ownership_link_replaced() {
+  ownership_find link "$1"
+  [ -n "$OWN_ENTRY" ] || return 1
+  [ "$(cat "$OWN_ENTRY/before_kind" 2>/dev/null)" != absent ]
+}
+
 ownership_parent_identity() {
   if has stat; then
     stat -c '%d:%i' "$1" 2>/dev/null || stat -f '%d:%i' "$1" 2>/dev/null
