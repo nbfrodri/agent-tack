@@ -157,6 +157,12 @@ expect("allow", "rm -rf sub/../build", "rm: a path that stays inside the project
 expect("allow", "rm -rf ./sub/./cache", "rm: dot segments inside the project are allowed", cwd=inside)
 expect("deny", "rm -rf ~/work/..", "rm: a home path that resolves to HOME is denied", cwd=inside)
 expect("ask", "rm -rf ~/work", "rm: working from HOME is not working in a project", cwd=Path(os.environ["HOME"]), reason="outside the project")
+# macOS's TMPDIR ends in "/", so temp paths there contain "//"; HOME and the working directory are
+# compared after the same normalisation as the targets.
+doubled_home = os.environ["HOME"].replace("/home", "//home", 1)
+doubled_cwd = str(inside).replace("/home", "//home", 1)
+expect("ask", "rm -rf ./*", "rm: everything in the project asks when its path has //", cwd=doubled_cwd, home=doubled_home)
+expect("ask", "rm -rf ~/projects/old", "rm: elsewhere in HOME asks when HOME has //", cwd=doubled_cwd, home=doubled_home, reason="outside the project")
 
 # Beyond rm: infrastructure, code piped into an interpreter, find -delete and the git history.
 expect("ask", "gh repo delete me/app --yes", "limits: deleting a GitHub repository asks", reason="repository")

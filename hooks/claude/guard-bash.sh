@@ -73,6 +73,25 @@ cwd="$(json_field .cwd)"
 [ -n "$command" ] || exit 0
 [ -n "$cwd" ] && [ -d "$cwd" ] || cwd="$PWD"
 
+# normalize_abs PATH: collapses "//", "." and ".." in an absolute path, without reading the disk.
+normalize_abs() {
+  local segment out='' IFS=/
+  set -f
+  for segment in $1; do
+    case "$segment" in
+      '' | .) ;;
+      ..) out="${out%/*}" ;;
+      *) out="$out/$segment" ;;
+    esac
+  done
+  set +f
+  printf '%s\n' "${out:-/}"
+}
+# Delete targets are compared after normalisation, so the working directory and HOME are too:
+# macOS's TMPDIR ends in "/" and leaves "//" in temp paths.
+cwd="$(normalize_abs "$cwd")"
+HOME_DIR="$(normalize_abs "$HOME")"
+
 # shellcheck source=SCRIPTDIR/lib/shell-parse.sh
 . "$(dirname "$0")/lib/shell-parse.sh"
 # The bare-script copy in the guard tests has no log library; logging is optional.
@@ -357,7 +376,7 @@ check_gh() {
 # nothing for a path whose value is only known when the shell runs it: substitutions, other
 # variables, brace expansion, backticks or another user's home (~user).
 resolve_path() {
-  local path="$1" segment out='' IFS=/
+  local path="$1"
   # shellcheck disable=SC2016 # $HOME is matched as typed, not expanded.
   case "$path" in
     *__subst__* | *'{'* | *'}'* | *'`'* | '~'[!/]*) return 0 ;;
@@ -372,16 +391,7 @@ resolve_path() {
     /*) ;;
     *) path="$cwd/$path" ;;
   esac
-  set -f
-  for segment in $path; do
-    case "$segment" in
-      '' | .) ;;
-      ..) out="${out%/*}" ;;
-      *) out="$out/$segment" ;;
-    esac
-  done
-  set +f
-  printf '%s\n' "${out:-/}"
+  normalize_abs "$path"
 }
 
 # fixed_part PATH: the folder a glob path starts from (the path itself when it has no glob).
@@ -395,7 +405,7 @@ fixed_part() {
 
 # Deny a recursive delete of the filesystem root, of HOME or of any folder that holds HOME.
 too_broad() {
-  case "$HOME/" in "${1%/}/"*) return 0 ;; esac
+  case "$HOME_DIR/" in "${1%/}/"*) return 0 ;; esac
   return 1
 }
 
@@ -414,7 +424,7 @@ place_of() {
     "$project") echo project-root ;;
     "$project"/*) echo project ;;
     # Inside HOME but outside the project is never temp, even when HOME sits under /tmp.
-    "${HOME%/}"/*) echo home ;;
+    "${HOME_DIR%/}"/*) echo home ;;
     /tmp/* | /var/tmp/* | "$tmp"/*) echo temp ;;
     *) echo outside ;;
   esac
