@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeShellExecution": [
+      {
+        "command": "bash '__REPO__/hooks/cursor/guard.sh' #tack"
+      }
+    ]
+  }
+}

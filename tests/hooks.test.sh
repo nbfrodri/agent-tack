@@ -228,6 +228,15 @@ printf '#!/usr/bin/env bash\necho rejected >&2\nexit 1\n' > "$BARE/hooks/pre-rec
 setup_commit "feat: rejected by the server"
 check "a failing pre-receive still rejects the push" "! push deploy main"
 
+echo "Cursor adapter: the command guard in Cursor's own hook format"
+CURSOR_GUARD="$REPO/hooks/cursor/guard.sh"
+cursor_shell() { printf '{"hook_event_name":"beforeShellExecution","command":"%s","cwd":"%s"}' "$1" "$WORK" | bash "$CURSOR_GUARD"; }
+check "cursor: a safe command is allowed" "cursor_shell 'git status' | grep -q '\"permission\": *\"allow\"'"
+check "cursor: a hook bypass is denied" "cursor_shell 'git commit --no-verify -m x' | grep -q '\"permission\": *\"deny\"'"
+check "cursor: the reason reaches the agent" "cursor_shell 'git commit --no-verify -m x' | grep -q '\"agent_message\": *\".*no-verify'"
+check "cursor: a destructive command asks the user" "cursor_shell 'git reset --hard HEAD~1' | grep -q '\"permission\": *\"ask\"'"
+check "cursor: unreadable input is allowed rather than blocking the editor" "printf 'not json' | bash '$CURSOR_GUARD' | grep -q '\"permission\": *\"allow\"'"
+
 echo "Claude hook: guard-bash"
 GUARD="$REPO/hooks/claude/guard-bash.sh"
 R="$WORK/guard"
@@ -600,7 +609,25 @@ touch -t 202001010000 "$P2/docs/handoffs/2026-10-04-x.md"
 printf 'later\n' > "$P2/later.txt"
 git -C "$P2" add later.txt
 GIT_COMMITTER_DATE="2030-01-01T00:00:00" git -C "$P2" commit -q -m "feat: later work"
-check "stop-check: a stale handoff is reported" "stopping | grep -q 'handoff may be stale'"
+check "stop-check: a handoff one commit behind on an unpushed branch is left alone" "! stopping | grep -q 'handoff may be stale'"
+printf 'more\n' >> "$P2/later.txt"
+git -C "$P2" add later.txt
+GIT_COMMITTER_DATE="2030-01-01T00:00:01" git -C "$P2" commit -q -m "feat: more work"
+printf 'even more\n' >> "$P2/later.txt"
+git -C "$P2" add later.txt
+GIT_COMMITTER_DATE="2030-01-01T00:00:02" git -C "$P2" commit -q -m "feat: even more work"
+check "stop-check: a handoff three code commits behind is reported" "stopping | grep -q 'handoff may be stale'"
+git -C "$P2" config tack.handoffStaleCommits 5
+check "stop-check: the threshold follows tack config handoff-stale-commits" "! stopping | grep -q 'handoff may be stale'"
+git init -q --bare "$WORK/stop-remote.git"
+git -C "$P2" remote add origin "$WORK/stop-remote.git"
+git -C "$P2" push -q -u origin feat/x 2>/dev/null
+check "stop-check: work already pushed past the handoff is reported at once" "stopping | grep -q 'handoff may be stale'"
+printf 'local only\n' >> "$P2/later.txt"
+git -C "$P2" add later.txt
+GIT_COMMITTER_DATE="2030-01-01T00:00:03" git -C "$P2" commit -q -m "feat: local work"
+check "stop-check: work partly pushed past the handoff is still reported" "stopping | grep -q 'handoff may be stale'"
+git -C "$P2" config --unset tack.handoffStaleCommits
 git -C "$P2" config harness.stopCheck false
 check "stop-check: can be turned off" "[ -z \"\$(stopping)\" ]"
 git -C "$P2" config --unset harness.stopCheck
@@ -625,6 +652,8 @@ check "activity log: guard decisions are recorded" "grep -q 'claude.*guard deny.
 deny_in --codex
 check "activity log: only the user can read it (it may hold commands)" "[ \"\$(ls -l '$LOG' | cut -c1-10)\" = '-rw-------' ]"
 check "activity log: Codex runs are labelled" "grep -q 'codex.*guard deny' '$LOG'"
+printf '{"command":"git commit --no-verify","cwd":"%s"}' "$A" | bash "$CURSOR_GUARD" >/dev/null
+check "activity log: Cursor runs are labelled" "grep -q 'cursor.*guard deny' '$LOG'"
 printf '{"cwd":"%s"}' "$A" | bash "$SESSION" >/dev/null
 check "activity log: session starts are recorded with the mode" "grep -q 'session-start.*mode=auto' '$LOG'"
 printf 'x\n' > "$A/dirty.txt"
@@ -636,7 +665,7 @@ check "activity log: tack log N limits the entries" "[ \"\$(log_cmd 1 | wc -l | 
 check "activity log: tack log rejects a bad count" "log_cmd nope >/dev/null 2>&1; [ \$? -eq 2 ]"
 git -C "$A" config tack.activityLog false
 deny_in
-check "activity log: turning it off stops recording" "[ \"\$(grep -c 'guard deny' '$LOG')\" = 2 ]"
+check "activity log: turning it off stops recording" "[ \"\$(grep -c 'guard deny' '$LOG')\" = 3 ]"
 
 echo "Turn metrics from transcripts (activity log)"
 git -C "$A" config tack.activityLog true

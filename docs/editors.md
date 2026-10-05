@@ -14,17 +14,17 @@ Restart the tool or editor after installing or updating so it reloads instructio
 
 | Tool | Global instructions | Skills | Agents | Agent hooks | Mods | Git hooks |
 | --- | --- | --- | --- | --- | --- | --- |
-| Claude Code (CLI, VS Code, JetBrains) | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
-| Codex (CLI, VS Code) | ✔ | ✔ | ✔ | ✔ (approve once with `/hooks`) | — | ✔ |
-| GitHub Copilot (CLI, VS Code Copilot Chat) | ✔ | ✔ | — | — | — | ✔ |
-| Gemini CLI | ✔ | ✔ | — | — | — | ✔ |
-| OpenCode | ✔ | ✔ | — | — | — | ✔ |
-| Crush | ✔ | ✔ | — | — | — | ✔ |
-| Cursor (editor and `cursor-agent`) | manual, once | ✔ | — | — | — | ✔ |
+| Claude Code (`claude`; CLI, VS Code, JetBrains) | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
+| Codex (`codex`; CLI, VS Code) | ✔ | ✔ | ✔ | ✔ (approve once with `/hooks`) | — | ✔ |
+| GitHub Copilot (`copilot`; CLI, VS Code Copilot Chat) | ✔ | ✔ | — | — | — | ✔ |
+| Gemini CLI (`gemini`) | ✔ | ✔ | — | — | — | ✔ |
+| OpenCode (`opencode`) | ✔ | ✔ | — | — | — | ✔ |
+| Crush (`crush`) | ✔ | ✔ | — | — | — | ✔ |
+| Cursor (`cursor`; editor and `cursor-agent`) | manual, once | ✔ | — | command guard only | — | ✔ |
 
 - **Global instructions** carry your preferences and the workflow for enabled projects, including the mode rules.
 - **Git hooks** enforce Conventional Commits, no AI attribution, no secrets and protected `main` and tags for every tool, because git runs them whoever commits.
-- **Agent hooks** (command guard with green-only merges, startup context, fast check, check before stopping, tool-call limit, opt-in activity log) run in Claude Code and Codex. **Mods** (usage band, activity pane) exist only in Claude Code. Other tools follow the same rules as instructions, without enforcement.
+- **Agent hooks** (command guard with green-only merges, startup context, fast check, check before stopping, tool-call limit, opt-in activity log) run in Claude Code and Codex; Cursor gets the command guard through a thin adapter (`hooks/cursor/guard.sh`) registered in `~/.cursor/hooks.json`. **Mods** (usage band, activity pane) exist only in Claude Code. Other tools follow the same rules as instructions, without enforcement.
 - **Startup context:** Claude Code receives it automatically. Other tools are told by the global instructions to run `tack status` and `tack context` at the start of a session; if a tool skips it, ask it to ("run tack context").
 
 ## Claude Code
@@ -55,6 +55,7 @@ Restart the tool or editor after installing or updating so it reloads instructio
 ## Cursor
 
 - **One manual step:** Cursor keeps global rules in its settings, not in a file. Copy the contents of `global/AGENTS.md` from your checkout into *Cursor Settings → Rules* (User Rules) once; the installer reminds you. Paste again after updates that change that file.
+- **Command guard:** the installer registers `hooks/cursor/guard.sh` for `beforeShellExecution` in `~/.cursor/hooks.json`, next to your own hooks. It translates Cursor's hook format to the shared guard and back, so Cursor refuses or asks about the same commands as Claude Code. The adapter needs `python3`; without it Cursor runs commands unchecked. The other agent hooks (startup context, checks after edits and before stopping) do not run in Cursor yet.
 - **Skills:** from `~/.agents/skills`.
 - **`cursor-agent`** (terminal) uses the same rules and skills.
 - **Check:** `tack doctor` shows "cursor: detected but not configured by this installation" until you paste the rules; the warning stays because tack cannot see Cursor's settings.

@@ -85,7 +85,7 @@ ownership_begin() {
     (cd "$(dirname "$path")" && pwd -P) > "$OWN_ENTRY/parent" &&
     ownership_parent_identity "$(cat "$OWN_ENTRY/parent")" > "$OWN_ENTRY/parent_identity" &&
     printf '%s\n' "$REPO" > "$OWN_ENTRY/repo" &&
-    { [ "$kind" != link ] || cp "$REPO/targets.txt" "$OWN_ENTRY/targets"; })
+    { case "$kind" in link | settings) cp "$REPO/targets.txt" "$OWN_ENTRY/targets" ;; esac; })
 }
 
 # ownership_release_link PATH: drops the record of a link tack created where nothing was before,

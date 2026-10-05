@@ -19,7 +19,7 @@ Clone it into any directory you choose and install from that checkout, as shown 
 | Agent responsibilities and defaults | `agents/*.md` (`model:` is `inherit` or a Claude Code model from `model-tiers.txt`; `docs-writer` uses the `economical` tier because large doc updates are delegated to it) |
 | Which model each tool uses for a tier | `model-tiers.txt` (`economical`, `balanced`, `strongest` per tool), or for your machine only `~/.config/agent-tack/model-tiers.txt`; check with `tack models` |
 | CI after a push, green-only merges and the activity log | `tack config ci-watch`, `merge-requires-green` and `activity-log` ([usage](usage.md#ci-wait-for-it-merge-only-when-green)) |
-| Supported tools and installation paths | `targets.txt` |
+| Supported tools and installation paths | `targets.txt`; a tool whose hooks column names a file gets the template at `<tool>/<that file name>` merged by the installer (for example `cursor/hooks.json`), with a thin adapter in `hooks/<tool>/` when its hook format differs from the shared scripts |
 | Claude Code settings and registered hooks | `claude/settings.json` |
 | Installed marketplaces and plugins | `plugins.txt` |
 | Mods shipped by tack | `plugins/<name>/` (turn them off with `./install.sh --skip-mods` or `git config --global tack.mods false`) |

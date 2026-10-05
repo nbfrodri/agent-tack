@@ -30,5 +30,31 @@ PY
   then PASSED=$((PASSED + 1)); printf '  ✔ %s preserves mixed user hook groups\n' "$backend"
   else FAILED=$((FAILED + 1)); printf '  ✘ %s preserves mixed user hook groups\n' "$backend"; fi
 done
+# Cursor lists plain {"command"} entries instead of groups; tagged ones are replaced, the user's kept.
+cat > "$WORK/cursor.json" <<'JSON'
+{"version":1,"hooks":{"beforeShellExecution":[{"command":"./mine.sh"},{"command":"bash old/guard.sh #harness"}],"afterFileEdit":[{"command":"bash x #tack"}]}}
+JSON
+for backend in python jq; do
+  [ "$backend" != jq ] || command -v jq >/dev/null 2>&1 || continue
+  if [ "$backend" = python ]; then
+    python3 "$REPO/lib/settings-merge.py" "$WORK/cursor.json" "$REPO/cursor/hooks.json" > "$WORK/cursor-$backend.json"
+  else
+    jq -s -f "$REPO/lib/settings-merge.jq" "$WORK/cursor.json" "$REPO/cursor/hooks.json" > "$WORK/cursor-$backend.json"
+  fi
+  if python3 - "$WORK/cursor-$backend.json" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1]))
+commands = [h['command'] for h in d['hooks']['beforeShellExecution']]
+assert commands[0] == './mine.sh' and len(commands) == 2 and '#tack' in commands[1]
+assert 'afterFileEdit' not in d['hooks'] and d['version'] == 1
+PY
+  then PASSED=$((PASSED + 1)); printf '  ✔ %s replaces tagged plain Cursor entries\n' "$backend"
+  else FAILED=$((FAILED + 1)); printf '  ✘ %s replaces tagged plain Cursor entries\n' "$backend"; fi
+done
+if command -v jq >/dev/null 2>&1; then
+  if cmp -s <(jq -S . "$WORK/cursor-python.json") <(jq -S . "$WORK/cursor-jq.json"); then
+    PASSED=$((PASSED + 1)); printf '  ✔ python and jq merge Cursor entries the same way\n'
+  else FAILED=$((FAILED + 1)); printf '  ✘ python and jq merge Cursor entries the same way\n'; fi
+fi
 printf '\n%s passed, %s failed\n' "$PASSED" "$FAILED"
 [ "$FAILED" -eq 0 ]

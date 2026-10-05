@@ -78,7 +78,7 @@ Other ways to shape an AI coding agent, and where agent-tack differs (as of Octo
 | Approach | Instructions per project | A broad catalog: hundreds of skills, agents and commands you pick from and invoke | One opinionated workflow applied automatically, scaled per task by mode |
 | How you use it | The model reads it | You start workflows with commands (`/plan`, `/code-review`…) and install the parts you need | `tack enable`, then ask as usual; the mode decides the process |
 | Enforcement | None | Claude Code hooks, configured with environment variables | Git hooks (any tool, even manual commits) plus a command guard in Claude Code and Codex; toggles per project with `tack config` |
-| Tools | One file per tool | Claude Code first, adapters for many others | Claude Code, Codex, Copilot, Cursor, Gemini, OpenCode and Crush from one install; rules in `AGENTS.md`, agent hooks in Claude Code and Codex |
+| Tools | One file per tool | Claude Code first, adapters for many others | Claude Code, Codex, Copilot, Cursor, Gemini, OpenCode and Crush from one install; rules in `AGENTS.md`, agent hooks in Claude Code and Codex, the command guard in Cursor |
 | Context cost | What you write | Grows with what you install; selective install recommended | Small core; documents and skills load on demand |
 | Footprint | None | Node.js runtime and packages | Bash and git, plus `python3` or `jq` |
 

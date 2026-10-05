@@ -21,6 +21,7 @@ disabled-hooks        tack.disabledHooks        none     list:session-context|fa
 context-max-chars     tack.contextMaxChars      none     number    any     hook         Cap the context added at session start at this many characters, dropping project context first (the activation line always stays)
 state-retention-days  tack.stateRetentionDays   30       number    global  hook        Delete per-session state (tool-call counters) older than this many days at session start
 merge-requires-green  tack.mergeRequiresGreen  true     bool      any     hook         Refuse gh pr merge while the pull request's CI checks fail or are still running
+handoff-stale-commits tack.handoffStaleCommits  3        number    any     hook         The check before stopping asks for a handoff refresh once it is this many code commits behind, or when that work is pushed
 stop-check          tack.stopCheck            true     bool      any     hook         Before the assistant stops, report uncommitted work, a failing fast check, a stale handoff or docs the docs map expects
 reply-style           tack.replyStyle           normal   normal|terse      any  instruction  Ask the assistant for terse replies to save output tokens
 skill-loading         tack.skillLoading         normal   normal|minimal    any  instruction  Load skills only when a task cannot be done without them, to save input tokens

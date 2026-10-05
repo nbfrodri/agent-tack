@@ -255,18 +255,35 @@ d = json.load(open(sys.argv[1])); d.pop("hooks", None); json.dump(d, open(sys.ar
   fi
 }
 
-merge_settings() {
-  local claude="$REPO/claude/settings.json" codex="$REPO/codex/hooks.json"
-  if [ "$NO_HOOKS" -eq 1 ]; then
-    # The other Claude Code settings (attribution, permissions) still apply without hooks.
-    claude="$WORKDIR/settings-no-hooks.json" codex="$WORKDIR/codex-no-hooks.json"
-    if ! without_hooks "$REPO/claude/settings.json" "$claude" || ! without_hooks "$REPO/codex/hooks.json" "$codex"; then
-      fail "cannot prepare settings without hooks"
-      return
-    fi
+# only_version FILE: succeeds when a JSON settings file holds nothing but a "version" key.
+only_version() {
+  if has python3; then
+    python3 -c 'import json, sys; sys.exit(0 if set(json.load(open(sys.argv[1]))) <= {"version"} else 1)' "$1" 2>/dev/null
+  else
+    jq -e 'del(.version) == {}' "$1" >/dev/null 2>&1
   fi
-  merge_json "Claude Code settings" "$claude" "$HOME/.claude/settings.json"
-  merge_json "Codex hooks" "$codex" "$HOME/.codex/hooks.json"
+}
+
+# Registers each tool's hooks from targets.txt: a tool with a hooks file there and a template at
+# <tool>/<same file name> in the repo, when the tool is wanted. Adding a tool is data only.
+merge_settings() {
+  local tool when commands hooks_file template dest
+  while read -r tool when commands _ _ _ hooks_file _ <&3; do
+    case "$tool" in '' | '#'*) continue ;; esac
+    [ "${hooks_file:--}" != - ] || continue
+    template="$REPO/$tool/$(basename "$hooks_file")"
+    [ -f "$template" ] || continue
+    tool_wanted "$when" "$commands" || continue
+    dest="$(expand_home "$hooks_file")"
+    if [ "$NO_HOOKS" -eq 1 ]; then
+      # Other settings (Claude Code's attribution, permissions) still apply without hooks.
+      without_hooks "$template" "$WORKDIR/$tool-no-hooks.json" || { fail "cannot prepare $tool settings without hooks"; continue; }
+      template="$WORKDIR/$tool-no-hooks.json"
+      # A file that would hold nothing but its format version is not created.
+      if [ ! -e "$dest" ] && only_version "$template"; then continue; fi
+    fi
+    merge_json "$tool hooks and settings" "$template" "$dest"
+  done 3< "$REPO/targets.txt"
 }
 
 # Explains the hooks the first time an install registers them (hooks/summary.txt), unless

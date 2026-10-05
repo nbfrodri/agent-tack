@@ -64,9 +64,18 @@ for agent in "$REPO"/agents/*.md; do
   check_file "$agent" "$(basename "$agent" .md)" "$AGENT_DESC_MAX"
   echo "  ✔ $(basename "$agent" .md)"
 done
+# Every supported tool has a row in the capability map, marked with its targets.txt name.
+while read -r tool _; do
+  case "$tool" in '' | '#'*) continue ;; esac
+  grep -qE "^\| [^|]*\(\`$tool\`" "$REPO/docs/editors.md" || err "docs/editors.md has no row for '$tool' in the capability map"
+done < "$REPO/targets.txt"
+# CI pins a ShellCheck version; the development docs name the same one for local use.
+ci_shellcheck="$(sed -n 's/^ *SHELLCHECK_VERSION: *v\{0,1\}//p' "$REPO/.github/workflows/ci.yml")"
+grep -q "ShellCheck ${ci_shellcheck:-missing} " "$REPO/docs/development.md" \
+  || err "ShellCheck v${ci_shellcheck:-?} in CI does not match docs/development.md"
 # The ShellCheck on CI's runners reports SC2015 for "[ a ] && [ b ] || command" even where newer
 # local versions do not; only exit, return and assignments may follow. Write the rest as if.
-sc2015="$(cd "$REPO" && grep -nE '\] && \[[^]]*\] \|\| ' install.sh uninstall.sh bin/tack bin/harness lib/*.sh tests/*.sh evals/run.sh hooks/claude/*.sh hooks/claude/lib/*.sh git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push git-hooks/pre-commit 2>/dev/null \
+sc2015="$(cd "$REPO" && grep -nE '\] && \[[^]]*\] \|\| ' install.sh uninstall.sh bin/tack bin/harness lib/*.sh tests/*.sh evals/run.sh hooks/claude/*.sh hooks/claude/lib/*.sh hooks/cursor/*.sh git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push git-hooks/pre-commit 2>/dev/null \
   | grep -vE '^tests/validate(\.test)?\.sh:|^[^:]*:[0-9]+:[[:space:]]*#|\|\| (exit|return)([ ;]|$)|\|\| [A-Za-z_][A-Za-z0-9_]*=')"
 [ -z "$sc2015" ] || err "use if instead of '[ a ] && [ b ] || command' (CI's ShellCheck rejects it):
 $sc2015"

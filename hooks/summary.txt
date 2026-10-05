@@ -9,3 +9,4 @@ Claude Code, Codex | fast-check | after edits, runs the project's fast check (on
 Claude Code, Codex | stop-check | before the assistant stops, reports uncommitted work, a stale handoff and docs left behind
 Claude Code, Codex | budget | in unleash mode, enforces tack config unleash-max-tool-calls
 Claude Code | format-file | formats edited files with the project's own formatter (only in trusted projects)
+Cursor | command guard | the same deny and ask rules as Claude Code and Codex, through hooks/cursor/guard.sh
