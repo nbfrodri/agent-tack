@@ -63,7 +63,7 @@ fi
 
 # Sessions are non-interactive: a question would end them, so every prompt waives questions.
 NO_QUESTIONS='You do not need to ask me questions; choose reasonable defaults.'
-NEW_PROJECT_PROMPT='Create a small Python library (use uv) to calculate a shopping cart total: price times quantity, a 10% volume discount for 10 or more units of the same product, and 21% VAT on the total. This is a new project in this directory. '"$NO_QUESTIONS"
+NEW_PROJECT_PROMPT='Create a small Python library (use uv) to calculate a shopping cart total: price times quantity, a 10% volume discount for 10 or more units of the same product, and 21% VAT on the total. Name the package cart and expose cart_total(items), where items is a list of (unit_price, quantity) pairs, returning the total with VAT. This is a new project in this directory. '"$NO_QUESTIONS"
 
 seed_bug_repo() {
   cd "$dir" || exit 1

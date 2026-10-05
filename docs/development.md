@@ -39,8 +39,11 @@ Real sessions on throwaway repos, comparing tack with a plain assistant. They us
 evals/run.sh <new-project|bug-fix|release|vague-requirement> <baseline|auto|lean|lite|standard|strict> [repetition]   # harness = auto
 evals/grade.py $EVALS_OUT/<scenario>/<condition>-<rep>    # writes metrics.json
 evals/report.py                                          # Markdown tables
+evals/outcomes.py <repo> [--days N] [--json]             # escaped defects and rework from a repo's history
 ```
 Latest results: [results](results.md).
+
+Outcomes come before process. `bug-fix` and `new-project` have hidden acceptance tests in `evals/hidden/<scenario>/test_hidden.py`, which the agent never sees: the grader runs them against the finished repo through the project's own environment (`uv run python evals/hidden/run.py`, plain `test_*` functions, no pytest needed) and records `hidden_passed`, `hidden_total` and `hidden_pass`; the report lists them first. The new-project prompt names the package and function (`cart.cart_total(items)`) so the tests can call it. `evals/outcomes.py` counts, from a repository's history, `feat:` commits whose files a `fix:` touches within N days (escaped defects), fixes, reverts, bookkeeping commits (`docs(handoffs|plans|ai)`) and the median lead time from a merged branch's first commit to its merge.
 
 Metrics version 2 separates Claude and Codex transcript formats, preserves unknown evidence as `null` and distinguishes test-file order from a verified red/green test run. Reports group runs by provider and metrics version rather than combining incompatible measurements.
 

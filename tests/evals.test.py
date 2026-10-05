@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -166,6 +167,127 @@ class Metrics(unittest.TestCase):
         self.assertIsNone(m['test_written_before_code'])
 
 
+
+
+class HiddenAcceptance(unittest.TestCase):
+    """Hidden tests run against the agent's code after the session; the agent never sees them."""
+
+    def run_hidden(self, scenario, source):
+        with tempfile.TemporaryDirectory() as temp:
+            repo = Path(temp) / 'repo'
+            (repo / 'src/cart').mkdir(parents=True)
+            (repo / 'src/cart/__init__.py').write_text(source)
+            with patch.object(grade, 'HIDDEN_RUNNER', [sys.executable]):
+                return grade.hidden_acceptance(repo, scenario)
+
+    def test_a_correct_bug_fix_passes_every_hidden_test(self):
+        passed, total = self.run_hidden('bug-fix', (
+            'from decimal import Decimal\n'
+            'def total(items):\n    return sum((p * q for p, q in items), Decimal("0"))\n'
+            'def average_price(items):\n    return sum((p for p, _ in items), Decimal("0")) / len(items) if items else Decimal("0")\n'))
+        self.assertGreaterEqual(total, 3)
+        self.assertEqual(passed, total)
+
+    def test_the_seeded_bug_fails_a_hidden_test(self):
+        passed, total = self.run_hidden('bug-fix', (
+            'from decimal import Decimal\n'
+            'def total(items):\n    return sum((p * q for p, q in items), Decimal("0"))\n'
+            'def average_price(items):\n    return sum((p for p, _ in items), Decimal("0")) / len(items)\n'))
+        self.assertLess(passed, total)
+
+    def test_a_correct_new_project_passes_and_a_missing_discount_fails(self):
+        correct = ('from decimal import Decimal\n'
+                   'def cart_total(items):\n'
+                   '    net = sum((Decimal(str(p)) * q * (Decimal("0.9") if q >= 10 else 1) for p, q in items), Decimal("0"))\n'
+                   '    return net * Decimal("1.21")\n')
+        passed, total = self.run_hidden('new-project', correct)
+        self.assertEqual(passed, total)
+        passed, total = self.run_hidden('new-project', correct.replace('if q >= 10', 'if q >= 100'))
+        self.assertLess(passed, total)
+
+    def test_code_that_does_not_import_fails_every_hidden_test(self):
+        passed, total = self.run_hidden('new-project', 'raise ImportError("broken")\n')
+        self.assertEqual(passed, 0)
+        self.assertGreater(total, 0)
+
+    def test_scenarios_without_hidden_tests_report_nothing(self):
+        self.assertEqual(grade.hidden_acceptance(Path('/nonexistent'), 'release'), (None, None))
+
+
+class Outcomes(unittest.TestCase):
+    """evals/outcomes.py reads escaped defects and rework from a repository's history."""
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.repo = Path(self.temp.name) / 'repo'
+        self.env = dict(os.environ, HOME=self.temp.name, XDG_CONFIG_HOME=self.temp.name, GIT_CONFIG_NOSYSTEM='1',
+                        GIT_CONFIG_GLOBAL=str(Path(self.temp.name) / 'gitconfig'))
+        self.git('init', '-q', '-b', 'main', str(self.repo), cwd=self.temp.name)
+        self.day = 0
+
+    def git(self, *args, cwd=None, day=None):
+        env = dict(self.env, GIT_AUTHOR_NAME='T', GIT_AUTHOR_EMAIL='t@example.com', GIT_COMMITTER_NAME='T',
+                   GIT_COMMITTER_EMAIL='t@example.com')
+        if day is not None:
+            env['GIT_AUTHOR_DATE'] = env['GIT_COMMITTER_DATE'] = f'2026-01-{day + 1:02d}T12:00:00Z'
+        return subprocess.run(['git', *args], cwd=cwd or self.repo, env=env, check=True, capture_output=True, text=True).stdout
+
+    def commit(self, day, subject, path):
+        (self.repo / path).parent.mkdir(parents=True, exist_ok=True)
+        with open(self.repo / path, 'a') as handle:
+            handle.write(subject + '\n')
+        self.git('add', '-A')
+        self.git('commit', '-q', '-m', subject, day=day)
+
+    def report(self, *args):
+        spec = importlib.util.spec_from_file_location('outcomes', ROOT / 'evals/outcomes.py')
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module.measure(self.repo, *args)
+
+    def build(self):
+        self.commit(0, 'feat: add a', 'a.py')
+        self.commit(2, 'fix: correct a', 'a.py')
+        self.commit(3, 'feat: add b', 'b.py')
+        self.commit(20, 'fix: correct b much later', 'b.py')
+        self.commit(21, 'Revert "feat: add b"', 'b.py')
+        self.commit(21, 'docs(handoffs): record progress', 'docs/handoffs/x.md')
+        self.git('switch', '-q', '-c', 'feat/c')
+        self.commit(22, 'feat: add c', 'c.py')
+        self.git('switch', '-q', 'main')
+        self.git('merge', '-q', '--no-ff', '-m', 'Merge branch feat/c', 'feat/c', day=23)
+
+    def test_a_fix_to_a_feature_within_the_window_is_an_escaped_defect(self):
+        self.build()
+        metrics = self.report(14)
+        self.assertEqual(metrics['features'], 3)
+        self.assertEqual(metrics['escaped_defects'], 1)
+        self.assertEqual(metrics['escaped_defect_rate'], 33)
+
+    def test_a_wider_window_counts_the_later_fix_too(self):
+        self.build()
+        self.assertEqual(self.report(30)['escaped_defects'], 2)
+
+    def test_rework_reverts_bookkeeping_and_lead_time(self):
+        self.build()
+        metrics = self.report(14)
+        self.assertEqual(metrics['commits'], 7)
+        self.assertEqual(metrics['fixes'], 2)
+        self.assertEqual(metrics['reverts'], 1)
+        self.assertEqual(metrics['bookkeeping_commits'], 1)
+        self.assertEqual(metrics['merges'], 1)
+        self.assertEqual(metrics['median_lead_time_hours'], 24)
+
+    def test_cli_prints_a_table_and_json(self):
+        self.build()
+        table = subprocess.run([sys.executable, str(ROOT / 'evals/outcomes.py'), str(self.repo)], env=self.env,
+                               capture_output=True, text=True, check=True).stdout
+        self.assertIn('| Escaped defects |', table)
+        data = json.loads(subprocess.run([sys.executable, str(ROOT / 'evals/outcomes.py'), str(self.repo), '--json'],
+                                         env=self.env, capture_output=True, text=True, check=True).stdout)
+        self.assertEqual(data['reverts'], 1)
+
 class Runner(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
@@ -310,6 +432,20 @@ class Report(unittest.TestCase):
             self.assertIn('| Metric | Baseline | Lite | Strict |', output)
             self.assertIn('| Test written before code | 0/1 | 1/1 | 1/1 |', output)
             self.assertIn('baseline: 1 runs; lite: 1 runs; strict: 1 runs', output)
+
+    def test_hidden_acceptance_is_reported_first_as_an_outcome(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            for condition, passed in (('baseline', 3), ('auto', 5)):
+                directory = root / 'bug-fix' / (condition + '-1')
+                directory.mkdir(parents=True)
+                metrics = {'scenario': 'bug-fix', 'condition': condition, 'metrics_version': 2, 'provider': 'claude',
+                           'hidden_passed': passed, 'hidden_total': 5, 'hidden_pass': passed == 5, 'commits': 1}
+                (directory / 'metrics.json').write_text(json.dumps(metrics))
+            output = subprocess.run(['python3', str(ROOT / 'evals/report.py'), str(root)], capture_output=True, text=True, check=True).stdout
+            self.assertIn('| Hidden acceptance tests: all pass | 0/1 | 1/1 |', output)
+            self.assertIn('| Hidden acceptance tests passed (mean count) | 3.0 | 5.0 |', output)
+            self.assertLess(output.index('Hidden acceptance'), output.index('| Commits |'))
 
 
 if __name__ == '__main__':
