@@ -37,4 +37,4 @@ Save `docs/audits/YYYY-MM-DD-auto-improve.md` on the branch:
 - what was reverted or deliberately not done (proposals for the user);
 - how to review: `git log main..improve/auto-YYYY-MM-DD`, then the commands to test.
 
-Log the run in `docs/ai/log.md`, delete the handoff, and tell the user in a few lines: start → end score, iterations, the branch, and the open proposals. Offer to open a PR, after their OK.
+Log the run in `docs/ai/log.md`, set the handoff to `Status: done` and move it to `docs/archive/handoffs/`, and tell the user in a few lines: start → end score, iterations, the branch, and the open proposals. Offer to open a PR, after their OK.

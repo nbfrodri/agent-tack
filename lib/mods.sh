@@ -78,7 +78,7 @@ print(found[0].get("path") or "" if found else "")
 mods_skip_reason() {
   if [ "$SKIP_MODS" -eq 1 ]; then echo "--skip-mods"; return 0; fi
   if [ "$SKIP_PLUGINS" -eq 1 ]; then echo "--skip-plugins"; return 0; fi
-  if ! mods_enabled; then echo "git config harness.mods is false"; return 0; fi
+  if ! mods_enabled; then echo "git config tack.mods is false"; return 0; fi
   return 1
 }
 

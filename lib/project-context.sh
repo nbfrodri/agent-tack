@@ -38,9 +38,9 @@ handoff_freshness() {
   # A commit that includes the handoff updates it too, whatever the file's mtime says.
   committed="$(git -C "$root" log -1 --format=%ct -- "$1" 2>/dev/null)"
   [ -z "$committed" ] || [ "$committed" -le "$since" ] || since="$committed"
-  # Commits that only touch plans or handoffs record decisions about the work, not new work.
+  # Commits that only touch plans, handoffs or the archive record decisions about the work, not new work.
   commits="$(git -C "$root" rev-list --count --since="@$((since + 1))" HEAD -- . \
-    ':(exclude)docs/plans' ':(exclude)docs/handoffs' 2>/dev/null)" || commits=0
+    ':(exclude)docs/plans' ':(exclude)docs/handoffs' ':(exclude)docs/archive' 2>/dev/null)" || commits=0
   # shellcheck disable=SC2016 # The backticks are literal Markdown, not command substitution.
   named="$(sed -n 's/^[-[:space:]]*\**Branch:\**[[:space:]]*`\{0,1\}\([^`[:space:]]*\).*/\1/p' "$path" | head -n 1)"
   current="$(git -C "$root" branch --show-current 2>/dev/null)"

@@ -8,7 +8,7 @@
 #   agents        subagents dir the installer fills
 #   hooks         hooks file the installer fills
 #   min_version   oldest supported version (x.y.z)
-#   smoke         non-interactive diagnostic arguments run by 'harness doctor --tools' (comma-separated)
+#   smoke         non-interactive diagnostic arguments run by 'tack doctor --tools' (comma-separated)
 # Older files with only the first five columns are still read. Every tool also gets the skills
 # in ~/.agents/skills, the open standard location.
 #

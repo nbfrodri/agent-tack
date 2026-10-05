@@ -13,8 +13,9 @@ for arg in "$@"; do
 done
 # The directory was agent-harness before the rename; use it while it is the only one.
 STATE_BASE="${XDG_STATE_HOME:-$HOME/.local/state}"
-if [ -d "$STATE_BASE/agent-tack" ] || [ ! -d "$STATE_BASE/agent-harness" ]; then STATE="$STATE_BASE/agent-tack/ownership"
-else STATE="$STATE_BASE/agent-harness/ownership"; fi
+FORMER_DIR=agent-harness
+if [ -d "$STATE_BASE/agent-tack" ] || [ ! -d "$STATE_BASE/$FORMER_DIR" ]; then STATE="$STATE_BASE/agent-tack/ownership"
+else STATE="$STATE_BASE/$FORMER_DIR/ownership"; fi
 if [ ! -e "$STATE" ] && [ ! -L "$STATE" ]; then
   echo 'No ownership record; nothing removed. Pre-existing configuration is never inferred to be owned.'
   exit 0

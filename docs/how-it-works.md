@@ -72,6 +72,8 @@ Mods are small Claude Code plugins that change its interface; this repo ships tw
 | `commit-msg` | git (global) | Removes AI attribution everywhere; in enabled projects, rejects subjects that aren't Conventional Commits. |
 | `pre-push` | git (global) | Refuses force-pushes and deletions of `main`/`master`. In enabled projects, only annotated `vX.Y.Z` tags, never moved or deleted. |
 | Other git hooks | git (global) | Pass through to each repo's own `.git/hooks/*` (client and server side). |
+
+A deliberate one-off override is an environment variable on the command: `TACK_ALLOW_SECRETS=1` (pre-commit), `TACK_ALLOW_FORCE_PUSH=1` and `TACK_ALLOW_TAG=1` (pre-push). `git-hooks/_chain` checks them, and the former `HARNESS_ALLOW_*` names still work.
 | `fast-check.sh` | Claude Code `PostToolUse` (`Write`, `Edit`, `MultiEdit`) | In an enabled and locally trusted project with `tack config check-fast` set, runs that command from the repository root (60-second timeout where `timeout` exists) and returns a failure with the last 40 output lines to the assistant. |
 | `stop-check.sh` | Claude Code `Stop` | In an enabled project (unless `tack config stop-check false`), asks the assistant once to continue when there is uncommitted work, a failing fast check, a handoff that is `handoff-stale-commits` (3) code commits behind or behind pushed work, or a changed file whose docs in `docs-map.txt` did not change on the branch; a second stop is never blocked. |
 | `budget.sh` | Claude Code `PreToolUse` (every tool) | In an enabled project running a project-only mode such as `unleash`, counts the session's tool calls and refuses them past `tack config unleash-max-tool-calls`; silent otherwise. |

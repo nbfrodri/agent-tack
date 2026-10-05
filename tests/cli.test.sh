@@ -293,8 +293,17 @@ git add docs/plans/2026-10-03-plan.md
 GIT_COMMITTER_DATE="2030-01-01T00:00:00" git -c user.name=T -c user.email=t@example.com commit -q -m 'docs(plans): note a decision'
 check "context after a plans-only commit succeeds" expect_exit 0 "$CLI" context
 check "a commit that only touches plans or handoffs keeps the handoff up to date" contains 'up to date: no commits since its last update'
-git rm -q docs/plans/2026-10-03-plan.md
-GIT_COMMITTER_DATE="2030-01-01T00:00:01" git -c user.name=T -c user.email=t@example.com commit -q -m 'docs(plans): drop the note'
+mkdir -p docs/archive/plans docs/archive/handoffs
+git mv docs/plans/2026-10-03-plan.md docs/archive/plans/2026-10-03-plan.md
+GIT_COMMITTER_DATE="2030-01-01T00:00:01" git -c user.name=T -c user.email=t@example.com commit -q -m 'docs: archive the plan'
+check "context after archiving succeeds" expect_exit 0 "$CLI" context
+check "a commit that only archives documents keeps the handoff up to date" contains 'up to date: no commits since its last update'
+printf '# Archived handoff\nStatus: in progress\n' > docs/archive/handoffs/2026-10-01-old.md
+check "context with an archived handoff succeeds" expect_exit 0 "$CLI" context
+check "an archived handoff is never the active one" contains '- Active handoff: docs/handoffs/2026-10-03-active.md'
+rm docs/archive/handoffs/2026-10-01-old.md
+git rm -q docs/archive/plans/2026-10-03-plan.md
+GIT_COMMITTER_DATE="2030-01-01T00:00:02" git -c user.name=T -c user.email=t@example.com commit -q -m 'docs: drop the archived plan'
 touch docs/handoffs/2026-10-03-active.md
 # shellcheck disable=SC2016 # Literal Markdown backticks.
 printf 'Branch: `feat/other`\n' >> docs/handoffs/2026-10-03-active.md

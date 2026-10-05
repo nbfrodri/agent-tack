@@ -1,6 +1,6 @@
 # Handoff: title
 
-- **Status:** in progress | paused
+- **Status:** in progress | paused | done (then move it to `docs/archive/handoffs/`)
 - **Last updated:** YYYY-MM-DD HH:MM
 - **Tool:** Claude Code / Codex / …
 - **Branch:** `feat/…` (last commit `abc1234`)

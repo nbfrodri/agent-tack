@@ -28,11 +28,11 @@ If a task turns out larger or riskier than its level, say so and move up before 
 | --- | --- | --- | --- |
 | Plan | none | short plan in the tool's task list; not saved | written plan saved in `docs/plans/`; **wait for approval** |
 | Branch | off `main`/`master`/`develop` for any change | same | same |
-| Commits | Conventional Commits | each verified milestone | each verified milestone, SHAs in the handoff |
+| Commits | Conventional Commits | each verified milestone | each verified milestone |
 | Tests | a test for changed logic; run the affected suite | TDD: red, green, refactor | TDD |
 | Docs | only if the change contradicts existing docs | docs affected by changed behaviour; `docs/architecture.md` if structure changes | full checklist in `references/documentation.md`, ADRs |
-| Handoff | none | only if work spans sessions or context or usage looks low | from the start, updated every milestone |
-| AI log | none | none | one row in `docs/ai/log.md` |
+| Handoff | none | only if work spans sessions or context or usage looks low | only if work spans sessions, is delegated, or context or usage looks low; updated at milestones (a merged PR, a plan step), not every commit |
+| AI log | none | none | one row in `docs/ai/log.md`, in the same commit as the change it records |
 | Review | read your own diff | `code-reviewer` for large or risky diffs | `code-reviewer` before offering to push |
 | CI | none | after a push or new PR, wait for CI in the background, report it and fix failures from the log | same |
 | Delegation | suggest and wait | suggest and wait | automatic after approval unless `tack.delegation` is `off` |

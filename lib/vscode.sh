@@ -35,7 +35,7 @@ vscode_state() {
 install_vscode() {
   section "VS Code Copilot Chat"
   if ! vscode_enabled; then
-    ok "skipped (git config harness.vscodeAgentsMd is false)"
+    ok "skipped (git config tack.vscodeAgentsMd is false)"
     return
   fi
   local command product path state created found=0

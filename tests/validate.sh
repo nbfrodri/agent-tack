@@ -84,6 +84,48 @@ grep -q "ShellCheck ${ci_shellcheck:-missing} " "$REPO/docs/development.md" \
 ci_ruff="$(sed -n 's/.*pipx install ruff==\([0-9.]*\).*/\1/p' "$REPO/.github/workflows/ci.yml")"
 grep -qx "RUFF_VERSION=${ci_ruff:-missing}" "$REPO/tests/lint.sh" \
   || err "ruff ${ci_ruff:-?} in CI does not match tests/lint.sh"
+# The project is tack: the former command, git keys, marker, directories and override variables
+# appear only in compatibility code (a line saying legacy, former or renamed), the deprecated
+# alias, dated records, tests and the upgrade section of docs/usage.md.
+former_keys="$(awk '$2 ~ /^tack\./ { sub(/^tack\./, "", $2); printf "%s|", $2 }' "$REPO/features.txt")"
+former_names="harness\.(${former_keys}enabled|mode)([^A-Za-z]|$)|harness (help|status|enable|disable|config|doctor|mode|context|log|init|models|lesson|lessons|trace|trust|trusted)([^a-z-]|$)|agent-harness|HARNESS_ALLOW_|(^|[^A-Za-z/])\.harness([^A-Za-z]|$)|#harness"
+if [ -e "$REPO/.git" ]; then tracked=(git -C "$REPO" ls-files); else tracked=(find . -type f -not -path './.git/*'); fi
+name_files=()
+while IFS= read -r file; do
+  file="${file#./}"
+  case "$file" in
+    tests/* | docs/plans/* | docs/audits/* | docs/handoffs/* | docs/benchmarks/* | docs/archive/* | docs/ai/* | bin/harness | lib/keys.sh | node_modules/* | */node_modules/*) ;;
+    *) name_files+=("$file") ;;
+  esac
+done < <(cd "$REPO" && "${tracked[@]}")
+upgrade_notes="$(awk '/^### Upgrading from agent-harness/ { start = NR; next } start && !end && /^#{1,3} / { end = NR - 1 } END { if (start) print start ":" (end ? end : NR) }' "$REPO/docs/usage.md")"
+old_names=''
+if [ "${#name_files[@]}" -gt 0 ]; then
+  old_names="$(cd "$REPO" && grep -nIHE -- "$former_names" "${name_files[@]}" | awk -v notes="$upgrade_notes" '
+    BEGIN { split(notes, range, ":") }
+    {
+      path = $0; sub(/:.*/, "", path); rest = substr($0, length(path) + 2)
+      line = rest; sub(/:.*/, "", line); text = tolower(substr(rest, length(line) + 2))
+      if (path == "docs/usage.md" && line + 0 >= range[1] + 0 && line + 0 <= range[2] + 0) next
+      if (text ~ /(^|[^a-z])(legacy|former|formerly|rename|renamed)([^a-z]|$)/) next
+      print
+    }')"
+fi
+if [ -n "$old_names" ]; then
+  while IFS= read -r line; do err "${line%%:*}: names the former 'harness' (use tack): ${line#*:}"; done <<EOF_NAMES
+$old_names
+EOF_NAMES
+fi
+# docs/plans and docs/handoffs show only open work; finished ones live in docs/archive/.
+for kind in plans handoffs; do
+  for doc in "$REPO/docs/$kind"/*.md; do
+    [ -f "$doc" ] || continue
+    case "$(basename "$doc")" in template.md) continue ;; esac
+    if grep -qiE '^[-[:space:]]*(\*\*)?Status(\*\*)?:(\*\*)?[[:space:]]*(done|complete|completed|implemented|abandoned|superseded|merged|closed|finished)' "$doc"; then
+      err "docs/$kind/$(basename "$doc") is closed; move it to docs/archive/$kind/"
+    fi
+  done
+done
 # The ShellCheck on CI's runners reports SC2015 for "[ a ] && [ b ] || command" even where newer
 # local versions do not; only exit, return and assignments may follow. Write the rest as if.
 sc2015="$(cd "$REPO" && grep -nE '\] && \[[^]]*\] \|\| ' install.sh uninstall.sh bin/tack bin/harness lib/*.sh tests/*.sh evals/run.sh hooks/claude/*.sh hooks/claude/lib/*.sh hooks/cursor/*.sh git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push git-hooks/pre-commit 2>/dev/null \

@@ -38,7 +38,7 @@ def state(path):
 def write(path, settings):
     directory = os.path.dirname(path)
     mode = stat.S_IMODE(os.stat(path).st_mode) if os.path.exists(path) else 0o644
-    fd, temporary = tempfile.mkstemp(prefix=".harness-", dir=directory)
+    fd, temporary = tempfile.mkstemp(prefix=".tack-", dir=directory)
     try:
         with os.fdopen(fd, "w") as stream:
             os.fchmod(stream.fileno(), mode)

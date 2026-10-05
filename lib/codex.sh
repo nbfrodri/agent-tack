@@ -21,7 +21,7 @@ install_codex_agents() {
     recorded=""
     [ -z "$OWN_ENTRY" ] || recorded="$(cat "$OWN_ENTRY/sha256" 2>/dev/null)"
     if [ -e "$target" ] && [ -z "$recorded" ]; then
-      warn "$target exists and is not managed by the harness; left untouched"
+      warn "$target exists and is not managed by tack; left untouched"
       continue
     fi
     if [ -n "$recorded" ] && [ -e "$target" ] && [ "$(file_sha256 "$target")" != "$recorded" ]; then

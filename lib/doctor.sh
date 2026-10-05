@@ -159,7 +159,7 @@ check_tool_capabilities() {
   fi
   QUIET=0
   if [ "$FAILURES" -gt "$before" ]; then
-    printf 'FAIL %s: a managed capability is broken (run harness doctor for details)\n' "$tool"
+    printf 'FAIL %s: a managed capability is broken (run tack doctor for details)\n' "$tool"
   else
     ok "$tool: managed links intact"
   fi
@@ -272,7 +272,7 @@ check_hooks_path() {
   elif recorded_git_hooks_path "$path"; then
     fail "$scope Git hooks: managed hooksPath points to another or missing checkout"
   else
-    warn "$scope Git hooks: deliberate non-harness hooksPath; managed hooks are not active"
+    warn "$scope Git hooks: deliberate hooksPath of your own; managed hooks are not active"
   fi
 }
 check_git_hooks() {
@@ -338,7 +338,7 @@ check_ownership() {
 }
 check_mods() {
   local mod id state
-  if ! mods_enabled; then ok 'mods disabled (git config harness.mods is false)'; return; fi
+  if ! mods_enabled; then ok 'mods disabled (git config tack.mods is false)'; return; fi
   if ! has claude; then warn 'mods: claude CLI not found; the mods in plugins/ cannot be installed or checked'; return; fi
   for mod in $(mods_list "$REPO"); do
     id="$mod@$MODS_MARKETPLACE"
@@ -353,7 +353,7 @@ check_mods() {
 }
 check_vscode() {
   local command product path state found=0
-  if ! vscode_enabled; then ok 'VS Code setting disabled (git config harness.vscodeAgentsMd is false)'; return; fi
+  if ! vscode_enabled; then ok 'VS Code setting disabled (git config tack.vscodeAgentsMd is false)'; return; fi
   while IFS='|' read -r command product <&4; do
     has "$command" || continue
     found=1
@@ -404,7 +404,7 @@ if [ "$TOOLS_MODE" -eq 1 ]; then
   [ -f "$REPO/targets.txt" ] || { echo 'doctor: targets.txt is missing' >&2; exit 1; }
   check_tools
 elif [ ! -f "$REPO/targets.txt" ] || [ ! -f "$REPO/bin/tack" ]; then
-  fail 'checkout is missing required harness files'
+  fail 'checkout is missing required tack files'
 else
   check_tools_and_links
   check_ownership

@@ -1,6 +1,6 @@
 # CI watching, green-only merges and delegated docs
 
-- Status: approved 2026-10-04 (owner answers below)
+- Status: done (approved 2026-10-04; owner answers below)
 - Goal: never integrate red or unfinished CI, let the assistant fix CI failures itself, and spend fewer tokens on large documentation updates.
 
 ## Decisions

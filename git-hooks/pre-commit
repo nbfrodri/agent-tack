@@ -2,7 +2,7 @@
 # Global pre-commit safety net: run the local hook, then inspect the final index for
 # environment files and added lines containing well-known credential formats.
 # Reports the file and kind of secret, never the secret itself.
-# Deliberate one-off override: HARNESS_ALLOW_SECRETS=1 git commit ...
+# Deliberate one-off override: TACK_ALLOW_SECRETS=1 git commit ...
 set -u
 
 HOOK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -15,7 +15,7 @@ pre-commit: refusing to commit secrets:
 $1
 Keep secrets in .env (git-ignored) or a secret manager, and document the variable in .env.example.
 To unstage: git restore --staged <file>. If the secret was ever pushed, rotate it.
-(Deliberate override: HARNESS_ALLOW_SECRETS=1 git commit ...)
+(Deliberate override: TACK_ALLOW_SECRETS=1 git commit ...)
 EOF_MESSAGE
   exit 1
 }
@@ -26,7 +26,7 @@ scan_error() {
 }
 
 run_local_hook pre-commit "$@" || exit $?
-[ "${HARNESS_ALLOW_SECRETS:-}" = "1" ] && exit 0
+if override_set SECRETS; then exit 0; fi
 
 root="$(git rev-parse --show-toplevel)" || scan_error
 work="$(mktemp -d "${TMPDIR:-/tmp}/pre-commit.XXXXXX")" || scan_error

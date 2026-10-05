@@ -10,7 +10,7 @@ Context: full
 - Plan: written plan in `docs/plans/`, followed without waiting.
 - Tests: TDD; never commit failing tests.
 - Docs: everything the change affects.
-- Handoff: from the start, updated at every milestone, listing assumptions. AI log: one row.
+- Handoff: from the start (long work spans sessions), updated at milestones, not every commit, listing assumptions. AI log: one row, committed with the change it records.
 - Review: run `code-reviewer` on the final diff and fix its findings before opening the pull request.
 - CI: after a push or a new pull request, wait for CI in the background, report the result and fix failures from the log before continuing.
 - Delegation: automatic for separable work, unless `tack config delegation` is `off`.
