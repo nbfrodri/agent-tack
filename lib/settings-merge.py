@@ -7,7 +7,8 @@ Cursor's plain command entries)
 tagged "#tack" (or "#harness" and "#agent-config", the former names) are replaced; the user's own hooks are kept.
 Same behaviour as lib/settings-merge.jq, which install.sh uses when python3 is missing.
 """
-import json, sys
+import json
+import sys
 
 # Hooks this repo installs; "#agent-config" is the tag of older versions
 TAGS = ("#tack", "#harness", "#agent-config")

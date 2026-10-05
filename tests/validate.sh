@@ -69,6 +69,13 @@ while read -r tool _; do
   case "$tool" in '' | '#'*) continue ;; esac
   grep -qE "^\| [^|]*\(\`$tool\`" "$REPO/docs/editors.md" || err "docs/editors.md has no row for '$tool' in the capability map"
 done < "$REPO/targets.txt"
+# One lint command and one test runner, used by AGENTS.md and CI, that cover every suite.
+grep -q 'tests/lint.sh' "$REPO/AGENTS.md" || err "AGENTS.md does not call tests/lint.sh"
+grep -q 'run: tests/lint.sh' "$REPO/.github/workflows/ci.yml" || err ".github/workflows/ci.yml does not call tests/lint.sh"
+suites=" $("$REPO/tests/run-all.sh" --list | tr '\n' ' ') "
+for suite in "$REPO"/tests/*.test.sh; do
+  case "$suites" in *" $(basename "$suite") "*) ;; *) err "tests/$(basename "$suite") is not run by tests/run-all.sh" ;; esac
+done
 # CI pins a ShellCheck version; the development docs name the same one for local use.
 ci_shellcheck="$(sed -n 's/^ *SHELLCHECK_VERSION: *v\{0,1\}//p' "$REPO/.github/workflows/ci.yml")"
 grep -q "ShellCheck ${ci_shellcheck:-missing} " "$REPO/docs/development.md" \

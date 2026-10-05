@@ -48,6 +48,10 @@ expect_failure "an unclosed frontmatter" "not closed" \
   "printf -- '---\nname: broken\ndescription: x\n' > skills/testing/SKILL.md && mkdir -p skills/broken && cp skills/testing/SKILL.md skills/broken/"
 expect_failure "a description over budget" "max 400" \
   "python3 -c \"import re;p='skills/testing/SKILL.md';s=open(p).read();open(p,'w').write(re.sub(r'^description: .*\$','description: '+'x'*401,s,count=1,flags=re.M))\""
+expect_failure "a suite run-all.sh does not know" "tests/new.test.sh is not run by tests/run-all.sh" \
+  "printf '#!/usr/bin/env bash\n' > tests/new.test.sh"
+expect_failure "CI linting with its own command instead of tests/lint.sh" "ci.yml does not call tests/lint.sh" \
+  "sed 's#run: tests/lint.sh#run: shellcheck install.sh#' .github/workflows/ci.yml > tmp && mv tmp .github/workflows/ci.yml"
 expect_failure "a supported tool missing from the capability map" "docs/editors.md has no row for 'crush'" \
   "grep -v '(\`crush\`' docs/editors.md > tmp && mv tmp docs/editors.md"
 expect_failure "CI and the development docs naming different ShellCheck versions" "ShellCheck v0.10.0 in CI" \

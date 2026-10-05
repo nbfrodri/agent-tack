@@ -4,7 +4,8 @@ How to change this repo safely: commands, adding skills or agents, and measuring
 
 ## Commands
 ```bash
-shellcheck -x install.sh uninstall.sh bin/tack lib/*.sh tests/*.sh evals/run.sh git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push git-hooks/pre-commit hooks/claude/*.sh hooks/claude/lib/*.sh hooks/cursor/*.sh
+tests/lint.sh            # ShellCheck on every script and ruff on the Python, at the versions CI pins
+tests/run-all.sh         # every suite below, in parallel (-j N), with a one-line summary each
 tests/validate.sh        # skills, agents, cross-references, components list coverage, budgets
 tests/validate.test.sh   # the validator catches each kind of error
 tests/install.test.sh    # installer, in throwaway HOME directories
