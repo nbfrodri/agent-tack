@@ -41,7 +41,7 @@ Claude Code subagents (`~/.claude/agents`); other tools follow the same files as
 | `architecture-reviewer` | Layering, coupling, boundaries, debt hot spots |
 | `security-auditor` | OWASP Top 10, auth, secrets, dependencies, CI |
 | `performance-analyzer` | Measures and ranks performance problems |
-| `ui-reviewer` | Reviews a running app at mobile and desktop widths |
+| `ui-reviewer` | Reviews a running app at mobile and desktop widths, or scores `tack shots` before and after screenshots on a fixed rubric |
 
 ## Plugins
 | Plugin | Purpose |

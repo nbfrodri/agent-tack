@@ -507,6 +507,16 @@ check "ci-watch: the default adds no setting line" "! session '$WORK/repo' | gre
 git -C "$WORK/repo" config tack.ciWatch false
 check "ci-watch: turning it off tells the assistant not to wait for CI" "session '$WORK/repo' | grep -q 'Workflow settings:.*Do not wait for CI'"
 git -C "$WORK/repo" config --unset tack.ciWatch
+git -C "$WORK/repo" config tack.visualReview false
+check "visual-review: turning it off tells the assistant to skip it" "session '$WORK/repo' | grep -q 'Workflow settings:.*Skip the visual review'"
+git -C "$WORK/repo" config --unset tack.visualReview
+for review_mode in standard strict unleash; do
+  git -C "$WORK/repo" config tack.mode "$review_mode"
+  check "visual-review: $review_mode mode captures and scores UI changes" "session '$WORK/repo' | grep -q 'Visual review: .*tack shots'"
+done
+git -C "$WORK/repo" config tack.mode lite
+check "visual-review: lite mode has no visual review" "! session '$WORK/repo' | grep -q 'Visual review:'"
+git -C "$WORK/repo" config --unset tack.mode
 for ci_mode in standard strict unleash; do
   git -C "$WORK/repo" config tack.mode "$ci_mode"
   check "ci-watch: $ci_mode mode waits for CI after a push" "session '$WORK/repo' | grep -q 'CI: after a push'"

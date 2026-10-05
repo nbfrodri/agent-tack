@@ -580,5 +580,71 @@ check "an ID followed by a letter does not cover the requirement" expect_exit 1 
 rm -rf "$TRACE/docs/plans"
 check "trace without a plan explains itself" expect_exit 2 trace
 
+# tack shots: before and after screenshots of visual changes (#54). A stub stands in for Playwright,
+# so these run without a browser; the real capture runs below when Playwright is installed.
+SHOTS="$WORK/shots-project"
+mkdir -p "$SHOTS" && git -C "$SHOTS" init -q -b feat/new-button
+printf '<!doctype html><title>Fixture</title><h1>Hello</h1>\n' > "$SHOTS/page.html"
+STUB="$WORK/playwright-stub"
+cat > "$STUB" <<'EOF_STUB'
+#!/usr/bin/env bash
+# Fake `playwright screenshot ... --viewport-size=W,H URL FILE`: records the call, writes a PNG.
+[ "$1" != --version ] || { echo "Version 1.0.0-stub"; exit 0; }
+printf '%s\n' "$*" >> "${STUB_LOG:?}"
+for last in "$@"; do :; done
+printf '\211PNG\r\n\032\n' > "$last"
+EOF_STUB
+chmod +x "$STUB"
+export STUB_LOG="$WORK/stub.log"
+shots() { (cd "$SHOTS" && TACK_PLAYWRIGHT="$STUB" "$CLI" shots "$@"); }
+# git reports the physical path (macOS temp folders sit behind /var -> /private/var).
+SHOTS_ROOT="$(git -C "$SHOTS" rev-parse --show-toplevel)"
+SHOT_DIR="$SHOTS_ROOT/.tack-screenshots/$(date +%Y-%m-%d)-feat-new-button"
+check "shots --before captures a page" expect_exit 0 shots --before "file://$SHOTS/page.html"
+check "before shots exist at mobile and desktop widths" test -s "$SHOT_DIR/before/page-mobile.png" -a -s "$SHOT_DIR/before/page-desktop.png"
+check "mobile is 390 wide and desktop 1440" grep -q 'viewport-size=1440,900' "$STUB_LOG"
+check "the capture uses the mobile viewport too" grep -q 'viewport-size=390,844' "$STUB_LOG"
+check "shots --after with a name captures again" expect_exit 0 shots --after --name home "file://$SHOTS/page.html"
+check "after shots use the given name" test -s "$SHOT_DIR/after/home-desktop.png"
+check "an index shows before and after side by side" eval "grep -q 'before/page-mobile.png' '$SHOT_DIR/index.html' && grep -q 'after/home-desktop.png' '$SHOT_DIR/index.html'"
+check "the screenshots folder ignores itself in git" eval "[ -z \"\$(git -C '$SHOTS' status --porcelain --untracked-files=all | grep tack-screenshots)\" ]"
+check "shots --dir prints the folder" expect_exit 0 shots --dir
+check "the printed folder is today's for this branch" output_is "$SHOT_DIR"
+printf '# Score\n\nOverall: 8/10 <b>ok</b>\n' > "$SHOT_DIR/score.md"
+check "shots --index rebuilds the index" expect_exit 0 shots --index
+check "the index includes the score, escaped" eval "grep -q 'Overall: 8/10 &lt;b&gt;ok&lt;/b&gt;' '$SHOT_DIR/index.html'"
+check "shots without a URL is a usage error" expect_exit 2 shots --after
+check "an unknown shots option is a usage error" expect_exit 2 shots --sideways "file://$SHOTS/page.html"
+check "outside a git repository shots explains itself" expect_exit 2 env TACK_PLAYWRIGHT="$STUB" "$CLI" shots --dir
+check "missing Playwright gives install instructions" eval "(cd '$SHOTS' && TACK_PLAYWRIGHT=/nonexistent/playwright '$CLI' shots --after 'file://$SHOTS/page.html') > '$WORK/output' 2>&1; [ \$? -eq 1 ] && grep -q 'npx playwright install chromium' '$WORK/output'"
+check "a name cannot leave the screenshots folder" eval "shots --after --name ../../escaped 'file://$SHOTS/page.html' >/dev/null 2>&1 && [ -s '$SHOT_DIR/after/escaped-mobile.png' ] && [ ! -e '$SHOTS/escaped-mobile.png' ] && [ ! -e '$SHOTS/.tack-screenshots/escaped-mobile.png' ]"
+check "two URLs with the same name are refused" expect_exit 2 shots --after "http://localhost:3000/a-b?x=1" "http://localhost:3000/a/b?x=1"
+check "the host and port do not split a page" eval "shots --before http://localhost:3000/cart >/dev/null 2>&1 && shots --after http://localhost:5173/cart >/dev/null 2>&1 && [ -s '$SHOT_DIR/before/cart-mobile.png' ] && [ -s '$SHOT_DIR/after/cart-mobile.png' ]"
+check "--before and --after together are a usage error" expect_exit 2 shots --before --after "file://$SHOTS/page.html"
+check "--dir with a URL is a usage error" expect_exit 2 shots --dir "file://$SHOTS/page.html"
+check "an empty TACK_PLAYWRIGHT is reported, not a crash" eval "(cd '$SHOTS' && TACK_PLAYWRIGHT=' ' '$CLI' shots --after 'file://$SHOTS/page.html') > '$WORK/output' 2>&1; [ \$? -eq 1 ] && grep -q 'Playwright is not available' '$WORK/output'"
+FAILING_STUB="$WORK/playwright-failing"
+cat > "$FAILING_STUB" <<'EOF_STUB'
+#!/usr/bin/env bash
+[ "$1" != --version ] || exit 0
+case "$*" in *1440,900*) echo "browserType.launch: Executable doesn't exist" >&2; exit 1 ;; esac
+for last in "$@"; do :; done
+printf 'PNG' > "$last"
+EOF_STUB
+chmod +x "$FAILING_STUB"
+printf 'stale' > "$SHOT_DIR/after/page-desktop.png"
+check "a failed capture exits 1" eval "(cd '$SHOTS' && TACK_PLAYWRIGHT='$FAILING_STUB' '$CLI' shots --after 'file://$SHOTS/page.html') > '$WORK/output' 2>&1; [ \$? -eq 1 ]"
+check "Playwright's error reaches the user" grep -q "Executable doesn't exist" "$WORK/output"
+check "a failed capture leaves no stale screenshot" test ! -e "$SHOT_DIR/after/page-desktop.png"
+git -C "$SHOTS" switch -q -c feat/later-day
+mkdir -p "$SHOTS/.tack-screenshots/2000-01-01-feat-later-day/before"
+check "a branch keeps using its first folder on later days" eval "[ \"\$(shots --dir)\" = '$SHOTS_ROOT/.tack-screenshots/2000-01-01-feat-later-day' ]"
+git -C "$SHOTS" switch -q feat/new-button
+if (cd "$SHOTS" && npx --no-install playwright --version) >/dev/null 2>&1; then
+  check "real Playwright captures the fixture" eval "(cd '$SHOTS' && '$CLI' shots --after --name real 'file://$SHOTS/page.html') >/dev/null 2>&1 && [ \"\$(head -c 4 '$SHOT_DIR/after/real-mobile.png' | tail -c 3)\" = PNG ]"
+else
+  echo "  - skipped: real capture (Playwright is not installed: npm i -D playwright && npx playwright install chromium)"
+fi
+
 printf '\n%s passed, %s failed\n' "$PASSED" "$FAILED"
 [ "$FAILED" -eq 0 ]
