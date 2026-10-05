@@ -1,12 +1,12 @@
 import { atom, read, update } from 'claude-code'
-import type { Register, SessionContextUsage, SessionCost, SessionRateLimit } from 'claude-code'
+import type { Engine, Register, SessionContextUsage, SessionCost, SessionRateLimit } from 'claude-code'
 
 import type { Usage, UsageWindow } from '../types'
 
 const usage = atom({ plugin: 'usage-band', key: 'usage' } as const, { windows: [] } as Usage)
 const isHidden = atom({ plugin: 'usage-band', key: 'isHidden' } as const, false)
 // An atom, not a local, so setting it re-renders the band as soon as the mode is known.
-const chip = atom({ plugin: 'usage-band', key: 'chip' } as const, 'tack · off')
+const chip = atom({ plugin: 'usage-band', key: 'chip' } as const, 'tack · …')
 
 const LABELS: Record<string, string> = { five_hour: '5h', seven_day: '7d', spend_limit: 'spend' }
 const WARN_AT = [80, 90]
@@ -62,10 +62,20 @@ export function costLimit(modeShow: string, configValue: string): number | undef
   return Number.isFinite(amount) && amount > 0 ? amount : undefined
 }
 
-// `tack mode` prints "<mode> (<source>)"; a failing `tack status --quiet` means the project is not enabled.
+const CHIP_PENDING = 'tack · …'
+const CHIP_UNKNOWN = 'tack · ?'
+const CHIP_TRIES = 3
+
+// `tack mode` prints "<mode> (<source>)". `tack status --quiet` exits 1 when the project is not
+// enabled; any other failure (tack not found, an error) means the state is unknown, not off.
 export function modeChip(statusExit: number, modeOutput: string): string {
+  if (statusExit === 1) return 'tack · off'
   const mode = modeOutput.trim().split(' ')[0]
-  return statusExit === 0 && mode ? `tack · ${mode}` : 'tack · off'
+  return statusExit === 0 && mode ? `tack · ${mode}` : CHIP_UNKNOWN
+}
+
+export function chipNeedsRetry(label: string): boolean {
+  return label === CHIP_PENDING || label === CHIP_UNKNOWN
 }
 
 export function overBudget(costUsd: number | undefined, limitUsd: number | undefined): boolean {
@@ -74,6 +84,24 @@ export function overBudget(costUsd: number | undefined, limitUsd: number | undef
 
 export const register: Register = on => {
   let limitUsd: number | undefined
+  let chipTries = 0
+  let chipError = ''
+
+  // Asks tack for the project's state; at session start the call can fail before the session is
+  // ready, so an unknown answer is retried with the next measurement instead of reading as off.
+  const refreshChip = async ($: Engine) => {
+    chipTries += 1
+    try {
+      const status = await $.process.run(['tack', 'status', '--quiet'], { timeoutMs: 5000 })
+      const mode = await $.process.run(['tack', 'mode'], { timeoutMs: 5000 })
+      const label = modeChip(status.exitCode, mode.exitCode === 0 ? mode.stdout : '')
+      chipError = label === CHIP_UNKNOWN ? `tack status exited ${status.exitCode}: ${status.stderr.trim()}` : ''
+      await update($, chip, () => label)
+    } catch (error) {
+      chipError = `could not run tack: ${error instanceof Error ? error.message : String(error)}`
+      await update($, chip, () => CHIP_UNKNOWN)
+    }
+  }
 
   on('session.start', async ($, e, next) => {
     const { context, rateLimits, cost } = await $.session.usage()
@@ -86,14 +114,7 @@ export const register: Register = on => {
     } catch {
       limitUsd = undefined
     }
-    try {
-      const status = await $.process.run(['tack', 'status', '--quiet'], { timeoutMs: 5000 })
-      const mode = await $.process.run(['tack', 'mode'], { timeoutMs: 5000 })
-      const label = modeChip(status.exitCode, mode.exitCode === 0 ? mode.stdout : '')
-      await update($, chip, () => label)
-    } catch {
-      await update($, chip, () => 'tack · off')
-    }
+    await refreshChip($)
     return next(e)
   })
 
@@ -113,12 +134,14 @@ export const register: Register = on => {
     await update($, usage, () => after)
     const warning = crossedWarning(before, after.windows)
     if (warning) $.ui.toast(warning)
+    if (chipTries < CHIP_TRIES && chipNeedsRetry(await read($, chip))) await refreshChip($)
     return next(e)
   })
 
   on('command.run', { command: 'usage-band' }, async $ => {
     const hidden = await update($, isHidden, value => !value)
-    return { text: hidden ? 'Usage band hidden.' : 'Usage band shown.' }
+    const why = chipError ? ` (tack chip: ${chipError})` : ''
+    return { text: (hidden ? 'Usage band hidden.' : 'Usage band shown.') + why }
   })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
