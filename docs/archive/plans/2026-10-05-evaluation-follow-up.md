@@ -1,6 +1,6 @@
 # Evaluation follow-up and remaining issues
 
-- Status: approved 2026-10-05
+- Status: done (approved 2026-10-05; PRs #76–#82 merged)
 - Goal: act on the project evaluation (score 7.1/10; security 6, code quality, performance, docs and tooling 7, architecture and tests 8) and close the remaining open issues.
 
 ## Decisions
