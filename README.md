@@ -33,8 +33,7 @@ The mode decides how much process each task gets. `auto` is the default and pick
 
 | Mode | For | What the assistant does |
 | --- | --- | --- |
-| `lean` | Small tasks when tokens matter most | Minimal self-contained rules, terse replies; still branch, commit and test ([measured](docs/benchmarks/2026-10-04-lean.md): about lite cost, ~10% less on new projects) |
-| `lite` | Typos, config, one-line fixes | Branch, commit, a test when logic changes |
+| `lite` | Typos, config, small fixes; small tasks when tokens matter | Minimal self-contained rules, terse replies; still branch, commit and test (it absorbed the former `lean` mode, [measured](docs/benchmarks/2026-10-04-lean.md) at the same cost) |
 | `standard` | A bounded feature or bug fix | Adds TDD, a short plan and the affected docs |
 | `strict` | Risky or multi-module work | Adds a saved plan you approve, handoffs, review and delegation |
 | `unleash` | Unattended work on a branch | Works without asking; the guard still blocks dangerous commands ([risks](docs/usage.md#unleash-autonomous-work)) |

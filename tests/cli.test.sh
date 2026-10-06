@@ -160,7 +160,7 @@ check "mode list includes auto" contains 'auto      built-in'
 check "a user mode can be created from another" expect_exit 0 "$CLI" mode new spike --from lite
 check "the user mode lives in the user's config" test -f "$USER_MODES/spike.md"
 check "the user mode is renamed" grep -q '^# spike$' "$USER_MODES/spike.md"
-check "the user mode keeps the source rules" grep -q '^- Plan: none.$' "$USER_MODES/spike.md"
+check "the user mode keeps the source rules" grep -q '^- Review: read your own diff before committing.$' "$USER_MODES/spike.md"
 check "mode list includes user modes" expect_exit 0 "$CLI" mode list
 check "user modes are labelled" contains 'spike     user'
 check "a user mode can be selected" expect_exit 0 "$CLI" mode spike
@@ -668,6 +668,8 @@ check "the project stays enabled" eval "'$CLI' status --quiet"
 bash "$REPO/lib/doctor.sh" "$REPO" >"$WORK/doctor" 2>&1
 check "doctor no longer asks" eval "grep -q 'current project workflow' '$WORK/doctor' && ! grep -q 'former harness name' '$WORK/doctor'"
 check "a second run has nothing to do" eval "'$CLI' migrate | grep -q 'Nothing to migrate'"
+git config tack.mode lean
+check "migrate replaces the merged lean mode with lite" eval "'$CLI' migrate | grep -q 'mode lean' && [ \"\$(git config tack.mode)\" = lite ]"
 cd "$WORK/project" || exit 1
 
 printf '\n%s passed, %s failed\n' "$PASSED" "$FAILED"

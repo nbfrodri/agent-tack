@@ -201,6 +201,12 @@ EOF
         git config "--$scope" --remove-section harness || fail "cannot remove the former $scope harness settings"
         echo "Moved the $scope harness.* settings to tack.*."
       fi
+      # The lean mode was merged into lite.
+      if [ "$(git config "--$scope" --get tack.mode 2>/dev/null)" = lean ]; then
+        git config "--$scope" tack.mode lite || fail "cannot rewrite the $scope mode"
+        echo "Replaced the $scope mode lean, now part of lite, with lite."
+        migrated=1
+      fi
     done
     if root="$(repo_root)" && [ -f "$root/.harness" ]; then
       if [ -f "$root/.tack" ]; then rm -f "$root/.harness"; else mv "$root/.harness" "$root/.tack"; fi \

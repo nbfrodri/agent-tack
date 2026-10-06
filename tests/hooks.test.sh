@@ -429,7 +429,7 @@ check "every mode: asks the assistant to ask when in doubt" "session '$WORK/repo
 check "every mode: states the core rules without loading the skill" "session '$WORK/repo' | grep -q 'At every level: work on a branch off main, test the change, and make a Conventional Commit for each verified milestone'"
 git -C "$WORK/repo" config harness.mode lite
 check "fixed mode: names the level to apply" "session '$WORK/repo' | grep -q 'mode: lite.*Apply the lite mode rules below'"
-check "fixed mode: injects that mode's rules" "session '$WORK/repo' | grep -q 'Plan: none.'"
+check "fixed mode: injects that mode's rules" "session '$WORK/repo' | grep -q 'Review: read your own diff before committing.'"
 git -C "$WORK/repo" config --unset harness.mode
 check "auto mode: lists the modes to choose from" "session '$WORK/repo' | grep -q 'strict: several modules'"
 check "token toggles: defaults add nothing" "! session '$WORK/repo' | grep -q 'Token settings'"
@@ -527,8 +527,11 @@ for ci_mode in lite lean; do
 done
 git -C "$WORK/repo" config --unset tack.mode
 git -C "$WORK/repo" config harness.mode lean
-check "lean mode: the rules say not to load dev-workflow" "session '$WORK/repo' | grep -q 'do not load the \`dev-workflow\` skill'"
-check "lean mode: the message points to the mode's own rules" "session '$WORK/repo' | grep -q 'Apply the lean mode rules below'"
+check "lean, now an alias of lite: the rules say not to load dev-workflow" "session '$WORK/repo' | grep -q 'do not load the \`dev-workflow\` skill'"
+check "lean, now an alias of lite: lite's rules apply" "session '$WORK/repo' | grep -q 'Review: read your own diff before committing.'"
+git -C "$WORK/repo" config harness.mode lite
+check "lite mode: self-contained, without dev-workflow" "session '$WORK/repo' | grep -q 'do not load the \`dev-workflow\` skill'"
+check "auto mode: lean is no longer listed" "git -C '$WORK/repo' config harness.mode auto && ! session '$WORK/repo' | grep -q '^- lean:'"
 git -C "$WORK/repo" config harness.mode unleash
 check "unleash mode: warns loudly at session start" "session '$WORK/repo' | grep -q 'WARNING: unleash mode is active'"
 git -C "$WORK/repo" config harness.mode turbo
