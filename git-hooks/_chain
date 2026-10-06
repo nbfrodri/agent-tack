@@ -6,10 +6,10 @@
 # This file is both a library (sourced by commit-msg and pre-push) and the pass-through
 # hook itself (the other hook names are symlinks to it).
 
-# override_set NAME: success when TACK_ALLOW_NAME=1, or HARNESS_ALLOW_NAME=1 (the former name).
+# override_set NAME: success when TACK_ALLOW_NAME=1, the user's deliberate one-off override.
 override_set() {
-  local current="TACK_ALLOW_$1" former="HARNESS_ALLOW_$1"
-  [ "${!current:-}" = 1 ] || [ "${!former:-}" = 1 ]
+  local name="TACK_ALLOW_$1"
+  [ "${!name:-}" = 1 ]
 }
 
 # Runs .git/hooks/<name> of the current repository, if there is one, with the given arguments.

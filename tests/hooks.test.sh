@@ -115,7 +115,7 @@ check "text that only mentions secrets is allowed" "try_commit"
 stage .env "API_KEY=abc"
 check "override allows a deliberate commit" "TACK_ALLOW_SECRETS=1 try_commit"
 stage .env.prod "API_KEY=abc"
-check "the former override name still allows it" "HARNESS_ALLOW_SECRETS=1 try_commit"
+check "the former override name no longer bypasses the scan" "! HARNESS_ALLOW_SECRETS=1 try_commit"
 git -C "$S" config harness.enabled false
 stage .env.local "X=1"
 check "also active in projects that aren't enabled" "! try_commit"
@@ -183,7 +183,7 @@ git -C "$R" tag -d v1.0.0 >/dev/null
 git -C "$R" tag -a v1.0.0 -m "moved" HEAD~1
 check "moving a published tag is refused" "! push --force origin v1.0.0"
 check "override allows a deliberate tag change" "TACK_ALLOW_TAG=1 push --force origin v1.0.0"
-check "the former force-push and tag override names still count" "env -u TACK_ALLOW_TAG bash -c '. \"$REPO/git-hooks/_chain\" && HARNESS_ALLOW_FORCE_PUSH=1 override_set FORCE_PUSH && HARNESS_ALLOW_TAG=1 override_set TAG && ! override_set TAG'"
+check "the former force-push and tag override names no longer count" "env -u TACK_ALLOW_TAG bash -c '. \"$REPO/git-hooks/_chain\" && ! HARNESS_ALLOW_FORCE_PUSH=1 override_set FORCE_PUSH && ! HARNESS_ALLOW_TAG=1 override_set TAG'"
 git -C "$R" config harness.enabled false
 check "projects not enabled can push any tag" "push origin release-1"
 git -C "$R" config --unset harness.enabled
