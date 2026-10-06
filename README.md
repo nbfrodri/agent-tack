@@ -7,7 +7,8 @@
 ## What it does
 
 - **One workflow, scaled to the task:** plan, test first, small commits, docs, review; light for a typo, thorough for a risky change.
-- **Rules that are enforced, not just suggested:** git hooks (every tool) and the Claude Code and Codex hooks block AI attribution, committed secrets, force-pushes to `main`, dangerous commands and merges with red or unfinished CI.
+- **Rules that are enforced, not just suggested:** git hooks (every tool) and the Claude Code and Codex hooks block AI attribution, committed secrets, force-pushes to `main`, dangerous commands and merges with red or unfinished CI. The command guard catches an assistant's mistakes; it is not a sandbox against a determined one, so run untrusted or fully unattended work in a container or VM ([what it covers](docs/how-it-works.md#what-the-command-guard-covers-and-what-it-does-not)).
+- **Enforcement depends on the tool:** Claude Code gets everything; Codex gets the agent hooks; Cursor gets the command guard; Copilot, Gemini, OpenCode and Crush get the instructions and skills, with git hooks as their only enforcement ([per tool](docs/editors.md#what-each-tool-receives)).
 - **Opt-in per project:** everywhere else the assistant works normally with only the safety net on.
 - **Yours to change:** rules, skills, modes and toggles are plain files and commands. [Why →](docs/why.md)
 
