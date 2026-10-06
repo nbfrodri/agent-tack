@@ -204,7 +204,7 @@ check_git_push() {
 check_harness() {
   local positional=0 a
   case "${1:-}" in
-    trust | enable | disable) SETTINGS_WRITE="Changing tack's settings is the user's decision in this mode."; return ;;
+    trust | enable | disable | migrate) SETTINGS_WRITE="Changing tack's settings is the user's decision in this mode."; return ;;
     mode)
       case "${2:-}" in '' | list | show | new) return ;; esac
       SETTINGS_WRITE="Changing the workflow mode is the user's decision in this mode." ;;

@@ -28,6 +28,8 @@ Commands:
                       Enable this clone, or use a shareable .tack marker;
                       --scaffold adds the missing docs structure (never overwrites)
   disable             Disable this clone and remove the shared marker
+  migrate             Move settings and the marker from the former harness name to tack
+                      (this clone and user-wide); tack doctor says when it is needed
   trust [--revoke]     Allow or revoke project formatter execution in this clone
   trusted [--quiet]    Query local formatter trust independently of activation
   doctor              Diagnose installation and project state without changes
@@ -186,6 +188,41 @@ case "$cmd" in
       echo "Removed $root/$marker — commit the removal to share it."
     done
     echo "Disabled for this clone."
+    ;;
+  migrate)
+    allowed_option=''; check_args "$@"
+    # Settings and markers under the former name: a tack setting already present wins, as when
+    # reading. The former names stop being read in a later release.
+    migrated=0
+    for scope in global local; do
+      if [ "$scope" = local ] && ! root="$(repo_root)"; then continue; fi
+      # Git values may contain whitespace and newlines. Read the last value of each key as
+      # a NUL-delimited record, matching key_get, and preserve valueless booleans as true.
+      while IFS= read -r former; do
+        [ -n "$former" ] || continue
+        current="tack.${former#harness.}"
+        if ! git config "--$scope" --get "$current" >/dev/null 2>&1; then
+          IFS= read -r -d '' value < <(git config "--$scope" --null --get "$former") \
+            || fail "cannot read $former"
+          if [ -z "$value" ] && [ "$(git config "--$scope" --bool --get "$former" 2>/dev/null)" = true ]; then
+            value=true
+          fi
+          git config "--$scope" "$current" "$value" || fail "cannot write $current"
+        fi
+        migrated=1
+      done < <(git config "--$scope" --name-only --get-regexp '^harness\.' 2>/dev/null | sort -u)
+      if git config "--$scope" --get-regexp '^harness\.' >/dev/null 2>&1; then
+        git config "--$scope" --remove-section harness || fail "cannot remove the former $scope harness settings"
+        echo "Moved the $scope harness.* settings to tack.*."
+      fi
+    done
+    if root="$(repo_root)" && [ -f "$root/.harness" ]; then
+      if [ -f "$root/.tack" ]; then rm -f "$root/.harness"; else mv "$root/.harness" "$root/.tack"; fi \
+        || fail "cannot replace $root/.harness"
+      echo "Replaced $root/.harness with .tack — commit the change to share it."
+      migrated=1
+    fi
+    [ "$migrated" -eq 1 ] || echo "Nothing to migrate: only tack names are in use."
     ;;
   status)
     allowed_option=--quiet; check_args "$@"

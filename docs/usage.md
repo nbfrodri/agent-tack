@@ -409,7 +409,7 @@ The project was called agent-harness and its command `harness`. After `git pull 
 
 - `tack` is the command; `harness` remains as an alias that prints a notice when you run it yourself, and will be removed in a later release.
 - Settings move from `harness.*` to `tack.*` git keys. Old keys keep working: the new one wins when both exist, and changing a setting writes the new key and removes the old one in that scope.
-- A project's `.harness` marker still enables it; `tack enable --shared` writes `.tack`.
+- A project's `.harness` marker and `harness.*` settings still work, but a later release stops reading them: `tack doctor` warns when they are in use, and `tack migrate` moves this clone's and your user-wide settings to `tack.*` (a `tack.*` value already set wins) and renames `.harness` to `.tack`.
 - The installer moves `~/.config/agent-harness` (your modes and guard rules) and `~/.local/state/agent-harness` (installation records) to `agent-tack`, re-tags hooks from `#harness` to `#tack`, and replaces the `agent-harness-mods` marketplace with `agent-tack-mods`.
 - The git hooks' overrides are `TACK_ALLOW_*`; the former `HARNESS_ALLOW_*` variables no longer work.
 - Codex sees new hook commands, so run `/hooks` in Codex and approve them again.
