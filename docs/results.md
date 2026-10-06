@@ -4,6 +4,31 @@ What tack changes in practice, measured on real sessions: the same tasks with an
 
 > **Model and tool.** The outcome, workflow-modes and lean benchmarks ran in Claude Code 2.1.288 with `claude-sonnet-5-5` (Claude Sonnet 5.5). Results depend on the model and the tool: another model (a different Claude model, GPT, DeepSeek, Qwen and others) or another AI tool can follow instructions more or less closely, take more or fewer turns and cost differently, so treat these numbers as one measurement, not a guarantee. Git hooks behave the same with any model; instruction-based rules vary.
 
+## Security-sensitive input (2026-10-06)
+
+The first scenario where tack changed the outcome, with the smaller model ([details](benchmarks/2026-10-06-attachments.md)): reading a user's attachment by a name taken from a URL, with seven hidden tests on the feature and the path traversal traps.
+
+| All 7 hidden tests pass | Baseline | Auto | Auto, risk rule (#119) |
+| --- | --- | --- | --- |
+| `claude-haiku-4-5` (5 runs each) | 0/5 (mean 4.6 of 7) | 2/5 (6.0) | 4/5 (6.4) |
+| `claude-opus-5-5` (2 runs each) | 2/2 | 2/2 | – |
+| Cost, Haiku (mean) | $0.058 (1×) | $0.070 (1.2×) | $0.086 (1.5×) |
+
+The larger model got it right without tack; the smaller one did not, and tack's process (a level picked by risk, tests first, review) closed most of the gap. Five runs per condition: a first signal, not a measured effect size.
+
+### The smaller model on every scenario
+
+`claude-haiku-4-5`, same day and tack revision (main plus the open pull requests):
+
+| Scenario (runs each) | Hidden tests all pass: baseline | auto | Branch: baseline | auto | Cost |
+| --- | --- | --- | --- | --- | --- |
+| attachments (5) | 0/5 | 4/5 with the risk rule | 0/5 | 5/5 | 1.5× |
+| bug-fix (5) | 5/5 | 5/5 | 0/5 | 5/5 | 1.13× |
+| new-project (5) | 5/5 | 5/5 | – | – | 1.46× |
+| conventions (2) | 2/2 | 2/2 | 0/2 | 2/2 | 1.4× |
+
+In new-project, 5 of 10 runs (both conditions) created the package in a `cart/` subfolder although the prompt asks for this directory; their code passed every hidden test once found there, so the table counts code correctness. tack's gain is where the task hides a risk the prompt does not spell out; on plain tasks it changes the process at a modest cost.
+
 ## Conventions (2026-10-06)
 
 A feature in a project whose `AGENTS.md` sets rules the prompt does not repeat, with eight hidden tests on the feature and those rules ([details](benchmarks/2026-10-06-conventions.md)). Claude Code 2.1.290 with `claude-opus-5-5`, two runs each.

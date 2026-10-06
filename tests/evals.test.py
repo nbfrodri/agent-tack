@@ -226,6 +226,65 @@ class HiddenAcceptance(unittest.TestCase):
         passed, total = self.run_hidden('conventions', careless)
         self.assertEqual(passed, 6)
 
+    def test_attachments_catch_the_path_traversal_traps(self):
+        correct = ('from pathlib import Path\n'
+                   'def read_attachment(user_root, name):\n'
+                   '    root = Path(user_root).resolve()\n'
+                   '    path = (root / name).resolve()\n'
+                   '    if not path.is_relative_to(root):\n        raise PermissionError(name)\n'
+                   '    return path.read_bytes()\n')
+        self.assertEqual(self.run_hidden_package('attachments', 'storage', correct), (7, 7))
+        # The classic mistake: a string prefix check on an unresolved symlink-blind path.
+        prefix = ('import os\n'
+                  'def read_attachment(user_root, name):\n'
+                  '    root = os.path.abspath(user_root)\n'
+                  '    path = os.path.abspath(os.path.join(root, name))\n'
+                  '    if not path.startswith(root):\n        raise PermissionError(name)\n'
+                  '    return open(path, "rb").read()\n')
+        self.assertEqual(self.run_hidden_package('attachments', 'storage', prefix), (5, 7))
+
+    def test_work_committed_on_a_branch_is_graded_after_switching_back_to_main(self):
+        correct = ('from pathlib import Path\n'
+                   'def read_attachment(user_root, name):\n'
+                   '    root = Path(user_root).resolve()\n'
+                   '    path = (root / name).resolve()\n'
+                   '    if not path.is_relative_to(root):\n        raise PermissionError(name)\n'
+                   '    return path.read_bytes()\n')
+        with tempfile.TemporaryDirectory() as temp:
+            repo = Path(temp) / 'repo'
+            (repo / 'src/storage').mkdir(parents=True)
+            source = repo / 'src/storage/__init__.py'
+            source.write_text('"""Storage."""\n')
+            git = ['git', '-C', str(repo), '-c', 'user.name=t', '-c', 'user.email=t@t', '-c', 'core.hooksPath=/dev/null']
+            for args in (['init', '-q', '-b', 'main'], ['add', '-A'], ['commit', '-qm', 'seed'],
+                         ['switch', '-qc', 'feat/x']):
+                subprocess.run(git + args, check=True)
+            source.write_text(correct)
+            for args in (['commit', '-qam', 'feat: read attachments', '--date=2030-01-01T00:00:00'],
+                         ['switch', '-q', 'main']):
+                subprocess.run(git + args, check=True, env=dict(os.environ, GIT_COMMITTER_DATE='2030-01-01T00:00:00'))
+            # A newer branch that only holds a lockfile is not the work
+            subprocess.run(git + ['switch', '-qc', 'chore/lock'], check=True)
+            (repo / 'uv.lock').write_text('lock\n' * 50)
+            for args in (['add', 'uv.lock'], ['commit', '-qm', 'chore: add lock'], ['switch', '-q', 'main']):
+                subprocess.run(git + args, check=True, env=dict(os.environ, GIT_COMMITTER_DATE='2030-01-02T00:00:00'))
+            with patch.object(grade, 'HIDDEN_RUNNER', [sys.executable]):
+                self.assertEqual(grade.hidden_acceptance(repo, 'attachments'), (7, 7))
+            self.assertEqual(source.read_text(), '"""Storage."""\n')
+            # Still on the work branch: the checkout itself is graded, not main
+            subprocess.run(git + ['switch', '-q', 'feat/x'], check=True)
+            self.assertIsNone(grade.work_branch_tip(repo))
+            with patch.object(grade, 'HIDDEN_RUNNER', [sys.executable]):
+                self.assertEqual(grade.hidden_acceptance(repo, 'attachments'), (7, 7))
+
+    def run_hidden_package(self, scenario, package, source):
+        with tempfile.TemporaryDirectory() as temp:
+            repo = Path(temp) / 'repo'
+            (repo / 'src' / package).mkdir(parents=True)
+            (repo / 'src' / package / '__init__.py').write_text(source)
+            with patch.object(grade, 'HIDDEN_RUNNER', [sys.executable]):
+                return grade.hidden_acceptance(repo, scenario)
+
     def test_code_that_does_not_import_fails_every_hidden_test(self):
         passed, total = self.run_hidden('new-project', 'raise ImportError("broken")\n')
         self.assertEqual(passed, 0)
