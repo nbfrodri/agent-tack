@@ -107,6 +107,19 @@ expect("ask", "git commit -" + "a" * 50000 + "n", "long compact option does not 
 expect("ask", 'echo "' + '$(true)' * 100 + '"', "many substitutions require bounded review", reason="limit")
 expect("ask", ";".join(["git status"] * 1500), "too many commands ask explicitly", reason="limit")
 expect("deny", "git commit --no-verify", "Python JSON fallback", path=work / "no-jq")
+# Input parsing: NULs inside the command are dropped and trailing newlines trimmed, with jq and Python
+for parser, parser_path in (("jq", None), ("Python", work / "no-jq")):
+    expect("deny", "rm -rf\u0000 /", f"{parser}: NUL inside the command is dropped", path=parser_path)
+    expect("deny", "rm -rf /\n\n", f"{parser}: trailing newlines are trimmed", path=parser_path)
+    expect("allow", "git status", f"{parser}: cwd is read along with the command", path=parser_path, cwd=repo)
+for raw in ('{"tool_input": {"command": 5}}', '[]', 'not json'):
+    result = subprocess.run(["bash", str(guard)], input=raw, text=True, capture_output=True, timeout=8)
+    if result.returncode == 0 and not result.stdout:
+        passed += 1
+        print(f"  PASS unusable input allows: {raw}")
+    else:
+        failed += 1
+        print(f"  FAIL unusable input allows: {raw}: {result.stdout}{result.stderr}")
 if (work / "no-python/jq").exists():
     expect("deny", "sudo -n rm -rf /", "jq-only fallback still denies", path=work / "no-python")
     expect("ask", "cat <<EOF\n$(rm -rf /)\nEOF", "jq-only unsupported syntax asks", path=work / "no-python")
