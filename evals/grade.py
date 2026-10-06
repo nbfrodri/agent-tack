@@ -10,6 +10,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 CONVENTIONAL = re.compile(r"^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([\w./-]+\))?!?: \S")
@@ -147,11 +148,45 @@ def ordering_metrics(entries):
     return order, verified
 
 
+def work_branch_tip(repo):
+    """The branch tip holding the most work beyond the checked-out commit (lines changed, lockfiles
+    aside), or None when no branch holds any. An agent may commit on a branch and switch back to
+    main; its work is then on that branch, not in the checkout."""
+    def git(*args):
+        result = subprocess.run(["git", "-C", str(repo), *args], capture_output=True, text=True)
+        return result.stdout.strip() if result.returncode == 0 else ""
+    head = git("rev-parse", "HEAD")
+    best, best_size = None, 0
+    for tip in git("for-each-ref", "--sort=-committerdate", "--format=%(objectname)", "refs/heads").splitlines():
+        if not head or tip == head:
+            continue
+        stat = git("diff", "--numstat", f"{head}...{tip}", "--", ".", ":!*.lock", ":!*-lock.json", ":!*-lock.yaml")
+        size = sum(int(n) for line in stat.splitlines() for n in line.split("\t")[:2] if n.isdigit())
+        if size > best_size:
+            best, best_size = tip, size
+    return best
+
+
 def hidden_acceptance(repo, scenario):
     """(passed, total) for the scenario's hidden tests run against the repo, or (None, None)."""
     tests = HIDDEN / scenario.replace("codex-", "") / "test_hidden.py"
     if not tests.exists() or not repo.is_dir():
         return None, None
+    tip = work_branch_tip(repo)
+    if tip:
+        with tempfile.TemporaryDirectory() as temp:
+            checkout = Path(temp) / "work"
+            subprocess.run(["git", "-C", str(repo), "worktree", "add", "-q", "--detach", str(checkout), tip],
+                           capture_output=True)
+            try:
+                return hidden_acceptance_at(checkout, tests) if checkout.is_dir() else (None, None)
+            finally:
+                subprocess.run(["git", "-C", str(repo), "worktree", "remove", "--force", str(checkout)],
+                               capture_output=True)
+    return hidden_acceptance_at(repo, tests)
+
+
+def hidden_acceptance_at(repo, tests):
     total = len(re.findall(r"^def test_", tests.read_text(), re.M))
     # src/ layouts and flat packages both import, installed or not.
     env = dict(os.environ, PYTHONPATH=os.pathsep.join([str(repo / "src"), str(repo)]))
