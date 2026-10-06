@@ -121,6 +121,22 @@ stage .env.local "X=1"
 check "also active in projects that aren't enabled" "! try_commit"
 reset_index
 
+echo "commit-msg: a direct commit to main is reported, not refused"
+M="$WORK/main-repo"
+rm -rf "$M" && git init -q -b main "$M" && git -C "$M" config tack.enabled true
+# The output goes through a file: grep -q on a pipe would end git with SIGPIPE under pipefail.
+on_main() { git -C "$M" commit --allow-empty -m "$1" >"$WORK/main-out" 2>&1; cat "$WORK/main-out"; }
+reported() { on_main "$1" >/dev/null; grep -q 'goes straight to main' "$WORK/main-out"; }
+check "the first commit of a repository is left alone" "! reported 'chore: initial commit'"
+check "a feature committed on main is reported" "reported 'feat: add x'"
+check "and still committed" "[ \"\$(git -C '$M' log -1 --format=%s)\" = 'feat: add x' ]"
+check "a release commit is not reported" "! reported 'chore(release): v1.0.0'"
+check "a revert is not reported" "! reported 'Revert \"feat: add x\"'"
+git -C "$M" switch -q -c feat/y
+check "a commit on a branch is not reported" "! reported 'feat: add y'"
+git -C "$M" switch -q main && git -C "$M" config tack.enabled false
+check "a project without tack is not reported" "! reported 'feat: add z'"
+
 echo "Local repository hooks keep working (chaining)"
 cat > "$R/.git/hooks/pre-commit" <<EOF
 #!/usr/bin/env bash
