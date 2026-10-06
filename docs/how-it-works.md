@@ -40,7 +40,7 @@ One line per tool; `-` means unsupported or none. Files with only the first five
 ### Codex agents and hooks
 Codex 0.160.0 supports both (`codex features list`: `hooks` and `multi_agent` stable). Per its official documentation, agents are TOML files in `~/.codex/agents/` (`name`, `description`, `developer_instructions`) and hooks live in `~/.codex/hooks.json` or `config.toml`. Tack agents are Markdown with Claude frontmatter and the hook scripts expect Claude Code's payload, so the installer does not write either for Codex yet; the `agents` and `hooks` columns stay `-` until a converter and a payload check exist.
 
-**Platforms:** Linux and macOS (tested in CI). On Windows, use it inside WSL, where it works as on Linux; native Windows (PowerShell/CMD) isn't supported yet.
+**Platforms:** Linux and macOS (tested in CI). On Windows, use it inside WSL, where it works as on Linux; native Windows through Git Bash is experimental ([editors](editors.md#windows)): the checkout keeps LF endings and its git hooks are plain files, and the installer needs Developer Mode for symlinks.
 
 ## What the installer does
 | Step | Details |
