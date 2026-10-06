@@ -29,7 +29,7 @@ install_codex_agents() {
       continue
     fi
     if [ -e "$target" ] && cmp -s "$rendered" "$target"; then
-      ok "Codex agent $name up to date"
+      item_kept "Codex agent $name up to date"
       continue
     fi
     if [ "$DRY_RUN" -eq 1 ]; then
@@ -37,7 +37,7 @@ install_codex_agents() {
       continue
     fi
     if cp "$rendered" "$target" && ownership_generated "$target" "$(file_sha256 "$target")"; then
-      ok "Codex agent $name written"
+      item_new "Codex agent $name written"
     else
       fail "could not write $target"
     fi

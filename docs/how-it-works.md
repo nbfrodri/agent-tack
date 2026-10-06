@@ -55,7 +55,7 @@ Codex 0.160.0 supports both (`codex features list`: `hooks` and `multi_agent` st
 | VS Code | When `code`, `code-insiders` or `codium` is on `PATH`, adds `"chat.useAgentsMdFile": true` to that editor's user `settings.json` so Copilot Chat loads each project's `AGENTS.md`. It creates the file if absent, never changes an existing value, and leaves a file with comments or trailing commas alone (with a warning). Skip it with `git config --global tack.vscodeAgentsMd false`; `--skip-plugins` does not skip it. Uninstall removes the key only if it still holds the installed value, and deletes a file the installer created only if nothing else is in it. |
 | Migration | Cleans up installs from when the project was called agent-config. |
 
-Safety: existing files are moved to `<name>.bak-<timestamp>`, never overwritten; an invalid `settings.json` is left untouched; links of deleted skills are pruned; missing tools are skipped with a warning; a failed step doesn't stop the rest and makes the exit code non-zero. Re-running is always safe. `--skip-plugins` works offline.
+Safety: existing files are moved to `<name>.bak-<timestamp>`, never overwritten; an invalid `settings.json` is left untouched; links of deleted skills are pruned; missing tools are skipped with a warning; a failed step doesn't stop the rest and makes the exit code non-zero. Re-running is always safe. `--skip-plugins` works offline. Links and generated files are counted per section ("57 new", "57 already in place"); `--verbose` lists each one.
 
 ## Mods
 Mods are small Claude Code plugins that change its interface; this repo ships two in `plugins/` (see [components](components.md#mods)). The installer registers `plugins/` as a local marketplace (`claude plugin marketplace add`) and installs each mod from it with `claude plugin install`, which survives `git pull` and needs no `--plugin-dir` flag. Claude Code copies a mod when it installs it, so after changing a mod bump its `version` in `plugin.json` and re-run `./install.sh` to update it. If the checkout moved, the installer notices that the marketplace points to the old folder and re-adds it from the new one.
@@ -63,7 +63,7 @@ Mods are small Claude Code plugins that change its interface; this repo ships tw
 - Mods install by default. Skip them with `./install.sh --skip-mods`, or for good with `git config --global tack.mods false` (absent means enabled). `--skip-plugins` skips mods too, so an offline or local-only run never calls the Claude CLI.
 - `--dry-run` lists what would happen without calling Claude.
 - Only what the installer installed is recorded as owned. A mod or marketplace you already had is updated but never removed. `./uninstall.sh` uninstalls the recorded mods, then the marketplace if the installer added it.
-- `tack doctor` warns when the claude CLI is missing, a mod is not installed or disabled, and notes when mods are turned off by configuration.
+- `tack doctor` reports the mods as skipped when the claude CLI is missing, warns when a mod is not installed or disabled, and notes when mods are turned off by configuration.
 
 ## Enforced rules (hooks)
 | Hook | Where | What it does |
