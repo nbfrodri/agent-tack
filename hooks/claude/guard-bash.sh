@@ -15,17 +15,23 @@ set -u
 
 input="$(cat)"
 
-json_field() {
+# Prints .tool_input.command and .cwd, each followed by a NUL, from one process: a process start
+# costs tens of milliseconds, up to hundreds on Windows. A missing or non-string value prints as
+# empty; NULs inside a value and trailing newlines are dropped, as command substitution did.
+read_input() {
   if command -v jq >/dev/null 2>&1; then
-    printf '%s' "$input" | jq -r "$1 // empty" 2>/dev/null
+    printf '%s' "$input" | jq -j '(.tool_input.command, .cwd)
+      | (if type == "string" then gsub("\u0000"; "") | sub("\n+$"; "") else "" end) + "\u0000"' 2>/dev/null
   elif command -v python3 >/dev/null 2>&1; then
     printf '%s' "$input" | python3 -S -c '
 import json, sys
-data = json.load(sys.stdin)
-for key in sys.argv[1].lstrip(".").split("."):
-    data = data.get(key) if isinstance(data, dict) else None
-print(data if isinstance(data, str) else "")
-' "$1" 2>/dev/null
+data = json.loads(sys.stdin.buffer.read())
+tool_input = data.get("tool_input") if isinstance(data, dict) else None
+values = [tool_input.get("command") if isinstance(tool_input, dict) else None, data.get("cwd") if isinstance(data, dict) else None]
+for value in values:
+    text = value.replace("\0", "").rstrip("\n") if isinstance(value, str) else ""
+    sys.stdout.buffer.write(text.encode("utf-8", "surrogateescape") + b"\0")
+' 2>/dev/null
   fi
 }
 
@@ -72,8 +78,8 @@ SETTINGS_WRITE=""
 # Set when GH_REPO or GH_HOST points gh at another repository.
 GH_REPO_FROM_ENV=0
 
-command="$(json_field .tool_input.command)"
-cwd="$(json_field .cwd)"
+command="" cwd=""
+{ IFS= read -r -d '' command; IFS= read -r -d '' cwd; } < <(read_input)
 [ -n "$command" ] || exit 0
 [ -n "$cwd" ] && [ -d "$cwd" ] || cwd="$PWD"
 
