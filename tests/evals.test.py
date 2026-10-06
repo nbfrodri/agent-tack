@@ -205,6 +205,27 @@ class HiddenAcceptance(unittest.TestCase):
         passed, total = self.run_hidden('new-project', correct.replace('if q >= 10', 'if q >= 100'))
         self.assertLess(passed, total)
 
+    def test_conventions_pass_only_when_the_agents_md_rules_are_kept(self):
+        seed = ('from decimal import ROUND_HALF_UP, Decimal\nCENT = Decimal("0.01")\n'
+                'def _check(items):\n'
+                '    if any(p < 0 or q < 0 for p, q in items):\n        raise ValueError("negative")\n'
+                'def subtotal(items):\n    _check(items)\n'
+                '    return sum((p * q for p, q in items), Decimal("0")).quantize(CENT, ROUND_HALF_UP)\n')
+        correct = seed + (
+            'def total(items, code=None):\n    amount = subtotal(items)\n'
+            '    key = None if code is None else code.upper()\n'
+            '    if key == "SAVE10":\n        amount = amount * Decimal("0.9")\n'
+            '    elif key == "FLAT5":\n        amount = max(amount - 5, Decimal("0"))\n'
+            '    elif key is not None:\n        raise ValueError("unknown code")\n'
+            '    return amount.quantize(CENT, ROUND_HALF_UP)\n')
+        passed, total = self.run_hidden('conventions', correct)
+        self.assertEqual((passed, total), (8, 8))
+        # The feature without the conventions: unrounded result, unknown codes ignored.
+        careless = correct.replace('    elif key is not None:\n        raise ValueError("unknown code")\n', '').replace(
+            '    return amount.quantize(CENT, ROUND_HALF_UP)\n', '    return amount\n')
+        passed, total = self.run_hidden('conventions', careless)
+        self.assertEqual(passed, 6)
+
     def test_code_that_does_not_import_fails_every_hidden_test(self):
         passed, total = self.run_hidden('new-project', 'raise ImportError("broken")\n')
         self.assertEqual(passed, 0)

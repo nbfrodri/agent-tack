@@ -4,6 +4,18 @@ What tack changes in practice, measured on real sessions: the same tasks with an
 
 > **Model and tool.** The outcome, workflow-modes and lean benchmarks ran in Claude Code 2.1.288 with `claude-sonnet-5-5` (Claude Sonnet 5.5). Results depend on the model and the tool: another model (a different Claude model, GPT, DeepSeek, Qwen and others) or another AI tool can follow instructions more or less closely, take more or fewer turns and cost differently, so treat these numbers as one measurement, not a guarantee. Git hooks behave the same with any model; instruction-based rules vary.
 
+## Conventions (2026-10-06)
+
+A feature in a project whose `AGENTS.md` sets rules the prompt does not repeat, with eight hidden tests on the feature and those rules ([details](benchmarks/2026-10-06-conventions.md)). Claude Code 2.1.290 with `claude-opus-5-5`, two runs each.
+
+| | Baseline | Auto |
+| --- | --- | --- |
+| Hidden acceptance tests all pass | 2/2 | 2/2 |
+| Branch and Conventional Commit | 0/2 | 2/2 |
+| Cost (mean) | $0.154 (1×) | $0.259 (1.7×) |
+
+Claude Code kept the project's conventions without tack; tack again changed the process, not the outcome.
+
 ## Outcomes (2026-10-05)
 
 Process compliance is not quality, so the evals now also run hidden acceptance tests the agent never sees, and `evals/outcomes.py` reads defects from git history ([benchmark](benchmarks/2026-10-05-outcomes.md), [what each step caught](benchmarks/2026-10-05-step-value.md)).
