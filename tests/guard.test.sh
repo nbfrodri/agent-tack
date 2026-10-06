@@ -260,6 +260,7 @@ expect("deny", "harness config unleash-max-tool-calls 999999", "unleash: the age
 expect("deny", "harness config unleash-max-tool-calls --unset", "unleash: the agent cannot remove its own limit", cwd=project)
 expect("deny", "harness mode standard", "unleash: the agent cannot change its own mode", cwd=project)
 expect("deny", "harness trust", "unleash: the agent cannot grant itself formatter trust", cwd=project)
+expect("deny", "tack migrate", "unleash: the agent cannot migrate tack settings", cwd=project)
 expect("deny", "git config harness.unleashMaxToolCalls 999999", "unleash: raw git config writes to harness keys are refused", cwd=project)
 expect("deny", "tack config unleash-max-tool-calls 999999", "unleash: the renamed CLI cannot raise the limit either", cwd=project)
 expect("deny", "tack mode standard", "unleash: the renamed CLI cannot change the mode", cwd=project)

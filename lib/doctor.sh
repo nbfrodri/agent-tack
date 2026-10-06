@@ -371,12 +371,17 @@ check_vscode() {
 }
 check_project() {
   has git || return
+  ! git config --global --get-regexp '^harness\.' >/dev/null 2>&1 \
+    || warn 'user-wide settings use the former harness name: run tack migrate'
   if ! git rev-parse --show-toplevel >/dev/null 2>&1; then
     ok 'current directory: outside a Git repository (project checks not applicable)'
     return
   fi
   if "$REPO/bin/tack" status --quiet; then ok 'current project workflow: enabled'
   else ok 'current project workflow: disabled'; fi
+  if git config --local --get-regexp '^harness\.' >/dev/null 2>&1 || [ -f "$(git rev-parse --show-toplevel)/.harness" ]; then
+    warn 'current project uses the former harness name: run tack migrate'
+  fi
   mode="$("$REPO/bin/tack" mode)"
   if [ -z "${mode##*invalid*}" ] || [ -z "${mode##*ignored*}" ]; then
     warn "current project mode: $mode"

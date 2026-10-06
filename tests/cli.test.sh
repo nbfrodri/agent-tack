@@ -646,5 +646,29 @@ else
   echo "  - skipped: real capture (Playwright is not installed: npm i -D playwright && npx playwright install chromium)"
 fi
 
+echo "migrate: from the former harness name"
+M="$WORK/migrate"
+git init -q "$M" && cd "$M" || exit 1
+git config harness.enabled true
+git config harness.checkFast 'make test -k'
+git config harness.mode lite
+git config tack.mode strict
+git config --global harness.mods false
+printf 'shared\n' > .harness
+bash "$REPO/lib/doctor.sh" "$REPO" >"$WORK/doctor" 2>&1
+check "doctor asks for the migration" grep -q 'current project uses the former harness name: run tack migrate' "$WORK/doctor"
+check "doctor notices user-wide former settings" grep -q 'user-wide settings use the former harness name' "$WORK/doctor"
+check "migrate succeeds" eval "'$CLI' migrate >'$WORK/output' 2>&1"
+check "former local settings move to tack" eval "[ \"\$(git config tack.enabled)\" = true ] && [ \"\$(git config tack.checkFast)\" = 'make test -k' ]"
+check "a tack setting already present wins" eval "[ \"\$(git config tack.mode)\" = strict ]"
+check "no former local settings remain" eval "! git config --local --get-regexp '^harness[.]' >/dev/null"
+check "user-wide settings move too" eval "[ \"\$(git config --global tack.mods)\" = false ] && ! git config --global --get-regexp '^harness[.]' >/dev/null"
+check "the shared marker is renamed" eval "[ -f .tack ] && [ ! -e .harness ]"
+check "the project stays enabled" eval "'$CLI' status --quiet"
+bash "$REPO/lib/doctor.sh" "$REPO" >"$WORK/doctor" 2>&1
+check "doctor no longer asks" eval "grep -q 'current project workflow' '$WORK/doctor' && ! grep -q 'former harness name' '$WORK/doctor'"
+check "a second run has nothing to do" eval "'$CLI' migrate | grep -q 'Nothing to migrate'"
+cd "$WORK/project" || exit 1
+
 printf '\n%s passed, %s failed\n' "$PASSED" "$FAILED"
 [ "$FAILED" -eq 0 ]
