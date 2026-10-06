@@ -183,6 +183,10 @@ check_policy() {
   done
 }
 
+deny_override() {
+  deny "The ${1%%=*} override is for the user to set. Fix what the hook refuses, or ask the user to run the command."
+}
+
 # Checks one simple command given as words
 check_command() {
   COMMAND_COUNT=$((COMMAND_COUNT + 1))
@@ -194,6 +198,13 @@ check_command() {
   for w in "$@"; do
     if [ "$skip_redir" -eq 1 ]; then skip_redir=0; continue; fi
     if [ "$w" = "$REDIR" ]; then skip_redir=1; continue; fi
+    # The hooks' overrides are the user's deliberate choice, like --no-verify: an assignment,
+    # env, export or declare of one would let the assistant bypass them.
+    case "$w" in
+      TACK_ALLOW_*=*) deny_override "$w" ;;
+      TACK_ALLOW_*)
+        case "${words[0]:-}" in export | declare | typeset | readonly | local) deny_override "$w" ;; esac ;;
+    esac
     words+=("$w")
   done
   [ "${#words[@]}" -gt 0 ] || return 0

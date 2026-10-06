@@ -112,6 +112,15 @@ expect("ask", "git commit -" + "a" * 50000 + "n", "long compact option does not 
 expect("ask", 'echo "' + '$(true)' * 100 + '"', "many substitutions require bounded review", reason="limit")
 expect("ask", ";".join(["git status"] * 1500), "too many commands ask explicitly", reason="limit")
 expect("deny", "git commit --no-verify", "Python JSON fallback", path=work / "no-jq")
+# The hooks' override variables are the user's to set, like --no-verify
+for bypass in ("TACK_ALLOW_SECRETS=1 git commit -m x", "env TACK_ALLOW_SECRETS=1 git commit -m x",
+               "export TACK_ALLOW_SECRETS=1; git commit -m x", "TACK_ALLOW_TAG=1 git push origin v1.0.0",
+               "declare -x TACK_ALLOW_FORCE_PUSH=1", "sudo TACK_ALLOW_SECRETS=1 git commit -m x",
+               "bash -c 'TACK_ALLOW_SECRETS=1 git commit -m x'",
+               "export TACK_ALLOW_SECRETS"):
+    expect("deny", bypass, f"override set by the assistant: {bypass}", reason="override is for the user")
+expect("allow", "echo $TACK_ALLOW_SECRETS", "reading an override variable is allowed")
+expect("allow", "grep -rn 'TACK_ALLOW_SECRETS' docs", "quoted mentions are data")
 # Input parsing: NULs inside the command are dropped and trailing newlines trimmed, with jq and Python
 for parser, parser_path in (("jq", None), ("Python", work / "no-jq")):
     expect("deny", "rm -rf\u0000 /", f"{parser}: NUL inside the command is dropped", path=parser_path)
