@@ -67,11 +67,15 @@ check "legacy harness alias linked into ~/.local/bin" "[ \"\$(readlink '$H/.loca
 check "settings.json disables AI attribution" "[ \"\$(json_get '$H/.claude/settings.json' attribution.commit)\" = '\"\"' ]"
 
 check "fresh install creates no backups" "! find '$H' -name '*.bak-*' | grep -q ."
+check "fresh install counts links instead of listing them" "grep -qE '✔ [0-9]+ new$' '$H.log' && ! grep -q -- ' -> ' '$H.log'"
+check "fresh install output stays short" "[ \"\$(wc -l < '$H.log')\" -lt 80 ]"
+H_VERBOSE="$WORK/verbose"
+check "--verbose lists every link" "run_install '$H_VERBOSE' --verbose && grep -q -- '/.claude/CLAUDE.md -> ' '$H_VERBOSE.log'"
 
 echo "Idempotent"
 check "second run exits 0" "run_install '$H'"
 check "second run creates no backups" "! find '$H' -name '*.bak-*' | grep -q ."
-check "second run changes nothing" "! grep -qE 'backed up|merged|created|removed|->' '$H.log'"
+check "second run changes nothing" "! grep -qE 'backed up|merged|created|removed|->|[0-9]+ new' '$H.log'"
 
 echo "Existing files are backed up, never overwritten"
 H="$WORK/existing"

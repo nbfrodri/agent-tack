@@ -15,7 +15,8 @@
 # Safe to re-run at any time. Existing files are backed up with a timestamp,
 # never overwritten. A failing step is reported and the rest still runs.
 #
-# Usage: ./install.sh [--dry-run] [--skip-plugins] [--skip-mods] [--no-hooks] [--help]
+# Usage: ./install.sh [--dry-run] [--verbose] [--skip-plugins] [--skip-mods] [--no-hooks] [--help]
+# Links and generated files already in place are counted per section; --verbose lists each one.
 set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -26,6 +27,7 @@ SKIP_PLUGINS=0
 SKIP_MODS=0
 NO_HOOKS=0
 DRY_RUN=0
+VERBOSE=0
 FAILURES=0
 WARNINGS=0
 
@@ -35,8 +37,9 @@ for arg in "$@"; do
     --skip-mods) SKIP_MODS=1 ;;
     --no-hooks) NO_HOOKS=1 ;;
     --dry-run) DRY_RUN=1 ;;
+    --verbose) VERBOSE=1 ;;
     -h|--help)
-      sed -n '2,18p' "$0" | sed 's/^# \{0,1\}//'
+      sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'
       exit 0
       ;;
     *)
@@ -51,7 +54,20 @@ if [ -t 1 ]; then
 else
   C_OK='' C_WARN='' C_FAIL='' C_HEAD='' C_OFF=''
 fi
-section() { printf '\n%s== %s ==%s\n' "$C_HEAD" "$1" "$C_OFF"; }
+# Per-item results are counted, not listed, unless --verbose; section() prints the previous
+# section's counts before its own heading.
+ITEMS_NEW=0 ITEMS_KEPT=0
+item_new()  { ITEMS_NEW=$((ITEMS_NEW + 1)); [ "$VERBOSE" -eq 0 ] || ok "$1"; }
+item_kept() { ITEMS_KEPT=$((ITEMS_KEPT + 1)); [ "$VERBOSE" -eq 0 ] || ok "$1"; }
+flush_items() {
+  if [ "$VERBOSE" -eq 0 ]; then
+    if [ "$ITEMS_NEW" -gt 0 ] && [ "$ITEMS_KEPT" -gt 0 ]; then ok "$ITEMS_NEW new, $ITEMS_KEPT already in place"
+    elif [ "$ITEMS_NEW" -gt 0 ]; then ok "$ITEMS_NEW new"
+    elif [ "$ITEMS_KEPT" -gt 0 ]; then ok "$ITEMS_KEPT already in place"; fi
+  fi
+  ITEMS_NEW=0 ITEMS_KEPT=0
+}
+section() { flush_items; printf '\n%s== %s ==%s\n' "$C_HEAD" "$1" "$C_OFF"; }
 ok()      { printf '  %s✔%s %s\n' "$C_OK" "$C_OFF" "$1"; }
 warn()    { printf '  %s!%s %s\n' "$C_WARN" "$C_OFF" "$1"; WARNINGS=$((WARNINGS + 1)); }
 fail()    { printf '  %s✘%s %s\n' "$C_FAIL" "$C_OFF" "$1"; FAILURES=$((FAILURES + 1)); }
@@ -102,7 +118,7 @@ link() {
   done
   if [ -L "$dest" ]; then
     if [ "$(readlink "$dest")" = "$src" ]; then
-      ok "$dest"
+      item_kept "$dest"
       return
     fi
     ownership_link "$dest" "$src" "$displaced" || { fail "cannot record $dest"; return; }
@@ -114,7 +130,7 @@ link() {
     ownership_link "$dest" "$src" "$displaced" || { fail "cannot record $dest"; return; }
   fi
   if ln -s "$src" "$dest"; then
-    ok "$dest -> $src"
+    item_new "$dest -> $src"
   else
     fail "cannot link $dest"
   fi
