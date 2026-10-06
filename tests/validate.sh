@@ -205,7 +205,7 @@ docs = list((repo / "skills").glob("*/SKILL.md")) + list((repo / "skills").glob(
 for doc in docs:
     rel = doc.relative_to(repo)
     own = doc.parts[len(repo.parts) + 1] if rel.parts[0] == "skills" else None
-    for n, line in enumerate(doc.read_text().splitlines(), 1):
+    for n, line in enumerate(doc.read_text(encoding="utf-8").splitlines(), 1):
         for m in re.finditer(r"~/\.agents/skills/([a-z0-9-]+)(/[A-Za-z0-9_./-]*)?", line):
             target = repo / "skills" / m.group(1) / (m.group(2) or "").lstrip("/")
             if not target.exists():
@@ -220,7 +220,7 @@ for doc in docs:
             if not (repo / "skills" / owner / "references" / m.group(3)).exists():
                 print(f"{rel}:{n}: {owner}/references/{m.group(3)} does not exist")
 
-components = (repo / "docs/components.md").read_text()
+components = (repo / "docs/components.md").read_text(encoding="utf-8")
 for name in sorted(skills | agents):
     if f"`{name}`" not in components:
         print(f"docs/components.md: `{name}` is not documented")

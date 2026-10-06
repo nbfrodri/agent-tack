@@ -36,6 +36,9 @@ while IFS= read -r file; do python_files+=("$file"); done < <(git ls-files '*.py
 if [ "${#python_files[@]}" -gt 0 ]; then
   "${ruff[@]}" check --output-format concise "${python_files[@]}" || status=1
 fi
+# Python that runs on users' machines names its text encoding: Windows defaults to its ANSI code
+# page, which garbles the UTF-8 in skills and settings.
+"${ruff[@]}" check --output-format concise --preview --select PLW1514 lib hooks || status=1
 
 [ "$status" -ne 0 ] || echo "lint: clean"
 exit "$status"

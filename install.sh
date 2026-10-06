@@ -249,7 +249,7 @@ EOF
 without_hooks() {
   if has python3; then
     python3 -c 'import json, sys
-d = json.load(open(sys.argv[1])); d.pop("hooks", None); json.dump(d, open(sys.argv[2], "w"), indent=2)' "$1" "$2"
+d = json.load(open(sys.argv[1], encoding="utf-8")); d.pop("hooks", None); json.dump(d, open(sys.argv[2], "w", encoding="utf-8"), indent=2)' "$1" "$2"
   else
     jq 'del(.hooks)' "$1" > "$2"
   fi
@@ -258,7 +258,7 @@ d = json.load(open(sys.argv[1])); d.pop("hooks", None); json.dump(d, open(sys.ar
 # only_version FILE: succeeds when a JSON settings file holds nothing but a "version" key.
 only_version() {
   if has python3; then
-    python3 -c 'import json, sys; sys.exit(0 if set(json.load(open(sys.argv[1]))) <= {"version"} else 1)' "$1" 2>/dev/null
+    python3 -c 'import json, sys; sys.exit(0 if set(json.load(open(sys.argv[1], encoding="utf-8"))) <= {"version"} else 1)' "$1" 2>/dev/null
   else
     jq -e 'del(.version) == {}' "$1" >/dev/null 2>&1
   fi
