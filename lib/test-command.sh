@@ -29,7 +29,9 @@ if [ -f package.json ] && grep -qE '"test"[[:space:]]*:' package.json \
 fi
 if [ -f pytest.ini ] || [ -f conftest.py ] || [ -f tests/conftest.py ] \
   || grep -qsE 'pytest' pyproject.toml setup.cfg tox.ini requirements*.txt; then
-  if [ -f uv.lock ]; then found 'uv run pytest -q' 'pytest configuration'
+  # uv runs a pyproject.toml project without a lockfile too; python3 may lack its dev dependencies.
+  if [ -f uv.lock ] || { [ -f pyproject.toml ] && command -v uv >/dev/null 2>&1; }; then
+    found 'uv run pytest -q' 'pytest configuration'
   else found 'python3 -m pytest -q' 'pytest configuration'; fi
 fi
 [ -f Cargo.toml ] && found 'cargo test -q' Cargo.toml

@@ -719,7 +719,9 @@ printf 'test:\n\tpytest\n' > "$T/Makefile"
 check "detect: a make test target comes first" "[ \"\$(detected)\" = 'make test' ]"
 fresh
 printf '[project]\nname = "x"\n[dependency-groups]\ndev = ["pytest"]\n' > "$T/pyproject.toml"
-check "detect: pytest from pyproject.toml" "[ \"\$(detected)\" = 'python3 -m pytest -q' ]"
+UVBIN="$WORK/uv-bin" && mkdir -p "$UVBIN" && printf '#!/bin/sh\n' > "$UVBIN/uv" && chmod +x "$UVBIN/uv"
+check "detect: uv run for a pyproject.toml project when uv is installed" "[ \"\$(PATH='$UVBIN':\$PATH detected)\" = 'uv run pytest -q' ]"
+command -v uv >/dev/null 2>&1 || check "detect: python3 -m pytest without uv" "[ \"\$(detected)\" = 'python3 -m pytest -q' ]"
 : > "$T/uv.lock"
 check "detect: uv run when uv.lock exists" "[ \"\$(detected)\" = 'uv run pytest -q' ]"
 fresh
