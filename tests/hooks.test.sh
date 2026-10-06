@@ -712,6 +712,58 @@ git -C "$P2" rm -q app.py
 check "stop-check: deleting a source file is not asked for a test" "! stopping | grep -q 'no test did'"
 git -C "$P2" reset -q --hard
 
+echo "Test command detection"
+T="$WORK/detect"
+detected() { bash "$REPO/lib/test-command.sh" "$REPO" "$T" | cut -f1; }
+fresh() { rm -rf "$T" && git init -q "$T"; }
+fresh
+check "detect: nothing in an empty project" "[ -z \"\$(detected)\" ]"
+cat > "$T/package.json" <<'JSON'
+{"scripts": {"test": "echo \"Error: no test specified\" && exit 1"}}
+JSON
+check "detect: npm's placeholder test script is ignored" "[ -z \"\$(detected)\" ]"
+printf '{"scripts": {"test": "vitest run"}}\n' > "$T/package.json"
+check "detect: package.json test script with npm" "[ \"\$(detected)\" = 'npm test' ]"
+: > "$T/pnpm-lock.yaml"
+check "detect: pnpm from its lockfile" "[ \"\$(detected)\" = 'pnpm test' ]"
+printf 'test:\n\tpytest\n' > "$T/Makefile"
+check "detect: a make test target comes first" "[ \"\$(detected)\" = 'make test' ]"
+fresh
+printf '[project]\nname = "x"\n[dependency-groups]\ndev = ["pytest"]\n' > "$T/pyproject.toml"
+UVBIN="$WORK/uv-bin" && mkdir -p "$UVBIN" && printf '#!/bin/sh\n' > "$UVBIN/uv" && chmod +x "$UVBIN/uv"
+check "detect: uv run for a pyproject.toml project when uv is installed" "[ \"\$(PATH='$UVBIN':\$PATH detected)\" = 'uv run pytest -q' ]"
+command -v uv >/dev/null 2>&1 || check "detect: python3 -m pytest without uv" "[ \"\$(detected)\" = 'python3 -m pytest -q' ]"
+: > "$T/uv.lock"
+check "detect: uv run when uv.lock exists" "[ \"\$(detected)\" = 'uv run pytest -q' ]"
+fresh
+: > "$T/Cargo.toml"
+check "detect: cargo" "[ \"\$(detected)\" = 'cargo test -q' ]"
+fresh
+: > "$T/go.mod"
+check "detect: go" "[ \"\$(detected)\" = 'go test ./...' ]"
+git -C "$T" config tack.checkFast 'make lint'
+check "detect: an explicit check-fast wins" "[ \"\$(detected)\" = 'make lint' ]"
+check "detect: the source is reported" "bash '$REPO/lib/test-command.sh' '$REPO' '$T' | grep -q 'tack config check-fast'"
+git -C "$T" config tack.enabled true
+check "detect: tack status names the test command" "(cd '$T' && '$REPO/bin/tack' status) | grep -qx 'test command: make lint (from tack config check-fast)'"
+check "detect: the startup context names it so the assistant does not probe" "(cd '$T' && '$REPO/bin/tack' context) | grep -q '^Test command: make lint (from tack config check-fast)'"
+
+echo "Claude hook: stop-check runs the tests"
+G="$WORK/gate-repo"
+git init -q -b main "$G"
+git -C "$G" config tack.enabled true
+mkdir -p "$G/tests" && printf 'def test_f(): pass\n' > "$G/tests/test_app.py" && printf 'def f(): pass\n' > "$G/app.py"
+printf 'test:\n\t@test -f ok\n' > "$G/Makefile"
+git -C "$G" add -A && git -C "$G" commit -q -m "chore: initial commit" && git -C "$G" switch -q -c feat/x
+gate() { printf '{"cwd":"%s","stop_hook_active":false}' "$G" | bash "$STOP"; }
+check "test gate: untrusted projects never run the tests" "! gate | grep -q 'the tests'"
+git -C "$G" config tack.trusted true
+check "test gate: nothing runs while no code changed" "! gate | grep -q 'the tests'"
+printf 'def f(): return 1\n' > "$G/app.py" && printf 'def test_f(): assert True\n' > "$G/tests/test_app.py"
+check "test gate: failing tests after a code change are reported" "gate | grep -q 'the tests fail: make test (from Makefile test target)'"
+: > "$G/ok"
+check "test gate: passing tests are not reported" "! gate | grep -q 'the tests'"
+
 echo "Activity log (tack config activity-log, tack log)"
 LOG="$WORK/state/agent-tack/activity.log"
 A="$WORK/activity-repo"

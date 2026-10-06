@@ -127,11 +127,13 @@ tack trust                                    # the check runs project code, lik
 tack config check-fast "uv run pytest -q -x"  # or: npm test -- --bail, make lint, ...
 ```
 
-After each file edit, Claude Code runs the command from the repository root. When it fails, the assistant sees the exit code and the last 40 lines of output and fixes the problem before continuing. Keep it fast (a focused test target or a linter); it times out after 60 seconds where `timeout` is available. Remove it with `tack config check-fast --unset`.
+Without it, tack detects the project's test command (a `make test` target, the `package.json` test script with npm, pnpm, yarn or bun, pytest with or without uv, `cargo test` or `go test ./...`). `tack status` and the startup context name it, so the assistant runs it instead of searching for one, and in trusted projects the check before stopping runs it whenever source or test files changed.
+
+With `check-fast` set, after each file edit Claude Code runs the command from the repository root. When it fails, the assistant sees the exit code and the last 40 lines of output and fixes the problem before continuing. Keep it fast (a focused test target or a linter); it times out after 60 seconds where `timeout` is available. Remove it with `tack config check-fast --unset`.
 
 ### Check before stopping and the docs map
 
-Before Claude Code's assistant ends a turn in an enabled project, a Stop hook looks for unfinished business: uncommitted changes, a failing fast check, source files changed on the branch while no test changed (only in projects that have tests; docs, config and deletions do not count), a stale handoff, and code changed on the branch without the docs that `docs-map.txt` pairs with it. If it finds any, the assistant gets the list once and either fixes it or explains why it stays; the next stop always goes through. Turn it off with `tack config stop-check false`.
+Before Claude Code's assistant ends a turn in an enabled project, a Stop hook looks for unfinished business: uncommitted changes, failing tests (the fast check or the detected test command, in trusted projects), source files changed on the branch while no test changed (only in projects that have tests; docs, config and deletions do not count), a stale handoff, and code changed on the branch without the docs that `docs-map.txt` pairs with it. If it finds any, the assistant gets the list once and either fixes it or explains why it stays; the next stop always goes through. Turn it off with `tack config stop-check false`.
 
 A handoff a commit or two behind is normal mid-task, so it is reported only once it is `handoff-stale-commits` code commits behind (default 3; commits that only touch plans, handoffs or `docs/archive/` do not count), or as soon as that work is pushed, or when it names another branch:
 
