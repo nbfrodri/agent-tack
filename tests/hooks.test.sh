@@ -23,7 +23,7 @@ git config --global init.defaultBranch main
 git config --global core.hooksPath "$REPO/git-hooks"
 git config --global commit.gpgsign false
 # Test repos behave as harness-enabled projects unless a test disables them
-git config --global harness.enabled true
+git config --global tack.enabled true
 CLI="$REPO/bin/tack"
 
 new_repo() {
@@ -77,11 +77,11 @@ setup_commit "$(printf 'fix: w\n\nCo-authored-by: Copilot <175728472+Copilot@use
 check "Copilot and model-named Claude trailers removed" "! last_message | grep -qiE 'copilot|claude'"
 
 echo "commit-msg: per-repo opt-out"
-git -C "$R" config harness.conventionalCommits false
+git -C "$R" config tack.conventionalCommits false
 check "free-form message allowed after opt-out" "commit 'Update stuff'"
 setup_commit "$(printf 'Update more\n\nCo-Authored-By: Claude <noreply@anthropic.com>\n')"
 check "AI attribution still removed after opt-out" "! last_message | grep -qi claude"
-git -C "$R" config --unset harness.conventionalCommits
+git -C "$R" config --unset tack.conventionalCommits
 
 echo "pre-commit: secrets never get committed"
 S="$WORK/secrets"
@@ -116,7 +116,7 @@ stage .env "API_KEY=abc"
 check "override allows a deliberate commit" "TACK_ALLOW_SECRETS=1 try_commit"
 stage .env.prod "API_KEY=abc"
 check "the former override name still allows it" "HARNESS_ALLOW_SECRETS=1 try_commit"
-git -C "$S" config harness.enabled false
+git -C "$S" config tack.enabled false
 stage .env.local "X=1"
 check "also active in projects that aren't enabled" "! try_commit"
 reset_index
@@ -184,9 +184,9 @@ git -C "$R" tag -a v1.0.0 -m "moved" HEAD~1
 check "moving a published tag is refused" "! push --force origin v1.0.0"
 check "override allows a deliberate tag change" "TACK_ALLOW_TAG=1 push --force origin v1.0.0"
 check "the former force-push and tag override names still count" "env -u TACK_ALLOW_TAG bash -c '. \"$REPO/git-hooks/_chain\" && HARNESS_ALLOW_FORCE_PUSH=1 override_set FORCE_PUSH && HARNESS_ALLOW_TAG=1 override_set TAG && ! override_set TAG'"
-git -C "$R" config harness.enabled false
+git -C "$R" config tack.enabled false
 check "projects not enabled can push any tag" "push origin release-1"
-git -C "$R" config --unset harness.enabled
+git -C "$R" config --unset tack.enabled
 git -C "$R" switch -q feat/x
 
 echo "pre-push: local pre-push hook receives stdin"
@@ -391,7 +391,7 @@ check "no jq: session-context still answers" "printf '{\"cwd\":\"%s\"}' '$R' | P
 echo "Switch: harness enable/disable/status"
 R="$WORK/switch"
 new_repo "$R"
-git config --global --unset harness.enabled
+git config --global --unset tack.enabled
 status_of() { (cd "${1:-$R}" && "$CLI" status) | sed -n '1p'; }
 check "disabled by default" "[ \"\$(status_of)\" = disabled ]"
 check "status exits 1 when disabled" "! (cd '$R' && '$CLI' status --quiet)"
@@ -409,10 +409,11 @@ check "enable --shared creates .tack" "[ -f '$R/.tack' ]"
 git -C "$R" config --unset tack.enabled
 check "the .tack file alone enables it" "[ \"\$(status_of)\" = enabled ]"
 mv "$R/.tack" "$R/.harness"
-check "a legacy .harness file still enables it" "[ \"\$(status_of)\" = enabled ]"
+check "a former .harness file no longer enables it" "[ \"\$(status_of)\" = disabled ]"
+mv "$R/.harness" "$R/.tack"
 (cd "$R" && "$CLI" disable >/dev/null)
-check "disable removes the file" "[ ! -e '$R/.harness' ] && [ \"\$(status_of)\" = disabled ]"
-git config --global harness.enabled true
+check "disable removes the file" "[ ! -e '$R/.tack' ] && [ \"\$(status_of)\" = disabled ]"
+git config --global tack.enabled true
 check "global true enables every repo" "[ \"\$(status_of '$WORK/repo')\" = enabled ]"
 check "a local false wins over global true" "[ \"\$(status_of)\" = disabled ]"
 check "outside a git repo: disabled" "[ \"\$(status_of '$WORK')\" = disabled ]"
@@ -427,21 +428,21 @@ check "output is valid JSON for SessionStart" "session '$R' | python3 -c 'import
 check "auto mode: asks the assistant to pick a level per task" "session '$WORK/repo' | grep -q 'mode: auto.*pick the workflow level'"
 check "every mode: asks the assistant to ask when in doubt" "session '$WORK/repo' | grep -q 'Ask the user whenever you have a real doubt'"
 check "every mode: states the core rules without loading the skill" "session '$WORK/repo' | grep -q 'At every level: work on a branch off main, test the change, and make a Conventional Commit for each verified milestone'"
-git -C "$WORK/repo" config harness.mode lite
+git -C "$WORK/repo" config tack.mode lite
 check "fixed mode: names the level to apply" "session '$WORK/repo' | grep -q 'mode: lite.*Apply the lite mode rules below'"
 check "fixed mode: injects that mode's rules" "session '$WORK/repo' | grep -q 'Review: read your own diff before committing.'"
-git -C "$WORK/repo" config --unset harness.mode
+git -C "$WORK/repo" config --unset tack.mode
 check "auto mode: lists the modes to choose from" "session '$WORK/repo' | grep -q 'strict: several modules'"
 check "token toggles: defaults add nothing" "! session '$WORK/repo' | grep -q 'Token settings'"
-git -C "$WORK/repo" config harness.replyStyle terse
-git -C "$WORK/repo" config harness.skillLoading minimal
-git -C "$WORK/repo" config harness.subagentModel economical
+git -C "$WORK/repo" config tack.replyStyle terse
+git -C "$WORK/repo" config tack.skillLoading minimal
+git -C "$WORK/repo" config tack.subagentModel economical
 check "token toggles: terse replies are requested" "session '$WORK/repo' | grep -q 'Token settings:.*Keep replies terse'"
 check "token toggles: minimal skill loading is requested" "session '$WORK/repo' | grep -q 'Load a skill only when'"
 check "token toggles: economical subagents are requested" "session '$WORK/repo' | grep -q 'most economical model'"
-git -C "$WORK/repo" config --unset harness.replyStyle
-git -C "$WORK/repo" config --unset harness.skillLoading
-git -C "$WORK/repo" config --unset harness.subagentModel
+git -C "$WORK/repo" config --unset tack.replyStyle
+git -C "$WORK/repo" config --unset tack.skillLoading
+git -C "$WORK/repo" config --unset tack.subagentModel
 context_of() { session "$1" | python3 -c 'import json,sys; print(json.load(sys.stdin)["hookSpecificOutput"]["additionalContext"])'; }
 printf '# AGENTS.md\n%s\n' "$(printf 'project rule %.0s' $(seq 1 60))" > "$WORK/repo/AGENTS.md"
 # shellcheck disable=SC2034 # Read inside check's eval strings.
@@ -526,17 +527,17 @@ for ci_mode in lite lean; do
   check "ci-watch: $ci_mode mode does not wait for CI" "! session '$WORK/repo' | grep -q 'CI: after a push'"
 done
 git -C "$WORK/repo" config --unset tack.mode
-git -C "$WORK/repo" config harness.mode lean
+git -C "$WORK/repo" config tack.mode lean
 check "lean, now an alias of lite: the rules say not to load dev-workflow" "session '$WORK/repo' | grep -q 'do not load the \`dev-workflow\` skill'"
 check "lean, now an alias of lite: lite's rules apply" "session '$WORK/repo' | grep -q 'Review: read your own diff before committing.'"
-git -C "$WORK/repo" config harness.mode lite
+git -C "$WORK/repo" config tack.mode lite
 check "lite mode: self-contained, without dev-workflow" "session '$WORK/repo' | grep -q 'do not load the \`dev-workflow\` skill'"
-check "auto mode: lean is no longer listed" "git -C '$WORK/repo' config harness.mode auto && ! session '$WORK/repo' | grep -q '^- lean:'"
-git -C "$WORK/repo" config harness.mode unleash
+check "auto mode: lean is no longer listed" "git -C '$WORK/repo' config tack.mode auto && ! session '$WORK/repo' | grep -q '^- lean:'"
+git -C "$WORK/repo" config tack.mode unleash
 check "unleash mode: warns loudly at session start" "session '$WORK/repo' | grep -q 'WARNING: unleash mode is active'"
-git -C "$WORK/repo" config harness.mode turbo
+git -C "$WORK/repo" config tack.mode turbo
 check "invalid mode: falls back to auto" "session '$WORK/repo' | grep -q 'mode: auto'"
-git -C "$WORK/repo" config --unset harness.mode
+git -C "$WORK/repo" config --unset tack.mode
 
 echo "Claude hook: budget"
 BUDGET="$REPO/hooks/claude/budget.sh"
@@ -544,19 +545,19 @@ export XDG_STATE_HOME="$WORK/state"
 budget() { printf '{"session_id":"%s","cwd":"%s","tool_name":"Read"}' "$1" "$2" | bash "$BUDGET"; }
 B="$WORK/budget-repo"
 git init -q "$B"
-git -C "$B" config harness.enabled true
-git -C "$B" config harness.mode unleash
-git -C "$B" config harness.unleashMaxToolCalls 2
+git -C "$B" config tack.enabled true
+git -C "$B" config tack.mode unleash
+git -C "$B" config tack.unleashMaxToolCalls 2
 check "budget: calls under the limit pass" "[ -z \"\$(budget s1 '$B')\" ] && [ -z \"\$(budget s1 '$B')\" ]"
 check "budget: the call past the limit is denied" "budget s1 '$B' | grep -q '\"permissionDecision\":\"deny\"'"
 check "budget: the reason names the limit" "budget s1 '$B' | grep -q 'limit of 2 tool calls'"
 check "budget: each session has its own count" "[ -z \"\$(budget s2 '$B')\" ]"
 check "budget: the count lives in the state directory" "[ -f '$WORK/state/agent-tack/budget/s1' ]"
 check "budget: unsafe session ids are ignored" "[ -z \"\$(budget '../escape' '$B')\" ] && [ ! -e '$WORK/state/agent-tack/escape' ]"
-git -C "$B" config harness.mode lite
+git -C "$B" config tack.mode lite
 check "budget: other modes are never limited" "[ -z \"\$(budget s1 '$B')\" ]"
-git -C "$B" config harness.mode unleash
-git -C "$B" config --unset harness.unleashMaxToolCalls
+git -C "$B" config tack.mode unleash
+git -C "$B" config --unset tack.unleashMaxToolCalls
 check "budget: no limit configured means no limit" "[ -z \"\$(budget s1 '$B')\" ]"
 check "budget: malformed input is ignored" "[ -z \"\$(printf 'not json' | bash '$BUDGET')\" ]"
 check "budget: registered for every tool" "grep -q 'budget.sh' '$REPO/claude/settings.json'"
@@ -594,21 +595,21 @@ echo "Claude hook: fast-check"
 FAST="$REPO/hooks/claude/fast-check.sh"
 F="$WORK/fast-repo"
 git init -q "$F"
-git -C "$F" config harness.enabled true
-git -C "$F" config harness.trusted true
+git -C "$F" config tack.enabled true
+git -C "$F" config tack.trusted true
 edited() { printf '{"cwd":"%s","tool_name":"Edit","tool_input":{"file_path":"%s/a.py"}}' "$F" "$F" | bash "$FAST"; }
 check "fast-check: silent when no check is configured" "[ -z \"\$(edited)\" ]"
-git -C "$F" config harness.checkFast "true"
+git -C "$F" config tack.checkFast "true"
 check "fast-check: silent when the check passes" "[ -z \"\$(edited)\" ]"
-git -C "$F" config harness.checkFast "echo 'tests/test_a.py::test_x FAILED'; exit 1"
+git -C "$F" config tack.checkFast "echo 'tests/test_a.py::test_x FAILED'; exit 1"
 check "fast-check: a failing check is reported to the assistant" "edited | grep -q '\"decision\":\"block\"'"
 check "fast-check: the report includes the check output" "edited | grep -q 'test_x FAILED'"
-git -C "$F" config harness.trusted false
+git -C "$F" config tack.trusted false
 check "fast-check: untrusted projects never run the check" "[ -z \"\$(edited)\" ]"
-git -C "$F" config harness.trusted true
-git -C "$F" config harness.enabled false
+git -C "$F" config tack.trusted true
+git -C "$F" config tack.enabled false
 check "fast-check: disabled projects never run the check" "[ -z \"\$(edited)\" ]"
-git -C "$F" config harness.enabled true
+git -C "$F" config tack.enabled true
 check "fast-check: malformed input is ignored" "[ -z \"\$(printf 'not json' | bash '$FAST')\" ]"
 check "fast-check: registered after edits" "grep -q 'fast-check.sh' '$REPO/claude/settings.json'"
 
@@ -616,7 +617,7 @@ echo "Claude hook: stop-check"
 STOP="$REPO/hooks/claude/stop-check.sh"
 P2="$WORK/stop-repo"
 git init -q -b main "$P2"
-git -C "$P2" config harness.enabled true
+git -C "$P2" config tack.enabled true
 mkdir -p "$P2/bin" "$P2/docs/handoffs"
 printf 'bin/* | docs/usage.md\n' > "$P2/docs-map.txt"
 printf 'usage\n' > "$P2/docs/usage.md"
@@ -671,10 +672,10 @@ git -C "$P2" add later.txt
 GIT_COMMITTER_DATE="2030-01-01T00:00:03" git -C "$P2" commit -q -m "feat: local work"
 check "stop-check: work partly pushed past the handoff is still reported" "stopping | grep -q 'handoff may be stale'"
 git -C "$P2" config --unset tack.handoffStaleCommits
-git -C "$P2" config harness.stopCheck false
+git -C "$P2" config tack.stopCheck false
 check "stop-check: can be turned off" "[ -z \"\$(stopping)\" ]"
-git -C "$P2" config --unset harness.stopCheck
-git -C "$P2" config harness.enabled false
+git -C "$P2" config --unset tack.stopCheck
+git -C "$P2" config tack.enabled false
 check "stop-check: disabled projects are left alone" "[ -z \"\$(stopping)\" ]"
 check "stop-check: malformed input is ignored" "[ -z \"\$(printf 'not json' | bash '$STOP')\" ]"
 check "stop-check: registered for Stop" "grep -q 'stop-check.sh' '$REPO/claude/settings.json'"
@@ -793,7 +794,7 @@ FORMAT="$REPO/hooks/claude/format-file.sh"
 P="$WORK/project"
 mkdir -p "$P/node_modules/.bin" "$P/src"
 git init -q "$P"
-git -C "$P" config --local harness.trusted true
+git -C "$P" config --local tack.trusted true
 cat > "$P/node_modules/.bin/prettier" <<'EOF'
 #!/usr/bin/env bash
 for a in "$@"; do case "$a" in -*) ;; *) echo "// formatted" >> "$a" ;; esac; done
@@ -807,10 +808,10 @@ echo '{}' > "$P/.prettierrc"
 format "$P/src/a.ts"
 check "prettier configured → file formatted" "grep -q formatted '$P/src/a.ts'"
 echo "const b=2" > "$P/src/b.ts"
-git -C "$P" config harness.enabled false
+git -C "$P" config tack.enabled false
 format "$P/src/b.ts"
 check "project not enabled → its formatter binaries are never run" "! grep -q formatted '$P/src/b.ts'"
-git -C "$P" config --unset harness.enabled
+git -C "$P" config --unset tack.enabled
 mkdir -p "$WORK/no-git"
 echo "const c=3" > "$WORK/no-git/c.ts"
 format "$WORK/no-git/c.ts"
@@ -825,7 +826,7 @@ done
 RS="$WORK/rust-project"
 mkdir -p "$RS/src"
 git init -q "$RS"
-git -C "$RS" config --local harness.trusted true
+git -C "$RS" config --local tack.trusted true
 printf '[package]\nname = "demo"\nedition = "2021"\n' > "$RS/Cargo.toml"
 echo "fn main(){}" > "$RS/src/main.rs"
 printf '{"tool_input":{"file_path":"%s"}}' "$RS/src/main.rs" | PATH="$STUBS:$PATH" bash "$FORMAT"

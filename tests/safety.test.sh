@@ -160,7 +160,7 @@ echo 'format-file: workflow activation is separate from local trust'
 new_repo formatter
 mkdir -p "$R/node_modules/.bin"
 printf '{}\n' > "$R/.prettierrc"
-printf '# shared activation\n' > "$R/.harness"
+printf '# shared activation\n' > "$R/.tack"
 cat > "$R/node_modules/.bin/prettier" <<'FORMATTER'
 #!/usr/bin/env bash
 printf 'ran\n' >> formatter-calls
@@ -173,16 +173,16 @@ format() {
 not_formatted() { rm -f "$R/formatter-calls"; format && [ ! -e "$R/formatter-calls" ]; }
 was_formatted() { rm -f "$R/formatter-calls"; format && [ -f "$R/formatter-calls" ]; }
 check 'a shared marker alone never executes the formatter' not_formatted
-git config --global harness.trusted true
+git config --global tack.trusted true
 check 'global trust never authorises a project formatter' not_formatted
-git -C "$R" config --local harness.trusted false
+git -C "$R" config --local tack.trusted false
 check 'explicit local false blocks a formatter despite global trust' not_formatted
-git -C "$R" config --local harness.trusted true
+git -C "$R" config --local tack.trusted true
 check 'explicit local trust and activation allow formatting' was_formatted
-git -C "$R" config --local harness.enabled false
+git -C "$R" config --local tack.enabled false
 check 'trust alone does not activate the workflow' not_formatted
-git -C "$R" config --local --unset harness.enabled
-git -C "$R" config --local --unset harness.trusted
+git -C "$R" config --local --unset tack.enabled
+git -C "$R" config --local --unset tack.trusted
 check 'removing local trust prevents execution immediately' not_formatted
 
 echo

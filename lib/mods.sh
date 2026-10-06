@@ -8,7 +8,7 @@ MODS_LEGACY_MARKETPLACE=agent-harness-mods
 
 mods_has() { command -v "$1" >/dev/null 2>&1; }
 
-# Success unless the global tack.mods (or legacy harness.mods) is false.
+# Success unless the global tack.mods is false.
 mods_enabled() {
   local value
   mods_has git || return 0

@@ -1,5 +1,5 @@
-# Merges the harness settings into a Claude Code settings.json (same behaviour as settings-merge.py).
-# Usage: jq -s -f lib/settings-merge.jq <current settings.json> <harness settings.json>
+# Merges tack's settings into a Claude Code settings.json (same behaviour as settings-merge.py).
+# Usage: jq -s -f lib/settings-merge.jq <current settings.json> <tack settings.json>
 def ours: type == "object" and ((.command? // "") | tostring | (contains("#tack") or contains("#harness") or contains("#agent-config")));  # "#harness" and "#agent-config" are former tags
 def clean: if ours then empty elif type == "object" and (.hooks | type) == "array" then .hooks |= map(select(ours | not)) | select(.hooks | length > 0) else . end;
 .[0] as $d | .[1] as $s

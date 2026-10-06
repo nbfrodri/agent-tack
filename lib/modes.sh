@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Workflow modes as data: built-in files in modes/, user files in the user's config directory.
-# Sourced by bin/tack, which sets HARNESS_ROOT to the checkout.
+# Sourced by bin/tack, which sets TACK_ROOT to the checkout.
 
 user_modes_dir() { printf '%s/modes\n' "$(tool_dir "${XDG_CONFIG_HOME:-$HOME/.config}")"; }
 
@@ -9,7 +9,7 @@ mode_file() {
   case "$1" in '' | *[!a-z0-9-]*) return 1 ;; esac
   # lean was merged into lite (#99); the name keeps working until tack migrate rewrites it.
   [ "$1" != lean ] || set -- lite
-  if [ -f "$HARNESS_ROOT/modes/$1.md" ]; then printf '%s\n' "$HARNESS_ROOT/modes/$1.md"
+  if [ -f "$TACK_ROOT/modes/$1.md" ]; then printf '%s\n' "$TACK_ROOT/modes/$1.md"
   elif [ -f "$(user_modes_dir)/$1.md" ]; then printf '%s\n' "$(user_modes_dir)/$1.md"
   else return 1; fi
 }
@@ -44,10 +44,10 @@ effective_mode() {
 list_modes() {
   local file name
   printf '%-10s%-10s%s\n' auto built-in 'the assistant picks a mode per task and states it'
-  for file in "$HARNESS_ROOT"/modes/*.md "$(user_modes_dir)"/*.md; do
+  for file in "$TACK_ROOT"/modes/*.md "$(user_modes_dir)"/*.md; do
     [ -f "$file" ] || continue
     name="$(basename "$file" .md)"
-    case "$file" in "$HARNESS_ROOT"/*) source_label=built-in ;; *) source_label=user ;; esac
+    case "$file" in "$TACK_ROOT"/*) source_label=built-in ;; *) source_label=user ;; esac
     printf '%-10s%-10s%s\n' "$name" "$source_label" "$(mode_field "$file" When)"
   done
 }
@@ -69,7 +69,7 @@ show_mode() {
   mode="${mode%% *}"
   if [ "$mode" = auto ]; then
     echo 'Modes to choose from:'
-    for file in "$HARNESS_ROOT"/modes/*.md "$(user_modes_dir)"/*.md; do
+    for file in "$TACK_ROOT"/modes/*.md "$(user_modes_dir)"/*.md; do
       [ -f "$file" ] || continue
       printf -- '- %s: %s\n' "$(basename "$file" .md)" "$(mode_field "$file" When)"
     done

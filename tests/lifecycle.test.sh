@@ -141,7 +141,7 @@ H="$WORK/preview-all"
 mkdir -p "$H" "$WORK/fake-cli" "$WORK/repo-preview"
 cp -R "$REPO/bin" "$REPO/git-hooks" "$REPO/lib" "$REPO/global" "$REPO/skills" "$REPO/agents" "$REPO/claude" "$WORK/repo-preview/"
 cp "$REPO/install.sh" "$REPO/uninstall.sh" "$REPO/targets.txt" "$REPO/plugins.txt" "$WORK/repo-preview/"
-chmod -x "$WORK/repo-preview/bin/harness" "$WORK/repo-preview/git-hooks/_chain" "$WORK/repo-preview/git-hooks/commit-msg" "$WORK/repo-preview/git-hooks/pre-push"
+chmod -x "$WORK/repo-preview/bin/tack" "$WORK/repo-preview/git-hooks/_chain" "$WORK/repo-preview/git-hooks/commit-msg" "$WORK/repo-preview/git-hooks/pre-push"
 cat > "$WORK/fake-cli/claude" <<'STUB'
 #!/bin/sh
 echo invoked >> "$HOME/plugin-calls"
@@ -149,7 +149,7 @@ STUB
 chmod +x "$WORK/fake-cli/claude"
 check 'dry-run with available plugin CLI succeeds' "HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 PATH='$WORK/fake-cli:$PATH' '$WORK/repo-preview/install.sh' --dry-run > '$WORK/preview-output'"
 check 'dry-run never invokes plugins or creates HOME state' "[ ! -e '$H/plugin-calls' ] && [ -z \"\$(find '$H' -mindepth 1 -print)\" ]"
-check 'dry-run never changes repository executable permissions' "[ ! -x '$WORK/repo-preview/bin/harness' ] && [ ! -x '$WORK/repo-preview/git-hooks/_chain' ] && [ ! -x '$WORK/repo-preview/git-hooks/commit-msg' ] && [ ! -x '$WORK/repo-preview/git-hooks/pre-push' ]"
+check 'dry-run never changes repository executable permissions' "[ ! -x '$WORK/repo-preview/bin/tack' ] && [ ! -x '$WORK/repo-preview/git-hooks/_chain' ] && [ ! -x '$WORK/repo-preview/git-hooks/commit-msg' ] && [ ! -x '$WORK/repo-preview/git-hooks/pre-push' ]"
 
 
 H="$WORK/changed-targets"
@@ -178,7 +178,6 @@ H="$WORK/recorded-move"
 mkdir -p "$H"
 check 'install records Git source for a later checkout move' "HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 '$WORK/repo-preview/install.sh' --skip-plugins > '$WORK/recorded-move.log' 2>&1"
 mv "$WORK/repo-preview" "$WORK/repo-moved"
-rm "$H/.agents/harness" "$H/.local/bin/harness"
 check 'ownership record proves a moved checkout without canonical links' 'run install.sh --skip-plugins'
 check 'recorded moved Git hooks migrate to the current checkout' "[ \"\$(HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 git config --global --get core.hooksPath)\" = '$REPO/git-hooks' ]"
 

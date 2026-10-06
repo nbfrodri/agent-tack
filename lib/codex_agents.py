@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render a harness agent (agents/<name>.md) as a Codex custom agent (TOML).
+"""Render a tack agent (agents/<name>.md) as a Codex custom agent (TOML).
 
 Usage: codex_agents.py <agent.md>   prints the TOML on stdout
 """

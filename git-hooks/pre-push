@@ -79,4 +79,4 @@ EOF
   fi
 done < "$stdin_file"
 
-HARNESS_HOOK_STDIN_FILE="$stdin_file" run_local_hook pre-push "$@"
+TACK_HOOK_STDIN_FILE="$stdin_file" run_local_hook pre-push "$@"

@@ -54,7 +54,7 @@ export function crossedWarning(before: UsageWindow[], after: UsageWindow[]): str
   return undefined
 }
 
-// A cost limit applies only in a project-only mode (harness prints a WARNING line for those)
+// A cost limit applies only in a project-only mode (tack prints a WARNING line for those)
 // and only when `tack config unleash-max-cost` holds a positive amount.
 export function costLimit(modeShow: string, configValue: string): number | undefined {
   if (!modeShow.startsWith('WARNING:')) return undefined

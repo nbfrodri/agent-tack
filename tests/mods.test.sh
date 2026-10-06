@@ -101,13 +101,13 @@ check "--skip-mods installs no mod" "! grep -q '$MARKET' '$STATE/calls' && ! ins
 check "--skip-mods still installs plugins.txt plugins" "installed context7@claude-plugins-official"
 check "--skip-mods says so" "grep -q 'skipped (--skip-mods)' '$H.log'"
 fresh_home skip-config
-git_global harness.mods false
-check "harness.mods false exits 0" "install"
-check "harness.mods false installs no mod" "! grep -q '$MARKET' '$STATE/calls'"
-check "harness.mods false says so" "grep -q 'harness.mods' '$H.log'"
+git_global tack.mods false
+check "tack.mods false exits 0" "install"
+check "tack.mods false installs no mod" "! grep -q '$MARKET' '$STATE/calls'"
+check "tack.mods false says so" "grep -q 'tack.mods' '$H.log'"
 fresh_home config-true
-git_global harness.mods true
-check "harness.mods true installs the mods" "install && installed usage-band@$MARKET"
+git_global tack.mods true
+check "tack.mods true installs the mods" "install && installed usage-band@$MARKET"
 fresh_home skip-plugins
 check "--skip-plugins exits 0" "install --skip-plugins"
 check "--skip-plugins also skips the mods" "[ ! -s '$STATE/calls' ]"
@@ -158,7 +158,7 @@ install
 check "installed mods are reported" "doctor; grep -q 'OK   mod installed: usage-band' '$H.log' && grep -q 'OK   mod installed: agent-activity' '$H.log'"
 echo "" > "$STATE/plugins"
 check "missing mods are a warning" "doctor; grep -q 'WARN mod not installed: usage-band' '$H.log'"
-git_global harness.mods false
+git_global tack.mods false
 check "disabled mods are reported as such" "doctor; grep -q 'mods disabled' '$H.log'"
 
 echo "Former marketplace name"

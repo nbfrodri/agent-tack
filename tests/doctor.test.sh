@@ -44,11 +44,11 @@ check 'skills of a deselected group are not reported missing' [ "$RC" -eq 0 ]
 check 'the installed skill groups are reported' grep -q "OK   skill groups: core, process" "$WORK/report"
 git config --global --unset tack.skillGroups
 "$REPO/install.sh" --skip-plugins >"$WORK/install.log" 2>&1
-rm "$HOME/.agents/harness"
-ln -s "$WORK/missing" "$HOME/.agents/harness"
+rm "$HOME/.agents/tack"
+ln -s "$WORK/missing" "$HOME/.agents/tack"
 run_doctor
 check 'broken canonical link is an error' [ "$RC" -eq 1 ]
-ln -sf "$REPO" "$HOME/.agents/harness"
+ln -sf "$REPO" "$HOME/.agents/tack"
 rm "$HOME/.codex/AGENTS.md"
 printf 'unmanaged\n' > "$HOME/.codex/AGENTS.md"
 run_doctor
@@ -118,15 +118,15 @@ check 'disabled untrusted project is healthy' [ "$RC" -eq 0 ]
 check 'disabled state is reported' grep -q 'workflow: disabled' "$WORK/report"
 check 'untrusted state is reported' grep -q 'formatter: untrusted' "$WORK/report"
 check 'project workflow mode is reported' grep -q 'OK   current project mode: auto (default)' "$WORK/report"
-git -C "$WORK/outside" config harness.mode turbo
+git -C "$WORK/outside" config tack.mode turbo
 run_doctor
 check 'invalid workflow mode is a warning' [ "$RC" -eq 0 ]
 check 'invalid workflow mode warning names the value' grep -q 'WARN current project mode: auto (invalid local value: turbo)' "$WORK/report"
-git -C "$WORK/outside" config harness.mode unleash
+git -C "$WORK/outside" config tack.mode unleash
 run_doctor
 check 'unleash mode is a visible warning' grep -q 'WARN current project mode: unleash (local); autonomous' "$WORK/report"
 check 'unleash on the main branch is flagged' grep -q 'WARN current branch is .* in a project-only mode' "$WORK/report"
-git -C "$WORK/outside" config --unset harness.mode
+git -C "$WORK/outside" config --unset tack.mode
 git -C "$WORK/outside" config core.hooksPath /project/deliberate/hooks
 run_doctor
 check 'local unrelated hooksPath is a warning' [ "$RC" -eq 0 ]
