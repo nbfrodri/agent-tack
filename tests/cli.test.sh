@@ -140,21 +140,11 @@ cd "$WORK/project" || exit 1
 
 USER_MODES="$XDG_CONFIG_HOME/agent-tack/modes"
 git config --local harness.mode strict
-check "legacy harness.* keys are still honoured" expect_mode 'strict (local)'
-git config --local tack.mode lite
-check "tack.* keys win over legacy harness.* keys" expect_mode 'lite (local)'
+check "former harness.* keys are no longer read" expect_mode 'auto (default)'
+git config --local --unset harness.mode
 check "setting a value succeeds" expect_exit 0 "$CLI" mode standard
 check "writes go to the tack.* key" test "$(git config --local --get tack.mode)" = standard
-check "writes remove the legacy key in that scope" test -z "$(git config --local --get harness.mode)"
 git config --local --unset tack.mode
-git config --local harness.delegation off
-check "config reads legacy keys" expect_mode_like 'off (local)' "$CLI" config delegation
-git config --local --unset harness.delegation
-mkdir -p "$XDG_CONFIG_HOME/agent-harness/modes"
-printf '# legacy\nWhen: an old user mode\nScope: any\n\n- Plan: none.\n' > "$XDG_CONFIG_HOME/agent-harness/modes/legacy.md"
-check "user modes in the former config directory are still found" expect_exit 0 "$CLI" mode legacy
-git config --local --unset tack.mode
-rm -rf "$XDG_CONFIG_HOME/agent-harness"
 check "mode list shows built-in modes" expect_exit 0 "$CLI" mode list
 check "mode list shows each mode's purpose" contains 'lite      built-in  questions, typos'
 check "mode list includes auto" contains 'auto      built-in'
@@ -314,10 +304,8 @@ printf '# Handoff\nStatus: in progress\nNext: implement feature\n' > docs/handof
 check "SessionStart returns valid JSON with project context" expect_exit 0 session
 check "SessionStart preserves quotes and backslashes" session_has_instructions
 mkdir -p "$HOME/.local/bin"
-ln -s "$CLI" "$HOME/.local/bin/harness"
-check "context works through the installed symlink" expect_exit 0 "$HOME/.local/bin/harness" context
-check "the legacy harness alias runs tack" expect_exit 0 "$REPO/bin/harness" status --quiet
-check "the alias stays silent when not run by a person" test ! -s "$WORK/output"
+ln -s "$CLI" "$HOME/.local/bin/tack"
+check "context works through the installed symlink" expect_exit 0 "$HOME/.local/bin/tack" context
 mkdir nested
 cd nested || exit 1
 check "context finds root from a nested directory" expect_exit 0 "$CLI" context
@@ -357,7 +345,7 @@ check "help documents doctor" expect_exit 0 "$CLI" help
 check "help includes doctor syntax" contains 'doctor'
 cd "$HOME" || exit 1
 check "doctor dispatches installation diagnostics outside Git" expect_exit 1 "$CLI" doctor
-check "doctor diagnoses missing installed canonical link" contains "missing managed symlink: $HOME/.agents/harness"
+check "doctor diagnoses missing installed canonical link" contains "missing managed symlink: $HOME/.agents/tack"
 
 # Reports over the activity log: a fixture with today's turns and one from long ago.
 out_matches() { grep -Eq -- "$1" "$WORK/output"; }

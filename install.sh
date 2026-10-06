@@ -222,7 +222,7 @@ $skill_dirs
 EOF
   done
 
-  section "Old names (agent-config)"
+  section "Old names (agent-config, harness)"
   # Links left by versions of this repo named agent-config
   local old
   for old in "$HOME/.local/bin/agent-config" "$HOME/.agents/agent-config"; do
@@ -231,17 +231,23 @@ EOF
       else rm -f "$old" && ok "removed old link $old"; fi
     fi
   done
+  # Links to this checkout under the former harness name; one that took the place of a file of
+  # yours stays until ./uninstall.sh restores that file.
+  for old in "$HOME/.local/bin/harness" "$HOME/.agents/harness"; do
+    [ -L "$old" ] || continue
+    case "$(readlink "$old")" in "$REPO" | "$REPO/bin/harness") ;; *) continue ;; esac
+    if [ "$DRY_RUN" -eq 1 ]; then ok "would remove old link $old"
+    elif ownership_release_link "$old"; then rm -f "$old" && ok "removed old link $old"
+    else warn "kept $old: it replaced a file of yours, which ./uninstall.sh restores"; fi
+  done
 
   section "Config repo link"
   # Canonical path skills and agents use to reach this repo, wherever it is cloned
   link "$REPO" "$HOME/.agents/tack"
-  # Former canonical path, kept for skills and settings written before the rename
-  link "$REPO" "$HOME/.agents/harness"
 
   section "Command"
-  [ "$DRY_RUN" -eq 1 ] || chmod +x "$REPO/bin/tack" "$REPO/bin/harness" 2>/dev/null
+  [ "$DRY_RUN" -eq 1 ] || chmod +x "$REPO/bin/tack" 2>/dev/null
   link "$REPO/bin/tack" "$HOME/.local/bin/tack"
-  link "$REPO/bin/harness" "$HOME/.local/bin/harness"
   case ":$PATH:" in
     *":$HOME/.local/bin:"*) ;;
     *) warn "$HOME/.local/bin is not in PATH: add it to use 'tack enable|disable|status'" ;;
@@ -374,9 +380,9 @@ merge_json() {
 }
 
 # Capture canonical link evidence before installation migrates or repairs those links.
-capture_harness_hooks() {
+capture_tack_hooks() {
   local link_path root target entry
-  : > "$WORKDIR/prior-harness-hooks"
+  : > "$WORKDIR/prior-tack-hooks"
   for link_path in "$HOME/.agents/tack" "$HOME/.agents/harness" "$HOME/.agents/agent-config" \
     "$HOME/.local/bin/tack" "$HOME/.local/bin/harness" "$HOME/.local/bin/agent-config"; do
     [ -L "$link_path" ] || continue
@@ -391,17 +397,17 @@ capture_harness_hooks() {
         esac
         ;;
     esac
-    printf '%s/git-hooks\n' "$root" >> "$WORKDIR/prior-harness-hooks"
+    printf '%s/git-hooks\n' "$root" >> "$WORKDIR/prior-tack-hooks"
   done
   for entry in "$OWNERSHIP"/entries/*; do
     [ -d "$entry" ] || continue
     [ "$(cat "$entry/kind")" = git ] || continue
-    cat "$entry/target" >> "$WORKDIR/prior-harness-hooks"
+    cat "$entry/target" >> "$WORKDIR/prior-tack-hooks"
   done
 }
 
-# Missing checkouts require recorded ownership or a prior canonical harness link.
-is_harness_hooks() {
+# Missing checkouts require recorded ownership or a prior canonical link (tack or a former name).
+is_tack_hooks() {
   local path="$1" known
   if [ -d "$path" ]; then
     [ -e "$path/_chain" ] && { [ -e "$path/../bin/tack" ] || [ -e "$path/../bin/harness" ] || [ -e "$path/../bin/agent-config" ]; }
@@ -409,7 +415,7 @@ is_harness_hooks() {
   fi
   while IFS= read -r known; do
     [ "$known" != "$path" ] || return 0
-  done < "$WORKDIR/prior-harness-hooks"
+  done < "$WORKDIR/prior-tack-hooks"
   return 1
 }
 
@@ -442,7 +448,7 @@ install_git_hooks() {
   current="$(git config --global --get core.hooksPath 2>/dev/null || true)"
   if same_dir "$current" "$target"; then
     ok "core.hooksPath already set to $target"
-  elif [ -z "$current" ] || is_harness_hooks "$current"; then
+  elif [ -z "$current" ] || is_tack_hooks "$current"; then
     if [ "$DRY_RUN" -eq 1 ]; then
       ok "would set core.hooksPath to $target"
     else
@@ -599,7 +605,7 @@ main() {
   HAD_HOOKS=0
   grep -qsE '#(tack|harness)' "$HOME/.claude/settings.json" "$HOME/.codex/hooks.json" && HAD_HOOKS=1
   ownership_init || exit 1
-  capture_harness_hooks
+  capture_tack_hooks
   install_links
   HOOK_FAILURES="$FAILURES"
   merge_settings

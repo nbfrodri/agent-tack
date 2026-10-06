@@ -82,9 +82,7 @@ check_tools_and_links() {
   done
   has readlink || return
   check_link "$REPO" "$HOME/.agents/tack"
-  check_link "$REPO" "$HOME/.agents/harness"
   check_link "$REPO/bin/tack" "$HOME/.local/bin/tack"
-  check_link "$REPO/bin/harness" "$HOME/.local/bin/harness"
   [ -x "$REPO/bin/tack" ] || fail 'tack CLI is not executable'
   ok "skill groups: $(skill_groups_selected)"
   check_skills "$HOME/.agents/skills"

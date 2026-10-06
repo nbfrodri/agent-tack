@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Merges the harness settings into a Claude Code settings.json.
+"""Merges tack's settings into a Claude Code settings.json.
 
-Usage: lib/settings-merge.py <current settings.json> <harness settings.json>   (prints the result)
-Objects are deep-merged and the harness values win; the user's other keys are kept. Hook groups (or
+Usage: lib/settings-merge.py <current settings.json> <tack settings.json>   (prints the result)
+Objects are deep-merged and tack's values win; the user's other keys are kept. Hook groups (or
 Cursor's plain command entries)
 tagged "#tack" (or "#harness" and "#agent-config", the former names) are replaced; the user's own hooks are kept.
 Same behaviour as lib/settings-merge.jq, which install.sh uses when python3 is missing.

@@ -103,11 +103,11 @@ check "writes nothing" "[ ! -e '$SETTINGS' ]"
 
 echo "Toggle"
 fresh_home toggle-off
-git_global harness.vscodeAgentsMd false
+git_global tack.vscodeAgentsMd false
 check "exits 0" "install"
 check "false skips the step" "[ ! -e '$SETTINGS' ] && grep -q 'tack.vscodeAgentsMd' '$H.log'"
 fresh_home toggle-on
-git_global harness.vscodeAgentsMd true
+git_global tack.vscodeAgentsMd true
 check "true applies the step, even with --skip-plugins" "install && [ -f '$SETTINGS' ]"
 
 echo "Editors and platforms"
@@ -158,7 +158,7 @@ printf '{"chat.useAgentsMdFile": false}\n' > "$SETTINGS"
 check "false: warns" "doctor; grep -q 'WARN VS Code (Code): chat.useAgentsMdFile is false' '$H.log'"
 printf '{ // c\n}\n' > "$SETTINGS"
 check "unparsable: warns" "doctor; grep -q 'WARN VS Code (Code): settings.json is not plain JSON' '$H.log'"
-git_global harness.vscodeAgentsMd false
+git_global tack.vscodeAgentsMd false
 check "toggle off is noted" "doctor; grep -q 'VS Code setting disabled' '$H.log'"
 
 echo

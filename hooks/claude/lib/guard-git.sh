@@ -101,7 +101,7 @@ check_git_config() {
         *" --get"* | *" -l "* | *" --list "*) ;;
         *) deny "Changing core.hooksPath disables the git hooks that enforce the user's rules." ;;
       esac ;;
-    *" harness."* | *" tack."*)
+    *" tack."*)
       case "$1" in
         *" --get"* | *" -l "* | *" --list "*) ;;
         *) SETTINGS_WRITE="Changing tack's settings is the user's decision in this mode." ;;
@@ -200,8 +200,8 @@ check_git_push() {
   fi
 }
 
-# Flags harness subcommands that change settings; reads (status, show, list, a lone name) pass.
-check_harness() {
+# Flags tack subcommands that change settings; reads (status, show, list, a lone name) pass.
+check_tack() {
   local positional=0 a
   case "${1:-}" in
     trust | enable | disable | migrate) SETTINGS_WRITE="Changing tack's settings is the user's decision in this mode."; return ;;

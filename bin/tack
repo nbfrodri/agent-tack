@@ -109,7 +109,7 @@ check_args() {
   echo "tack: unsupported arguments for $cmd (see --help)" >&2
   exit 2
 }
-harness_root() {
+tack_root() {
   local script="${BASH_SOURCE[0]}" dir target
   while [ -L "$script" ]; do
     dir="$(cd "$(dirname "$script")" && pwd)" || return 1
@@ -119,7 +119,7 @@ harness_root() {
   cd "$(dirname "$script")/.." && pwd
 }
 
-# Enabled when the repo has a .tack (or legacy .harness) file, or tack.enabled is true.
+# Enabled when the repo has a .tack file, or tack.enabled is true
 # (local, or global to enable it everywhere). An explicit local false wins over the file.
 is_enabled() {
   local root setting
@@ -128,14 +128,14 @@ is_enabled() {
   setting="$(key_get --bool enabled || true)"
   [ "$setting" = "false" ] && return 1
   [ "$setting" = "true" ] && return 0
-  [ -f "$root/.tack" ] || [ -f "$root/.harness" ]
+  [ -f "$root/.tack" ]
 }
 
-HARNESS_ROOT="$(harness_root)" || fail "cannot locate the harness checkout"
+TACK_ROOT="$(tack_root)" || fail "cannot locate the tack checkout"
 # shellcheck source=SCRIPTDIR/../lib/keys.sh
-. "$HARNESS_ROOT/lib/keys.sh"
+. "$TACK_ROOT/lib/keys.sh"
 # shellcheck source=SCRIPTDIR/../lib/modes.sh
-. "$HARNESS_ROOT/lib/modes.sh"
+. "$TACK_ROOT/lib/modes.sh"
 
 is_trusted() {
   [ "$(key_get --bool local trusted)" = true ]
@@ -156,7 +156,7 @@ case "$cmd" in
     done
     require_repo
     if [ "$scaffold" -eq 1 ]; then
-      bash "$HARNESS_ROOT/lib/scaffold.sh" "$HARNESS_ROOT" "$root" || fail "cannot create the docs structure"
+      bash "$TACK_ROOT/lib/scaffold.sh" "$TACK_ROOT" "$root" || fail "cannot create the docs structure"
     fi
     if [ "$shared" -eq 1 ]; then
       printf '# This project uses the tack workflow (https://github.com/nbfrodri/agent-tack).\n' > "$root/.tack" \
@@ -170,7 +170,7 @@ case "$cmd" in
       echo "Enabled for this clone (git config tack.enabled true)."
     fi
     # The test gate before stopping runs project code, so it waits for the user's trust.
-    detected="$(bash "$HARNESS_ROOT/lib/test-command.sh" "$HARNESS_ROOT" "$root")"
+    detected="$(bash "$TACK_ROOT/lib/test-command.sh" "$TACK_ROOT" "$root")"
     if [ -z "$detected" ]; then
       echo "No test command found: name one with tack config check-fast \"<command>\" so tests run before the assistant stops."
     elif ! is_trusted; then
@@ -182,11 +182,10 @@ case "$cmd" in
     allowed_option=''; check_args "$@"
     require_repo
     key_set local enabled false || fail "cannot disable this clone"
-    for marker in .tack .harness; do  # .harness is the former marker
-      [ -f "$root/$marker" ] || continue
-      rm -f "$root/$marker" || fail "cannot remove the shared marker"
-      echo "Removed $root/$marker — commit the removal to share it."
-    done
+    if [ -f "$root/.tack" ]; then
+      rm -f "$root/.tack" || fail "cannot remove the shared marker"
+      echo "Removed $root/.tack — commit the removal to share it."
+    fi
     echo "Disabled for this clone."
     ;;
   migrate)
@@ -242,7 +241,7 @@ case "$cmd" in
       printf 'mode: %s\n' "$(effective_mode)"
       if is_trusted; then echo 'formatter trust: trusted'
       else echo 'formatter trust: untrusted'; fi
-      if root="$(repo_root)" && detected="$(bash "$HARNESS_ROOT/lib/test-command.sh" "$HARNESS_ROOT" "$root")" && [ -n "$detected" ]; then
+      if root="$(repo_root)" && detected="$(bash "$TACK_ROOT/lib/test-command.sh" "$TACK_ROOT" "$root")" && [ -n "$detected" ]; then
         printf 'test command: %s (from %s)
 ' "${detected%%$'	'*}" "${detected#*$'	'}"
       else
@@ -333,7 +332,7 @@ case "$cmd" in
     is_enabled || exit 0
     [ "$(key_get --bool context)" != false ] || exit 0
     root="$(repo_root)" || exit 0
-    source_root="$HARNESS_ROOT"
+    source_root="$TACK_ROOT"
     bash "$source_root/lib/project-context.sh" "$root" "$(context_level)"
     detected="$(bash "$source_root/lib/test-command.sh" "$source_root" "$root")"
     [ -z "$detected" ] || printf '
@@ -341,7 +340,7 @@ Test command: %s (from %s). Use it to verify changes instead of searching for on
 '       "${detected%%$'	'*}" "${detected#*$'	'}"
     ;;
   config)
-    source_root="$HARNESS_ROOT"
+    source_root="$TACK_ROOT"
     bash "$source_root/lib/config.sh" "$source_root" "$@"
     exit
     ;;
@@ -378,34 +377,34 @@ Test command: %s (from %s). Use it to verify changes instead of searching for on
       exit 0
     fi
     command -v python3 >/dev/null 2>&1 || fail "log reports need python3"
-    python3 "$HARNESS_ROOT/lib/log-report.py" "$report" "$log_file" "$days" "$csv" \
-      "${XDG_CONFIG_HOME:-$HOME/.config}/agent-tack/pricing.txt" "$HARNESS_ROOT"
+    python3 "$TACK_ROOT/lib/log-report.py" "$report" "$log_file" "$days" "$csv" \
+      "${XDG_CONFIG_HOME:-$HOME/.config}/agent-tack/pricing.txt" "$TACK_ROOT"
     ;;
   models)
     [ "$#" -le 1 ] || { echo "tack: models takes at most one tier (see --help)" >&2; exit 2; }
-    bash "$HARNESS_ROOT/lib/models.sh" "$HARNESS_ROOT" "$@"
+    bash "$TACK_ROOT/lib/models.sh" "$TACK_ROOT" "$@"
     exit
     ;;
   lesson)
-    bash "$HARNESS_ROOT/lib/lessons.sh" "$@"
+    bash "$TACK_ROOT/lib/lessons.sh" "$@"
     exit
     ;;
   memory)
-    bash "$HARNESS_ROOT/lib/memory.sh" "$HARNESS_ROOT" "$@"
+    bash "$TACK_ROOT/lib/memory.sh" "$TACK_ROOT" "$@"
     exit
     ;;
   shots)
-    bash "$HARNESS_ROOT/lib/shots.sh" "$HARNESS_ROOT" "$@"
+    bash "$TACK_ROOT/lib/shots.sh" "$TACK_ROOT" "$@"
     exit
     ;;
   trace)
     [ "$#" -le 1 ] || { echo "tack: trace takes at most one plan (see --help)" >&2; exit 2; }
-    bash "$HARNESS_ROOT/lib/trace.sh" "$@"
+    bash "$TACK_ROOT/lib/trace.sh" "$@"
     exit
     ;;
   doctor)
     allowed_option='--tools'; check_args "$@"
-    source_root="$HARNESS_ROOT"
+    source_root="$TACK_ROOT"
     bash "$source_root/lib/doctor.sh" "$source_root" "$@"
     ;;
   -h|--help|help)

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Claude Code PostToolUse hook for Write/Edit/MultiEdit.
 # Formats the edited file with the formatter the project already uses, only in projects where
-# the harness is enabled and explicitly trusted in local git config, and only
+# tack is enabled and explicitly trusted in local git config, and only
 # when the project has the formatter configured, so other repositories never get noisy diffs.
 # Never blocks: always exits 0.
 set -u

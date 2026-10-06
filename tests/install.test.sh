@@ -61,9 +61,15 @@ for dir in .agents/skills .claude/skills .codex/skills; do
   check "all $skill_count skills linked in ~/$dir" "[ \"\$(find '$H/$dir' -maxdepth 1 -type l | wc -l | tr -d ' ')\" = '$skill_count' ]"
 done
 check "all $agent_count agents linked" "[ \"\$(find '$H/.claude/agents' -maxdepth 1 -type l | wc -l | tr -d ' ')\" = '$agent_count' ]"
-check "canonical ~/.agents/harness link to the repo" "[ \"\$(readlink '$H/.agents/harness')\" = '$REPO' ]"
+check "canonical ~/.agents/tack link to the repo" "[ \"\$(readlink '$H/.agents/tack')\" = '$REPO' ]"
 check "tack command linked into ~/.local/bin" "[ \"\$(readlink '$H/.local/bin/tack')\" = '$REPO/bin/tack' ]"
-check "legacy harness alias linked into ~/.local/bin" "[ \"\$(readlink '$H/.local/bin/harness')\" = '$REPO/bin/harness' ]"
+check "no links under the former harness name" "[ ! -e '$H/.agents/harness' ] && [ ! -L '$H/.local/bin/harness' ]"
+H_FORMER="$WORK/former-links"
+mkdir -p "$H_FORMER/.local/bin" "$H_FORMER/.agents"
+ln -s "$REPO/bin/harness" "$H_FORMER/.local/bin/harness" && ln -s "$REPO" "$H_FORMER/.agents/harness"
+check "links an earlier install made under the former name are removed" "run_install '$H_FORMER' && [ ! -L '$H_FORMER/.local/bin/harness' ] && [ ! -L '$H_FORMER/.agents/harness' ]"
+ln -s /somewhere/else "$H_FORMER/.local/bin/harness"
+check "a harness link that is not this checkout's is left alone" "run_install '$H_FORMER' && [ \"\$(readlink '$H_FORMER/.local/bin/harness')\" = /somewhere/else ]"
 check "settings.json disables AI attribution" "[ \"\$(json_get '$H/.claude/settings.json' attribution.commit)\" = '\"\"' ]"
 
 check "fresh install creates no backups" "! find '$H' -name '*.bak-*' | grep -q ."
