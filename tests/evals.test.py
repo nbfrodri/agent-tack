@@ -226,6 +226,31 @@ class HiddenAcceptance(unittest.TestCase):
         passed, total = self.run_hidden('conventions', careless)
         self.assertEqual(passed, 6)
 
+    def test_attachments_catch_the_path_traversal_traps(self):
+        correct = ('from pathlib import Path\n'
+                   'def read_attachment(user_root, name):\n'
+                   '    root = Path(user_root).resolve()\n'
+                   '    path = (root / name).resolve()\n'
+                   '    if not path.is_relative_to(root):\n        raise PermissionError(name)\n'
+                   '    return path.read_bytes()\n')
+        self.assertEqual(self.run_hidden_package('attachments', 'storage', correct), (7, 7))
+        # The classic mistake: a string prefix check on an unresolved symlink-blind path.
+        prefix = ('import os\n'
+                  'def read_attachment(user_root, name):\n'
+                  '    root = os.path.abspath(user_root)\n'
+                  '    path = os.path.abspath(os.path.join(root, name))\n'
+                  '    if not path.startswith(root):\n        raise PermissionError(name)\n'
+                  '    return open(path, "rb").read()\n')
+        self.assertEqual(self.run_hidden_package('attachments', 'storage', prefix), (5, 7))
+
+    def run_hidden_package(self, scenario, package, source):
+        with tempfile.TemporaryDirectory() as temp:
+            repo = Path(temp) / 'repo'
+            (repo / 'src' / package).mkdir(parents=True)
+            (repo / 'src' / package / '__init__.py').write_text(source)
+            with patch.object(grade, 'HIDDEN_RUNNER', [sys.executable]):
+                return grade.hidden_acceptance(repo, scenario)
+
     def test_code_that_does_not_import_fails_every_hidden_test(self):
         passed, total = self.run_hidden('new-project', 'raise ImportError("broken")\n')
         self.assertEqual(passed, 0)

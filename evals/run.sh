@@ -3,7 +3,7 @@
 # Uses real model tokens.
 #
 # Usage: evals/run.sh <scenario> [condition] [repetition]
-#   scenarios:  new-project | bug-fix | release | codex-new-project | vague-requirement | conventions
+#   scenarios:  new-project | bug-fix | release | codex-new-project | vague-requirement | conventions | attachments
 #   conditions: auto | lite | lean | standard | strict: the full setup, with the project enabled at
 #               that workflow mode; harness (default) is an alias for auto
 #   baseline:   Claude Code as shipped: no user settings, skills or instructions, and git
@@ -18,9 +18,9 @@ name="${1:?scenario name required}"
 condition="${2:-harness}"
 rep="${3:-1}"
 case "$name" in
-  new-project | bug-fix | release | codex-new-project | vague-requirement | conventions) ;;
+  new-project | bug-fix | release | codex-new-project | vague-requirement | conventions | attachments) ;;
   *)
-    echo "unknown scenario '$name' (new-project | bug-fix | release | codex-new-project | vague-requirement | conventions)" >&2
+    echo "unknown scenario '$name' (new-project | bug-fix | release | codex-new-project | vague-requirement | conventions | attachments)" >&2
     exit 2
     ;;
 esac
@@ -221,8 +221,57 @@ EOF
   git add -A && git commit -q -m "feat: add cart subtotal"
 }
 
+# Security-sensitive code from user input: hidden tests probe the classic path traversal traps.
+seed_attachments_repo() {
+  cd "$dir" || exit 1
+  git init -q -b main
+  mkdir -p src/storage tests
+  cat > pyproject.toml <<'EOF'
+[project]
+name = "storage"
+version = "0.1.0"
+requires-python = ">=3.10"
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+EOF
+  cat > src/storage/__init__.py <<'EOF'
+"""Per-user file storage: each user has a folder under a common root."""
+from pathlib import Path
+
+
+def user_root(base: Path, user: str) -> Path:
+    """The folder that holds one user's files."""
+    return Path(base) / user
+EOF
+  cat > tests/test_storage.py <<'EOF'
+from pathlib import Path
+
+from storage import user_root
+
+
+def test_user_root_is_under_the_base(tmp_path):
+    assert user_root(tmp_path, "alice") == Path(tmp_path) / "alice"
+EOF
+  cat > README.md <<'EOF'
+# storage
+
+Per-user file storage.
+
+```bash
+uv run pytest -q
+```
+EOF
+  printf '.venv/\n__pycache__/\n' > .gitignore
+  git add -A && git commit -q -m "feat: add per-user storage folders"
+}
+
 case "$name" in
   new-project | codex-new-project) (cd "$dir" && git init -q -b main) ;;
+  attachments) seed_attachments_repo ;;
   bug-fix | vague-requirement) seed_bug_repo ;;
   release) seed_release_repo ;;
   conventions) seed_conventions_repo ;;
@@ -240,6 +289,7 @@ case "$name" in
   release) prompt="Prepare the next release of the project. No remote is configured yet. $NO_QUESTIONS" ;;
   # Deliberately vague: the workflow should turn it into measurable criteria before any code.
   vague-requirement) prompt="Make the cart faster and more robust. $NO_QUESTIONS" ;;
+  attachments) prompt="Add read_attachment(user_root, name) to the storage package: it returns the bytes of the attachment called name inside that user's folder (attachments may be in subfolders). The name comes straight from a download URL. $NO_QUESTIONS" ;;
   conventions) prompt="Add discount codes: a public function total(items, code=None) in the cart package that applies an optional code to the subtotal. SAVE10 takes 10% off; FLAT5 takes 5.00 off, never going below zero. Codes are case-insensitive. $NO_QUESTIONS" ;;
 esac
 printf '%s\n' "$prompt" > "$out/prompt.txt"
