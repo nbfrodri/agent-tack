@@ -71,7 +71,8 @@ They are configured only when installed; rerun `./install.sh` after installing o
 
 ## Windows
 
-- **Native Windows is not supported:** tack is bash scripts, symlinks and bash git hooks.
+- **WSL2 is the supported path** (below). Native Windows is not supported yet: tack is bash scripts, symlinks and bash git hooks.
+- **Native Windows with Git Bash (experimental, not verified end to end):** the checkout keeps LF endings and holds no symlinks, so git hooks run and `tests/validate.sh` passes there. `./install.sh` needs symlinks: turn on Developer Mode (*Settings > System > For developers*), or the installer stops before changing anything. The test suites need Linux or macOS; on Windows run them in a container, for example from PowerShell: `docker run --rm -v "${PWD}:/src:ro" ubuntu:24.04 bash -c 'apt-get update -qq && apt-get install -yqq git jq python3 >/dev/null && git clone -q /src /w && cd /w && tests/run-all.sh'`.
 - **WSL2 is supported:** clone into the Linux file system (for example `~/Projects`, not `/mnt/c`), install the AI CLIs inside WSL and run `./install.sh` there.
 - **VS Code on Windows:** open the project with the **WSL** extension (*Remote: Open Folder in WSL*), so the Claude Code, Codex and Copilot extensions run inside WSL and read the configuration tack installed there. Not verified on a Windows machine yet; check with `tack doctor --tools` inside WSL and the per-tool checks above.
 - **Cursor on Windows** also supports opening WSL folders; paste the rules once as above.

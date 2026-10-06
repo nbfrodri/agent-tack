@@ -101,7 +101,7 @@ Global `core.hooksPath` points to this checkout's `git-hooks/`. A repository wit
 | `pre-commit` | Run the local hook, then inspect exact staged paths and added lines in the final index for secrets; inspection errors block the commit |
 | `commit-msg` | Remove attribution, validate the subject when enabled, then invoke the local commit-msg hook |
 | `pre-push` | Buffer stdin, check protected refs and enabled tag conventions, then forward the original stdin to the local pre-push hook |
-| Other hook names | Symlink to `_chain`, which delegates to the matching local hook |
+| Other hook names | A small file that sources `_chain` and delegates to the matching local hook (files, not symlinks, so Windows checkouts can run them) |
 
 `_chain` locates local hooks through git's common directory, including bare repositories and worktrees. It preserves arguments and stdin and prevents recursion through an environment flag and file-identity check. A failing local hook propagates its exit status.
 
