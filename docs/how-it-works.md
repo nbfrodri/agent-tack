@@ -69,7 +69,7 @@ Mods are small Claude Code plugins that change its interface; this repo ships tw
 | Hook | Where | What it does |
 | --- | --- | --- |
 | `pre-commit` | git (global) | Runs the repo's local pre-commit, then refuses `.env` files (not `.env.example`) and well-known credential formats in the final staged changes. Handles exact filenames and blocks commits when inspection fails. |
-| `commit-msg` | git (global) | Removes AI attribution everywhere; in enabled projects, rejects subjects that aren't Conventional Commits. |
+| `commit-msg` | git (global) | Removes AI attribution everywhere; in enabled projects, rejects subjects that aren't Conventional Commits and warns (without refusing) about a commit made directly on `main` or `master`, other than the first commit, a release or a revert. |
 | `pre-push` | git (global) | Refuses force-pushes and deletions of `main`/`master`. In enabled projects, only annotated `vX.Y.Z` tags, never moved or deleted. |
 | Other git hooks | git (global) | Pass through to each repo's own `.git/hooks/*` (client and server side). |
 
