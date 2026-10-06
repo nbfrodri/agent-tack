@@ -561,8 +561,20 @@ install_plugins() {
   done 3< "$REPO/plugins.txt"
 }
 
+# Git Bash on Windows copies files for `ln -s` unless asked for real symlinks, which Windows
+# grants only with Developer Mode or as administrator; a copy would silently go stale.
+windows_symlinks() {
+  case "$(uname -s)" in MINGW* | MSYS* | CYGWIN*) ;; *) return 0 ;; esac
+  export MSYS="${MSYS:+$MSYS }winsymlinks:nativestrict"
+  export CYGWIN="${CYGWIN:+$CYGWIN }winsymlinks:nativestrict"
+  ln -s "$REPO/README.md" "$WORKDIR/symlink-check" 2>/dev/null && return 0
+  fail "Windows refused to create a symlink: turn on Developer Mode (Settings > System > For developers) and re-run, or install inside WSL2 (docs/editors.md#windows)"
+  exit 1
+}
+
 main() {
   printf '%sInstalling tack from %s%s\n' "$C_HEAD" "$REPO" "$C_OFF"
+  windows_symlinks
   if [ "$DRY_RUN" -eq 0 ]; then
     migrate_tool_dir "${XDG_STATE_HOME:-$HOME/.local/state}" || { fail "cannot move the former state directory to agent-tack"; exit 1; }
     migrate_tool_dir "${XDG_CONFIG_HOME:-$HOME/.config}" || warn "could not move ~/.config/agent-harness (the former name) to agent-tack; it is still read"
