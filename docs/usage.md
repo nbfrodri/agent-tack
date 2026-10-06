@@ -127,7 +127,7 @@ tack trust                                    # the check runs project code, lik
 tack config check-fast "uv run pytest -q -x"  # or: npm test -- --bail, make lint, ...
 ```
 
-Without it, tack detects the project's test command (a `make test` target, the `package.json` test script with npm, pnpm, yarn or bun, pytest with or without uv, `cargo test` or `go test ./...`). `tack status` and the startup context name it, so the assistant runs it instead of searching for one, and in trusted projects the check before stopping runs it whenever source or test files changed.
+Without it, tack detects the project's test command (a `make test` target, the `package.json` test script with npm, pnpm, yarn or bun, pytest with or without uv, `cargo test` or `go test ./...`). `tack enable`, `tack status` and the startup context name it (`tack enable` also suggests `tack trust` when the project is not trusted yet), so the assistant runs it instead of searching for one, and in trusted projects the check before stopping runs it whenever source or test files changed.
 
 With `check-fast` set, after each file edit Claude Code runs the command from the repository root. When it fails, the assistant sees the exit code and the last 40 lines of output and fixes the problem before continuing. Keep it fast (a focused test target or a linter); it times out after 60 seconds where `timeout` is available. Remove it with `tack config check-fast --unset`.
 

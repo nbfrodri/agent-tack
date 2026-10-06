@@ -733,6 +733,14 @@ check "detect: go" "[ \"\$(detected)\" = 'go test ./...' ]"
 git -C "$T" config tack.checkFast 'make lint'
 check "detect: an explicit check-fast wins" "[ \"\$(detected)\" = 'make lint' ]"
 check "detect: the source is reported" "bash '$REPO/lib/test-command.sh' '$REPO' '$T' | grep -q 'tack config check-fast'"
+fresh
+check "enable: says when no test command is known" "(cd '$T' && '$REPO/bin/tack' enable) | grep -q 'No test command found'"
+: > "$T/go.mod"
+check "enable: names the detected command and suggests trust" "(cd '$T' && '$REPO/bin/tack' enable) | grep -q 'Tests: go test ./... (from go.mod). Run tack trust'"
+git -C "$T" config tack.trusted true
+check "enable: no trust suggestion once trusted" "! (cd '$T' && '$REPO/bin/tack' enable) | grep -q 'Run tack trust'"
+git -C "$T" config --unset tack.trusted
+git -C "$T" config tack.checkFast 'make lint'
 git -C "$T" config tack.enabled true
 check "detect: tack status names the test command" "(cd '$T' && '$REPO/bin/tack' status) | grep -qx 'test command: make lint (from tack config check-fast)'"
 check "detect: the startup context names it so the assistant does not probe" "(cd '$T' && '$REPO/bin/tack' context) | grep -q '^Test command: make lint (from tack config check-fast)'"
