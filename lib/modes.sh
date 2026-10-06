@@ -7,6 +7,8 @@ user_modes_dir() { printf '%s/modes\n' "$(tool_dir "${XDG_CONFIG_HOME:-$HOME/.co
 # Prints the file that defines a mode; built-in names cannot be shadowed by user files.
 mode_file() {
   case "$1" in '' | *[!a-z0-9-]*) return 1 ;; esac
+  # lean was merged into lite (#99); the name keeps working until tack migrate rewrites it.
+  [ "$1" != lean ] || set -- lite
   if [ -f "$HARNESS_ROOT/modes/$1.md" ]; then printf '%s\n' "$HARNESS_ROOT/modes/$1.md"
   elif [ -f "$(user_modes_dir)/$1.md" ]; then printf '%s\n' "$(user_modes_dir)/$1.md"
   else return 1; fi

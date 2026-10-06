@@ -208,9 +208,9 @@ In every mode the hooks still enforce Conventional Commits, no AI attribution, n
 
 A project setting (`tack mode lite`) overrides your global default (`tack mode lite --global`); with neither, the mode is `auto`. Invalid values behave as `auto` and are reported by `tack status` and `tack doctor`. Lighter modes cost fewer tokens and less time; [results](results.md) compares them.
 
-### Lean: save tokens
+### Lite: save tokens
 
-`tack mode lean` is for small, well-defined tasks when tokens matter more than process. Its rules are self-contained, so the assistant does not load `dev-workflow`; it starts with only `AGENTS.md` as context, reads only the lines it needs, runs only the affected tests and replies in a few lines. It still branches, adds a test for changed logic and makes a Conventional Commit, and the hooks apply as in every mode. It skips plans, handoffs, the AI log, review agents and delegation, and suggests `standard` or `strict` when a task turns out risky.
+`tack mode lite` is for small, well-defined tasks and whenever tokens matter more than process. It absorbed the former `lean` mode, which measured the same cost and outcome: `lean` still works as a name for `lite`, and `tack migrate` rewrites it. Its rules are self-contained, so the assistant does not load `dev-workflow`; it starts with only `AGENTS.md` as context, reads only the lines it needs, runs only the affected tests and replies in a few lines. It still branches, adds a test for changed logic and makes a Conventional Commit, and the hooks apply as in every mode. It skips plans, handoffs, the AI log, review agents and delegation, and suggests `standard` or `strict` when a task turns out risky.
 
 The same savings are available one by one in any mode:
 
@@ -222,7 +222,7 @@ tack config context false              # no startup context at all
 tack config stop-check false           # no extra turn before stopping
 ```
 
-Add `--global` to make any of them your default. [Results](results.md) compares `lean` with `lite` and the plain assistant.
+Add `--global` to make any of them your default. [Results](results.md) compares the former `lean` with `lite` and the plain assistant.
 
 ### Unleash: autonomous work
 
