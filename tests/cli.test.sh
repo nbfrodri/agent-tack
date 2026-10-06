@@ -31,7 +31,8 @@ expect_status() {
   local expected_exit="$1" workflow="$2" trust="$3" expected
   shift 3
   expect_exit "$expected_exit" "$CLI" "$@" || return 1
-  expected="$(printf '%s\nmode: %s\nformatter trust: %s' "$workflow" "${EXPECTED_MODE:-auto (default)}" "$trust")"
+  expected="$(printf '%s\nmode: %s\nformatter trust: %s\ntest command: %s' "$workflow" "${EXPECTED_MODE:-auto (default)}" "$trust" \
+    'none found (set one with tack config check-fast)')"
   [ "$(cat "$WORK/output")" = "$expected" ]
 }
 excludes_completed() { ! grep -qF 'Do not include completed work' "$WORK/output"; }
@@ -658,6 +659,23 @@ check "doctor no longer asks" eval "grep -q 'current project workflow' '$WORK/do
 check "a second run has nothing to do" eval "'$CLI' migrate | grep -q 'Nothing to migrate'"
 git config tack.mode lean
 check "migrate replaces the merged lean mode with lite" eval "'$CLI' migrate | grep -q 'mode lean' && [ \"\$(git config tack.mode)\" = lite ]"
+
+# A check command is arbitrary text, and key_get reads the last of repeated scalar values.
+M_TEXT="$WORK/migrate-text"
+git init -q "$M_TEXT" && cd "$M_TEXT" || exit 1
+multiline=$'  printf first\n\tprintf second\n\n'
+git config harness.checkFast "$multiline"
+git config --null --get harness.checkFast > "$WORK/before-migration"
+git config --add harness.replyStyle normal
+git config --add harness.replyStyle terse
+printf '[harness]\n\tcontext\n\tstopCheck = ""\n' >> .git/config
+check "migrate accepts multiline values and valueless booleans" expect_exit 0 "$CLI" migrate
+git config --null --get tack.checkFast > "$WORK/after-migration"
+check "migration preserves whitespace and trailing newlines byte for byte" cmp -s "$WORK/before-migration" "$WORK/after-migration"
+check "migration preserves the effective last scalar value" eval "[ \"\$(git config tack.replyStyle)\" = terse ]"
+check "migration preserves valueless true" eval "[ \"\$(git config --bool tack.context)\" = true ]"
+check "migration preserves an empty false value" eval "[ \"\$(git config --bool tack.stopCheck)\" = false ]"
+check "text migration removes only the former settings" eval "! git config --local --get-regexp '^harness[.]' >/dev/null"
 cd "$WORK/project" || exit 1
 
 printf '\n%s passed, %s failed\n' "$PASSED" "$FAILED"

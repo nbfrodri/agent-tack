@@ -83,6 +83,11 @@ expect("deny", "cat <<EOF\n`git commit --no-verify`\nEOF", "unquoted heredoc bac
 expect("ask", "bash <<'EOF'\nrm -rf /\nEOF", "shell heredoc requires review", reason="heredoc")
 expect("ask", "sudo -n sh <<EOF\ngit commit --no-verify\nEOF", "wrapped shell heredoc requires review")
 expect("ask", "cat <<'EOF' | sh\nrm -rf /\nEOF", "piped executable heredoc requires review")
+expect("allow", "git switch -c feat/x && cat >> t.py <<'EOF'\nx\nEOF", "a heredoc read by cat after a git command on the same line")
+expect("allow", "git status; cat > notes <<EOF\nx\nEOF", "only the commands that read a heredoc are its consumers")
+expect("ask", "cat <<'EOF' |& bash\nrm -rf /\nEOF", "a heredoc piped with |& to a shell requires review")
+expect("ask", "cat <<'EOF' | grep x | python3\nx\nEOF", "a heredoc piped through a chain to an interpreter requires review")
+expect("ask", "git push origin x <<'EOF'\nx\nEOF", "a heredoc read by git other than commit requires review")
 expect("allow", "cat <<'A' <<'B'\n$(rm -rf /)\nA\nrm -rf /\nB", "multiple quoted heredocs stay data")
 expect("deny", "cat <<'A' <<B\ndata\nA\n$(rm -rf /)\nB", "multiple heredocs retain expansion rules")
 expect("deny", "cat <<-EOF\n\tdata\n\tEOF\nrm -rf /", "tab-stripped heredoc retains following command")
@@ -107,6 +112,37 @@ expect("ask", "git commit -" + "a" * 50000 + "n", "long compact option does not 
 expect("ask", 'echo "' + '$(true)' * 100 + '"', "many substitutions require bounded review", reason="limit")
 expect("ask", ";".join(["git status"] * 1500), "too many commands ask explicitly", reason="limit")
 expect("deny", "git commit --no-verify", "Python JSON fallback", path=work / "no-jq")
+# The hooks' override variables are the user's to set, like --no-verify
+for bypass in ("TACK_ALLOW_SECRETS=1 git commit -m x", "env TACK_ALLOW_SECRETS=1 git commit -m x",
+               "export TACK_ALLOW_SECRETS=1; git commit -m x", "TACK_ALLOW_TAG=1 git push origin v1.0.0",
+               "declare -x TACK_ALLOW_FORCE_PUSH=1", "sudo TACK_ALLOW_SECRETS=1 git commit -m x",
+               "bash -c 'TACK_ALLOW_SECRETS=1 git commit -m x'",
+               "export TACK_ALLOW_SECRETS"):
+    expect("deny", bypass, f"override set by the assistant: {bypass}", reason="override is for the user")
+expect("allow", "echo $TACK_ALLOW_SECRETS", "reading an override variable is allowed")
+expect("allow", "grep -rn 'TACK_ALLOW_SECRETS' docs", "quoted mentions are data")
+# Input parsing: NULs inside the command are dropped and trailing newlines trimmed, with jq and Python
+for parser, parser_path in (("jq", None), ("Python", work / "no-jq")):
+    expect("deny", "rm -rf\u0000 /", f"{parser}: NUL inside the command is dropped", path=parser_path)
+    expect("deny", "rm -rf /\n\n", f"{parser}: trailing newlines are trimmed", path=parser_path)
+    expect("allow", "git status", f"{parser}: cwd is read along with the command", path=parser_path, cwd=repo)
+# Run by a relative path: the libraries and the tack CLI are still found after the guard changes directory
+relative = subprocess.run(["bash", "guard-bash.sh"], cwd=guard.parent, text=True, capture_output=True, timeout=8,
+                          input=json.dumps({"tool_input": {"command": "git reset --hard"}, "cwd": str(work)}))
+if '"ask"' in relative.stdout and not relative.stderr:
+    passed += 1
+    print("  PASS relative invocation finds its libraries")
+else:
+    failed += 1
+    print(f"  FAIL relative invocation finds its libraries: {relative.stdout}{relative.stderr}")
+for raw in ('{"tool_input": {"command": 5}}', '[]', 'not json'):
+    result = subprocess.run(["bash", str(guard)], input=raw, text=True, capture_output=True, timeout=8)
+    if result.returncode == 0 and not result.stdout:
+        passed += 1
+        print(f"  PASS unusable input allows: {raw}")
+    else:
+        failed += 1
+        print(f"  FAIL unusable input allows: {raw}: {result.stdout}{result.stderr}")
 if (work / "no-python/jq").exists():
     expect("deny", "sudo -n rm -rf /", "jq-only fallback still denies", path=work / "no-python")
     expect("ask", "cat <<EOF\n$(rm -rf /)\nEOF", "jq-only unsupported syntax asks", path=work / "no-python")

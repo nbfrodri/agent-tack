@@ -14,7 +14,7 @@ if ! command -v shellcheck >/dev/null 2>&1; then
   exit 2
 fi
 shellcheck -x install.sh uninstall.sh bin/tack lib/*.sh tests/*.sh evals/run.sh \
-  git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push git-hooks/pre-commit \
+  git-hooks/* \
   hooks/claude/*.sh hooks/claude/lib/*.sh hooks/cursor/*.sh || status=1
 
 # ruff: the pinned release through uvx when uv is there, otherwise the installed one (a warning
@@ -36,6 +36,9 @@ while IFS= read -r file; do python_files+=("$file"); done < <(git ls-files '*.py
 if [ "${#python_files[@]}" -gt 0 ]; then
   "${ruff[@]}" check --output-format concise "${python_files[@]}" || status=1
 fi
+# Python that runs on users' machines names its text encoding: Windows defaults to its ANSI code
+# page, which garbles the UTF-8 in skills and settings.
+"${ruff[@]}" check --output-format concise --preview --select PLW1514 lib hooks || status=1
 
 [ "$status" -ne 0 ] || echo "lint: clean"
 exit "$status"

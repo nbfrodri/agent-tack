@@ -115,11 +115,27 @@ check "text that only mentions secrets is allowed" "try_commit"
 stage .env "API_KEY=abc"
 check "override allows a deliberate commit" "TACK_ALLOW_SECRETS=1 try_commit"
 stage .env.prod "API_KEY=abc"
-check "the former override name still allows it" "HARNESS_ALLOW_SECRETS=1 try_commit"
+check "the former override name no longer bypasses the scan" "! HARNESS_ALLOW_SECRETS=1 try_commit"
 git -C "$S" config tack.enabled false
 stage .env.local "X=1"
 check "also active in projects that aren't enabled" "! try_commit"
 reset_index
+
+echo "commit-msg: a direct commit to main is reported, not refused"
+M="$WORK/main-repo"
+rm -rf "$M" && git init -q -b main "$M" && git -C "$M" config tack.enabled true
+# The output goes through a file: grep -q on a pipe would end git with SIGPIPE under pipefail.
+on_main() { git -C "$M" commit --allow-empty -m "$1" >"$WORK/main-out" 2>&1; cat "$WORK/main-out"; }
+reported() { on_main "$1" >/dev/null; grep -q 'goes straight to main' "$WORK/main-out"; }
+check "the first commit of a repository is left alone" "! reported 'chore: initial commit'"
+check "a feature committed on main is reported" "reported 'feat: add x'"
+check "and still committed" "[ \"\$(git -C '$M' log -1 --format=%s)\" = 'feat: add x' ]"
+check "a release commit is not reported" "! reported 'chore(release): v1.0.0'"
+check "a revert is not reported" "! reported 'Revert \"feat: add x\"'"
+git -C "$M" switch -q -c feat/y
+check "a commit on a branch is not reported" "! reported 'feat: add y'"
+git -C "$M" switch -q main && git -C "$M" config tack.enabled false
+check "a project without tack is not reported" "! reported 'feat: add z'"
 
 echo "Local repository hooks keep working (chaining)"
 cat > "$R/.git/hooks/pre-commit" <<EOF
@@ -141,6 +157,17 @@ exit 1
 EOF
 check "a failing local pre-commit still blocks the commit" "! commit 'docs: blocked'"
 rm -f "$R/.git/hooks/pre-commit" "$R/.git/hooks/commit-msg"
+# prepare-commit-msg is a pass-through hook: only _chain forwards it to the local one
+cat > "$R/.git/hooks/prepare-commit-msg" <<EOF
+#!/usr/bin/env bash
+echo "\$1" > "$WORK/prepare-commit-msg-ran"
+EOF
+chmod +x "$R/.git/hooks/prepare-commit-msg"
+setup_commit "docs: pass-through hook"
+check "a local pass-through hook runs with its arguments" "[ -s '$WORK/prepare-commit-msg-ran' ]"
+printf '#!/usr/bin/env bash\nexit 1\n' > "$R/.git/hooks/prepare-commit-msg"
+check "a failing local pass-through hook still blocks the commit" "! commit 'docs: blocked'"
+rm -f "$R/.git/hooks/prepare-commit-msg"
 
 echo "pre-push: main is protected"
 REMOTE="$WORK/remote.git"
@@ -183,7 +210,7 @@ git -C "$R" tag -d v1.0.0 >/dev/null
 git -C "$R" tag -a v1.0.0 -m "moved" HEAD~1
 check "moving a published tag is refused" "! push --force origin v1.0.0"
 check "override allows a deliberate tag change" "TACK_ALLOW_TAG=1 push --force origin v1.0.0"
-check "the former force-push and tag override names still count" "env -u TACK_ALLOW_TAG bash -c '. \"$REPO/git-hooks/_chain\" && HARNESS_ALLOW_FORCE_PUSH=1 override_set FORCE_PUSH && HARNESS_ALLOW_TAG=1 override_set TAG && ! override_set TAG'"
+check "the former force-push and tag override names no longer count" "env -u TACK_ALLOW_TAG bash -c '. \"$REPO/git-hooks/_chain\" && ! HARNESS_ALLOW_FORCE_PUSH=1 override_set FORCE_PUSH && ! HARNESS_ALLOW_TAG=1 override_set TAG'"
 git -C "$R" config tack.enabled false
 check "projects not enabled can push any tag" "push origin release-1"
 git -C "$R" config --unset tack.enabled
@@ -433,6 +460,7 @@ check "fixed mode: names the level to apply" "session '$WORK/repo' | grep -q 'mo
 check "fixed mode: injects that mode's rules" "session '$WORK/repo' | grep -q 'Review: read your own diff before committing.'"
 git -C "$WORK/repo" config --unset tack.mode
 check "auto mode: lists the modes to choose from" "session '$WORK/repo' | grep -q 'strict: several modules'"
+check "auto mode: picks by risk, so untrusted input is never lite" "session '$WORK/repo' | grep -q 'Pick by risk, not size: code that handles untrusted input'"
 check "token toggles: defaults add nothing" "! session '$WORK/repo' | grep -q 'Token settings'"
 git -C "$WORK/repo" config tack.replyStyle terse
 git -C "$WORK/repo" config tack.skillLoading minimal
@@ -679,6 +707,91 @@ git -C "$P2" config tack.enabled false
 check "stop-check: disabled projects are left alone" "[ -z \"\$(stopping)\" ]"
 check "stop-check: malformed input is ignored" "[ -z \"\$(printf 'not json' | bash '$STOP')\" ]"
 check "stop-check: registered for Stop" "grep -q 'stop-check.sh' '$REPO/claude/settings.json'"
+git -C "$P2" config tack.enabled true
+git -C "$P2" switch -q main && git -C "$P2" switch -q -c feat/code
+check "stop-check: a project without tests is not asked for one" "printf 'def f(): pass\n' > '$P2/app.py' && ! stopping | grep -q 'no test did'"
+mkdir -p "$P2/tests" && printf 'def test_f(): pass\n' > "$P2/tests/test_app.py"
+git -C "$P2" add -A && git -C "$P2" commit -q -m "test: add a test" && git -C "$P2" switch -q main && git -C "$P2" merge -q feat/code && git -C "$P2" switch -q -c feat/logic
+printf 'def f(): return 1\n' > "$P2/app.py"
+check "stop-check: a source change without a test change is reported" "stopping | grep -q '1 source file(s) changed (app.py first) but no test did'"
+git -C "$P2" add app.py && git -C "$P2" commit -q -m "feat: change f"
+check "stop-check: committed source changes on the branch count too" "stopping | grep -q 'no test did'"
+printf 'def test_f(): assert True\n' > "$P2/tests/test_app.py"
+check "stop-check: a test change on the branch satisfies it" "! stopping | grep -q 'no test did'"
+git -C "$P2" checkout -q -- tests
+git -C "$P2" switch -q main && git -C "$P2" switch -q -c docs/only
+printf 'notes\n' > "$P2/README.md"
+check "stop-check: docs-only changes are not asked for a test" "! stopping | grep -q 'no test did'"
+rm "$P2/README.md"
+for layout in 'src/cart.test.ts' 'pkg/cart_test.go' 'spec/cart_spec.rb' 'src/__tests__/cart.js' 'src/test/java/CartTest.java'; do
+  mkdir -p "$P2/$(dirname "$layout")" && printf 'x\n' > "$P2/$layout"
+  printf 'def f(): return 2\n' > "$P2/app.py"
+  check "stop-check: $layout counts as a test" "! stopping | grep -q 'no test did'"
+  rm -rf "${P2:?}/${layout%%/*}" && git -C "$P2" checkout -q -- app.py
+done
+git -C "$P2" rm -q app.py
+check "stop-check: deleting a source file is not asked for a test" "! stopping | grep -q 'no test did'"
+git -C "$P2" reset -q --hard
+
+echo "Test command detection"
+T="$WORK/detect"
+detected() { bash "$REPO/lib/test-command.sh" "$REPO" "$T" | cut -f1; }
+fresh() { rm -rf "$T" && git init -q "$T"; }
+fresh
+check "detect: nothing in an empty project" "[ -z \"\$(detected)\" ]"
+cat > "$T/package.json" <<'JSON'
+{"scripts": {"test": "echo \"Error: no test specified\" && exit 1"}}
+JSON
+check "detect: npm's placeholder test script is ignored" "[ -z \"\$(detected)\" ]"
+printf '{"scripts": {"test": "vitest run"}}\n' > "$T/package.json"
+check "detect: package.json test script with npm" "[ \"\$(detected)\" = 'npm test' ]"
+: > "$T/pnpm-lock.yaml"
+check "detect: pnpm from its lockfile" "[ \"\$(detected)\" = 'pnpm test' ]"
+printf 'test:\n\tpytest\n' > "$T/Makefile"
+check "detect: a make test target comes first" "[ \"\$(detected)\" = 'make test' ]"
+fresh
+printf '[project]\nname = "x"\n[dependency-groups]\ndev = ["pytest"]\n' > "$T/pyproject.toml"
+UVBIN="$WORK/uv-bin" && mkdir -p "$UVBIN" && printf '#!/bin/sh\n' > "$UVBIN/uv" && chmod +x "$UVBIN/uv"
+check "detect: uv run for a pyproject.toml project when uv is installed" "[ \"\$(PATH='$UVBIN':\$PATH detected)\" = 'uv run pytest -q' ]"
+command -v uv >/dev/null 2>&1 || check "detect: python3 -m pytest without uv" "[ \"\$(detected)\" = 'python3 -m pytest -q' ]"
+: > "$T/uv.lock"
+check "detect: uv run when uv.lock exists" "[ \"\$(detected)\" = 'uv run pytest -q' ]"
+fresh
+: > "$T/Cargo.toml"
+check "detect: cargo" "[ \"\$(detected)\" = 'cargo test -q' ]"
+fresh
+: > "$T/go.mod"
+check "detect: go" "[ \"\$(detected)\" = 'go test ./...' ]"
+git -C "$T" config tack.checkFast 'make lint'
+check "detect: an explicit check-fast wins" "[ \"\$(detected)\" = 'make lint' ]"
+check "detect: the source is reported" "bash '$REPO/lib/test-command.sh' '$REPO' '$T' | grep -q 'tack config check-fast'"
+fresh
+check "enable: says when no test command is known" "(cd '$T' && '$REPO/bin/tack' enable) | grep -q 'No test command found'"
+: > "$T/go.mod"
+check "enable: names the detected command and suggests trust" "(cd '$T' && '$REPO/bin/tack' enable) | grep -q 'Tests: go test ./... (from go.mod). Run tack trust'"
+git -C "$T" config tack.trusted true
+check "enable: no trust suggestion once trusted" "! (cd '$T' && '$REPO/bin/tack' enable) | grep -q 'Run tack trust'"
+git -C "$T" config --unset tack.trusted
+git -C "$T" config tack.checkFast 'make lint'
+git -C "$T" config tack.enabled true
+check "detect: tack status names the test command" "(cd '$T' && '$REPO/bin/tack' status) | grep -qx 'test command: make lint (from tack config check-fast)'"
+check "detect: the startup context names it so the assistant does not probe" "(cd '$T' && '$REPO/bin/tack' context) | grep -q '^Test command: make lint (from tack config check-fast)'"
+
+echo "Claude hook: stop-check runs the tests"
+G="$WORK/gate-repo"
+git init -q -b main "$G"
+git -C "$G" config tack.enabled true
+mkdir -p "$G/tests" && printf 'def test_f(): pass\n' > "$G/tests/test_app.py" && printf 'def f(): pass\n' > "$G/app.py"
+printf 'test:\n\t@test -f ok\n' > "$G/Makefile"
+git -C "$G" add -A && git -C "$G" commit -q -m "chore: initial commit" && git -C "$G" switch -q -c feat/x
+gate() { printf '{"cwd":"%s","stop_hook_active":false}' "$G" | bash "$STOP"; }
+check "test gate: untrusted projects never run the tests" "! gate | grep -q 'the tests'"
+git -C "$G" config tack.trusted true
+check "test gate: nothing runs while no code changed" "! gate | grep -q 'the tests'"
+printf 'def f(): return 1\n' > "$G/app.py" && printf 'def test_f(): assert True\n' > "$G/tests/test_app.py"
+check "test gate: failing tests after a code change are reported" "gate | grep -q 'the tests fail: make test (from Makefile test target)'"
+: > "$G/ok"
+check "test gate: passing tests are not reported" "! gate | grep -q 'the tests'"
 
 echo "Activity log (tack config activity-log, tack log)"
 LOG="$WORK/state/agent-tack/activity.log"

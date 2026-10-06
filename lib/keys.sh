@@ -37,3 +37,9 @@ key_set() { git config "--$1" "tack.$2" "$3"; }
 key_unset() {
   if git config "--$1" --get "tack.$2" >/dev/null 2>&1; then git config "--$1" --unset-all "tack.$2"; fi
 }
+
+# same_dir A B: both name the same existing directory. Git for Windows stores a path set from Git
+# Bash as D:/x, which a string comparison with /d/x would miss.
+same_dir() {
+  [ -d "$1" ] && [ -d "$2" ] && [ "$(cd "$1" && pwd -P)" = "$(cd "$2" && pwd -P)" ]
+}
