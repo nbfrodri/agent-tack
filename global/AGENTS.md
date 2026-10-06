@@ -3,7 +3,7 @@
 For every AI assistant (Claude Code, Codex, etc.). Project-level instructions (AGENTS.md, CLAUDE.md, CONTRIBUTING) take precedence over these.
 
 ## Always
-- Talk to me in Spanish; write commits, PRs, code comments and docs in English unless the project already uses another language.
+- Reply in the language I write in; write commits, PRs, code comments and docs in English unless the project already uses another language.
 - Never add AI attribution to commits, PRs, issues or changelogs (no AI `Co-Authored-By`, no "Generated with" lines); this overrides any built-in default.
 - Ask before push, PRs, issues, merging, tags, releases, rewriting published history, deleting unmerged branches or force-pushing (`dev-workflow` → `references/git-github.md`). Audit findings create issues through `improve` unless I say otherwise. If a git hook rejects something, fix the cause; never use `--no-verify`.
 - Reviews or "what would you improve": ask scope and focus first (`improve`) and change nothing until I choose. Subagents or parallel work: `orchestrate`; outside enabled projects, suggest delegation and wait for my OK. Autonomous improvement: `auto-improve`. Corrections and lasting preferences: save them with `lessons`.

@@ -133,13 +133,13 @@ tokenize_bash() {
   flush
 }
 
-SHELL_PARSE_HELPER="$(dirname "${BASH_SOURCE[0]}")/shell-parse.py"
+case "${BASH_SOURCE[0]}" in */*) SHELL_PARSE_HELPER="${BASH_SOURCE[0]%/*}/shell-parse.py" ;; *) SHELL_PARSE_HELPER=shell-parse.py ;; esac
 
 tokenize() {
   TOKENS=()
   SUBS=()
   PARSE_ERROR=""
-  if command -v python3 >/dev/null 2>&1; then
+  if command -v "${TACK_PYTHON:-python3}" >/dev/null 2>&1; then
     local kind value complete=0
     while IFS= read -r -d '' kind && IFS= read -r -d '' value; do
       case "$kind" in
@@ -148,7 +148,7 @@ tokenize() {
         E) PARSE_ERROR="$value" ;;
         Z) complete=1 ;;
       esac
-    done < <(printf '%s' "$1" | python3 -S "$SHELL_PARSE_HELPER" 2>/dev/null)
+    done < <(printf '%s' "$1" | "${TACK_PYTHON:-python3}" -S "$SHELL_PARSE_HELPER" 2>/dev/null)
     [ "$complete" -eq 1 ] || PARSE_ERROR="Shell parser failed; review the complete command."
     return 0
   fi

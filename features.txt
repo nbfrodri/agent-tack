@@ -22,13 +22,13 @@ context-max-chars     tack.contextMaxChars      none     number    any     hook 
 state-retention-days  tack.stateRetentionDays   30       number    global  hook        Delete per-session state (tool-call counters) older than this many days at session start
 merge-requires-green  tack.mergeRequiresGreen  true     bool      any     hook         Refuse gh pr merge while the pull request's CI checks fail or are still running
 handoff-stale-commits tack.handoffStaleCommits  3        number    any     hook         The check before stopping asks for a handoff refresh once it is this many code commits behind, or when that work is pushed
-stop-check          tack.stopCheck            true     bool      any     hook         Before the assistant stops, report uncommitted work, a failing fast check, a stale handoff or docs the docs map expects
+stop-check          tack.stopCheck            true     bool      any     hook         Before the assistant stops, report uncommitted work, a failing fast check, source changes without a test change, a stale handoff or docs the docs map expects
 reply-style           tack.replyStyle           normal   normal|terse      any  instruction  Ask the assistant for terse replies to save output tokens
 skill-loading         tack.skillLoading         normal   normal|minimal    any  instruction  Load skills only when a task cannot be done without them, to save input tokens
 subagent-model        tack.subagentModel        inherit  inherit|economical any instruction  Delegate to the most economical capable model instead of inheriting the main one
 memory                tack.memory               true     bool      global  hook         Load the shared user memory (tack memory) at session start in Claude Code and Codex
 memory-max-chars      tack.memoryMaxChars       2000     number    global  hook         Cap the notes of the shared user memory added at session start at this many characters, keeping the newest
 visual-review         tack.visualReview         true     bool      any     instruction  For UI changes in standard, strict and unleash, capture before and after screenshots (tack shots) and have ui-reviewer score them
-check-fast            tack.checkFast            none     text      any     hook         Shell command run after each edit in trusted projects; its failures are shown to the assistant
+check-fast            tack.checkFast            none     text      any     hook         Shell command run after each edit and before stopping in trusted projects; replaces the detected test command
 unleash-max-tool-calls tack.unleashMaxToolCalls none    number    any     hook         In a project-only mode such as unleash, refuse tool calls after this many in one session
 unleash-max-cost      tack.unleashMaxCost       none     decimal   any     mod          In a project-only mode such as unleash, refuse tool calls once the session cost passes this many USD

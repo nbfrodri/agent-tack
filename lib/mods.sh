@@ -112,7 +112,7 @@ install_mods() {
     return
   fi
   if ! has claude; then
-    warn "claude CLI not found: install Claude Code, then re-run ./install.sh to load the mods"
+    ok "mods: skipped until Claude Code is installed (then re-run ./install.sh)"
     return
   fi
 

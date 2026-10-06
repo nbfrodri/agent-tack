@@ -169,6 +169,14 @@ case "$cmd" in
       key_set local enabled true || fail "cannot enable this clone"
       echo "Enabled for this clone (git config tack.enabled true)."
     fi
+    # The test gate before stopping runs project code, so it waits for the user's trust.
+    detected="$(bash "$HARNESS_ROOT/lib/test-command.sh" "$HARNESS_ROOT" "$root")"
+    if [ -z "$detected" ]; then
+      echo "No test command found: name one with tack config check-fast \"<command>\" so tests run before the assistant stops."
+    elif ! is_trusted; then
+      printf 'Tests: %s (from %s). Run tack trust to have them run before the assistant stops.\n' \
+        "${detected%%$'\t'*}" "${detected#*$'\t'}"
+    fi
     ;;
   disable)
     allowed_option=''; check_args "$@"
@@ -188,15 +196,21 @@ case "$cmd" in
     migrated=0
     for scope in global local; do
       if [ "$scope" = local ] && ! root="$(repo_root)"; then continue; fi
-      while read -r former value; do
+      # Git values may contain whitespace and newlines. Read the last value of each key as
+      # a NUL-delimited record, matching key_get, and preserve valueless booleans as true.
+      while IFS= read -r former; do
         [ -n "$former" ] || continue
         current="tack.${former#harness.}"
-        git config "--$scope" --get "$current" >/dev/null 2>&1 || git config "--$scope" "$current" "$value" \
-          || fail "cannot write $current"
+        if ! git config "--$scope" --get "$current" >/dev/null 2>&1; then
+          IFS= read -r -d '' value < <(git config "--$scope" --null --get "$former") \
+            || fail "cannot read $former"
+          if [ -z "$value" ] && [ "$(git config "--$scope" --bool --get "$former" 2>/dev/null)" = true ]; then
+            value=true
+          fi
+          git config "--$scope" "$current" "$value" || fail "cannot write $current"
+        fi
         migrated=1
-      done <<EOF
-$(git config "--$scope" --get-regexp '^harness\.' 2>/dev/null)
-EOF
+      done < <(git config "--$scope" --name-only --get-regexp '^harness\.' 2>/dev/null | sort -u)
       if git config "--$scope" --get-regexp '^harness\.' >/dev/null 2>&1; then
         git config "--$scope" --remove-section harness || fail "cannot remove the former $scope harness settings"
         echo "Moved the $scope harness.* settings to tack.*."
@@ -228,6 +242,12 @@ EOF
       printf 'mode: %s\n' "$(effective_mode)"
       if is_trusted; then echo 'formatter trust: trusted'
       else echo 'formatter trust: untrusted'; fi
+      if root="$(repo_root)" && detected="$(bash "$HARNESS_ROOT/lib/test-command.sh" "$HARNESS_ROOT" "$root")" && [ -n "$detected" ]; then
+        printf 'test command: %s (from %s)
+' "${detected%%$'	'*}" "${detected#*$'	'}"
+      else
+        echo 'test command: none found (set one with tack config check-fast)'
+      fi
     fi
     exit "$workflow_exit"
     ;;
@@ -315,6 +335,10 @@ EOF
     root="$(repo_root)" || exit 0
     source_root="$HARNESS_ROOT"
     bash "$source_root/lib/project-context.sh" "$root" "$(context_level)"
+    detected="$(bash "$source_root/lib/test-command.sh" "$source_root" "$root")"
+    [ -z "$detected" ] || printf '
+Test command: %s (from %s). Use it to verify changes instead of searching for one.
+'       "${detected%%$'	'*}" "${detected#*$'	'}"
     ;;
   config)
     source_root="$HARNESS_ROOT"

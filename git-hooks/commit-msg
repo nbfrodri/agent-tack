@@ -4,7 +4,8 @@
 #      in every repository
 #   2. enforces Conventional Commits on the subject line, in projects where tack is
 #      enabled (`tack enable`)
-#   3. runs the repository's own commit-msg hook, if any
+#   3. in enabled projects, warns (without refusing) about a commit made directly on main or master
+#   4. runs the repository's own commit-msg hook, if any
 #
 # Opt out of the format check in an enabled repository that uses other conventions:
 #   tack config conventional-commits false   (git key: tack.conventionalCommits)
@@ -43,10 +44,13 @@ if ! cmp -s "$tmp" "$msg_file"; then
 fi
 rm -f "$tmp"
 
+enabled=false
+! "$HOOK_DIR/../bin/tack" status --quiet || enabled=true
+subject="$(grep -vE '^[[:space:]]*(#|$)' "$msg_file" | head -n 1)"
+
 # 2. Conventional Commits check on the subject (first non-comment, non-empty line)
-if "$HOOK_DIR/../bin/tack" status --quiet \
+if [ "$enabled" = true ] \
   && [ "$("$HOOK_DIR/../bin/tack" config conventional-commits 2>/dev/null | cut -d" " -f1)" != "false" ]; then
-  subject="$(grep -vE '^[[:space:]]*(#|$)' "$msg_file" | head -n 1)"
   CC_PATTERN='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-zA-Z0-9._/-]+\))?!?: [^[:space:]].*'
   # Messages git or tools generate (merges, reverts, autosquash) are always accepted
   GENERATED_PATTERN='^(Merge |Revert "|fixup! |squash! |amend! |Initial commit$)'
@@ -75,5 +79,18 @@ EOF
   fi
 fi
 
-# 3. The repository's own commit-msg hook
+# 3. Every mode works on a branch. A direct commit to main or master is reported, not refused:
+#    trivial fixes and releases may land there. The first commit of a repository is left alone.
+branch="$(git symbolic-ref --short -q HEAD 2>/dev/null)"
+if [ "$enabled" = true ] && { [ "$branch" = main ] || [ "$branch" = master ]; } \
+  && git rev-parse -q --verify HEAD >/dev/null \
+  && ! printf '%s' "$subject" | grep -qE '^(chore\((release|main)\)|Merge |Revert |revert)'; then
+  cat >&2 <<EOF
+commit-msg: this commit goes straight to $branch. Every tack mode works on a branch; unless the
+change is trivial or a release, move it there now (the commit stays, $branch goes back one):
+    git branch <type>/<name> && git reset --keep HEAD~1 && git switch <type>/<name>
+EOF
+fi
+
+# 4. The repository's own commit-msg hook
 run_local_hook commit-msg "$@"

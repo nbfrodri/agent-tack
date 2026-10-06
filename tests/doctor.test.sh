@@ -30,7 +30,9 @@ check 'missing installation is an error' [ "$RC" -eq 1 ]
 "$REPO/install.sh" --skip-plugins >"$WORK/install.log" 2>&1 || exit 1
 run_doctor
 check 'installed links are healthy outside Git' [ "$RC" -eq 0 ]
-check 'optional absent tools are warnings' grep -q "WARN.*claude" "$WORK/report"
+check 'no AI tool at all is one warning' grep -q "WARN no supported AI tool found" "$WORK/report"
+check 'absent tools are listed once, not warned one by one' grep -q "OK   AI tools not installed: claude codex" "$WORK/report"
+check 'absent tools add no other warnings' bash -c "! grep -q 'WARN.*unavailable' '$WORK/report'"
 check 'outside Git is accepted' grep -q "outside a Git repository" "$WORK/report"
 mkdir -p "$XDG_STATE_HOME/agent-tack/budget"
 : > "$XDG_STATE_HOME/agent-tack/budget/s1"
@@ -69,6 +71,7 @@ printf '#!/bin/sh\nexit 13\n' > "$WORK/bin/gemini"
 chmod +x "$WORK/bin/gemini"
 run_doctor
 check 'new optional CLI does not imply an existing managed installation' [ "$RC" -eq 0 ]
+check 'an installed tool is listed as found' grep -q "OK   AI tools found: gemini" "$WORK/report"
 check 'new optional CLI missing configuration is a warning' grep -q 'WARN.*gemini.*not configured' "$WORK/report"
 mkdir -p "$HOME/.gemini"
 printf 'user rules\n' > "$HOME/.gemini/GEMINI.md"

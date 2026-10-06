@@ -67,11 +67,15 @@ check "legacy harness alias linked into ~/.local/bin" "[ \"\$(readlink '$H/.loca
 check "settings.json disables AI attribution" "[ \"\$(json_get '$H/.claude/settings.json' attribution.commit)\" = '\"\"' ]"
 
 check "fresh install creates no backups" "! find '$H' -name '*.bak-*' | grep -q ."
+check "fresh install counts links instead of listing them" "grep -qE '✔ [0-9]+ new$' '$H.log' && ! grep -q -- ' -> ' '$H.log'"
+check "fresh install output stays short" "[ \"\$(wc -l < '$H.log')\" -lt 80 ]"
+H_VERBOSE="$WORK/verbose"
+check "--verbose lists every link" "run_install '$H_VERBOSE' --verbose && grep -q -- '/.claude/CLAUDE.md -> ' '$H_VERBOSE.log'"
 
 echo "Idempotent"
 check "second run exits 0" "run_install '$H'"
 check "second run creates no backups" "! find '$H' -name '*.bak-*' | grep -q ."
-check "second run changes nothing" "! grep -qE 'backed up|merged|created|removed|->' '$H.log'"
+check "second run changes nothing" "! grep -qE 'backed up|merged|created|removed|->|[0-9]+ new' '$H.log'"
 
 echo "Existing files are backed up, never overwritten"
 H="$WORK/existing"
@@ -389,6 +393,16 @@ git_global "$H" --unset tack.skillGroups
 run_install "$H"
 check "selecting a group again installs it again" "[ -L '$H/.agents/skills/frontend' ]"
 check "uninstall still restores after groups changed" "HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 '$REPO/uninstall.sh' >'$H.uninstall.log' 2>&1 && [ ! -e '$H/.agents/skills/dev-workflow' ]"
+
+echo "Windows (Git Bash) without symlink permission"
+H="$WORK/windows"
+WINBIN="$WORK/bin-windows"
+mkdir -p "$H" "$WINBIN"
+printf '#!/bin/sh\necho MINGW64_NT-10.0-26200\n' > "$WINBIN/uname"
+printf '#!/bin/sh\necho "ln: Operation not permitted" >&2\nexit 1\n' > "$WINBIN/ln"
+chmod +x "$WINBIN/uname" "$WINBIN/ln"
+check "stops before changing anything" "! HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 PATH='$WINBIN:$PATH' '$REPO/install.sh' --skip-plugins >'$H.log' 2>&1 && [ ! -e '$H/.claude' ]"
+check "names Developer Mode and WSL2" "grep -q 'Developer Mode' '$H.log' && grep -q 'WSL2' '$H.log'"
 
 echo
 echo "$PASSED passed, $FAILED failed"

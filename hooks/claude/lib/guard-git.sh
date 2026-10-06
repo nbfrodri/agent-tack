@@ -267,7 +267,7 @@ check_gh() {
     esac
   done
   # Absolute, because it runs after cd "$cwd" and the hook may be started with a relative path.
-  cli="$(cd "$(dirname "$0")/../../bin" && pwd)/tack"
+  cli="$(cd "$GUARD_DIR/../../bin" && pwd)/tack"
   (cd "$cwd" && "$cli" status --quiet) 2>/dev/null || return 0
   setting="$(cd "$cwd" && "$cli" config merge-requires-green 2>/dev/null)"
   [ "${setting%% *}" != false ] || return 0

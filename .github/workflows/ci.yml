@@ -66,6 +66,22 @@ jobs:
           tests/safety.test.sh
           tests/guard.test.sh
           tests/evals.test.sh
+          tests/smoke.test.sh
+
+  windows:
+    # Native Windows through Git Bash is experimental (docs/editors.md#windows). This job keeps the
+    # checkout, the validator, the installer, the git hooks and the guard working there; the other
+    # suites need symlink and tool behaviour Windows lacks.
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - name: Validate skills, agents and cross-references
+        run: tests/validate.sh
+      - name: Install, commit through the hooks and ask the guard (tests/smoke.test.sh)
+        run: tests/smoke.test.sh
 
   mods:
     # Unit tests always run with Node; claude plugin validate/test need the Claude Code CLI and warn when it is missing

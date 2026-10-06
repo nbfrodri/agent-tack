@@ -7,7 +7,8 @@
 ## What it does
 
 - **One workflow, scaled to the task:** plan, test first, small commits, docs, review; light for a typo, thorough for a risky change.
-- **Rules that are enforced, not just suggested:** git hooks (every tool) and the Claude Code and Codex hooks block AI attribution, committed secrets, force-pushes to `main`, dangerous commands and merges with red or unfinished CI.
+- **Rules that are enforced, not just suggested:** git hooks (every tool) and the Claude Code and Codex hooks block AI attribution, committed secrets, force-pushes to `main`, dangerous commands and merges with red or unfinished CI. The command guard catches an assistant's mistakes; it is not a sandbox against a determined one, so run untrusted or fully unattended work in a container or VM ([what it covers](docs/how-it-works.md#what-the-command-guard-covers-and-what-it-does-not)).
+- **Enforcement depends on the tool:** Claude Code gets everything; Codex gets the agent hooks; Cursor gets the command guard; Copilot, Gemini, OpenCode and Crush get the instructions and skills, with git hooks as their only enforcement ([per tool](docs/editors.md#what-each-tool-receives)).
 - **Opt-in per project:** everywhere else the assistant works normally with only the safety net on.
 - **Yours to change:** rules, skills, modes and toggles are plain files and commands. [Why →](docs/why.md)
 
@@ -63,7 +64,7 @@ Run `tack help` for everything. [Usage →](docs/usage.md)
 
 - **Skills:** a core workflow (`dev-workflow`) plus process skills (debugging, testing, releases, issues, reviews, delegation) and stack skills (frontend, APIs, databases, auth, deployment…).
 - **Agents:** planner, implementer, reviewers (code, security, performance, architecture, UI), test and docs writers.
-- **Hooks:** commit conventions, secret scanning, a command guard (including green-only merges), auto-format, a fast check after edits, a check before the assistant stops and an opt-in activity log.
+- **Hooks:** commit conventions, secret scanning, a command guard (including green-only merges), auto-format, a fast check after edits, a check before the assistant stops (uncommitted work, code changed without a test, failing tests in trusted projects) and an opt-in activity log.
 - **Claude Code mods:** a usage band with the active tack mode and your 5-hour and weekly limits, and a live pane of what the agent is doing.
 
 [Full list →](docs/components.md) · [How it works →](docs/how-it-works.md)
@@ -85,13 +86,18 @@ Pick a catalog when you want breadth and choose workflows yourself; pick agent-t
 
 ## Results
 
-Measured on real sessions with Claude Sonnet 5.5 in Claude Code, plain assistant versus tack. Other models and tools can give different numbers ([method and limits](docs/results.md)):
+Measured on real Claude Code sessions, plain assistant versus tack, with hidden acceptance tests the assistant never sees. Other models and tools can give different numbers ([method, limits and every table](docs/results.md)):
 
-| | Plain assistant | Lite / Auto | Strict |
-| --- | --- | --- | --- |
-| Bug fix on a branch with a `fix:` commit and a regression test | 0/2 | 2/2 | 2/2 |
-| Cost of a bug fix | 1× | ~2× | 3.5× |
-| Cost of a new project | 1× | ~2.2× | waits for your plan approval |
+| | Plain assistant | tack (`auto`) |
+| --- | --- | --- |
+| Path traversal from user input, smaller model (`claude-haiku-4-5`, 5 runs): every trap handled | 0/5 | 4/5 |
+| Path traversal, larger model (`claude-opus-5-5`, 2 runs) | 2/2 | 2/2 |
+| SQL search on user input, smaller model (5 runs): every trap handled | 0/5 | 0/5 |
+| Bug fix, new project and project conventions (Haiku and Opus): hidden tests pass | all | all |
+| Work on a branch with Conventional Commits | no run | every Opus run; most Haiku runs |
+| Cost | 1× | 1.1–1.9× |
+
+tack changed the outcome in one of two hidden-risk scenarios: the smaller model handled path traversal once tack had it pick the level by risk, while in a SQL search both conditions missed the same `LIKE` wildcard trap. On plain tasks it changes the process (branch, commits, tests) at a modest cost.
 
 ## Learn more
 
