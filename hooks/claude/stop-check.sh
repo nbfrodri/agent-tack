@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Claude Code Stop hook: before the assistant ends its turn in an enabled project, reports
-# uncommitted work, a failing fast check, a stale handoff and docs the project's docs map
+# uncommitted work, a failing fast check, source changes without a test change, a stale handoff and docs the project's docs map
 # expects (docs-map.txt). It asks to continue once; a second stop is never blocked.
 set -u
 
@@ -90,15 +90,33 @@ $changed
 EOF
 }
 
+# Files changed on this branch (since it left main or master) and in the working tree.
+base=""
+current="$(git branch --show-current 2>/dev/null)"
+for trunk in main master; do
+  [ "$current" != "$trunk" ] || break
+  base="$(git merge-base HEAD "$trunk" 2>/dev/null)" && break
+done
+# A rename shows as "old -> new"; the new path is the one that exists now.
+changed="$( { [ -z "$base" ] || git diff --name-only "$base" HEAD; git status --porcelain --untracked-files=all | cut -c4- | sed 's/.* -> //'; } 2>/dev/null | sort -u)"
+
+# Every mode asks for a test when logic changes. Source changes with no test change are reported,
+# in projects that have tests at all; deleted files do not count.
+TEST_FILES='(^|/)(tests?|spec|__tests__)/|(^|/)test_[^/]*\.py$|_test\.[^/]+$|\.(test|spec)\.[^/]+$|_spec\.[^/]+$|Tests?\.(java|kt|cs|scala)$'
+SOURCE_FILES='\.(py|js|jsx|ts|tsx|mjs|cjs|go|rs|java|kt|rb|php|cs|swift|c|h|cc|cpp|hpp|scala|ex|exs|vue|svelte|dart|sh)$'
+if ! printf '%s\n' "$changed" | grep -qE "$TEST_FILES" && git ls-files | grep -qE "$TEST_FILES"; then
+  sources=0 first=""
+  while IFS= read -r file; do
+    [ -e "$file" ] || continue
+    sources=$((sources + 1))
+    [ -n "$first" ] || first="$file"
+  done <<EOF
+$(printf '%s\n' "$changed" | grep -E "$SOURCE_FILES" | grep -vE "$TEST_FILES")
+EOF
+  [ "$sources" -eq 0 ] || add "$sources source file(s) changed ($first first) but no test did: add or update a test for the changed behaviour, or tell the user why none is needed."
+fi
+
 if [ -f docs-map.txt ]; then
-  base=""
-  current="$(git branch --show-current 2>/dev/null)"
-  for trunk in main master; do
-    [ "$current" != "$trunk" ] || break
-    base="$(git merge-base HEAD "$trunk" 2>/dev/null)" && break
-  done
-  # A rename shows as "old -> new"; the new path is the one that exists now.
-  changed="$( { [ -z "$base" ] || git diff --name-only "$base" HEAD; git status --porcelain | cut -c4- | sed 's/.* -> //'; } 2>/dev/null | sort -u)"
   while IFS='|' read -r pattern docs; do
     pattern="$(printf '%s' "$pattern" | tr -d '[:space:]')"
     case "$pattern" in '' | '#'*) continue ;; esac

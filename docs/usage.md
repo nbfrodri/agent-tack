@@ -131,7 +131,7 @@ After each file edit, Claude Code runs the command from the repository root. Whe
 
 ### Check before stopping and the docs map
 
-Before Claude Code's assistant ends a turn in an enabled project, a Stop hook looks for unfinished business: uncommitted changes, a failing fast check, a stale handoff, and code changed on the branch without the docs that `docs-map.txt` pairs with it. If it finds any, the assistant gets the list once and either fixes it or explains why it stays; the next stop always goes through. Turn it off with `tack config stop-check false`.
+Before Claude Code's assistant ends a turn in an enabled project, a Stop hook looks for unfinished business: uncommitted changes, a failing fast check, source files changed on the branch while no test changed (only in projects that have tests; docs, config and deletions do not count), a stale handoff, and code changed on the branch without the docs that `docs-map.txt` pairs with it. If it finds any, the assistant gets the list once and either fixes it or explains why it stays; the next stop always goes through. Turn it off with `tack config stop-check false`.
 
 A handoff a commit or two behind is normal mid-task, so it is reported only once it is `handoff-stale-commits` code commits behind (default 3; commits that only touch plans, handoffs or `docs/archive/` do not count), or as soon as that work is pushed, or when it names another branch:
 
