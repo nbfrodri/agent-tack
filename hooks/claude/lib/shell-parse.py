@@ -130,22 +130,30 @@ class Parser:
                 index += 1
         return subs
 
-    def heredocs(self, index, pending, line_tokens, depth):
-        segments, words = [], []
+    def heredocs(self, index, pending, line_tokens, pipes, depth):
+        # Only the commands that read a heredoc are checked: the one that owns it and those its
+        # output is piped to. Other commands on the line are checked as ordinary commands.
+        segments, words, piped = [], [], []
         skip_target = False
-        for token in line_tokens + [SEP]:
+        for position, token in enumerate(line_tokens + [SEP]):
             if skip_target:
                 skip_target = False
                 continue
             if token == REDIR:
                 skip_target = True
             elif token == SEP:
-                if words:
-                    segments.append(words)
+                segments.append(words)
+                piped.append(position in pipes)
                 words = []
             else:
                 words.append(token)
-        for words in segments:
+        readers = set()
+        for owner in {entry[3] for entry in pending}:
+            readers.add(owner)
+            while owner < len(piped) and piped[owner]:
+                owner += 1
+                readers.add(owner)
+        for words in (segments[k] for k in sorted(readers) if k < len(segments) and segments[k]):
             first = next((word for word in words if "=" not in word), "")
             base = first.rsplit("/", 1)[-1]
             if base not in DATA_READERS and base != "git":
@@ -153,7 +161,7 @@ class Parser:
             if base == "git" and (len(words) < 2 or words[1] != "commit"):
                 raise ReviewRequired("Unsupported git heredoc consumer requires review.")
         subs = []
-        for delimiter, quoted, strip_tabs in pending:
+        for delimiter, quoted, strip_tabs, _ in pending:
             start = index
             while index < self.length:
                 end = self.source.find("\n", index)
@@ -173,6 +181,7 @@ class Parser:
     def parse(self, index=0, closing=None, depth=0):
         tokens, subs, pending = [], [], []
         line_start = 0
+        pipes = set()  # positions in tokens of separators that are pipes
         command_start = True
         while index < self.length:
             char = self.source[index]
@@ -202,10 +211,14 @@ class Parser:
                     continue
                 self.add(tokens, SEP)
                 command_start = True
+                if char == "|" and not self.source.startswith("||", index) and self.source[index - 1:index] != "|":
+                    pipes.add(len(tokens) - 1)
+                    index += int(self.source.startswith("|&", index))  # |& pipes stderr too
                 index += 1
                 if char == "\n":
                     if pending:
-                        index, heredoc_subs = self.heredocs(index, pending, tokens[line_start:], depth)
+                        line_pipes = {position - line_start for position in pipes if position >= line_start}
+                        index, heredoc_subs = self.heredocs(index, pending, tokens[line_start:], line_pipes, depth)
                         subs.extend(heredoc_subs)
                         pending = []
                     line_start = len(tokens)
@@ -222,7 +235,7 @@ class Parser:
                     index, delimiter, quoted, _ = self.word(index, depth, delimiter=True)
                     if not delimiter:
                         raise ReviewRequired("Empty heredoc delimiter requires review.")
-                    pending.append((delimiter, quoted, strip_tabs))
+                    pending.append((delimiter, quoted, strip_tabs, tokens[line_start:].count(SEP)))
                     continue
                 while index < self.length and self.source[index] in "<>&|":
                     index += 1
