@@ -204,8 +204,8 @@ check_settings() {
     python3 - "$dest" "$REPO/claude/settings.json" "$REPO" <<'PYTHON' >/dev/null 2>&1
 import json,sys
 try:
-    current=json.load(open(sys.argv[1]))
-    expected=json.load(open(sys.argv[2]))
+    current=json.load(open(sys.argv[1], encoding="utf-8"))
+    expected=json.load(open(sys.argv[2], encoding="utf-8"))
 except (OSError,ValueError):
     sys.exit(2)
 if not isinstance(current,dict): sys.exit(2)

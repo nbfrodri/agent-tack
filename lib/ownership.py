@@ -23,7 +23,7 @@ SHA256 = re.compile(r"[0-9a-f]{64}")
 
 
 def read(path):
-    value = path.read_text()
+    value = path.read_text(encoding="utf-8")
     return value[:-1] if value.endswith("\n") else value
 
 
@@ -45,7 +45,7 @@ def settings_paths(home, declaration):
     """Settings files the installer may merge: each tool's hooks file in targets.txt."""
     paths = {home + "/.claude/settings.json", home + "/.codex/hooks.json"}
     try:
-        lines = declaration.read_text().splitlines()
+        lines = declaration.read_text(encoding="utf-8").splitlines()
     except OSError:
         return paths
     for line in lines:
@@ -60,7 +60,7 @@ def expected_link(path, target, home, repo, declaration):
              home + "/.local/bin/tack": repo + "/bin/tack",
              home + "/.local/bin/harness": repo + "/bin/harness"}
     skill_dirs = {home + "/.agents/skills"}
-    for line in declaration.read_text().splitlines():
+    for line in declaration.read_text(encoding="utf-8").splitlines():
         fields = line.split()
         if not fields or fields[0].startswith("#"):
             continue
@@ -149,7 +149,7 @@ def validate(state, home):
             if path not in settings_paths(home.rstrip("/"), declaration):
                 raise ValueError("unexpected settings path")
             for name in ("before", "after", "managed"):
-                with (entry / name).open() as stream:
+                with (entry / name).open(encoding="utf-8") as stream:
                     if not isinstance(json.load(stream), dict):
                         raise ValueError("settings snapshot is not an object")
         elif kind == "git":
@@ -159,7 +159,7 @@ def validate(state, home):
                 expected.add(os.environ["GIT_CONFIG_GLOBAL"])
             if path not in expected or read(entry / "target") != entry_repo.rstrip("/") + "/git-hooks":
                 raise ValueError("unexpected Git config path")
-            if "\n" in (entry / "before").read_text():
+            if "\n" in (entry / "before").read_text(encoding="utf-8"):
                 raise ValueError("unsupported multiline Git baseline")
         elif kind == "generated":
             parent, name = os.path.split(path)
@@ -305,7 +305,7 @@ def write_json(path, value):
     mode = stat.S_IMODE(path.stat().st_mode)
     fd, temporary = tempfile.mkstemp(prefix=".tack-uninstall-", dir=path.parent)
     try:
-        with os.fdopen(fd, "w") as stream:
+        with os.fdopen(fd, "w", encoding="utf-8") as stream:
             os.fchmod(stream.fileno(), mode)
             json.dump(value, stream, indent=2)
             stream.write("\n")
@@ -395,11 +395,11 @@ def uninstall_entry(entry, dry_run):
         print(f"{'would ' if dry_run else ''}{verb} {path}")
         return True
     if kind == "settings":
-        with path.open() as stream:
+        with path.open(encoding="utf-8") as stream:
             current = json.load(stream)
-        before = json.loads((entry / "before").read_text())
-        after = json.loads((entry / "after").read_text())
-        managed = json.loads((entry / "managed").read_text())
+        before = json.loads((entry / "before").read_text(encoding="utf-8"))
+        after = json.loads((entry / "after").read_text(encoding="utf-8"))
+        managed = json.loads((entry / "managed").read_text(encoding="utf-8"))
         restored = before if current == after else reverse_managed(before, managed, current)
         if current != after:
             restore_retired_events(before, after, managed, current, restored)
@@ -420,7 +420,7 @@ def uninstall_entry(entry, dry_run):
         return False
     print(f"{'would restore' if dry_run else 'restore'} original Git hooks: {path}")
     if not dry_run:
-        before = (entry / "before").read_text()
+        before = (entry / "before").read_text(encoding="utf-8")
         args = ["--replace-all", "core.hooksPath", before] if (entry / "before_present").exists() else ["--unset-all", "core.hooksPath"]
         subprocess.run(command + args, check=True, capture_output=True)
     return True

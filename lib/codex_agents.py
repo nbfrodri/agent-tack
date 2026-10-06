@@ -10,7 +10,7 @@ READ_ONLY_TOOLS = {"Read", "Grep", "Glob", "Bash", "WebFetch", "WebSearch"}
 
 
 def parse(path):
-    text = Path(path).read_text()
+    text = Path(path).read_text(encoding="utf-8")
     if not text.startswith("---\n"):
         raise ValueError(f"{path}: missing frontmatter")
     header, _, body = text[4:].partition("\n---\n")

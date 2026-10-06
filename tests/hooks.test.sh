@@ -141,6 +141,17 @@ exit 1
 EOF
 check "a failing local pre-commit still blocks the commit" "! commit 'docs: blocked'"
 rm -f "$R/.git/hooks/pre-commit" "$R/.git/hooks/commit-msg"
+# prepare-commit-msg is a pass-through hook: only _chain forwards it to the local one
+cat > "$R/.git/hooks/prepare-commit-msg" <<EOF
+#!/usr/bin/env bash
+echo "\$1" > "$WORK/prepare-commit-msg-ran"
+EOF
+chmod +x "$R/.git/hooks/prepare-commit-msg"
+setup_commit "docs: pass-through hook"
+check "a local pass-through hook runs with its arguments" "[ -s '$WORK/prepare-commit-msg-ran' ]"
+printf '#!/usr/bin/env bash\nexit 1\n' > "$R/.git/hooks/prepare-commit-msg"
+check "a failing local pass-through hook still blocks the commit" "! commit 'docs: blocked'"
+rm -f "$R/.git/hooks/prepare-commit-msg"
 
 echo "pre-push: main is protected"
 REMOTE="$WORK/remote.git"

@@ -33,9 +33,9 @@ def clean_group(group):
     kept = [hook for hook in group["hooks"] if not is_ours(hook)]
     return dict(group, hooks=kept) if kept else None
 
-with open(sys.argv[1]) as f:
+with open(sys.argv[1], encoding="utf-8") as f:
     current = json.load(f)
-with open(sys.argv[2]) as f:
+with open(sys.argv[2], encoding="utf-8") as f:
     wanted = json.load(f)
 if not isinstance(current, dict):
     sys.exit("settings.json is not a JSON object")

@@ -390,6 +390,16 @@ run_install "$H"
 check "selecting a group again installs it again" "[ -L '$H/.agents/skills/frontend' ]"
 check "uninstall still restores after groups changed" "HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 '$REPO/uninstall.sh' >'$H.uninstall.log' 2>&1 && [ ! -e '$H/.agents/skills/dev-workflow' ]"
 
+echo "Windows (Git Bash) without symlink permission"
+H="$WORK/windows"
+WINBIN="$WORK/bin-windows"
+mkdir -p "$H" "$WINBIN"
+printf '#!/bin/sh\necho MINGW64_NT-10.0-26200\n' > "$WINBIN/uname"
+printf '#!/bin/sh\necho "ln: Operation not permitted" >&2\nexit 1\n' > "$WINBIN/ln"
+chmod +x "$WINBIN/uname" "$WINBIN/ln"
+check "stops before changing anything" "! HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 PATH='$WINBIN:$PATH' '$REPO/install.sh' --skip-plugins >'$H.log' 2>&1 && [ ! -e '$H/.claude' ]"
+check "names Developer Mode and WSL2" "grep -q 'Developer Mode' '$H.log' && grep -q 'WSL2' '$H.log'"
+
 echo
 echo "$PASSED passed, $FAILED failed"
 if [ "$FAILED" -gt 0 ]; then
