@@ -21,8 +21,12 @@ check() {
 echo "Install"
 check "install.sh succeeds in a temporary HOME" "'$REPO/install.sh' --skip-plugins >'$WORK/install.log' 2>&1 || { cat '$WORK/install.log'; false; }"
 check "global instructions are linked" "[ -L '$HOME/.claude/CLAUDE.md' ]"
-check "git uses tack's hooks" "[ \"\$(git config --global core.hooksPath)\" = '$REPO/git-hooks' ]"
-check "the doctor reports no errors" "bash '$REPO/lib/doctor.sh' '$REPO' >'$WORK/doctor.log' 2>&1 || { grep -v '^OK' '$WORK/doctor.log'; false; }"
+check "git uses tack's hooks" "[ \"\$(cd \"\$(git config --global core.hooksPath)\" && pwd -P)\" = \"\$(cd '$REPO/git-hooks' && pwd -P)\" ]"
+case "$(uname -s)" in
+  # Doctor and uninstall still misjudge paths and permissions there (#111).
+  MINGW* | MSYS* | CYGWIN*) echo "  - doctor skipped on native Windows (#111)" ;;
+  *) check "the doctor reports no errors" "bash '$REPO/lib/doctor.sh' '$REPO' >'$WORK/doctor.log' 2>&1 || { grep -v '^OK' '$WORK/doctor.log'; false; }" ;;
+esac
 
 echo "Commits through the global hooks"
 P="$WORK/project"

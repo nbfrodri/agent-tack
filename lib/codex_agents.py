@@ -51,4 +51,5 @@ def render(path):
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         sys.exit("usage: codex_agents.py <agent.md>")
-    sys.stdout.write(render(sys.argv[1]))
+    # Bytes, not text: Windows would encode stdout with its ANSI code page, which lacks some characters.
+    sys.stdout.buffer.write(render(sys.argv[1]).encode("utf-8"))
