@@ -188,15 +188,21 @@ case "$cmd" in
     migrated=0
     for scope in global local; do
       if [ "$scope" = local ] && ! root="$(repo_root)"; then continue; fi
-      while read -r former value; do
+      # Git values may contain whitespace and newlines. Read the last value of each key as
+      # a NUL-delimited record, matching key_get, and preserve valueless booleans as true.
+      while IFS= read -r former; do
         [ -n "$former" ] || continue
         current="tack.${former#harness.}"
-        git config "--$scope" --get "$current" >/dev/null 2>&1 || git config "--$scope" "$current" "$value" \
-          || fail "cannot write $current"
+        if ! git config "--$scope" --get "$current" >/dev/null 2>&1; then
+          IFS= read -r -d '' value < <(git config "--$scope" --null --get "$former") \
+            || fail "cannot read $former"
+          if [ -z "$value" ] && [ "$(git config "--$scope" --bool --get "$former" 2>/dev/null)" = true ]; then
+            value=true
+          fi
+          git config "--$scope" "$current" "$value" || fail "cannot write $current"
+        fi
         migrated=1
-      done <<EOF
-$(git config "--$scope" --get-regexp '^harness\.' 2>/dev/null)
-EOF
+      done < <(git config "--$scope" --name-only --get-regexp '^harness\.' 2>/dev/null | sort -u)
       if git config "--$scope" --get-regexp '^harness\.' >/dev/null 2>&1; then
         git config "--$scope" --remove-section harness || fail "cannot remove the former $scope harness settings"
         echo "Moved the $scope harness.* settings to tack.*."

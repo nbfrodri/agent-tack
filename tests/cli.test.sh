@@ -668,6 +668,23 @@ check "the project stays enabled" eval "'$CLI' status --quiet"
 bash "$REPO/lib/doctor.sh" "$REPO" >"$WORK/doctor" 2>&1
 check "doctor no longer asks" eval "grep -q 'current project workflow' '$WORK/doctor' && ! grep -q 'former harness name' '$WORK/doctor'"
 check "a second run has nothing to do" eval "'$CLI' migrate | grep -q 'Nothing to migrate'"
+
+# A check command is arbitrary text, and key_get reads the last of repeated scalar values.
+M_TEXT="$WORK/migrate-text"
+git init -q "$M_TEXT" && cd "$M_TEXT" || exit 1
+multiline=$'  printf first\n\tprintf second\n\n'
+git config harness.checkFast "$multiline"
+git config --null --get harness.checkFast > "$WORK/before-migration"
+git config --add harness.replyStyle normal
+git config --add harness.replyStyle terse
+printf '[harness]\n\tcontext\n\tstopCheck = ""\n' >> .git/config
+check "migrate accepts multiline values and valueless booleans" expect_exit 0 "$CLI" migrate
+git config --null --get tack.checkFast > "$WORK/after-migration"
+check "migration preserves whitespace and trailing newlines byte for byte" cmp -s "$WORK/before-migration" "$WORK/after-migration"
+check "migration preserves the effective last scalar value" eval "[ \"\$(git config tack.replyStyle)\" = terse ]"
+check "migration preserves valueless true" eval "[ \"\$(git config --bool tack.context)\" = true ]"
+check "migration preserves an empty false value" eval "[ \"\$(git config --bool tack.stopCheck)\" = false ]"
+check "text migration removes only the former settings" eval "! git config --local --get-regexp '^harness[.]' >/dev/null"
 cd "$WORK/project" || exit 1
 
 printf '\n%s passed, %s failed\n' "$PASSED" "$FAILED"
