@@ -675,6 +675,31 @@ git -C "$P2" config harness.enabled false
 check "stop-check: disabled projects are left alone" "[ -z \"\$(stopping)\" ]"
 check "stop-check: malformed input is ignored" "[ -z \"\$(printf 'not json' | bash '$STOP')\" ]"
 check "stop-check: registered for Stop" "grep -q 'stop-check.sh' '$REPO/claude/settings.json'"
+git -C "$P2" config harness.enabled true
+git -C "$P2" switch -q main && git -C "$P2" switch -q -c feat/code
+check "stop-check: a project without tests is not asked for one" "printf 'def f(): pass\n' > '$P2/app.py' && ! stopping | grep -q 'no test did'"
+mkdir -p "$P2/tests" && printf 'def test_f(): pass\n' > "$P2/tests/test_app.py"
+git -C "$P2" add -A && git -C "$P2" commit -q -m "test: add a test" && git -C "$P2" switch -q main && git -C "$P2" merge -q feat/code && git -C "$P2" switch -q -c feat/logic
+printf 'def f(): return 1\n' > "$P2/app.py"
+check "stop-check: a source change without a test change is reported" "stopping | grep -q '1 source file(s) changed (app.py first) but no test did'"
+git -C "$P2" add app.py && git -C "$P2" commit -q -m "feat: change f"
+check "stop-check: committed source changes on the branch count too" "stopping | grep -q 'no test did'"
+printf 'def test_f(): assert True\n' > "$P2/tests/test_app.py"
+check "stop-check: a test change on the branch satisfies it" "! stopping | grep -q 'no test did'"
+git -C "$P2" checkout -q -- tests
+git -C "$P2" switch -q main && git -C "$P2" switch -q -c docs/only
+printf 'notes\n' > "$P2/README.md"
+check "stop-check: docs-only changes are not asked for a test" "! stopping | grep -q 'no test did'"
+rm "$P2/README.md"
+for layout in 'src/cart.test.ts' 'pkg/cart_test.go' 'spec/cart_spec.rb' 'src/__tests__/cart.js' 'src/test/java/CartTest.java'; do
+  mkdir -p "$P2/$(dirname "$layout")" && printf 'x\n' > "$P2/$layout"
+  printf 'def f(): return 2\n' > "$P2/app.py"
+  check "stop-check: $layout counts as a test" "! stopping | grep -q 'no test did'"
+  rm -rf "${P2:?}/${layout%%/*}" && git -C "$P2" checkout -q -- app.py
+done
+git -C "$P2" rm -q app.py
+check "stop-check: deleting a source file is not asked for a test" "! stopping | grep -q 'no test did'"
+git -C "$P2" reset -q --hard
 
 echo "Activity log (tack config activity-log, tack log)"
 LOG="$WORK/state/agent-tack/activity.log"
