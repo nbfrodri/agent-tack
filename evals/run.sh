@@ -3,7 +3,7 @@
 # Uses real model tokens.
 #
 # Usage: evals/run.sh <scenario> [condition] [repetition]
-#   scenarios:  new-project | bug-fix | release | codex-new-project | vague-requirement
+#   scenarios:  new-project | bug-fix | release | codex-new-project | vague-requirement | conventions | attachments | search
 #   conditions: auto | lite | lean | standard | strict: the full setup, with the project enabled at
 #               that workflow mode; harness (default) is an alias for auto
 #   baseline:   Claude Code as shipped: no user settings, skills or instructions, and git
@@ -18,9 +18,9 @@ name="${1:?scenario name required}"
 condition="${2:-harness}"
 rep="${3:-1}"
 case "$name" in
-  new-project | bug-fix | release | codex-new-project | vague-requirement) ;;
+  new-project | bug-fix | release | codex-new-project | vague-requirement | conventions | attachments | search) ;;
   *)
-    echo "unknown scenario '$name' (new-project | bug-fix | release | codex-new-project | vague-requirement)" >&2
+    echo "unknown scenario '$name' (new-project | bug-fix | release | codex-new-project | vague-requirement | conventions | attachments | search)" >&2
     exit 2
     ;;
 esac
@@ -152,10 +152,184 @@ PY
   git commit -q --allow-empty -m "chore: tidy up"
 }
 
+# A feature in a project whose AGENTS.md sets conventions the prompt does not repeat: the hidden
+# tests check the feature and those conventions (rounding, input validation, errors).
+seed_conventions_repo() {
+  cd "$dir" || exit 1
+  git init -q -b main
+  mkdir -p src/cart tests
+  cat > pyproject.toml <<'EOF'
+[project]
+name = "cart"
+version = "0.1.0"
+requires-python = ">=3.10"
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+EOF
+  cat > AGENTS.md <<'EOF'
+# AGENTS.md
+
+## Conventions
+- Money is `Decimal`, never `float`. Every public function returns amounts rounded to cents with
+  `ROUND_HALF_UP` (`.quantize(CENT, ROUND_HALF_UP)`), applied once, to the final result.
+- Every public function validates its items with `_check`: a negative price or quantity raises
+  `ValueError`.
+- Invalid arguments raise `ValueError` with a message; never return `None` or ignore them.
+
+## Commands
+- Tests: `uv run pytest -q`
+EOF
+  cat > src/cart/__init__.py <<'EOF'
+from decimal import ROUND_HALF_UP, Decimal
+
+CENT = Decimal("0.01")
+
+
+def _check(items: list[tuple[Decimal, int]]) -> None:
+    for price, quantity in items:
+        if price < 0 or quantity < 0:
+            raise ValueError("price and quantity must not be negative")
+
+
+def subtotal(items: list[tuple[Decimal, int]]) -> Decimal:
+    """Sum of unit price x quantity."""
+    _check(items)
+    return sum((price * quantity for price, quantity in items), Decimal("0")).quantize(CENT, ROUND_HALF_UP)
+EOF
+  cat > tests/test_cart.py <<'EOF'
+from decimal import Decimal
+
+import pytest
+
+from cart import subtotal
+
+
+def test_subtotal_multiplies_price_by_quantity():
+    assert subtotal([(Decimal("2.50"), 2), (Decimal("1.00"), 3)]) == Decimal("8.00")
+
+
+def test_subtotal_rejects_negative_quantities():
+    with pytest.raises(ValueError):
+        subtotal([(Decimal("1.00"), -1)])
+EOF
+  printf '# cart\n\nShopping cart helpers. Conventions and commands: AGENTS.md.\n' > README.md
+  printf '.venv/\n__pycache__/\n' > .gitignore
+  git add -A && git commit -q -m "feat: add cart subtotal"
+}
+
+# A database query from a search box: hidden tests probe SQL injection and LIKE wildcards.
+seed_search_repo() {
+  cd "$dir" || exit 1
+  git init -q -b main
+  mkdir -p src/shop tests
+  cat > pyproject.toml <<'EOF'
+[project]
+name = "shop"
+version = "0.1.0"
+requires-python = ">=3.10"
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+EOF
+  cat > src/shop/__init__.py <<'EOF'
+"""A small product catalogue in SQLite."""
+import sqlite3
+
+
+def connect(path: str = ":memory:") -> sqlite3.Connection:
+    """Opens the catalogue, creating the products table if needed."""
+    conn = sqlite3.connect(path)
+    conn.execute("CREATE TABLE IF NOT EXISTS products (name TEXT NOT NULL, price REAL NOT NULL)")
+    return conn
+
+
+def add_product(conn: sqlite3.Connection, name: str, price: float) -> None:
+    conn.execute("INSERT INTO products (name, price) VALUES (?, ?)", (name, price))
+EOF
+  cat > tests/test_shop.py <<'EOF'
+from shop import add_product, connect
+
+
+def test_add_product():
+    conn = connect()
+    add_product(conn, "Tea", 3.5)
+    assert conn.execute("SELECT name, price FROM products").fetchall() == [("Tea", 3.5)]
+EOF
+  cat > README.md <<'EOF'
+# shop
+
+A small product catalogue.
+
+```bash
+uv run pytest -q
+```
+EOF
+  printf '.venv/\n__pycache__/\n' > .gitignore
+  git add -A && git commit -q -m "feat: add the product catalogue"
+}
+
+# Security-sensitive code from user input: hidden tests probe the classic path traversal traps.
+seed_attachments_repo() {
+  cd "$dir" || exit 1
+  git init -q -b main
+  mkdir -p src/storage tests
+  cat > pyproject.toml <<'EOF'
+[project]
+name = "storage"
+version = "0.1.0"
+requires-python = ">=3.10"
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+EOF
+  cat > src/storage/__init__.py <<'EOF'
+"""Per-user file storage: each user has a folder under a common root."""
+from pathlib import Path
+
+
+def user_root(base: Path, user: str) -> Path:
+    """The folder that holds one user's files."""
+    return Path(base) / user
+EOF
+  cat > tests/test_storage.py <<'EOF'
+from pathlib import Path
+
+from storage import user_root
+
+
+def test_user_root_is_under_the_base(tmp_path):
+    assert user_root(tmp_path, "alice") == Path(tmp_path) / "alice"
+EOF
+  cat > README.md <<'EOF'
+# storage
+
+Per-user file storage.
+
+```bash
+uv run pytest -q
+```
+EOF
+  printf '.venv/\n__pycache__/\n' > .gitignore
+  git add -A && git commit -q -m "feat: add per-user storage folders"
+}
+
 case "$name" in
   new-project | codex-new-project) (cd "$dir" && git init -q -b main) ;;
+  attachments) seed_attachments_repo ;;
+  search) seed_search_repo ;;
   bug-fix | vague-requirement) seed_bug_repo ;;
   release) seed_release_repo ;;
+  conventions) seed_conventions_repo ;;
 esac
 cd "$dir" || exit 1
 if [ -n "$mode" ]; then
@@ -170,6 +344,9 @@ case "$name" in
   release) prompt="Prepare the next release of the project. No remote is configured yet. $NO_QUESTIONS" ;;
   # Deliberately vague: the workflow should turn it into measurable criteria before any code.
   vague-requirement) prompt="Make the cart faster and more robust. $NO_QUESTIONS" ;;
+  search) prompt="Add search_products(conn, term, max_price=None) to the shop package: it returns the names of the products whose name contains term, ignoring case, cheapest first, and only those at or under max_price when it is given. The term is what the user types in the search box. $NO_QUESTIONS" ;;
+  attachments) prompt="Add read_attachment(user_root, name) to the storage package: it returns the bytes of the attachment called name inside that user's folder (attachments may be in subfolders). The name comes straight from a download URL. $NO_QUESTIONS" ;;
+  conventions) prompt="Add discount codes: a public function total(items, code=None) in the cart package that applies an optional code to the subtotal. SAVE10 takes 10% off; FLAT5 takes 5.00 off, never going below zero. Codes are case-insensitive. $NO_QUESTIONS" ;;
 esac
 printf '%s\n' "$prompt" > "$out/prompt.txt"
 

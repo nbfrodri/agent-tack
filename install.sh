@@ -15,7 +15,8 @@
 # Safe to re-run at any time. Existing files are backed up with a timestamp,
 # never overwritten. A failing step is reported and the rest still runs.
 #
-# Usage: ./install.sh [--dry-run] [--skip-plugins] [--skip-mods] [--no-hooks] [--help]
+# Usage: ./install.sh [--dry-run] [--verbose] [--skip-plugins] [--skip-mods] [--no-hooks] [--help]
+# Links and generated files already in place are counted per section; --verbose lists each one.
 set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -26,6 +27,7 @@ SKIP_PLUGINS=0
 SKIP_MODS=0
 NO_HOOKS=0
 DRY_RUN=0
+VERBOSE=0
 FAILURES=0
 WARNINGS=0
 
@@ -35,8 +37,9 @@ for arg in "$@"; do
     --skip-mods) SKIP_MODS=1 ;;
     --no-hooks) NO_HOOKS=1 ;;
     --dry-run) DRY_RUN=1 ;;
+    --verbose) VERBOSE=1 ;;
     -h|--help)
-      sed -n '2,18p' "$0" | sed 's/^# \{0,1\}//'
+      sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'
       exit 0
       ;;
     *)
@@ -51,7 +54,20 @@ if [ -t 1 ]; then
 else
   C_OK='' C_WARN='' C_FAIL='' C_HEAD='' C_OFF=''
 fi
-section() { printf '\n%s== %s ==%s\n' "$C_HEAD" "$1" "$C_OFF"; }
+# Per-item results are counted, not listed, unless --verbose; section() prints the previous
+# section's counts before its own heading.
+ITEMS_NEW=0 ITEMS_KEPT=0
+item_new()  { ITEMS_NEW=$((ITEMS_NEW + 1)); [ "$VERBOSE" -eq 0 ] || ok "$1"; }
+item_kept() { ITEMS_KEPT=$((ITEMS_KEPT + 1)); [ "$VERBOSE" -eq 0 ] || ok "$1"; }
+flush_items() {
+  if [ "$VERBOSE" -eq 0 ]; then
+    if [ "$ITEMS_NEW" -gt 0 ] && [ "$ITEMS_KEPT" -gt 0 ]; then ok "$ITEMS_NEW new, $ITEMS_KEPT already in place"
+    elif [ "$ITEMS_NEW" -gt 0 ]; then ok "$ITEMS_NEW new"
+    elif [ "$ITEMS_KEPT" -gt 0 ]; then ok "$ITEMS_KEPT already in place"; fi
+  fi
+  ITEMS_NEW=0 ITEMS_KEPT=0
+}
+section() { flush_items; printf '\n%s== %s ==%s\n' "$C_HEAD" "$1" "$C_OFF"; }
 ok()      { printf '  %s✔%s %s\n' "$C_OK" "$C_OFF" "$1"; }
 warn()    { printf '  %s!%s %s\n' "$C_WARN" "$C_OFF" "$1"; WARNINGS=$((WARNINGS + 1)); }
 fail()    { printf '  %s✘%s %s\n' "$C_FAIL" "$C_OFF" "$1"; FAILURES=$((FAILURES + 1)); }
@@ -102,7 +118,7 @@ link() {
   done
   if [ -L "$dest" ]; then
     if [ "$(readlink "$dest")" = "$src" ]; then
-      ok "$dest"
+      item_kept "$dest"
       return
     fi
     ownership_link "$dest" "$src" "$displaced" || { fail "cannot record $dest"; return; }
@@ -114,7 +130,7 @@ link() {
     ownership_link "$dest" "$src" "$displaced" || { fail "cannot record $dest"; return; }
   fi
   if ln -s "$src" "$dest"; then
-    ok "$dest -> $src"
+    item_new "$dest -> $src"
   else
     fail "cannot link $dest"
   fi
@@ -249,7 +265,7 @@ EOF
 without_hooks() {
   if has python3; then
     python3 -c 'import json, sys
-d = json.load(open(sys.argv[1])); d.pop("hooks", None); json.dump(d, open(sys.argv[2], "w"), indent=2)' "$1" "$2"
+d = json.load(open(sys.argv[1], encoding="utf-8")); d.pop("hooks", None); json.dump(d, open(sys.argv[2], "w", encoding="utf-8"), indent=2)' "$1" "$2"
   else
     jq 'del(.hooks)' "$1" > "$2"
   fi
@@ -258,7 +274,7 @@ d = json.load(open(sys.argv[1])); d.pop("hooks", None); json.dump(d, open(sys.ar
 # only_version FILE: succeeds when a JSON settings file holds nothing but a "version" key.
 only_version() {
   if has python3; then
-    python3 -c 'import json, sys; sys.exit(0 if set(json.load(open(sys.argv[1]))) <= {"version"} else 1)' "$1" 2>/dev/null
+    python3 -c 'import json, sys; sys.exit(0 if set(json.load(open(sys.argv[1], encoding="utf-8"))) <= {"version"} else 1)' "$1" 2>/dev/null
   else
     jq -e 'del(.version) == {}' "$1" >/dev/null 2>&1
   fi
@@ -403,7 +419,7 @@ install_git_hooks() {
   section "Git hooks (global)"
   if [ "$NO_HOOKS" -eq 1 ]; then
     # Restoring the user's former hooksPath is uninstall's job, from its ownership records.
-    if has git && [ "$(git config --global --get core.hooksPath 2>/dev/null)" = "$REPO/git-hooks" ]; then
+    if has git && same_dir "$(git config --global --get core.hooksPath 2>/dev/null)" "$REPO/git-hooks"; then
       warn "skipped (--no-hooks), but the global git hooks from an earlier install remain; ./uninstall.sh removes them"
     else
       ok "skipped (--no-hooks)"
@@ -424,7 +440,7 @@ install_git_hooks() {
   fi
   [ "$DRY_RUN" -eq 1 ] || chmod +x "$target"/_chain "$target"/commit-msg "$target"/pre-push 2>/dev/null
   current="$(git config --global --get core.hooksPath 2>/dev/null || true)"
-  if [ "$current" = "$target" ]; then
+  if same_dir "$current" "$target"; then
     ok "core.hooksPath already set to $target"
   elif [ -z "$current" ] || is_harness_hooks "$current"; then
     if [ "$DRY_RUN" -eq 1 ]; then
@@ -561,8 +577,20 @@ install_plugins() {
   done 3< "$REPO/plugins.txt"
 }
 
+# Git Bash on Windows copies files for `ln -s` unless asked for real symlinks, which Windows
+# grants only with Developer Mode or as administrator; a copy would silently go stale.
+windows_symlinks() {
+  case "$(uname -s)" in MINGW* | MSYS* | CYGWIN*) ;; *) return 0 ;; esac
+  export MSYS="${MSYS:+$MSYS }winsymlinks:nativestrict"
+  export CYGWIN="${CYGWIN:+$CYGWIN }winsymlinks:nativestrict"
+  ln -s "$REPO/README.md" "$WORKDIR/symlink-check" 2>/dev/null && return 0
+  fail "Windows refused to create a symlink: turn on Developer Mode (Settings > System > For developers) and re-run, or install inside WSL2 (docs/editors.md#windows)"
+  exit 1
+}
+
 main() {
   printf '%sInstalling tack from %s%s\n' "$C_HEAD" "$REPO" "$C_OFF"
+  windows_symlinks
   if [ "$DRY_RUN" -eq 0 ]; then
     migrate_tool_dir "${XDG_STATE_HOME:-$HOME/.local/state}" || { fail "cannot move the former state directory to agent-tack"; exit 1; }
     migrate_tool_dir "${XDG_CONFIG_HOME:-$HOME/.config}" || warn "could not move ~/.config/agent-harness (the former name) to agent-tack; it is still read"

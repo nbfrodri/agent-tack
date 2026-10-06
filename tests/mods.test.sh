@@ -113,7 +113,7 @@ check "--skip-plugins exits 0" "install --skip-plugins"
 check "--skip-plugins also skips the mods" "[ ! -s '$STATE/calls' ]"
 fresh_home no-claude
 check "without claude: exits 0" "env HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 PATH='$MINBIN' '$REPO/install.sh' >'$H.log' 2>&1"
-check "without claude: warns about the mods" "grep -q 'claude CLI not found' '$H.log'"
+check "without claude: skips the mods without a second warning" "grep -q 'mods: skipped until Claude Code is installed' '$H.log' && [ \"\$(grep -c 'claude CLI not found' '$H.log')\" = 1 ]"
 
 echo "Dry run"
 fresh_home dry
@@ -153,7 +153,7 @@ check "uninstall removes the mod it did install" "! installed agent-activity@$MA
 echo "Doctor"
 fresh_home doctor
 env HOME="$H" XDG_CONFIG_HOME="$H/.config" GIT_CONFIG_NOSYSTEM=1 PATH="$MINBIN" bash "$REPO/lib/doctor.sh" "$REPO" >"$H.nocli" 2>&1
-check "without claude: warns" "grep -q 'WARN mods: claude CLI not found' '$H.nocli'"
+check "without claude: reports the mods as skipped, not as a problem" "grep -q 'OK   mods: skipped, Claude Code is not installed' '$H.nocli'"
 install
 check "installed mods are reported" "doctor; grep -q 'OK   mod installed: usage-band' '$H.log' && grep -q 'OK   mod installed: agent-activity' '$H.log'"
 echo "" > "$STATE/plugins"

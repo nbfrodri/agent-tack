@@ -13,19 +13,33 @@
 # or broken rule library fails safe instead and every command asks.
 set -u
 
-input="$(cat)"
+# Builtins instead of cat and dirname: every process start costs tens of milliseconds on Windows.
+IFS= read -r -d '' input || true
+case "$0" in */*) GUARD_DIR="${0%/*}" ;; *) GUARD_DIR=. ;; esac
+case "$GUARD_DIR" in /*) ;; *) GUARD_DIR="$PWD/$GUARD_DIR" ;; esac
+# On Windows python3 is often the Microsoft Store alias, which starts several times slower than python.
+TACK_PYTHON=python3
+case "${OSTYPE:-}" in
+  msys* | cygwin*) case "$(command -v python3)" in *WindowsApps*) ! command -v python >/dev/null || TACK_PYTHON=python ;; esac ;;
+esac
 
-json_field() {
+# Prints .tool_input.command and .cwd, each followed by a NUL, from one process: a process start
+# costs tens of milliseconds, up to hundreds on Windows. A missing or non-string value prints as
+# empty; NULs inside a value and trailing newlines are dropped, as command substitution did.
+read_input() {
   if command -v jq >/dev/null 2>&1; then
-    printf '%s' "$input" | jq -r "$1 // empty" 2>/dev/null
-  elif command -v python3 >/dev/null 2>&1; then
-    printf '%s' "$input" | python3 -S -c '
+    printf '%s' "$input" | jq -j '(.tool_input.command, .cwd)
+      | (if type == "string" then gsub("\u0000"; "") | sub("\n+$"; "") else "" end) + "\u0000"' 2>/dev/null
+  elif command -v "$TACK_PYTHON" >/dev/null 2>&1; then
+    printf '%s' "$input" | "$TACK_PYTHON" -S -c '
 import json, sys
-data = json.load(sys.stdin)
-for key in sys.argv[1].lstrip(".").split("."):
-    data = data.get(key) if isinstance(data, dict) else None
-print(data if isinstance(data, str) else "")
-' "$1" 2>/dev/null
+data = json.loads(sys.stdin.buffer.read())
+tool_input = data.get("tool_input") if isinstance(data, dict) else None
+values = [tool_input.get("command") if isinstance(tool_input, dict) else None, data.get("cwd") if isinstance(data, dict) else None]
+for value in values:
+    text = value.replace("\0", "").rstrip("\n") if isinstance(value, str) else ""
+    sys.stdout.buffer.write(text.encode("utf-8", "surrogateescape") + b"\0")
+' 2>/dev/null
   fi
 }
 
@@ -72,8 +86,8 @@ SETTINGS_WRITE=""
 # Set when GH_REPO or GH_HOST points gh at another repository.
 GH_REPO_FROM_ENV=0
 
-command="$(json_field .tool_input.command)"
-cwd="$(json_field .cwd)"
+command="" cwd=""
+{ IFS= read -r -d '' command; IFS= read -r -d '' cwd; } < <(read_input)
 [ -n "$command" ] || exit 0
 [ -n "$cwd" ] && [ -d "$cwd" ] || cwd="$PWD"
 
@@ -98,14 +112,14 @@ cwd="$(normalize_abs "$cwd")"
 HOME_DIR="$(normalize_abs "$HOME")"
 
 # shellcheck source=SCRIPTDIR/lib/shell-parse.sh
-. "$(dirname "$0")/lib/shell-parse.sh"
+. "$GUARD_DIR/lib/shell-parse.sh"
 # The bare-script copy in the guard tests has no log library; logging is optional.
 # shellcheck source=SCRIPTDIR/lib/activity-log.sh
-. "$(dirname "$0")/lib/activity-log.sh" 2>/dev/null || activity_log() { :; }
+. "$GUARD_DIR/lib/activity-log.sh" 2>/dev/null || activity_log() { :; }
 
 # The rules live in libraries next to the parser. A missing or broken one fails safe: every command asks.
 GUARD_LIB_MISSING=""
-GUARD_LIB_DIR="$(dirname "$0")/lib"
+GUARD_LIB_DIR="$GUARD_DIR/lib"
 # shellcheck source=SCRIPTDIR/lib/guard-git.sh
 . "$GUARD_LIB_DIR/guard-git.sh" 2>/dev/null || GUARD_LIB_MISSING=lib/guard-git.sh
 # shellcheck source=SCRIPTDIR/lib/guard-files.sh
@@ -133,7 +147,7 @@ load_policy() {
   done < "$file"
 }
 
-POLICY_FILE="$(dirname "$0")/guard-policy.txt"
+POLICY_FILE="$GUARD_DIR/guard-policy.txt"
 if [ -f "$POLICY_FILE" ]; then load_policy "$POLICY_FILE"
 else ask "The guard policy file is missing or failed to load; review the command."; fi
 # User rules: agent-tack, plus the directory from before the rename if it is still there.
@@ -149,14 +163,15 @@ apply_rule() {
 }
 
 check_policy() {
-  local joined="$1" upper i has_client=0
+  local joined="$1" upper="" i has_client=0
   # bash 3.2 treats expanding an empty array under set -u as an unbound variable
   [ "${#POLICY_SCOPES[@]}" -gt 0 ] || return 0
   for i in "${!POLICY_SCOPES[@]}"; do
     [ "${POLICY_SCOPES[$i]}" = client ] || continue
     case " $joined " in *" ${POLICY_PATTERNS[$i]} "* | */"${POLICY_PATTERNS[$i]} "*) has_client=1; break ;; esac
   done
-  upper="$(printf '%s' "$joined" | tr '[:lower:]' '[:upper:]')"
+  # SQL rules apply only to a database client's command, so only then is it upper-cased.
+  [ "$has_client" -eq 0 ] || upper="$(printf '%s' "$joined" | tr '[:lower:]' '[:upper:]')"
   for i in "${!POLICY_SCOPES[@]}"; do
     case "${POLICY_SCOPES[$i]}" in
       command) case "$joined" in *"${POLICY_PATTERNS[$i]}"*) apply_rule "$i" ;; esac ;;
@@ -267,7 +282,7 @@ analyze() {
 
 waives_local_asks() {
   local cli mode
-  cli="$(dirname "$0")/../../bin/tack"
+  cli="$GUARD_DIR/../../bin/tack"
   (cd "$cwd" && "$cli" status --quiet) || return 1
   mode="$(cd "$cwd" && "$cli" mode show 2>/dev/null)" || return 1
   [ -z "${mode##WARNING:*}" ]

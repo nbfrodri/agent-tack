@@ -16,7 +16,7 @@ KEY = "chat.useAgentsMdFile"
 
 
 def load(path):
-    with open(path) as stream:
+    with open(path, encoding="utf-8") as stream:
         value = json.load(stream)
     if not isinstance(value, dict):
         raise ValueError("settings are not an object")
@@ -40,7 +40,7 @@ def write(path, settings):
     mode = stat.S_IMODE(os.stat(path).st_mode) if os.path.exists(path) else 0o644
     fd, temporary = tempfile.mkstemp(prefix=".tack-", dir=directory)
     try:
-        with os.fdopen(fd, "w") as stream:
+        with os.fdopen(fd, "w", encoding="utf-8") as stream:
             os.fchmod(stream.fileno(), mode)
             json.dump(settings, stream, indent=4)
             stream.write("\n")

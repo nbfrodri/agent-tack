@@ -15,7 +15,7 @@ You can customize every part of your copy to fit your own workflow; see [customi
 4. **Adapt the personal bits:**
    | File | What to change |
    | --- | --- |
-   | `global/AGENTS.md` | The language the AI speaks and the "ask before" rules (every agent and skill follows it) |
+   | `global/AGENTS.md` | The "ask before" rules (every agent and skill follows it). The assistant already replies in the language you write in; other personal preferences fit in `tack memory add`, which Claude Code and Codex load every session |
    | `skills/dev-workflow/references/conventions.md` | Stack choices: pnpm, kebab-case, merge commits, release-please… |
    | `plugins.txt`, `claude/settings.json` | Claude Code plugins and settings |
    | `README.md`, `bin/tack` | The repo URL |

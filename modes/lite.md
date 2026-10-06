@@ -1,5 +1,5 @@
 # lite
-When: questions, typos, renames, config tweaks, a one-line fix, small scripts or prototypes.
+When: questions, typos, renames, config tweaks, a one-line fix, small scripts or prototypes; never for code that handles untrusted input.
 Scope: any
 Context: minimal
 

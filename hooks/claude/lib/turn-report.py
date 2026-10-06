@@ -182,7 +182,7 @@ def subagent_files(path):
 
 def load_state(state_file):
     try:
-        raw = open(state_file).read().strip()
+        raw = open(state_file, encoding="utf-8").read().strip()
     except OSError:
         return None
     try:
@@ -196,7 +196,7 @@ def load_state(state_file):
 
 def save_state(state_file, state):
     try:
-        with open(state_file, "w") as handle:
+        with open(state_file, "w", encoding="utf-8") as handle:
             json.dump(state, handle)
     except OSError:
         pass

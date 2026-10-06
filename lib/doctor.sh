@@ -75,7 +75,7 @@ optional_target_configured() {
   return 1
 }
 check_tools_and_links() {
-  local tool when commands instructions skills_dir source
+  local tool when commands instructions skills_dir source found="" missing=""
   for tool in bash git readlink; do
     if has "$tool"; then ok "required tool: $tool"
     else fail "required tool unavailable: $tool"; fi
@@ -90,7 +90,7 @@ check_tools_and_links() {
   check_skills "$HOME/.agents/skills"
   while read -r tool when commands instructions skills_dir _ <&3; do
     case "$tool" in ''|'#'*) continue ;; esac
-    if ! selected_tool detect "$commands"; then warn "optional CLI unavailable: $tool"; fi
+    if selected_tool detect "$commands"; then found="$found $tool"; else missing="$missing $tool"; fi
     if [ "$when" != always ]; then
       if ! optional_target_configured "$instructions" "$skills_dir"; then
         if selected_tool detect "$commands"; then warn "$tool: detected but not configured by this installation"; fi
@@ -104,6 +104,9 @@ check_tools_and_links() {
     fi
     [ "$skills_dir" = - ] || check_skills "$(expand_home "$skills_dir")"
   done 3< "$REPO/targets.txt"
+  # Tools you do not use are not a problem; having none of them is.
+  if [ -n "$found" ]; then ok "AI tools found:$found"; else warn "no supported AI tool found (see targets.txt)"; fi
+  [ -z "$missing" ] || ok "AI tools not installed:$missing"
   check_stale_links "$HOME/.claude/agents"
   for source in "$REPO"/agents/*.md; do
     [ -f "$source" ] || continue
@@ -204,8 +207,8 @@ check_settings() {
     python3 - "$dest" "$REPO/claude/settings.json" "$REPO" <<'PYTHON' >/dev/null 2>&1
 import json,sys
 try:
-    current=json.load(open(sys.argv[1]))
-    expected=json.load(open(sys.argv[2]))
+    current=json.load(open(sys.argv[1], encoding="utf-8"))
+    expected=json.load(open(sys.argv[2], encoding="utf-8"))
 except (OSError,ValueError):
     sys.exit(2)
 if not isinstance(current,dict): sys.exit(2)
@@ -262,7 +265,7 @@ recorded_git_hooks_path() {
 }
 check_hooks_path() {
   local scope="$1" path="$2" source
-  if [ "$path" = "$REPO/git-hooks" ]; then
+  if same_dir "$path" "$REPO/git-hooks"; then
     for source in _chain commit-msg pre-push pre-commit; do
       [ -x "$path/$source" ] || fail "$scope Git hook is missing or not executable: $source"
     done
@@ -339,7 +342,7 @@ check_ownership() {
 check_mods() {
   local mod id state
   if ! mods_enabled; then ok 'mods disabled (git config tack.mods is false)'; return; fi
-  if ! has claude; then warn 'mods: claude CLI not found; the mods in plugins/ cannot be installed or checked'; return; fi
+  if ! has claude; then ok 'mods: skipped, Claude Code is not installed'; return; fi
   for mod in $(mods_list "$REPO"); do
     id="$mod@$MODS_MARKETPLACE"
     state="$(mods_plugin_state "$id")"

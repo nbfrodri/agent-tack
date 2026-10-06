@@ -1,1 +1,6 @@
-_chain
+#!/usr/bin/env bash
+# Pass-through hook: runs the repository's own hook of the same name (see _chain).
+# A small file instead of a symlink, so Windows checkouts without symlink support work too.
+# shellcheck source=SCRIPTDIR/_chain
+. "$(dirname "${BASH_SOURCE[0]}")/_chain"
+run_local_hook "$(basename "$0")" "$@"
