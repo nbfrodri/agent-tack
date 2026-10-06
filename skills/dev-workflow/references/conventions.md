@@ -33,7 +33,7 @@ gh repo edit --enable-merge-commit --enable-squash-merge \
 Details and setup: `release` skill.
 
 ## All languages
-- **English** for all identifiers, comments, docstrings, logs and error messages (user-facing UI text follows the product's language, through i18n where there is more than one). Business terms are translated consistently; when the translation isn't obvious, add it to the project glossary (`docs/glossary.md`) with the original Spanish term.
+- **English** for all identifiers, comments, docstrings, logs and error messages (user-facing UI text follows the product's language, through i18n where there is more than one). Business terms are translated consistently; when the translation isn't obvious, add it to the project glossary (`docs/glossary.md`) with the original term in the business's language.
 - Names say what something is or does: no abbreviations except universal ones (`id`, `url`, `db`). Booleans read as questions (`isActive`, `has_access`, `canEdit`). Functions are verbs, classes and types nouns.
 - Comments explain *why*, never restate *what*. No commented-out code; git has the history.
 - Money: decimal types (`Decimal`, `decimal.js`/`big.js`, `brick/money`) or integer minor units, never floats. Dates and times: UTC, ISO 8601 at the boundaries.
