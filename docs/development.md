@@ -36,7 +36,7 @@ CI runs ShellCheck 0.11.0 (pinned by checksum in `.github/workflows/ci.yml`; use
 ## Behaviour evals
 Real sessions on throwaway repos, comparing tack with a plain assistant. They use tokens, so run them by hand after changing skills.
 ```bash
-evals/run.sh <new-project|bug-fix|release|vague-requirement> <baseline|auto|lean|lite|standard|strict> [repetition]   # harness = auto
+evals/run.sh <new-project|bug-fix|release|vague-requirement|conventions> <baseline|auto|lean|lite|standard|strict> [repetition]   # harness = auto
 evals/grade.py $EVALS_OUT/<scenario>/<condition>-<rep>    # writes metrics.json
 evals/report.py                                          # Markdown tables
 evals/outcomes.py <repo> [--ref main] [--days N] [--json]  # escaped defects and rework from a repo's history
