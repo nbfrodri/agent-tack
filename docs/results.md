@@ -16,13 +16,16 @@ The first scenario where tack changed the outcome, with the smaller model ([deta
 
 The larger model got it right without tack; the smaller one did not, and tack's process (a level picked by risk, tests first, review) closed most of the gap. Five runs per condition: a first signal, not a measured effect size.
 
+A second hidden-risk scenario did not repeat the gain ([details](benchmarks/2026-10-06-search.md)): in a product search on what the user types, all 15 Haiku runs, with tack or without, avoided SQL injection and missed the `LIKE` wildcards (6 of 8 hidden tests). tack helps the model test what it thinks of, not what it does not know; asking auto for a `security-auditor` review changed nothing, as Haiku never called the agent.
+
 ### The smaller model on every scenario
 
 `claude-haiku-4-5`, same day and tack revision (main plus the open pull requests):
 
 | Scenario (runs each) | Hidden tests all pass: baseline | auto | Branch: baseline | auto | Cost |
 | --- | --- | --- | --- | --- | --- |
-| attachments (5) | 0/5 | 4/5 with the risk rule | 0/5 | 5/5 | 1.5× |
+| attachments (5) | 0/5 | 4/5 with the risk rule (5/5 in a later batch) | 0/5 | 5/5 | 1.5× |
+| search (5) | 0/5 | 0/5 | 0/5 | 5/5 | 1.9× |
 | bug-fix (5) | 5/5 | 5/5 | 0/5 | 5/5 | 1.13× |
 | new-project (5) | 5/5 | 5/5 | – | – | 1.46× |
 | conventions (2) | 2/2 | 2/2 | 0/2 | 2/2 | 1.4× |
