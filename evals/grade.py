@@ -15,7 +15,7 @@ from pathlib import Path
 
 CONVENTIONAL = re.compile(r"^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([\w./-]+\))?!?: \S")
 AI_ATTRIBUTION = re.compile(r"co-authored-by:.*(claude|anthropic|openai|codex|copilot|gemini|cursor)|generated with|🤖", re.I)
-SEEDED_COMMITS = {"new-project": 0, "codex-new-project": 0, "bug-fix": 1, "release": 5, "vague-requirement": 1, "conventions": 1, "attachments": 1}
+SEEDED_COMMITS = {"new-project": 0, "codex-new-project": 0, "bug-fix": 1, "release": 5, "vague-requirement": 1, "conventions": 1, "attachments": 1, "search": 1}
 HIDDEN = Path(__file__).resolve().parent / "hidden"
 # The project's own environment (uv) runs the hidden tests, so its dependencies are installed.
 HIDDEN_RUNNER = ["uv", "run", "--quiet", "python"]

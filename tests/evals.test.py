@@ -277,6 +277,31 @@ class HiddenAcceptance(unittest.TestCase):
             with patch.object(grade, 'HIDDEN_RUNNER', [sys.executable]):
                 self.assertEqual(grade.hidden_acceptance(repo, 'attachments'), (7, 7))
 
+    def test_search_catches_injection_and_like_wildcards(self):
+        seed = ('import sqlite3\n'
+                'def connect(path=":memory:"):\n'
+                '    conn = sqlite3.connect(path)\n'
+                '    conn.execute("CREATE TABLE IF NOT EXISTS products (name TEXT NOT NULL, price REAL NOT NULL)")\n'
+                '    return conn\n'
+                'def add_product(conn, name, price):\n'
+                '    conn.execute("INSERT INTO products (name, price) VALUES (?, ?)", (name, price))\n')
+        correct = seed + (
+            'def search_products(conn, term, max_price=None):\n'
+            '    pattern = "%" + term.replace("\\\\", "\\\\\\\\").replace("%", "\\\\%").replace("_", "\\\\_") + "%"\n'
+            '    sql = "SELECT name FROM products WHERE name LIKE ? ESCAPE \'\\\\\'"\n'
+            '    args = [pattern]\n'
+            '    if max_price is not None:\n        sql += " AND price <= ?"; args.append(max_price)\n'
+            '    return [r[0] for r in conn.execute(sql + " ORDER BY price", args)]\n')
+        self.assertEqual(self.run_hidden_package('search', 'shop', correct), (8, 8))
+        # Parameterised but unescaped: safe from injection, wrong on the wildcards.
+        plausible = seed + (
+            'def search_products(conn, term, max_price=None):\n'
+            '    sql = "SELECT name FROM products WHERE name LIKE ?"\n'
+            '    args = ["%" + term + "%"]\n'
+            '    if max_price is not None:\n        sql += " AND price <= ?"; args.append(max_price)\n'
+            '    return [r[0] for r in conn.execute(sql + " ORDER BY price", args)]\n')
+        self.assertEqual(self.run_hidden_package('search', 'shop', plausible), (6, 8))
+
     def run_hidden_package(self, scenario, package, source):
         with tempfile.TemporaryDirectory() as temp:
             repo = Path(temp) / 'repo'

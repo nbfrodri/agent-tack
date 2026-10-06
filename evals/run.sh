@@ -3,7 +3,7 @@
 # Uses real model tokens.
 #
 # Usage: evals/run.sh <scenario> [condition] [repetition]
-#   scenarios:  new-project | bug-fix | release | codex-new-project | vague-requirement | conventions | attachments
+#   scenarios:  new-project | bug-fix | release | codex-new-project | vague-requirement | conventions | attachments | search
 #   conditions: auto | lite | lean | standard | strict: the full setup, with the project enabled at
 #               that workflow mode; harness (default) is an alias for auto
 #   baseline:   Claude Code as shipped: no user settings, skills or instructions, and git
@@ -18,9 +18,9 @@ name="${1:?scenario name required}"
 condition="${2:-harness}"
 rep="${3:-1}"
 case "$name" in
-  new-project | bug-fix | release | codex-new-project | vague-requirement | conventions | attachments) ;;
+  new-project | bug-fix | release | codex-new-project | vague-requirement | conventions | attachments | search) ;;
   *)
-    echo "unknown scenario '$name' (new-project | bug-fix | release | codex-new-project | vague-requirement | conventions | attachments)" >&2
+    echo "unknown scenario '$name' (new-project | bug-fix | release | codex-new-project | vague-requirement | conventions | attachments | search)" >&2
     exit 2
     ;;
 esac
@@ -221,6 +221,60 @@ EOF
   git add -A && git commit -q -m "feat: add cart subtotal"
 }
 
+# A database query from a search box: hidden tests probe SQL injection and LIKE wildcards.
+seed_search_repo() {
+  cd "$dir" || exit 1
+  git init -q -b main
+  mkdir -p src/shop tests
+  cat > pyproject.toml <<'EOF'
+[project]
+name = "shop"
+version = "0.1.0"
+requires-python = ">=3.10"
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+EOF
+  cat > src/shop/__init__.py <<'EOF'
+"""A small product catalogue in SQLite."""
+import sqlite3
+
+
+def connect(path: str = ":memory:") -> sqlite3.Connection:
+    """Opens the catalogue, creating the products table if needed."""
+    conn = sqlite3.connect(path)
+    conn.execute("CREATE TABLE IF NOT EXISTS products (name TEXT NOT NULL, price REAL NOT NULL)")
+    return conn
+
+
+def add_product(conn: sqlite3.Connection, name: str, price: float) -> None:
+    conn.execute("INSERT INTO products (name, price) VALUES (?, ?)", (name, price))
+EOF
+  cat > tests/test_shop.py <<'EOF'
+from shop import add_product, connect
+
+
+def test_add_product():
+    conn = connect()
+    add_product(conn, "Tea", 3.5)
+    assert conn.execute("SELECT name, price FROM products").fetchall() == [("Tea", 3.5)]
+EOF
+  cat > README.md <<'EOF'
+# shop
+
+A small product catalogue.
+
+```bash
+uv run pytest -q
+```
+EOF
+  printf '.venv/\n__pycache__/\n' > .gitignore
+  git add -A && git commit -q -m "feat: add the product catalogue"
+}
+
 # Security-sensitive code from user input: hidden tests probe the classic path traversal traps.
 seed_attachments_repo() {
   cd "$dir" || exit 1
@@ -272,6 +326,7 @@ EOF
 case "$name" in
   new-project | codex-new-project) (cd "$dir" && git init -q -b main) ;;
   attachments) seed_attachments_repo ;;
+  search) seed_search_repo ;;
   bug-fix | vague-requirement) seed_bug_repo ;;
   release) seed_release_repo ;;
   conventions) seed_conventions_repo ;;
@@ -289,6 +344,7 @@ case "$name" in
   release) prompt="Prepare the next release of the project. No remote is configured yet. $NO_QUESTIONS" ;;
   # Deliberately vague: the workflow should turn it into measurable criteria before any code.
   vague-requirement) prompt="Make the cart faster and more robust. $NO_QUESTIONS" ;;
+  search) prompt="Add search_products(conn, term, max_price=None) to the shop package: it returns the names of the products whose name contains term, ignoring case, cheapest first, and only those at or under max_price when it is given. The term is what the user types in the search box. $NO_QUESTIONS" ;;
   attachments) prompt="Add read_attachment(user_root, name) to the storage package: it returns the bytes of the attachment called name inside that user's folder (attachments may be in subfolders). The name comes straight from a download URL. $NO_QUESTIONS" ;;
   conventions) prompt="Add discount codes: a public function total(items, code=None) in the cart package that applies an optional code to the subtotal. SAVE10 takes 10% off; FLAT5 takes 5.00 off, never going below zero. Codes are case-insensitive. $NO_QUESTIONS" ;;
 esac
