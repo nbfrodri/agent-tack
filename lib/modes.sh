@@ -71,6 +71,8 @@ show_mode() {
       [ -f "$file" ] || continue
       printf -- '- %s: %s\n' "$(basename "$file" .md)" "$(mode_field "$file" When)"
     done
+    # Small models judged a URL-to-file-path task "small and well defined" and picked lite.
+    echo 'Pick by risk, not size: code that handles untrusted input (URLs, file paths, uploads, queries, shell commands), auth, payments or deleting data is never lite or lean.'
     return
   fi
   file="$(mode_file "$mode")" || return 0

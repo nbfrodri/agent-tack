@@ -432,6 +432,7 @@ check "fixed mode: names the level to apply" "session '$WORK/repo' | grep -q 'mo
 check "fixed mode: injects that mode's rules" "session '$WORK/repo' | grep -q 'Plan: none.'"
 git -C "$WORK/repo" config --unset harness.mode
 check "auto mode: lists the modes to choose from" "session '$WORK/repo' | grep -q 'strict: several modules'"
+check "auto mode: picks by risk, so untrusted input is never lite" "session '$WORK/repo' | grep -q 'Pick by risk, not size: code that handles untrusted input'"
 check "token toggles: defaults add nothing" "! session '$WORK/repo' | grep -q 'Token settings'"
 git -C "$WORK/repo" config harness.replyStyle terse
 git -C "$WORK/repo" config harness.skillLoading minimal
