@@ -16,6 +16,19 @@ The first scenario where tack changed the outcome, with the smaller model ([deta
 
 The larger model got it right without tack; the smaller one did not, and tack's process (a level picked by risk, tests first, review) closed most of the gap. Five runs per condition: a first signal, not a measured effect size.
 
+### The smaller model on every scenario
+
+`claude-haiku-4-5`, same day and tack revision (main plus the open pull requests):
+
+| Scenario (runs each) | Hidden tests all pass: baseline | auto | Branch: baseline | auto | Cost |
+| --- | --- | --- | --- | --- | --- |
+| attachments (5) | 0/5 | 4/5 with the risk rule | 0/5 | 5/5 | 1.5× |
+| bug-fix (5) | 5/5 | 5/5 | 0/5 | 5/5 | 1.13× |
+| new-project (5) | 5/5 | 5/5 | – | – | 1.46× |
+| conventions (2) | 2/2 | 2/2 | 0/2 | 2/2 | 1.4× |
+
+In new-project, 5 of 10 runs (both conditions) created the package in a `cart/` subfolder although the prompt asks for this directory; their code passed every hidden test once found there, so the table counts code correctness. tack's gain is where the task hides a risk the prompt does not spell out; on plain tasks it changes the process at a modest cost.
+
 ## Conventions (2026-10-06)
 
 A feature in a project whose `AGENTS.md` sets rules the prompt does not repeat, with eight hidden tests on the feature and those rules ([details](benchmarks/2026-10-06-conventions.md)). Claude Code 2.1.290 with `claude-opus-5-5`, two runs each.
