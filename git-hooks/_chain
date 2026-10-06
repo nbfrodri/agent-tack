@@ -3,8 +3,8 @@
 # repository's own .git/hooks. Every hook in this folder calls run_local_hook
 # so that hooks installed per repository (pre-commit, lefthook, custom scripts) keep working.
 #
-# This file is both a library (sourced by commit-msg and pre-push) and the pass-through
-# hook itself (the other hook names are symlinks to it).
+# This file is a library: commit-msg, pre-push and pre-commit source it, and every other hook
+# name is a small pass-through file that sources it and calls run_local_hook.
 
 # override_set NAME: success when TACK_ALLOW_NAME=1, or HARNESS_ALLOW_NAME=1 (the former name).
 override_set() {
@@ -35,9 +35,3 @@ run_local_hook() {
     HARNESS_IN_LOCAL_HOOK=1 "$local_hook" "$@"
   fi
 }
-
-# Executed directly (as a symlinked hook name): just pass through to the local hook.
-if [ "${BASH_SOURCE[0]}" = "$0" ]; then
-  run_local_hook "$(basename "$0")" "$@"
-  exit $?
-fi

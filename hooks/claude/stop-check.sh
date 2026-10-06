@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Claude Code Stop hook: before the assistant ends its turn in an enabled project, reports
-# uncommitted work, a failing fast check, a stale handoff and docs the project's docs map
+# uncommitted work, a failing fast check, source changes without a test change, a stale handoff and docs the project's docs map
 # expects (docs-map.txt). It asks to continue once; a second stop is never blocked.
 set -u
 
@@ -47,16 +47,6 @@ add() { findings="$findings
 dirty="$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')"
 [ "$dirty" -eq 0 ] || add "$dirty uncommitted change(s): commit verified work or tell the user why it stays uncommitted."
 
-if "$cli" trusted --quiet; then
-  check="$("$cli" config check-fast 2>/dev/null)"
-  check="${check% (*}"
-  limit=()
-  command -v timeout >/dev/null 2>&1 && limit=(timeout 60)
-  if [ -n "$check" ] && [ "$check" != none ] && ! ${limit[@]+"${limit[@]}"} bash -c "$check" >/dev/null 2>&1; then
-    add "the fast check fails: $check"
-  fi
-fi
-
 # A handoff a commit or two behind mid-task is normal; refreshing it after every commit costs a
 # commit (and a CI run once pushed). Ask once it is handoff-stale-commits code commits behind,
 # or as soon as that work is pushed, since others can then see the branch.
@@ -90,15 +80,53 @@ $changed
 EOF
 }
 
+# Files changed on this branch (since it left main or master) and in the working tree.
+base=""
+current="$(git branch --show-current 2>/dev/null)"
+for trunk in main master; do
+  [ "$current" != "$trunk" ] || break
+  base="$(git merge-base HEAD "$trunk" 2>/dev/null)" && break
+done
+# A rename shows as "old -> new"; the new path is the one that exists now.
+changed="$( { [ -z "$base" ] || git diff --name-only "$base" HEAD; git status --porcelain --untracked-files=all | cut -c4- | sed 's/.* -> //'; } 2>/dev/null | sort -u)"
+
+# Every mode asks for a test when logic changes. Source changes with no test change are reported,
+# in projects that have tests at all; deleted files do not count.
+TEST_FILES='(^|/)(tests?|spec|__tests__)/|(^|/)test_[^/]*\.py$|_test\.[^/]+$|\.(test|spec)\.[^/]+$|_spec\.[^/]+$|Tests?\.(java|kt|cs|scala)$'
+SOURCE_FILES='\.(py|js|jsx|ts|tsx|mjs|cjs|go|rs|java|kt|rb|php|cs|swift|c|h|cc|cpp|hpp|scala|ex|exs|vue|svelte|dart|sh)$'
+if ! printf '%s\n' "$changed" | grep -qE "$TEST_FILES" && git ls-files | grep -qE "$TEST_FILES"; then
+  sources=0 first=""
+  while IFS= read -r file; do
+    [ -e "$file" ] || continue
+    sources=$((sources + 1))
+    [ -n "$first" ] || first="$file"
+  done <<EOF
+$(printf '%s\n' "$changed" | grep -E "$SOURCE_FILES" | grep -vE "$TEST_FILES")
+EOF
+  [ "$sources" -eq 0 ] || add "$sources source file(s) changed ($first first) but no test did: add or update a test for the changed behaviour, or tell the user why none is needed."
+fi
+
+# The project's tests must pass before the turn ends. It runs project code, so only in trusted
+# projects; a detected command runs only when source or test files changed, an explicit
+# check-fast always does.
+if "$cli" trusted --quiet; then
+  IFS="$(printf '\t')" read -r check check_source <<EOF
+$(bash "$(dirname "$0")/../../lib/test-command.sh" "$(dirname "$0")/../.." "$root")
+EOF
+  if [ -n "$check" ] && { [ "$check_source" = 'tack config check-fast' ] \
+    || printf '%s\n' "$changed" | grep -qE "$SOURCE_FILES|$TEST_FILES"; }; then
+    limit=()
+    command -v timeout >/dev/null 2>&1 && limit=(timeout 120)
+    ${limit[@]+"${limit[@]}"} bash -c "$check" >/dev/null 2>&1
+    case $? in
+      0) ;;
+      124) add "the tests did not finish within 120 s: $check (set a faster target with tack config check-fast)" ;;
+      *) add "the tests fail: $check (from $check_source): fix them, or tell the user why they fail." ;;
+    esac
+  fi
+fi
+
 if [ -f docs-map.txt ]; then
-  base=""
-  current="$(git branch --show-current 2>/dev/null)"
-  for trunk in main master; do
-    [ "$current" != "$trunk" ] || break
-    base="$(git merge-base HEAD "$trunk" 2>/dev/null)" && break
-  done
-  # A rename shows as "old -> new"; the new path is the one that exists now.
-  changed="$( { [ -z "$base" ] || git diff --name-only "$base" HEAD; git status --porcelain | cut -c4- | sed 's/.* -> //'; } 2>/dev/null | sort -u)"
   while IFS='|' read -r pattern docs; do
     pattern="$(printf '%s' "$pattern" | tr -d '[:space:]')"
     case "$pattern" in '' | '#'*) continue ;; esac

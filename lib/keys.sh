@@ -54,3 +54,9 @@ key_unset() {
     fi
   done
 }
+
+# same_dir A B: both name the same existing directory. Git for Windows stores a path set from Git
+# Bash as D:/x, which a string comparison with /d/x would miss.
+same_dir() {
+  [ -d "$1" ] && [ -d "$2" ] && [ "$(cd "$1" && pwd -P)" = "$(cd "$2" && pwd -P)" ]
+}

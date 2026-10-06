@@ -31,7 +31,8 @@ expect_status() {
   local expected_exit="$1" workflow="$2" trust="$3" expected
   shift 3
   expect_exit "$expected_exit" "$CLI" "$@" || return 1
-  expected="$(printf '%s\nmode: %s\nformatter trust: %s' "$workflow" "${EXPECTED_MODE:-auto (default)}" "$trust")"
+  expected="$(printf '%s\nmode: %s\nformatter trust: %s\ntest command: %s' "$workflow" "${EXPECTED_MODE:-auto (default)}" "$trust" \
+    'none found (set one with tack config check-fast)')"
   [ "$(cat "$WORK/output")" = "$expected" ]
 }
 excludes_completed() { ! grep -qF 'Do not include completed work' "$WORK/output"; }

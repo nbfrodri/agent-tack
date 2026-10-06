@@ -1,12 +1,12 @@
 # What each installed hook does, printed by install.sh after a first install.
 # Columns: where it runs | name | what it does. Keep each line short; detail lives in docs/how-it-works.md.
 git (every tool) | pre-commit | refuses .env files and credentials in staged changes
-git (every tool) | commit-msg | removes AI attribution; in enabled projects, requires Conventional Commits
+git (every tool) | commit-msg | removes AI attribution; in enabled projects, requires Conventional Commits and warns about commits made directly on main
 git (every tool) | pre-push | refuses force-pushes and deletion of main; in enabled projects, guards release tags
 Claude Code, Codex | command guard | refuses catastrophic commands and hook bypasses, asks before destructive ones, and waits for green CI before gh pr merge
 Claude Code, Codex | session-context | tells the assistant whether tack is on, its mode and the project context
 Claude Code, Codex | fast-check | after edits, runs the project's fast check (only in trusted projects with tack config check-fast)
-Claude Code, Codex | stop-check | before the assistant stops, reports uncommitted work, a stale handoff and docs left behind
+Claude Code, Codex | stop-check | before the assistant stops, reports uncommitted work, code changed without a test, a stale handoff and docs left behind
 Claude Code, Codex | budget | in unleash mode, enforces tack config unleash-max-tool-calls
 Claude Code | format-file | formats edited files with the project's own formatter (only in trusted projects)
 Cursor | command guard | the same deny and ask rules as Claude Code and Codex, through hooks/cursor/guard.sh

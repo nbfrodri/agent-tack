@@ -1,5 +1,5 @@
 # lean
-When: small, well-defined tasks when saving tokens matters more than process; never for risky or multi-module work.
+When: small, well-defined tasks when saving tokens matters more than process; never for risky or multi-module work or code that handles untrusted input.
 Scope: any
 Context: minimal
 

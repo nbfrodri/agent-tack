@@ -110,6 +110,8 @@ expect_failure "a marketplace line without source" "needs a source" \
   "echo 'marketplace lonely' >> plugins.txt"
 expect_failure "a git hook that isn't executable" "not executable" \
   "printf '#!/bin/sh\n' > git-hooks/pre-foo && chmod -x git-hooks/pre-foo"
+expect_failure "a git hook that is a symlink" "must be a file, not a symlink" \
+  "ln -s _chain git-hooks/pre-foo"
 }
 
 echo
