@@ -191,6 +191,12 @@ case "$cmd" in
       printf 'mode: %s\n' "$(effective_mode)"
       if is_trusted; then echo 'formatter trust: trusted'
       else echo 'formatter trust: untrusted'; fi
+      if root="$(repo_root)" && detected="$(bash "$HARNESS_ROOT/lib/test-command.sh" "$HARNESS_ROOT" "$root")" && [ -n "$detected" ]; then
+        printf 'test command: %s (from %s)
+' "${detected%%$'	'*}" "${detected#*$'	'}"
+      else
+        echo 'test command: none found (set one with tack config check-fast)'
+      fi
     fi
     exit "$workflow_exit"
     ;;
@@ -278,6 +284,10 @@ case "$cmd" in
     root="$(repo_root)" || exit 0
     source_root="$HARNESS_ROOT"
     bash "$source_root/lib/project-context.sh" "$root" "$(context_level)"
+    detected="$(bash "$source_root/lib/test-command.sh" "$source_root" "$root")"
+    [ -z "$detected" ] || printf '
+Test command: %s (from %s). Use it to verify changes instead of searching for one.
+'       "${detected%%$'	'*}" "${detected#*$'	'}"
     ;;
   config)
     source_root="$HARNESS_ROOT"

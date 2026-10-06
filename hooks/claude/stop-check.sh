@@ -47,16 +47,6 @@ add() { findings="$findings
 dirty="$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')"
 [ "$dirty" -eq 0 ] || add "$dirty uncommitted change(s): commit verified work or tell the user why it stays uncommitted."
 
-if "$cli" trusted --quiet; then
-  check="$("$cli" config check-fast 2>/dev/null)"
-  check="${check% (*}"
-  limit=()
-  command -v timeout >/dev/null 2>&1 && limit=(timeout 60)
-  if [ -n "$check" ] && [ "$check" != none ] && ! ${limit[@]+"${limit[@]}"} bash -c "$check" >/dev/null 2>&1; then
-    add "the fast check fails: $check"
-  fi
-fi
-
 # A handoff a commit or two behind mid-task is normal; refreshing it after every commit costs a
 # commit (and a CI run once pushed). Ask once it is handoff-stale-commits code commits behind,
 # or as soon as that work is pushed, since others can then see the branch.
@@ -114,6 +104,26 @@ if ! printf '%s\n' "$changed" | grep -qE "$TEST_FILES" && git ls-files | grep -q
 $(printf '%s\n' "$changed" | grep -E "$SOURCE_FILES" | grep -vE "$TEST_FILES")
 EOF
   [ "$sources" -eq 0 ] || add "$sources source file(s) changed ($first first) but no test did: add or update a test for the changed behaviour, or tell the user why none is needed."
+fi
+
+# The project's tests must pass before the turn ends. It runs project code, so only in trusted
+# projects; a detected command runs only when source or test files changed, an explicit
+# check-fast always does.
+if "$cli" trusted --quiet; then
+  IFS="$(printf '\t')" read -r check check_source <<EOF
+$(bash "$(dirname "$0")/../../lib/test-command.sh" "$(dirname "$0")/../.." "$root")
+EOF
+  if [ -n "$check" ] && { [ "$check_source" = 'tack config check-fast' ] \
+    || printf '%s\n' "$changed" | grep -qE "$SOURCE_FILES|$TEST_FILES"; }; then
+    limit=()
+    command -v timeout >/dev/null 2>&1 && limit=(timeout 120)
+    ${limit[@]+"${limit[@]}"} bash -c "$check" >/dev/null 2>&1
+    case $? in
+      0) ;;
+      124) add "the tests did not finish within 120 s: $check (set a faster target with tack config check-fast)" ;;
+      *) add "the tests fail: $check (from $check_source): fix them, or tell the user why they fail." ;;
+    esac
+  fi
 fi
 
 if [ -f docs-map.txt ]; then
