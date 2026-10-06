@@ -265,7 +265,7 @@ recorded_git_hooks_path() {
 }
 check_hooks_path() {
   local scope="$1" path="$2" source
-  if [ "$path" = "$REPO/git-hooks" ]; then
+  if same_dir "$path" "$REPO/git-hooks"; then
     for source in _chain commit-msg pre-push pre-commit; do
       [ -x "$path/$source" ] || fail "$scope Git hook is missing or not executable: $source"
     done

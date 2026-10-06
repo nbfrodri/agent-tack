@@ -419,7 +419,7 @@ install_git_hooks() {
   section "Git hooks (global)"
   if [ "$NO_HOOKS" -eq 1 ]; then
     # Restoring the user's former hooksPath is uninstall's job, from its ownership records.
-    if has git && [ "$(git config --global --get core.hooksPath 2>/dev/null)" = "$REPO/git-hooks" ]; then
+    if has git && same_dir "$(git config --global --get core.hooksPath 2>/dev/null)" "$REPO/git-hooks"; then
       warn "skipped (--no-hooks), but the global git hooks from an earlier install remain; ./uninstall.sh removes them"
     else
       ok "skipped (--no-hooks)"
@@ -440,7 +440,7 @@ install_git_hooks() {
   fi
   [ "$DRY_RUN" -eq 1 ] || chmod +x "$target"/_chain "$target"/commit-msg "$target"/pre-push 2>/dev/null
   current="$(git config --global --get core.hooksPath 2>/dev/null || true)"
-  if [ "$current" = "$target" ]; then
+  if same_dir "$current" "$target"; then
     ok "core.hooksPath already set to $target"
   elif [ -z "$current" ] || is_harness_hooks "$current"; then
     if [ "$DRY_RUN" -eq 1 ]; then
