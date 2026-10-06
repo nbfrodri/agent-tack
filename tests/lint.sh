@@ -14,7 +14,7 @@ if ! command -v shellcheck >/dev/null 2>&1; then
   exit 2
 fi
 shellcheck -x install.sh uninstall.sh bin/tack bin/harness lib/*.sh tests/*.sh evals/run.sh \
-  git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push git-hooks/pre-commit \
+  git-hooks/* \
   hooks/claude/*.sh hooks/claude/lib/*.sh hooks/cursor/*.sh || status=1
 
 # ruff: the pinned release through uvx when uv is there, otherwise the installed one (a warning

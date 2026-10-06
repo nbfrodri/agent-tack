@@ -248,8 +248,9 @@ done <"$REPO/plugins.txt"
 
 echo "git-hooks/"
 for hook in "$REPO"/git-hooks/*; do
+  # Windows checkouts without symlink support turn a symlink into a text file git cannot run
   if [ -L "$hook" ]; then
-    [ "$(readlink "$hook")" = "_chain" ] || err "git-hooks/$(basename "$hook"): symlinks must point to _chain"
+    err "git-hooks/$(basename "$hook"): must be a file, not a symlink (source _chain instead)"
   elif [ ! -x "$hook" ]; then
     err "git-hooks/$(basename "$hook"): not executable"
   fi
