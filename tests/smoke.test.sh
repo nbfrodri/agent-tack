@@ -22,11 +22,7 @@ echo "Install"
 check "install.sh succeeds in a temporary HOME" "'$REPO/install.sh' --skip-plugins >'$WORK/install.log' 2>&1 || { cat '$WORK/install.log'; false; }"
 check "global instructions are linked" "[ -L '$HOME/.claude/CLAUDE.md' ]"
 check "git uses tack's hooks" "[ \"\$(cd \"\$(git config --global core.hooksPath)\" && pwd -P)\" = \"\$(cd '$REPO/git-hooks' && pwd -P)\" ]"
-case "$(uname -s)" in
-  # Doctor and uninstall still misjudge paths and permissions there (#111).
-  MINGW* | MSYS* | CYGWIN*) echo "  - doctor skipped on native Windows (#111)" ;;
-  *) check "the doctor reports no errors" "bash '$REPO/lib/doctor.sh' '$REPO' >'$WORK/doctor.log' 2>&1 || { grep -v '^OK' '$WORK/doctor.log'; false; }" ;;
-esac
+check "the doctor reports no errors" "bash '$REPO/lib/doctor.sh' '$REPO' >'$WORK/doctor.log' 2>&1 || { grep -v '^OK' '$WORK/doctor.log'; false; }"
 
 echo "Commits through the global hooks"
 P="$WORK/project"
@@ -42,6 +38,10 @@ printf 'y\n' > "$P/b.txt" && git -C "$P" add b.txt
 check "an enabled project rejects a non-conventional subject" "! git -C '$P' commit -q -m 'added b' 2>/dev/null"
 printf 'AWS_SECRET_ACCESS_KEY=1\n' > "$P/.env" && git -C "$P" add -f .env
 check "pre-commit refuses a .env file" "! git -C '$P' commit -q -m 'chore: add env' 2>/dev/null"
+
+echo "Uninstall"
+check "uninstall restores the temporary HOME" "'$REPO/uninstall.sh' >'$WORK/uninstall.log' 2>&1 || { cat '$WORK/uninstall.log'; false; }"
+check "uninstall removed the global instructions link" "[ ! -e '$HOME/.claude/CLAUDE.md' ]"
 
 echo "Command guard"
 decision() {
