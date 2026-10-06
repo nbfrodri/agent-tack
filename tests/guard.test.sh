@@ -112,6 +112,15 @@ for parser, parser_path in (("jq", None), ("Python", work / "no-jq")):
     expect("deny", "rm -rf\u0000 /", f"{parser}: NUL inside the command is dropped", path=parser_path)
     expect("deny", "rm -rf /\n\n", f"{parser}: trailing newlines are trimmed", path=parser_path)
     expect("allow", "git status", f"{parser}: cwd is read along with the command", path=parser_path, cwd=repo)
+# Run by a relative path: the libraries and the tack CLI are still found after the guard changes directory
+relative = subprocess.run(["bash", "guard-bash.sh"], cwd=guard.parent, text=True, capture_output=True, timeout=8,
+                          input=json.dumps({"tool_input": {"command": "git reset --hard"}, "cwd": str(work)}))
+if '"ask"' in relative.stdout and not relative.stderr:
+    passed += 1
+    print("  PASS relative invocation finds its libraries")
+else:
+    failed += 1
+    print(f"  FAIL relative invocation finds its libraries: {relative.stdout}{relative.stderr}")
 for raw in ('{"tool_input": {"command": 5}}', '[]', 'not json'):
     result = subprocess.run(["bash", str(guard)], input=raw, text=True, capture_output=True, timeout=8)
     if result.returncode == 0 and not result.stdout:
