@@ -31,14 +31,14 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ### Deprecated
 
-- Runtime support for `harness.*`, `.harness` and the `harness` command is retained in this transition release. Migrate every existing clone before updating beyond this release to a version that removes those names ([#122](https://github.com/nbfrodri/agent-tack/pull/122)).
+- Runtime support for the former `harness.*`, `.harness` and the `harness` command is retained in this transition release. Migrate every existing clone before updating beyond this release to a version that removes those names ([#122](https://github.com/nbfrodri/agent-tack/pull/122)).
 
 ### Migration before updating beyond v0.1.0
 
 1. Update the tack checkout to this tag: `git fetch origin --tags && git switch --detach v0.1.0`.
 2. Run `./install.sh` from the tack checkout to update managed links and migrate old configuration/state directories.
 3. In every project clone that used the former name, run `tack migrate` and `tack doctor`. Global settings migrate too; each clone's local settings must be migrated separately.
-4. If the project tracked `.harness`, commit its replacement with `.tack`. Update scripts that invoke `harness` to use `tack`.
+4. If the project tracked the former `.harness` marker, commit its replacement with `.tack`. Update scripts that invoke `harness` to use `tack`.
 5. Only after those steps, update the tack checkout to a later release and rerun `./install.sh`.
 
 Native Windows Git Bash remains experimental: doctor and uninstall still have the limitations tracked in [#111](https://github.com/nbfrodri/agent-tack/issues/111). WSL2 remains the supported Windows path.
