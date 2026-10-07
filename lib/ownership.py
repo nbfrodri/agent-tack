@@ -7,12 +7,13 @@ import os
 from pathlib import Path
 import re
 import shutil
-import stat
 import subprocess
 import sys
 import tempfile
 
 import vscode_settings
+from ownership_platform import (WINDOWS, canonical, copy_permissions, no_symlink_ancestors,
+                                parent_identity, plain_path, redirected, validate_private)
 
 MISSING = object()
 VSCODE_PRODUCTS = ("Code", "Code - Insiders", "VSCodium")
@@ -27,18 +28,8 @@ def read(path):
     return value[:-1] if value.endswith("\n") else value
 
 
-def plain_path(value):
-    return (value.startswith("/") and not any(c in value for c in "\n\r\t")
-            and all(p not in (".", "..") for p in value.split("/")))
-
-
-def no_symlink_ancestors(path, floor):
-    for current in [path, *path.parents]:
-        if current == floor:
-            return True
-        if current.is_symlink():
-            return False
-    return True
+def record_path(path):
+    return canonical(read(path))
 
 
 def settings_paths(home, declaration):
@@ -47,12 +38,12 @@ def settings_paths(home, declaration):
     try:
         lines = declaration.read_text(encoding="utf-8").splitlines()
     except OSError:
-        return paths
+        return {canonical(path) for path in paths}
     for line in lines:
         fields = line.split()
         if len(fields) >= 7 and not fields[0].startswith("#") and fields[6] != "-":
             paths.add(fields[6].replace("~", home, 1) if fields[6].startswith("~/") else fields[6])
-    return paths
+    return {canonical(path) for path in paths}
 
 
 def expected_link(path, target, home, repo, declaration):
@@ -71,13 +62,15 @@ def expected_link(path, target, home, repo, declaration):
             fixed[home + instructions[1:]] = repo + "/global/AGENTS.md"
         if skills.startswith("~/"):
             skill_dirs.add(home + skills[1:])
+    fixed = {canonical(key): canonical(value) for key, value in fixed.items()}
+    skill_dirs = {canonical(value) for value in skill_dirs}
     if path in fixed:
         return target == fixed[path]
     parent, name = os.path.split(path)
     if parent in skill_dirs and name not in ("", ".", ".."):
-        return target == repo + "/skills/" + name
+        return target == canonical(repo + "/skills/" + name)
     if parent == home + "/.claude/agents" and name.endswith(".md"):
-        return target == repo + "/agents/" + name
+        return target == canonical(repo + "/agents/" + name)
     return False
 
 
@@ -89,7 +82,7 @@ def generated_parent(path, home, declaration):
     for line in declaration.read_text(encoding='utf-8').splitlines():
         fields = line.split()
         if len(fields) >= 6 and not fields[0].startswith('#') and fields[5].startswith('~/'):
-            if path == home + fields[5][1:] and plain_path(path):
+            if path == canonical(home + fields[5][1:]) and plain_path(path):
                 return True
     return False
 
@@ -97,25 +90,20 @@ def generated_parent(path, home, declaration):
 def vscode_settings_paths(home):
     home = home.rstrip("/")
     config = os.environ.get("XDG_CONFIG_HOME", home + "/.config")
-    return {base + "/" + product + "/User/settings.json"
+    return {canonical(base + "/" + product + "/User/settings.json")
             for base in (config, home + "/Library/Application Support")
             for product in VSCODE_PRODUCTS}
 
 
 def validate(state, home):
-    floor = Path(os.environ.get("XDG_STATE_HOME", home))
+    home = canonical(home)
+    floor = Path(canonical(os.environ.get("XDG_STATE_HOME", home)))
     if not plain_path(str(state)) or not no_symlink_ancestors(state, floor):
         raise ValueError("unsafe ownership state path")
-    for root, dirs, files in os.walk(state, followlinks=False):
-        for path in [Path(root), *(Path(root) / n for n in dirs + files)]:
-            info = path.lstat()
-            if (path.is_symlink() or info.st_uid != os.getuid()
-                    or stat.S_IMODE(info.st_mode) & 0o077
-                    or not (stat.S_ISDIR(info.st_mode) or stat.S_ISREG(info.st_mode))):
-                raise ValueError("ownership state is not private or contains unsupported files")
-    if read(state / "version") != "1" or read(state / "home") != home:
+    validate_private(state)
+    if read(state / "version") != "1" or record_path(state / "home") != home:
         raise ValueError("unsupported ownership version or HOME mismatch")
-    repo = read(state / "repo")
+    repo = record_path(state / "repo")
     if not plain_path(repo):
         raise ValueError("invalid recorded repository")
     entries = state / "entries"
@@ -125,19 +113,21 @@ def validate(state, home):
     for entry in entries.iterdir():
         if not entry.is_dir() or not entry.name.isdigit():
             raise ValueError("invalid ownership entry")
-        kind, path = read(entry / "kind"), read(entry / "path")
-        if (kind, path) in seen or not plain_path(path) or not plain_path(read(entry / "parent")):
+        kind, path = read(entry / "kind"), record_path(entry / "path")
+        if (kind, path) in seen or not plain_path(path) or not plain_path(record_path(entry / "parent")):
             raise ValueError("invalid or duplicate ownership path")
         seen.add((kind, path))
-        entry_repo = read(entry / "repo")
+        entry_repo = record_path(entry / "repo")
         identity = read(entry / "parent_identity")
+        if (entry / "native_identity").exists() and read(entry / "native_identity") != "1":
+            raise ValueError("invalid identity source")
         if not plain_path(entry_repo) or (identity != "unavailable" and
                 (len(identity.split(":")) != 2 or not all(part.isdigit() for part in identity.split(":")))):
             raise ValueError("invalid parent identity or source repository")
         if kind == "link":
             if not path.startswith(home.rstrip("/") + "/"):
                 raise ValueError("link outside HOME")
-            target, before = read(entry / "target"), read(entry / "before_kind")
+            target, before = record_path(entry / "target"), read(entry / "before_kind")
             declaration = entry / "targets"
             if not declaration.exists():
                 declaration = Path(__file__).resolve().parent.parent / "targets.txt"
@@ -149,8 +139,10 @@ def validate(state, home):
                 original = read(entry / "before_target")
                 if not original or "\n" in original:
                     raise ValueError("invalid original link target")
+                if (entry / "before_directory").exists() and read(entry / "before_directory") not in ("0", "1"):
+                    raise ValueError("invalid original link type")
             if before == "backup":
-                backup = read(entry / "backup")
+                backup = record_path(entry / "backup")
                 if not plain_path(backup) or not backup.startswith(path + ".bak-") or "/" in backup[len(path):]:
                     raise ValueError("backup is not adjacent to its managed path")
         elif kind == "settings":
@@ -170,7 +162,8 @@ def validate(state, home):
                         os.environ.get("XDG_CONFIG_HOME", home + "/.config") + "/git/config"}
             if os.environ.get("GIT_CONFIG_GLOBAL"):
                 expected.add(os.environ["GIT_CONFIG_GLOBAL"])
-            if path not in expected or read(entry / "target") != entry_repo.rstrip("/") + "/git-hooks":
+            expected = {canonical(value) for value in expected}
+            if path not in expected or record_path(entry / "target") != entry_repo.rstrip("/") + "/git-hooks":
                 raise ValueError("unexpected Git config path")
             if "\n" in (entry / "before").read_text(encoding="utf-8"):
                 raise ValueError("unsupported multiline Git baseline")
@@ -308,22 +301,27 @@ def restore_retired_events(before, after, managed, current, restored):
 
 
 def same_parent(entry, path):
-    if not path.parent.is_dir() or os.path.realpath(path.parent) != read(entry / "parent"):
+    if not path.parent.is_dir() or canonical(os.path.realpath(path.parent)) != record_path(entry / "parent"):
         return False
-    info = path.parent.stat()
-    return f"{info.st_dev}:{info.st_ino}" == read(entry / "parent_identity")
+    if WINDOWS and not (entry / "native_identity").exists():
+        # Older installers used MSYS stat, whose device/inode differ from native Python.
+        result = subprocess.run(["stat", "-c", "%d:%i", str(path.parent)],
+                                capture_output=True, text=True, check=True)
+        identity = result.stdout.strip()
+    else:
+        identity = parent_identity(path.parent)
+    return identity == read(entry / "parent_identity")
 
 
 def write_json(path, value):
-    mode = stat.S_IMODE(path.stat().st_mode)
     fd, temporary = tempfile.mkstemp(prefix=".tack-uninstall-", dir=path.parent)
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as stream:
-            os.fchmod(stream.fileno(), mode)
             json.dump(value, stream, indent=2)
             stream.write("\n")
             stream.flush()
             os.fsync(stream.fileno())
+        copy_permissions(path, temporary)
         os.replace(temporary, path)
     finally:
         if os.path.exists(temporary):
@@ -361,14 +359,14 @@ def uninstall_mod(entry, kind, dry_run):
 
 
 def uninstall_entry(entry, dry_run):
-    kind, path = read(entry / "kind"), Path(read(entry / "path"))
+    kind, path = read(entry / "kind"), Path(record_path(entry / "path"))
     if kind in ("mod", "modmarket"):
         return uninstall_mod(entry, kind, dry_run)
     if not same_parent(entry, path):
         print(f"preserved changed parent: {path}")
         return False
     if kind == "generated":
-        if not path.is_file() or path.is_symlink():
+        if not path.is_file() or redirected(path):
             print(f"generated file already removed: {path}")
             return True
         if hashlib.sha256(path.read_bytes()).hexdigest() != read(entry / "sha256"):
@@ -379,24 +377,34 @@ def uninstall_entry(entry, dry_run):
             path.unlink()
         return True
     if kind == "link":
-        if not path.is_symlink() or os.readlink(path) != read(entry / "target"):
+        target = os.readlink(path) if path.is_symlink() else ""
+        # A changed relative link is user-owned, and must not abort the remaining restoration.
+        checked = target[4:] if WINDOWS and target.startswith("\\\\?\\") else target
+        if not plain_path(checked) or canonical(target) != record_path(entry / "target"):
             print(f"preserved changed or missing link: {path}")
             return False
         before = read(entry / "before_kind")
-        backup = Path(read(entry / "backup")) if before == "backup" else None
+        backup = Path(record_path(entry / "backup")) if before == "backup" else None
         if backup is not None and not os.path.lexists(backup):
             print(f"preserved link with missing original backup: {path}")
+            return False
+        if WINDOWS and before == "symlink" and not (entry / "before_directory").exists():
+            print(f"preserved link with unknown original Windows link type: {path}")
             return False
         print(f"{'would remove' if dry_run else 'remove'} managed link: {path}" +
               (" and restore original" if before != "absent" else ""))
         if not dry_run:
             path.unlink()
             if before == "symlink":
-                path.symlink_to(read(entry / "before_target"))
+                original = read(entry / "before_target")
+                if WINDOWS and plain_path(original):
+                    original = canonical(original)
+                directory = WINDOWS and read(entry / "before_directory") == "1"
+                path.symlink_to(original, target_is_directory=directory)
             elif backup is not None:
                 backup.rename(path)
         return True
-    if path.is_symlink() or not path.is_file():
+    if not path.is_file() or redirected(path):
         print(f"preserved changed or missing {kind} file: {path}")
         return False
     if kind == "vscode":
@@ -428,7 +436,8 @@ def uninstall_entry(entry, dry_run):
         return restored == before
     command = ["git", "config", "--file", str(path)]
     found = subprocess.run(command + ["--get-all", "core.hooksPath"], capture_output=True, text=True)
-    if found.returncode or found.stdout != read(entry / "target") + "\n":
+    current = found.stdout[:-1] if found.stdout.endswith("\n") else found.stdout
+    if found.returncode or not plain_path(current) or canonical(current) != record_path(entry / "target"):
         print(f"preserved changed Git hooks: {path}")
         return False
     print(f"{'would restore' if dry_run else 'restore'} original Git hooks: {path}")
@@ -443,7 +452,7 @@ def main():
     if len(sys.argv) not in (4, 5):
         raise ValueError("invalid ownership invocation")
     action, state, home = sys.argv[1:4]
-    state = Path(state)
+    state = Path(canonical(state))
     entries = validate(state, home)
     if action == "validate":
         return
@@ -479,6 +488,6 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except (OSError, ValueError) as exc:
+    except (OSError, ValueError, subprocess.SubprocessError) as exc:
         print(f"ownership refused: {type(exc).__name__}; state or paths failed validation", file=sys.stderr)
         sys.exit(1)

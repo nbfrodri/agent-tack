@@ -8,9 +8,10 @@ Usage: vscode_settings.py state FILE   prints absent, unset, true, false, other 
 """
 import json
 import os
-import stat
 import sys
 import tempfile
+
+from ownership_platform import copy_permissions
 
 KEY = "chat.useAgentsMdFile"
 
@@ -37,13 +38,15 @@ def state(path):
 
 def write(path, settings):
     directory = os.path.dirname(path)
-    mode = stat.S_IMODE(os.stat(path).st_mode) if os.path.exists(path) else 0o644
     fd, temporary = tempfile.mkstemp(prefix=".tack-", dir=directory)
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as stream:
-            os.fchmod(stream.fileno(), mode)
             json.dump(settings, stream, indent=4)
             stream.write("\n")
+        if os.path.exists(path):
+            copy_permissions(path, temporary)
+        else:
+            os.chmod(temporary, 0o644)
         os.replace(temporary, path)
     finally:
         if os.path.exists(temporary):

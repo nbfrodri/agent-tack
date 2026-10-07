@@ -4,13 +4,15 @@
 # (Git Bash), where the other suites rely on tools or symlink behaviour Windows lacks.
 # Usage: tests/smoke.test.sh
 set -uo pipefail
-unset XDG_STATE_HOME GIT_CONFIG_GLOBAL
+unset XDG_STATE_HOME GIT_CONFIG_GLOBAL GIT_CONFIG_COUNT
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/agent-tack-smoke.XXXXXX")"
 trap 'rm -rf "$WORK"' EXIT
 export HOME="$WORK/home" XDG_CONFIG_HOME="$WORK/home/.config" GIT_CONFIG_NOSYSTEM=1
-mkdir -p "$HOME"
+mkdir -p "$HOME/.claude"
+printf 'Original user instructions\n' > "$HOME/.claude/CLAUDE.md"
+printf '{"theme":"smoke"}\n' > "$HOME/.claude/settings.json"
 PASSED=0
 FAILED=0
 check() {
@@ -22,11 +24,8 @@ echo "Install"
 check "install.sh succeeds in a temporary HOME" "'$REPO/install.sh' --skip-plugins >'$WORK/install.log' 2>&1 || { cat '$WORK/install.log'; false; }"
 check "global instructions are linked" "[ -L '$HOME/.claude/CLAUDE.md' ]"
 check "git uses tack's hooks" "[ \"\$(cd \"\$(git config --global core.hooksPath)\" && pwd -P)\" = \"\$(cd '$REPO/git-hooks' && pwd -P)\" ]"
-case "$(uname -s)" in
-  # Doctor and uninstall still misjudge paths and permissions there (#111).
-  MINGW* | MSYS* | CYGWIN*) echo "  - doctor skipped on native Windows (#111)" ;;
-  *) check "the doctor reports no errors" "bash '$REPO/lib/doctor.sh' '$REPO' >'$WORK/doctor.log' 2>&1 || { grep -v '^OK' '$WORK/doctor.log'; false; }" ;;
-esac
+check "the doctor reports no errors" "bash '$REPO/lib/doctor.sh' '$REPO' >'$WORK/doctor.log' 2>&1 || { grep -v '^OK' '$WORK/doctor.log'; false; }"
+check "reinstall accepts its own ownership state" "'$REPO/install.sh' --skip-plugins >'$WORK/reinstall.log' 2>&1 || { cat '$WORK/reinstall.log'; false; }"
 
 echo "Commits through the global hooks"
 P="$WORK/project"
@@ -52,6 +51,14 @@ check "allows a harmless command" "[ -z \"\$(decision 'ls -la')\" ]"
 check "denies a force-push to main" "[ \"\$(decision 'git push --force origin main')\" = deny ]"
 check "denies deleting the root directory" "[ \"\$(decision 'rm -rf /')\" = deny ]"
 check "asks before a hard reset" "[ \"\$(decision 'git reset --hard HEAD~1')\" = ask ]"
+
+echo "Uninstall"
+check "uninstall succeeds" "'$REPO/uninstall.sh' >'$WORK/uninstall.log' 2>&1 || { cat '$WORK/uninstall.log'; false; }"
+check "uninstall removes managed links" "[ ! -L '$HOME/.claude/CLAUDE.md' ]"
+check "uninstall restores original instructions" "grep -q 'Original user instructions' '$HOME/.claude/CLAUDE.md'"
+check "uninstall restores original settings" "grep -q smoke '$HOME/.claude/settings.json' && ! grep -q '#tack' '$HOME/.claude/settings.json'"
+check "uninstall restores the empty Git hooks baseline" "! git config --global --get core.hooksPath >/dev/null"
+check "uninstall completes every ownership entry" "[ ! -e '$HOME/.local/state/agent-tack/ownership' ]"
 
 echo
 echo "$PASSED passed, $FAILED failed"

@@ -203,8 +203,9 @@ check_settings() {
     [ -r "$source" ] || fail 'managed Claude hook script is unreadable'
   done
   if has python3; then
-    python3 - "$dest" "$REPO/claude/settings.json" "$REPO" <<'PYTHON' >/dev/null 2>&1
-import json,sys
+    MSYS2_ENV_CONV_EXCL="${MSYS2_ENV_CONV_EXCL:+$MSYS2_ENV_CONV_EXCL;}TACK_DOCTOR_ROOT" \
+      TACK_DOCTOR_ROOT="$REPO" python3 - "$dest" "$REPO/claude/settings.json" <<'PYTHON' >/dev/null 2>&1
+import json,os,sys
 try:
     current=json.load(open(sys.argv[1], encoding="utf-8"))
     expected=json.load(open(sys.argv[2], encoding="utf-8"))
@@ -218,7 +219,7 @@ for event,groups in expected.get('hooks',{}).items():
     if not isinstance(candidates,list): sys.exit(1)
     for group in groups:
         for hook in group['hooks']:
-            command=hook['command'].replace('__REPO__',sys.argv[3])
+            command=hook['command'].replace('__REPO__',os.environ['TACK_DOCTOR_ROOT'])
             matches=0
             for candidate in candidates:
                 if not isinstance(candidate,dict) or candidate.get('matcher')!=group.get('matcher'):

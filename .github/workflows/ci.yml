@@ -70,6 +70,7 @@ jobs:
           tests/project-capabilities.test.sh
           tests/native-agents.test.sh
           tests/project-setup.test.sh
+          tests/ownership-platform.test.sh
           tests/smoke.test.sh
 
   windows:
@@ -84,7 +85,9 @@ jobs:
       - uses: actions/checkout@v7
       - name: Validate skills, agents and cross-references
         run: tests/validate.sh
-      - name: Install, commit through the hooks and ask the guard (tests/smoke.test.sh)
+      - name: Validate native ownership paths, ACLs and restoration
+        run: tests/ownership-platform.test.sh
+      - name: Install, doctor, commit through hooks, guard and uninstall
         run: tests/smoke.test.sh
 
   mods:
