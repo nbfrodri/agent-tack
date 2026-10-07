@@ -2,7 +2,7 @@
 
 Status: approved
 
-The user requested resolution of issues #111 and #100 while PR #128 is awaiting its final CI check. Preserve and finish that integration separately. No paid model evaluations are authorized; all tests must use temporary HOME/XDG/Git configuration, never the user's installation.
+The user requested resolution of issues #111 and #100 while PR #128 was awaiting its final CI check; #128 is now merged. The initial local-only limit was superseded on 2026-10-08: the owner authorized real benchmarks with Codex through their ChatGPT subscription and delegated model selection. Use bounded runs and report observed usage, not invented dollar charges. All tests use temporary HOME/XDG/Git configuration, never the user's installation. The [Codex comparison protocol](../benchmarks/2026-10-08-codex-protocol.md) records the experimental scope.
 
 ## Scope and acceptance
 

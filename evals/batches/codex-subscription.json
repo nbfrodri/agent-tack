@@ -1,0 +1,12 @@
+{
+  "batch_id": "codex-subscription-20261008",
+  "seed": 20261008,
+  "repetitions": 2,
+  "scenarios": ["bug-fix", "attachments", "search"],
+  "conditions": ["baseline", "auto"],
+  "runtimes": [
+    {"provider": "codex", "model": "gpt-6-luna"},
+    {"provider": "codex", "model": "gpt-6.1-sol"}
+  ],
+  "limits": {"max_runs": 24, "timeout_seconds": 600, "concurrency": 2}
+}
