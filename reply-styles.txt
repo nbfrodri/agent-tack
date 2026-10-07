@@ -1,0 +1,4 @@
+# Reply profiles: name followed by startup guidance. Presentation only; workflow modes are independent.
+brief Lead with the answer or outcome. Keep the explanation short and actionable; include relevant verification and unresolved limits. Expand when the user asks.
+visual Lead with the answer or outcome. Use compact sections, lists or comparison tables when they improve scanning; skip decorative structure for simple answers. Include relevant verification and unresolved limits.
+detailed Lead with the answer or outcome. Explain the reasoning, context and relevant tradeoffs, with examples when useful. Include verification and unresolved limits; scale depth to the question.

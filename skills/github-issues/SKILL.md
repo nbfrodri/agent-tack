@@ -1,6 +1,6 @@
 ---
 name: github-issues
-description: Manage GitHub issues with gh: triage, bug reports, feature requests, plan breakdown and linked implementation PRs. Use for issue or ticket work and templates.
+description: "Manage GitHub issues with gh: triage, bug reports, feature requests, plan breakdown and linked implementation PRs. Use for issue or ticket work and templates."
 ---
 
 # GitHub issues
@@ -15,7 +15,7 @@ Creating, editing, commenting on, labelling or closing issues is visible to othe
 3. **Plan** as usual (`dev-workflow`), with the issue's acceptance criteria as the definition of done.
 4. **Branch linked to the issue:** `gh issue develop 12 --name feat/12-short-slug --checkout` (it shows up on the issue), or plain `git switch -c feat/12-short-slug`. Use `fix/` for bugs, etc.
 5. **Commits:** Conventional Commits as always; reference the issue in the footer when useful: `Refs #12`.
-6. **PR** (after asking): title in Conventional Commit format, body with `Closes #12` so merging closes the issue automatically. Don't close issues by hand when a PR will do it.
+6. **PR:** prepare the title and body using the project's template and `dev-workflow` → `references/git-github.md`; publish when authorized. Use `Closes #12` when the change fully resolves the issue, or `Refs #12` for partial work. Don't close issues by hand when a PR will do it.
 7. Anything out of scope that you notice stays out of the PR: propose a new issue for it (below).
 
 ## Writing a good issue
@@ -75,11 +75,11 @@ Don't silently fix unrelated problems inside the current change, and don't forge
 - "What is pending?": `gh issue list --state open --limit 50` (filter with `--label`, `--assignee @me`, `--milestone`), then summarise by priority and suggest what to tackle next and why.
 
 ## Templates for a repository
-To give a repo issue forms and a PR template, copy this skill's `assets/`:
+When asked for templates or setting up GitHub basics, first inspect the project's existing templates and contribution rules. Reuse what fits; add only missing, requested assets from this skill. A request for a PR template alone does not require adding issue forms:
 ```
 assets/ISSUE_TEMPLATE/bug_report.yml       -> .github/ISSUE_TEMPLATE/bug_report.yml
 assets/ISSUE_TEMPLATE/feature_request.yml  -> .github/ISSUE_TEMPLATE/feature_request.yml
 assets/ISSUE_TEMPLATE/config.yml           -> .github/ISSUE_TEMPLATE/config.yml
 assets/pull_request_template.md            -> .github/pull_request_template.md
 ```
-Commit them as `chore(github): add issue and PR templates`.
+Adapt prompts to the project's commands and review needs, preserve required checks, and keep optional sections optional. Follow `dev-workflow` → `references/git-github.md` when filling a PR body. Commit template changes as a coherent Conventional Commit.

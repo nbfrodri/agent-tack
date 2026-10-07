@@ -23,7 +23,7 @@ state-retention-days  tack.stateRetentionDays   30       number    global  hook 
 merge-requires-green  tack.mergeRequiresGreen  true     bool      any     hook         Refuse gh pr merge while the pull request's CI checks fail or are still running
 handoff-stale-commits tack.handoffStaleCommits  3        number    any     hook         The check before stopping asks for a handoff refresh once it is this many code commits behind, or when that work is pushed
 stop-check          tack.stopCheck            true     bool      any     hook         Before the assistant stops, report uncommitted work, a failing fast check, source changes without a test change, a stale handoff or docs the docs map expects
-reply-style           tack.replyStyle           normal   normal|terse      any  instruction  Ask the assistant for terse replies to save output tokens
+reply-style           tack.replyStyle           brief    brief|visual|detailed|normal|terse any instruction Reply presentation: brief, visual or detailed; normal and terse are legacy aliases for brief
 skill-loading         tack.skillLoading         normal   normal|minimal    any  instruction  Load skills only when a task cannot be done without them, to save input tokens
 subagent-model        tack.subagentModel        inherit  inherit|economical any instruction  Delegate to the most economical capable model instead of inheriting the main one
 memory                tack.memory               true     bool      global  hook         Load the shared user memory (tack memory) at session start in Claude Code and Codex

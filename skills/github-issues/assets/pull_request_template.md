@@ -1,17 +1,13 @@
 ## Summary
 
-What changes and why (1-3 sentences).
+<!-- Describe the concrete problem and resulting behavior in 1-3 sentences. -->
 
-## Changes
+## Validation
 
--
+<!-- List checks actually run and their results. Explain any failed or unrun checks. -->
 
-## How to test
+## Review notes
 
-Steps or commands to verify.
+<!-- Optional: compatibility, risks, screenshots, rollout/rollback or follow-ups. Remove if irrelevant. -->
 
-## Notes
-
-Risks, follow-ups, screenshots if UI.
-
-Closes #
+<!-- Add Closes #123 only for a real issue fully resolved by this PR; use Refs #123 for partial work. -->

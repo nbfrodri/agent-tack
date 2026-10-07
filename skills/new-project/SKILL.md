@@ -1,6 +1,6 @@
 ---
 name: new-project
-description: Bootstrap a project or add missing foundations: structure, tests, tooling, CI and docs. Use when starting, scaffolding or initializing a repository.
+description: "Bootstrap a project or add missing foundations: structure, tests, tooling, CI and docs. Use when starting, scaffolding or initializing a repository."
 ---
 
 # New project
@@ -32,7 +32,7 @@ Keep the initial capability catalog empty unless concrete project work justifies
 - `.env.example` with every variable documented and no real values.
 - Documentation following the `project-docs` skill, starting from its templates: `README.md`, `AGENTS.md`, a `CLAUDE.md` containing just `@AGENTS.md`, `docs/README.md`, `docs/overview.md`, `docs/architecture.md`, `docs/development.md` and `docs/ai/README.md`.
 - CI in `.github/workflows/ci.yml`: install, lint, type-check and test on push and pull requests.
-- Issue forms and a PR template: copy them from the `github-issues` skill's `assets/` into `.github/`.
+- Issue forms and a PR template: reuse existing templates; add missing ones from the `github-issues` skill's `assets/` into `.github/`, adapted to the project's validation commands. PR drafting follows `dev-workflow` → `references/git-github.md`.
 - Docker, if chosen: following `deployment` → `references/docker-vps.md`: a multi-stage, non-root `Dockerfile` with a healthcheck, a `.dockerignore` (`.git`, `.env`, dependencies, build output, tests), `compose.yaml` for the services plus `compose.override.yaml` for local development, the env vars in `.env.example`, and the Docker commands in the README and `AGENTS.md`. Build the image in CI.
 - Releases: release-please from the `release` skill's `assets/` (workflow, config with the stack's `release-type`, manifest at `0.1.0`), plus an empty `CHANGELOG.md`. Tags and versions follow `conventions.md` → "Releases and tags".
 - Dependabot: `.github/dependabot.yml` with weekly updates for the project's package ecosystems and for `github-actions` (see the example below).

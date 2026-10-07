@@ -24,6 +24,7 @@ Commands:
   config [NAME [VALUE]] [--global]
                       List feature toggles, show one, or set it for this project
                       (or user-wide with --global); config NAME --unset removes it
+                      reply-style: brief (default), visual or detailed
   enable [--shared] [--scaffold]
                       Enable this clone, or use a shareable .tack marker;
                       --scaffold adds the missing docs structure (never overwrites)

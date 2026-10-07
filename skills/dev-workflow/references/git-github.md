@@ -73,23 +73,17 @@ Before requesting integration approval, inspect the branch commits and recommend
 
 In the existing integration confirmation, offer both available methods and let the user choose. Preserve commits by default; squash requires the user's explicit choice. If the user already specified a method for this integration, follow it without asking again. Do not add a separate approval step or rewrite published commits to prepare the choice. Explain repository constraints when a method is unavailable; changing repository settings requires permission.
 
-Every branch commit and the PR title follow Conventional Commits (see `conventions.md`). When squashing, the resulting commit must also follow Conventional Commits and describe the complete change. Body:
-```markdown
-## Summary
-What changes and why (1-3 sentences).
+Every branch commit and the PR title follow Conventional Commits (see `conventions.md`). When squashing, the resulting commit must also follow Conventional Commits and describe the complete change.
 
-## Changes
-- …
+### Prepare the PR body
 
-## How to test
-Steps or commands to verify.
+1. Read the final diff against the intended base and the project's contribution instructions. Look for `pull_request_template.md` (including uppercase names) in `.github/`, the root and `docs/`, and for named templates in `PULL_REQUEST_TEMPLATE/` within those directories. Reuse an applicable known organization default when the project inherits one. Select the template matching the change; clarify only when the choice is consequential and ambiguous.
+2. Follow the selected template's required sections and checks. If none exists, use `github-issues` → `assets/pull_request_template.md` as the drafting fallback. Add a repository template when requested or when setting up a new project's GitHub basics; drafting a PR alone does not require adding one. Preserve existing templates.
+3. Lead with the concrete problem and resulting behavior. Explain the final change for a reviewer who has not read the conversation; include a short before/after example when it helps. Rewrite the title and body if scope changed. Scale detail to the diff rather than copying the work log or listing every file.
+4. Record the checks actually run and their results. Identify failed or unrun checks with reasons. Mark checklist items complete only with evidence. Include compatibility changes, risks, screenshots or rollout/rollback notes when relevant. Retain required sections; remove optional empty sections and draft placeholders. Add `Closes #123` only for an actual issue fully resolved by this PR; use `Refs #123` for partial work.
+5. Prepare the exact title, base/head branches and body locally before asking for publication approval when it is still needed. With `gh`, write the body to a temporary UTF-8 file and use `gh pr create --title '…' --body-file <path>` after authorization. This preserves real newlines; do not rely on automatic template insertion when supplying a body, or on commit autofill as the final description. `gh pr create --dry-run` may push changes, so preview the local file instead. Reuse existing authorization and do not open a duplicate PR.
 
-## Notes
-Risks, follow-ups, screenshots if UI.
-
-Closes #123
-```
-Keep PRs small and reviewable; split them when they grow. Create them with `gh pr create --title … --body …`, always with the user's permission. To work from issues, write them or split a plan into issues, follow `github-issues`.
+Keep PRs small and reviewable; split them when they grow. Creating or editing templates does not publish a PR. To work from issues, write them or split a plan into issues, follow `github-issues`. See [GitHub's template locations](https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/creating-a-pull-request-template-for-your-repository) and [GitHub CLI options](https://cli.github.com/manual/gh_pr_create).
 
 ## Versions and releases
 

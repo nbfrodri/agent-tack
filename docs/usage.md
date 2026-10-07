@@ -10,7 +10,29 @@ Skills live in `.agents/skills/<name>/SKILL.md`; portable role definitions live 
 
 Creating a role does not start an agent. Invocation still follows the workflow's delegation rules and actual runtime capabilities; a tool without native support can read the role and perform its checks sequentially. Read-only reviews stay read-only. Global promotion is a separate change after cross-project usefulness is demonstrated. See [customization](customization.md#project-capabilities).
 
-For everyday configuration, start with the workflow mode, `check-fast`, `skill-groups` and `delegation`. The remaining settings are available when a concrete need arises; no new toggle is required for local capability creation. A project's instructions can constrain this behavior.
+For everyday configuration, start with the workflow mode, `reply-style`, `check-fast`, `skill-groups` and `delegation`. The remaining settings are available when a concrete need arises; no new toggle is required for local capability creation. A project's instructions can constrain this behavior.
+
+## Reply styles
+
+Choose how the assistant presents its answers independently of how it performs the work:
+
+| Style | Presentation |
+| --- | --- |
+| `brief` (default) | Short and actionable: outcome, relevant verification and unresolved work |
+| `visual` | Compact sections, lists and comparison tables when useful for scanning |
+| `detailed` | Outcome followed by context, reasoning, tradeoffs and useful examples |
+
+```bash
+tack config reply-style                  # show the saved style and its source
+tack config reply-style visual           # use visual replies in this project
+tack config reply-style detailed --global # set a user-wide preference
+tack config reply-style brief            # return this project to brief replies
+tack config reply-style --unset          # inherit the global preference or default
+```
+
+You can also say "use visual replies for this conversation", "explain this in detail" or "keep this answer brief". A conversational request takes priority for the requested scope and does not change saved settings unless you ask. Project settings override global settings; the default is brief. Existing `normal` and `terse` values remain accepted and both map to brief.
+
+Changing reply style leaves tests, reviews, permissions and delegation at the chosen workflow level. A strict task can have a brief summary; lite can include a detailed explanation. PR descriptions follow the repository's template independently of chat style. Hooks supply the style at session start; other tools read `tack config reply-style`. For an immediate change in an ongoing session, state the preference in conversation; saved CLI changes are picked up at the next startup/context refresh.
 
 ## CLI help
 
@@ -220,12 +242,12 @@ A project setting (`tack mode lite`) overrides your global default (`tack mode l
 
 ### Lite: save tokens
 
-`tack mode lite` is for small, well-defined tasks and whenever tokens matter more than process. It absorbed the former `lean` mode, which measured the same cost and outcome: `lean` still works as a name for `lite`, and `tack migrate` rewrites it. Its rules are self-contained, so the assistant does not load `dev-workflow`; it starts with only `AGENTS.md` as context, reads only the lines it needs, runs only the affected tests and replies in a few lines. It still branches, adds a test for changed logic and makes a Conventional Commit, and the hooks apply as in every mode. It skips plans, handoffs, the AI log, review agents and delegation, and suggests `standard` or `strict` when a task turns out risky.
+`tack mode lite` is for small, well-defined tasks and whenever tokens matter more than process. It absorbed the former `lean` mode, which measured the same cost and outcome: `lean` still works as a name for `lite`, and `tack migrate` rewrites it. Its rules are self-contained, so the assistant does not load `dev-workflow`; it starts with only `AGENTS.md` as context, reads only the lines it needs, runs only the affected tests and uses the selected reply style (brief by default). It still branches, adds a test for changed logic and makes a Conventional Commit, and the hooks apply as in every mode. It skips plans, handoffs, the AI log, review agents and delegation, and suggests `standard` or `strict` when a task turns out risky.
 
 The same savings are available one by one in any mode:
 
 ```bash
-tack config reply-style terse          # short replies (output tokens)
+tack config reply-style brief          # short replies (output tokens; the default)
 tack config skill-loading minimal      # load skills only when needed (input tokens)
 tack config subagent-model economical  # cheapest capable model when delegating
 tack config context false              # no startup context at all

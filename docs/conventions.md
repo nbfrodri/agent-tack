@@ -6,6 +6,8 @@ The conventions tack applies, at a glance. Source of truth: [`skills/dev-workflo
 | --- | --- |
 | Commits | Conventional Commits, English, no AI attribution (enforced by hooks) |
 | PRs | Merge commit to keep verified milestones (squash only when you choose it); the merged branch is deleted locally and on the remote |
+| PR descriptions | Reuse the project's template; explain the problem and resulting behavior, actual validation and relevant review notes. This repo uses [its PR template](../.github/pull_request_template.md). Prepare the body locally before any missing publication approval. |
+| Replies | `reply-style` selects brief (default), visual or detailed independently of workflow mode; a conversational preference takes priority. See [usage](usage.md#reply-styles). |
 | Releases | SemVer, annotated `vX.Y.Z` tags, release-please, `CHANGELOG.md` + GitHub Release |
 | Code | English; formatter defaults; functional first; no unnecessary comments |
 | JS/TS | pnpm, TypeScript strict, kebab-case files, named exports |

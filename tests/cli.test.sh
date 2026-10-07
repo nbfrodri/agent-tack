@@ -179,6 +179,22 @@ check "user modes copied from unleash stay project-only" eval '"$CLI" mode new w
 check "a deleted user mode falls back to auto" eval 'git config --local tack.mode gone && "$CLI" mode | grep -q "auto (invalid local value: gone)"'
 git config --local --unset tack.mode
 
+check "reply style defaults to brief" expect_mode_like 'brief (default)' "$CLI" config reply-style
+check "reply style supports a global preference" expect_exit 0 "$CLI" config reply-style detailed --global
+check "reply style inherits the global preference" expect_mode_like 'detailed (global)' "$CLI" config reply-style
+check "reply style supports a project override" expect_exit 0 "$CLI" config reply-style visual
+check "reply style project preference wins" expect_mode_like 'visual (local)' "$CLI" config reply-style
+check "reply style does not change workflow mode" expect_mode 'auto (default)'
+check "reply style rejects unknown profiles" expect_exit 2 "$CLI" config reply-style fancy
+check "rejected reply style preserves the preference" expect_mode_like 'visual (local)' "$CLI" config reply-style
+check "reply style supports explicit brief" expect_exit 0 "$CLI" config reply-style brief
+check "reply style keeps the old terse value" expect_exit 0 "$CLI" config reply-style terse
+check "reply style keeps the old normal value" expect_exit 0 "$CLI" config reply-style normal
+check "reply style removes the project override" expect_exit 0 "$CLI" config reply-style --unset
+check "reply style restores the global preference" expect_mode_like 'detailed (global)' "$CLI" config reply-style
+check "reply style removes the global override" expect_exit 0 "$CLI" config reply-style --unset --global
+check "reply style restores the default" expect_mode_like 'brief (default)' "$CLI" config reply-style
+
 check "config lists every registered feature" expect_exit 0 "$CLI" config
 check "config listing shows value, source and enforcement" contains 'conventional-commits    true      default  hook'
 check "config listing includes instruction toggles" contains 'delegation              auto      default  instruction'
