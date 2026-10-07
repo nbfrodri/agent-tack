@@ -1,6 +1,6 @@
 # Windows ownership and outstanding audit
 
-Status: approved
+Status: implementation and re-audit complete; #100's empirical 9/10 goal remains open.
 
 The user requested resolution of issues #111 and #100 while PR #128 was awaiting its final CI check; #128 is now merged. The initial local-only limit was superseded on 2026-10-08: the owner authorized real benchmarks with Codex through their ChatGPT subscription and delegated model selection. Use bounded runs and report observed usage, not invented dollar charges. All tests use temporary HOME/XDG/Git configuration, never the user's installation. The [Codex comparison protocol](../benchmarks/2026-10-08-codex-protocol.md) records the experimental scope.
 
@@ -20,4 +20,8 @@ The user requested resolution of issues #111 and #100 while PR #128 was awaiting
 
 ## Verification
 
-Use native Windows regression tests for paths, privacy, symlinks and restoration, POSIX lifecycle/doctor/install/safety suites for nonregression, pinned lint, catalog validation and the cross-platform CI jobs. Assertions must exercise observable preservation/refusal behavior. Real-model outcome or spend improvements remain unmeasured unless existing compatible evidence supports them.
+Use native Windows regression tests for paths, privacy, symlinks and restoration, POSIX lifecycle/doctor/install/safety suites for nonregression, pinned lint, catalog validation and the cross-platform CI jobs. Assertions must exercise observable preservation/refusal behavior.
+
+## Outcome
+
+#111 merged through PR #129 with all CI jobs passing, including 11 native ownership tests and 19 Windows smoke checks. The 24-run Codex comparison is complete: frozen acceptance parity, increased tokens/time, useful Luna regressions and a supplementary Unicode limitation. [Audit round 8](../audits/2026-10-08-evidence-review.md) records an 8.6875 average and the evidence needed next; #100 is deliberately still open. No subscription dollar charge is inferred.

@@ -136,6 +136,8 @@ CI runs ShellCheck and content validation on Linux, plus installer and hook test
 
 Behaviour evaluations are a separate, manually invoked flow: `evals/run.sh` prepares a temporary scenario and captures an agent transcript; `grade.py` inspects the resulting repository and transcript and writes `metrics.json`; `report.py` aggregates those metrics. They use real model tokens and are not part of CI. Published measurements and their limits are in [results](results.md).
 
+The 2026-10-08 Codex comparison uses experiment-only helpers in `docs/benchmarks/support/`: a launcher fixes reasoning effort and scoped fixture Git permissions, then records local session model/effort observations before HOME cleanup. The exporter preserves original metrics and emits public counters, transcript hashes and code/docs diffs; the Unicode probe supplements frozen acceptance tests without rewriting them. These helpers are not installed by tack. Subscription usage stays separate from USD cost, and supplementary model observations do not replace unknown generic metadata.
+
 ## Design choices
 
 - Store shared configuration in one versioned checkout and expose it through symlinks, so edits apply locally without copying content into each tool.
