@@ -8,7 +8,7 @@ Open Agent Skills format (`SKILL.md`), read by every supported tool.
 | Skill | Purpose |
 | --- | --- |
 | `dev-workflow` | The workflow at lite, standard or strict level: impact mapping, minimal modular changes, architecture fit, plan, TDD, SOLID/DDD, code, git and release conventions, docs |
-| `new-project` | Scaffold a project with tests, lint, CI, docs, templates, release-please |
+| `new-project` | Analyze a new or existing project, initialize minimal guidance, select optional foundations with the user and remember choices |
 | `debugging` | Reproduce → regression test → isolate → verify → fix the root cause |
 | `testing` | What and how to test per layer; pytest, Pest/PHPUnit, Vitest/Jest |
 | `git-history` | Amend, fixup, squash, undo and recover commits |
@@ -18,7 +18,7 @@ Open Agent Skills format (`SKILL.md`), read by every supported tool.
 | `improve` | Prioritised improvement review with read-only reviewers |
 | `orchestrate` | Multi-agent delegation with model and effort per task; automatic only for strict-level work |
 | `auto-improve` | Autonomous score → fix → re-score loop up to a target score |
-| `lessons` | Turn corrections into versioned rules |
+| `lessons` | Turn corrections into versioned rules; create and reuse justified project-local skills and specialist roles |
 | `frontend` | React/Next.js components, state, forms, accessibility |
 | `api-design` | REST, errors, validation, OpenAPI; Python, Laravel, Node |
 | `database` | Modelling, safe migrations, indexes; PostgreSQL, MySQL, MongoDB |
@@ -28,7 +28,7 @@ Open Agent Skills format (`SKILL.md`), read by every supported tool.
 | `observability` | Logs, request IDs, Sentry, health checks, alerts |
 
 ## Agents
-Claude Code subagents (`~/.claude/agents`); other tools follow the same files as instructions.
+Portable role definitions, linked for Claude and rendered into native Codex, Gemini, Copilot CLI, OpenCode and Cursor formats. Other runtimes can follow the role text sequentially; see [editor support](editors.md).
 
 | Agent | Purpose |
 | --- | --- |

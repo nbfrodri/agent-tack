@@ -1,6 +1,6 @@
 ---
 name: dev-workflow
-description: The user's engineering workflow for projects with tack enabled, scaled by workflow level (lite, standard, strict): planning, TDD, SOLID/DDD, code and git conventions (Conventional Commits, branches, PRs) and docs. Use whenever writing, changing or debugging code, committing or opening PRs in such projects (implement, fix, commit).
+description: "Apply the active tack workflow to implementation, debugging, code changes and Git/PR work in enabled projects: planning, tests, conventions and docs scaled to task risk."
 ---
 
 # Dev Workflow
@@ -10,6 +10,7 @@ Applies in projects where tack is enabled (`tack status`; Claude Code says so at
 The goal: every request ends as a small, tested change in a clean git history, with only as much process as the task deserves. It works the same with any assistant (Claude, Codex or another).
 
 - **Language, attribution and what to ask before doing:** as in the global instructions; the git details are in `references/git-github.md`.
+- **Replies:** use the selected reply-style independently of the workflow level; longer progress, decisions and task closures follow `references/communication.md`.
 - **Code and git conventions:** `references/conventions.md` (style, naming, formatting, PR merging).
 - **The project's own conventions win.** If the repo has its own CONTRIBUTING, AGENTS.md, CLAUDE.md, linter, commit format or folder structure, follow them over this guide. This skill fills the gaps; it doesn't override what exists.
 
@@ -61,6 +62,8 @@ At standard and strict, number the acceptance criteria (`R1`, `R2`…) and check
 Read the relevant code, tests and docs before proposing anything. **Ask whenever you have a real doubt** about scope, behaviour, design or risk, grouping all questions in one round; don't guess. Decide alone only purely conventional details, and say what you chose.
 
 ### 2. Map the impact
+Check the project's capability index for reusable procedures and specialist roles relevant to the task. During authorized implementation, a concrete gap may justify a local addition under `lessons` → `references/project-capabilities.md`; do not create artifacts for routine one-off work.
+
 Before changing anything, list what the change touches beyond the obvious file: callers and dependants, tests, CLI help and usage text, README and `docs/` pages that describe the behaviour, `docs/architecture.md`, configuration and its examples, schemas and migrations, installer or setup steps, CI, translations. Search for the names you are changing (`grep` for the function, flag, setting or command) rather than relying on memory. Every affected item is updated in the same change or listed as pending; adding a mode to a CLI, for example, also means its `--help`, its validation, its tests and its usage docs. At lite this is a quick search; at standard and strict, put the list in the plan.
 
 Aim for the **smallest change that does the job**: touch as few files and lines as possible, extend through the existing extension points (data files, interfaces, registries, configuration) instead of editing many call sites, and keep unrelated refactors out (note them as suggestions). If the smallest correct change still has to touch many files, that is a design signal: see step 3.
@@ -81,13 +84,13 @@ At standard and strict, red → green → refactor for all logic with behaviour.
 Commit each coherent verified milestone immediately in Conventional Commits. Recommend an integration method from the branch history in the existing merge confirmation; preserve commits unless the user explicitly chooses squash. Details: `references/git-github.md`.
 
 ### 8. Document
-Update everything on the impact list, plus what the level requires, following `project-docs`. When a committed change leaves docs pending in 3 or more files, delegate them to `docs-writer` (it runs on an economical model) with the diff range and the list of files; keep smaller updates, ADRs and design decisions yourself, and review its result before committing. Every enabled project should have `docs/architecture.md`; if it is missing, add it during the first strict task after reading the code.
+Update everything on the impact list, plus what the level requires, following `project-docs`. When a committed change leaves docs pending in 3 or more files, delegate them to `docs-writer` (it runs on an economical model) with the diff range and the list of files; keep smaller updates, ADRs and design decisions yourself, and review its result before committing. Keep existing architecture guidance current; if it is missing, include it in the onboarding proposal and respect recorded setup choices.
 
 ### 9. Verify
 Run the project's tests, linter, formatter and type checker. Re-run the impact search on the final diff to catch help text, docs or callers that still describe the old behaviour. Never say something works without having checked it; if something fails or couldn't run, say so clearly, with the output.
 
 ### 10. Close
-Summarise briefly: what changed, the commits, what else the change affected and how it was covered, how it was verified and what's pending. Offer to push or open the PR where it applies. After a push, follow the CI row unless `tack config ci-watch` is `false`; the guard refuses `gh pr merge` while checks fail or are pending (`merge-requires-green`).
+Lead with the outcome, then actual verification and material pending work, using the selected reply-style (`references/communication.md`). For a requested PR, prepare its title and body from the project's template before seeking any missing publication approval (`references/git-github.md`); avoid an automatic offer to publish after unrelated tasks. After a push, follow the CI row unless `tack config ci-watch` is `false`; the guard refuses `gh pr merge` while checks fail or are pending (`merge-requires-green`).
 
 ## Related skills and agents
 Use them when the current tool has them. The `process` and `stack` groups may not be installed (`tack config skill-groups`); when a skill named here is missing, follow the rules in this skill instead and say which one was not available.

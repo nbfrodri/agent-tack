@@ -1,6 +1,6 @@
 ---
 name: orchestrate
-description: Delegate complex separable tasks using available models and isolated worktrees, then integrate and verify. Use for subagents or parallel work, or automatically for complex independent strict-level tasks in enabled projects unless tack.delegation is off.
+description: Delegate separable tasks with available models and isolated worktrees, then integrate and verify. Use for requested subagents or eligible strict work; respect delegation settings.
 ---
 
 # Orchestrate
@@ -33,6 +33,8 @@ The capabilities map to tiers (`economical`, `balanced`, `strongest`); `tack mod
 Record actual models, effort settings, fallbacks, branches/worktrees and task status in the orchestration handoff and `docs/ai/log.md`. Keep the handoff current as agents report so work can resume after interruption.
 
 ## 2. Delegate
+Check the project's AGENTS.md capability index before choosing a role. Reuse a matching local definition; follow `lessons` → `references/project-capabilities.md` when a reusable specialist is missing. Creating a definition does not change delegation authorization or prove native registration.
+
 Pick the agent for each task:
 | Task | Agent |
 | --- | --- |

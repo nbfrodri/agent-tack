@@ -24,27 +24,12 @@ SKILLS_TOTAL_MAX=6000
 SKILLS_TOTAL=0
 
 check_file() {
-  local file="$1" expected_name="$2" max="$3" name description
-  if [ "$(head -n 1 "$file")" != "---" ]; then
-    err "$file: missing frontmatter"
-    return
+  local file="$1" expected_name="$2" max="$3" description issues
+  if ! issues="$(python3 "$REPO/lib/capability_validation.py" file "$file" "$expected_name" "$max" 2>&1)"; then
+    err "${issues:-capability validator failed}"
   fi
-  if ! awk 'NR > 1 && $0 == "---" { found = 1; exit } END { exit !found }' "$file"; then
-    err "$file: frontmatter is not closed with ---"
-    return
-  fi
-  name="$(field "$file" name)"
   description="$(field "$file" description)"
-  [ "$name" = "$expected_name" ] || err "$file: name '$name' should be '$expected_name'"
-  case "$description" in
-    '' ) err "$file: missing description" ;;
-    '>'* | '|'*) err "$file: description must be on a single line" ;;
-  esac
-  [ "${#description}" -le "$max" ] || err "$file: description is ${#description} chars (max $max): say what it does and when to use it"
   case "$file" in */SKILL.md) SKILLS_TOTAL=$((SKILLS_TOTAL + ${#description})) ;; esac
-  case "$name" in
-    *[!a-z0-9-]*) err "$file: name must be lowercase letters, digits and hyphens" ;;
-  esac
 }
 
 echo "Skills"

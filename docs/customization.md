@@ -29,9 +29,24 @@ Clone it into any directory you choose and install from that checkout, as shown 
 
 You can add or remove skills, agents and plugins, choose different conventions, or change the workflow itself. Keep the [architecture](architecture.md), component list and usage documentation consistent with your choices. Project-level instructions take precedence over the global rules, so preferences for a single project belong in that project's `AGENTS.md`.
 
+## Project capabilities
+
+Local capabilities adapt one project without extending the shared catalog. The policy lives in `skills/lessons/references/project-capabilities.md`; the short global rule applies even when lite does not load the full workflow.
+
+| Artifact | Purpose | Discovery |
+| --- | --- | --- |
+| `.agents/skills/<name>/SKILL.md` | A reusable project procedure and its checks | Native skill discovery where available, otherwise an explicit read through the project's AGENTS.md index |
+| `.agents/agents/<name>.md` | A role's responsibility, context, boundaries and output | A portable instruction file; pass it to an authorized delegation tool or perform the checks sequentially |
+
+Both need `name` and a single-line `description` in YAML frontmatter; the name matches the folder or role filename. Descriptions are limited to 400 and 300 characters respectively. Link real project commands and references instead of copying general manuals. Reuse an existing definition rather than creating a suffixed duplicate.
+
+Run `python3 ~/.agents/tack/lib/capability_validation.py project .` to check definitions, reference paths and discovery from AGENTS.md. For an existing layout, specify `--skills-dir` and `--agents-dir` relative to the project. Validation does not execute scripts or prove that the model will use the instructions correctly; verify the actual procedure or review on its task.
+
+The assistant can make these local additions during authorized implementation, but a review or plan does not authorize unrelated writes. Native agent registration and automatic reload are not assumed. Promotion to `skills/` or `agents/` in tack is a separate reviewed change, justified by cross-project reuse and followed by catalog validation.
+
 ## Apply and check changes
 
-Instructions, skills, agents and hook scripts are installed through symlinks to the checkout. Editing them changes the installed files directly; start a new agent session to load updated instructions, skills and agent definitions.
+Instructions, skills, Claude agents and hook scripts are linked to the checkout. Other native agent definitions are generated; rerun the installer to refresh them. Edited generated files are preserved. Start a new agent session to load updated instructions, skills and agents.
 
 Re-run `./install.sh` after changing tool paths, registered hooks, Claude settings or plugins, or after adding or removing skills or agents. Use `./install.sh --skip-plugins` when you only need local configuration changes.
 

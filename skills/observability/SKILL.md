@@ -1,6 +1,6 @@
 ---
 name: observability
-description: Structured logs with request IDs, error handling, Sentry, health checks, metrics, tracing and alerts. Use when adding logging, monitoring or error tracking, or preparing an app for production (logs, production errors, monitoring, Sentry).
+description: Add structured logs, error tracking, health checks, metrics, tracing and alerts. Use for monitoring, production diagnostics and Sentry integration.
 ---
 
 # Observability

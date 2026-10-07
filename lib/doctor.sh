@@ -150,11 +150,12 @@ check_tool_capabilities() {
   if [ "$skills_dir" != - ] && [ -d "$(expand_home "$skills_dir")" ]; then check_skills "$(expand_home "$skills_dir")"; fi
   if [ "$agents_dir" != - ] && [ -d "$(expand_home "$agents_dir")" ]; then
     check_stale_links "$(expand_home "$agents_dir")"
-    # Agents are symlinked Markdown for Claude Code and generated TOML for Codex.
+    # Claude uses symlinks; the other adapters generate native files.
     for source in "$REPO"/agents/*.md; do
       [ -f "$source" ] || continue
       name="${source##*/}"
       [ -f "$(expand_home "$agents_dir")/${name%.md}.toml" ] && continue
+      if [ "$tool" != claude ] && { [ -f "$(expand_home "$agents_dir")/$name" ] || [ -f "$(expand_home "$agents_dir")/${name%.md}.agent.md" ]; }; then continue; fi
       check_link "$source" "$(expand_home "$agents_dir")/$name"
     done
   fi

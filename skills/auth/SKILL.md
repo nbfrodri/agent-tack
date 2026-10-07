@@ -1,6 +1,6 @@
 ---
 name: auth
-description: Authentication and authorisation in Next.js, Laravel, Python and Node: sessions vs JWT, OAuth, password hashing, MFA, CSRF, roles and permissions, multi-tenancy. Use for login, signup, sessions, tokens, permissions or protected routes (login, signup, permissions, roles).
+description: Implement authentication and authorization: sessions, OAuth, tokens, MFA and tenant permissions. Use for login, signup, access control or protected routes.
 ---
 
 # Authentication and authorisation

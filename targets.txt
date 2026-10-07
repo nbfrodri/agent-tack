@@ -1,5 +1,5 @@
 # AI tools the installer configures. Paths come from each tool's documentation.
-# Columns (- means unsupported or none):
+# Columns (- means no managed integration; it does not claim the tool lacks that capability):
 #   tool          name
 #   when          always | detect (configure only if the tool is installed)
 #   commands      commands that detect the tool (comma-separated)
@@ -15,8 +15,8 @@
 # tool      when      commands              instructions                          skills              agents            hooks                    min_version  smoke
 claude      always    claude                ~/.claude/CLAUDE.md                   ~/.claude/skills    ~/.claude/agents  ~/.claude/settings.json  -            doctor
 codex       always    codex                 ~/.codex/AGENTS.md                    ~/.codex/skills     ~/.codex/agents   ~/.codex/hooks.json      -            doctor,--summary
-gemini      detect    gemini                ~/.gemini/GEMINI.md                   -                   -                 -                        -            -
-copilot     detect    copilot,code,code-insiders,codium ~/.copilot/copilot-instructions.md    ~/.copilot/skills   -                 -                        -            -
-opencode    detect    opencode              ~/.config/opencode/AGENTS.md          -                   -                 -                        -            -
-crush       detect    crush                 ~/.config/AGENTS.md                   -                   -                 -                        -            -
-cursor      detect    cursor,cursor-agent   -                                     -                   -                 ~/.cursor/hooks.json     -            -
+gemini      detect    gemini                ~/.gemini/GEMINI.md                   ~/.gemini/skills    ~/.gemini/agents  ~/.gemini/settings.json  -            -
+copilot     detect    copilot,code,code-insiders,codium ~/.copilot/copilot-instructions.md    ~/.copilot/skills   ~/.copilot/agents ~/.copilot/hooks/tack.json -           -
+opencode    detect    opencode              ~/.config/opencode/AGENTS.md          ~/.config/opencode/skills ~/.config/opencode/agents -               -            -
+crush       detect    crush                 ~/.config/AGENTS.md                   ~/.config/crush/skills -               -                        -            -
+cursor      detect    cursor,cursor-agent,agent -                                  ~/.cursor/skills    ~/.cursor/agents  ~/.cursor/hooks.json     -            -

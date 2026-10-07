@@ -462,10 +462,29 @@ git -C "$WORK/repo" config --unset tack.mode
 check "auto mode: lists the modes to choose from" "session '$WORK/repo' | grep -q 'strict: several modules'"
 check "auto mode: picks by risk, so untrusted input is never lite" "session '$WORK/repo' | grep -q 'Pick by risk, not size: code that handles untrusted input'"
 check "token toggles: defaults add nothing" "! session '$WORK/repo' | grep -q 'Token settings'"
+check "reply style: defaults to brief" "session '$WORK/repo' | grep -q 'Reply style: brief'"
+git config --global tack.replyStyle detailed
+check "reply style: inherits a global choice" "session '$WORK/repo' | grep -q 'Reply style: detailed'"
+git -C "$WORK/repo" config tack.replyStyle visual
+git -C "$WORK/repo" config tack.mode lite
+check "reply style: visual overrides global even in lite" "session '$WORK/repo' | grep -q 'Reply style: visual'"
+check "reply style: does not change the workflow level" "session '$WORK/repo' | grep -q 'mode: lite'"
+git -C "$WORK/repo" config tack.context false
+check "reply style: independent of project document loading" "session '$WORK/repo' | grep -q 'Reply style: visual'"
+git -C "$WORK/repo" config --unset tack.context
+git -C "$WORK/repo" config --unset tack.mode
+git -C "$WORK/repo" config tack.replyStyle detailed
+check "reply style: explains the selected profile" "session '$WORK/repo' | grep -q 'Explain the reasoning'"
+git -C "$WORK/repo" config tack.replyStyle normal
+check "reply style: legacy normal maps to brief" "session '$WORK/repo' | grep -q 'Reply style: brief'"
+git -C "$WORK/repo" config tack.replyStyle invalid
+check "reply style: invalid stored values fall back safely" "session '$WORK/repo' | grep -q 'Reply style: brief'"
+git -C "$WORK/repo" config --unset tack.replyStyle
+git config --global --unset tack.replyStyle
 git -C "$WORK/repo" config tack.replyStyle terse
 git -C "$WORK/repo" config tack.skillLoading minimal
 git -C "$WORK/repo" config tack.subagentModel economical
-check "token toggles: terse replies are requested" "session '$WORK/repo' | grep -q 'Token settings:.*Keep replies terse'"
+check "reply style: legacy terse maps to brief" "session '$WORK/repo' | grep -q 'Reply style: brief'"
 check "token toggles: minimal skill loading is requested" "session '$WORK/repo' | grep -q 'Load a skill only when'"
 check "token toggles: economical subagents are requested" "session '$WORK/repo' | grep -q 'most economical model'"
 git -C "$WORK/repo" config --unset tack.replyStyle
@@ -516,7 +535,7 @@ git config --global --unset tack.memory
 rm -f "$MEMORY"
 git -C "$WORK/repo" config tack.replyStyle terse
 git -C "$WORK/repo" config tack.ciWatch false
-check "settings: token and workflow settings sit on separate lines" "context_of '$WORK/repo' | grep -q '^Token settings:' && context_of '$WORK/repo' | grep -q '^Workflow settings:'"
+check "settings: reply style and workflow settings sit on separate lines" "context_of '$WORK/repo' | grep -q '^Reply style:' && context_of '$WORK/repo' | grep -q '^Workflow settings:'"
 git -C "$WORK/repo" config --unset tack.replyStyle
 git -C "$WORK/repo" config --unset tack.ciWatch
 rm "$WORK/repo/AGENTS.md"

@@ -20,6 +20,7 @@ print("true" if value is True else value if isinstance(value, str) else "")' "$1
 
 client=claude
 [ "${1:-}" != --codex ] || client=codex
+case "${1:-}" in --gemini) client=gemini ;; --copilot) client=copilot ;; esac
 # shellcheck source=SCRIPTDIR/lib/activity-log.sh
 . "$(dirname "$0")/lib/activity-log.sh"
 
@@ -27,7 +28,7 @@ cwd="$(field .cwd)"
 [ -n "$cwd" ] && [ -d "$cwd" ] || exit 0
 # Turn metrics for the activity log come first: they are recording, not advice, so neither a
 # second stop nor turning off this hook's checks skips them.
-record_turn "$cwd" "$client" "$(field .session_id)" "$(field .transcript_path)"
+case "$client" in claude | codex) record_turn "$cwd" "$client" "$(field .session_id)" "$(field .transcript_path)" ;; esac
 [ "$(field .stop_hook_active)" = true ] && exit 0
 # shellcheck source=SCRIPTDIR/lib/hook-control.sh
 . "$(dirname "$0")/lib/hook-control.sh"

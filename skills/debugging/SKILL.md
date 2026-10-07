@@ -1,6 +1,6 @@
 ---
 name: debugging
-description: Systematic debugging: reproduce, write a regression test, isolate, verify hypotheses and fix the root cause. Use for any bug, error, stack trace, failing test or CI job, crash or flaky behaviour (broken behaviour, errors, intermittent failures).
+description: Reproduce failures, isolate their cause and verify a regression fix. Use for bugs, errors, stack traces, failing tests or CI, crashes and flaky behavior.
 ---
 
 # Debugging

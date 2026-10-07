@@ -18,7 +18,7 @@ MISSING = object()
 VSCODE_PRODUCTS = ("Code", "Code - Insiders", "VSCodium")
 MOD_NAME = re.compile(r"[a-z0-9][a-z0-9._-]*")
 MOD_ID = re.compile(r"[a-z0-9][a-z0-9._-]*@[a-z0-9][a-z0-9._-]*")
-GENERATED_NAME = re.compile(r"[a-z0-9][a-z0-9-]*\.toml")
+GENERATED_NAME = re.compile(r"[a-z0-9][a-z0-9-]*(?:\.agent)?\.(?:toml|md)")
 SHA256 = re.compile(r"[0-9a-f]{64}")
 
 
@@ -78,6 +78,19 @@ def expected_link(path, target, home, repo, declaration):
         return target == repo + "/skills/" + name
     if parent == home + "/.claude/agents" and name.endswith(".md"):
         return target == repo + "/agents/" + name
+    return False
+
+
+def generated_parent(path, home, declaration):
+    if path == home + '/.codex/agents':
+        return True  # Legacy generated records predate the saved target declaration.
+    if not declaration.is_file():
+        return False
+    for line in declaration.read_text(encoding='utf-8').splitlines():
+        fields = line.split()
+        if len(fields) >= 6 and not fields[0].startswith('#') and fields[5].startswith('~/'):
+            if path == home + fields[5][1:] and plain_path(path):
+                return True
     return False
 
 
@@ -163,7 +176,7 @@ def validate(state, home):
                 raise ValueError("unsupported multiline Git baseline")
         elif kind == "generated":
             parent, name = os.path.split(path)
-            if parent != home.rstrip("/") + "/.codex/agents" or not GENERATED_NAME.fullmatch(name):
+            if not generated_parent(parent, home.rstrip('/'), entry / 'targets') or not GENERATED_NAME.fullmatch(name):
                 raise ValueError("unexpected generated file")
             if not SHA256.fullmatch(read(entry / "sha256")):
                 raise ValueError("invalid generated file checksum")

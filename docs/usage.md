@@ -2,6 +2,38 @@
 
 Day-to-day use: switching tack on and off, what to ask, and keeping it up to date.
 
+## Project skills and roles
+
+During authorized implementation in an enabled project, the assistant may create or refine a useful local skill or specialist role without a separate confirmation. It first reuses existing capabilities and only persists concrete project knowledge: a recurring procedure, planned repeated work or a distinct reusable review responsibility. Small one-off edits need no new capability.
+
+Skills live in `.agents/skills/<name>/SKILL.md`; portable role definitions live in `.agents/agents/<name>.md`. A short index in the project's `AGENTS.md` links their triggers and paths so later sessions can read them. An established project layout can be kept. Validate with `python3 ~/.agents/tack/lib/capability_validation.py project .`.
+
+Creating a role does not start an agent. Invocation still follows the workflow's delegation rules and actual runtime capabilities; a tool without native support can read the role and perform its checks sequentially. Read-only reviews stay read-only. Global promotion is a separate change after cross-project usefulness is demonstrated. See [customization](customization.md#project-capabilities).
+
+For everyday configuration, start with the workflow mode, `reply-style`, `check-fast`, `skill-groups` and `delegation`. The remaining settings are available when a concrete need arises; no new toggle is required for local capability creation. A project's instructions can constrain this behavior.
+
+## Reply styles
+
+Choose how the assistant presents its answers independently of how it performs the work:
+
+| Style | Presentation |
+| --- | --- |
+| `brief` (default) | Short and actionable: outcome, relevant verification and unresolved work |
+| `visual` | Compact sections, lists and comparison tables when useful for scanning |
+| `detailed` | Outcome followed by context, reasoning, tradeoffs and useful examples |
+
+```bash
+tack config reply-style                  # show the saved style and its source
+tack config reply-style visual           # use visual replies in this project
+tack config reply-style detailed --global # set a user-wide preference
+tack config reply-style brief            # return this project to brief replies
+tack config reply-style --unset          # inherit the global preference or default
+```
+
+You can also say "use visual replies for this conversation", "explain this in detail" or "keep this answer brief". A conversational request takes priority for the requested scope and does not change saved settings unless you ask. Project settings override global settings; the default is brief. Existing `normal` and `terse` values remain accepted and both map to brief.
+
+Changing reply style leaves tests, reviews, permissions and delegation at the chosen workflow level. A strict task can have a brief summary; lite can include a detailed explanation. PR descriptions follow the repository's template independently of chat style. Hooks supply the style at session start; other tools read `tack config reply-style`. For an immediate change in an ongoing session, state the preference in conversation; saved CLI changes are picked up at the next startup/context refresh.
+
 ## CLI help
 
 Run `tack help`, `tack --help` or `tack -h` for command syntax, options, exit codes and examples. Help also works outside a Git repository. Running `tack` without a command displays project status.
@@ -22,7 +54,7 @@ tack doctor --tools                # check each installed AI tool instead of the
 ./uninstall.sh                         # restore recorded unchanged state
 ```
 
-Skills come in groups (`skill-groups.txt`): `core` (the workflow, reviews and delegation, always installed), `process` (releases, new projects) and `stack` (frontend, APIs, databases, auth, end-to-end tests, deployment, observability). Fewer skills mean fewer descriptions in every session of every tool. Choose the optional groups once, then re-run the installer; it removes only its own links to the skills you left out:
+Skills come in groups (`skill-groups.txt`): `core` (workflow, onboarding, reviews and delegation, always installed), `process` (releases) and `stack` (frontend, APIs, databases, auth, end-to-end tests, deployment, observability). Fewer skills mean fewer descriptions in every session of every tool. Choose the optional groups once, then re-run the installer; it removes only its own links to the skills you left out:
 
 ```bash
 tack config skill-groups process --global   # core and process; or core, stack, or all (the default)
@@ -59,9 +91,11 @@ tack help              # CLI reference; aliases: --help and -h
 tack status            # workflow activation, mode and local formatter trust
 tack status --quiet    # no output; exit 0 when enabled, 1 when disabled
 tack enable            # this clone only (git config; nothing added to the repo)
-tack enable --scaffold # also add the missing AGENTS.md, CLAUDE.md, docs/architecture.md, docs-map.txt,
-                       # and plan, handoff and AI-log templates, never overwriting a file
-                       # (CLAUDE.md only points to AGENTS.md, so it is harmless for other tools)
+tack enable --scaffold # add only missing AGENTS.md, CLAUDE.md, docs/architecture.md, docs-map.txt
+tack setup             # read-only stack, command, capability and missing-foundation inventory
+tack setup --check     # readiness: review markers, base files, local links and docs-map targets
+tack config setup-review deferred # postpone optional additions without repeated startup prompts
+tack config setup-review pending  # revisit setup choices
 tack enable --shared   # commit a .tack file so every clone has it
 tack disable
 tack mode              # effective mode and its source
@@ -79,6 +113,25 @@ tack trusted           # trusted / untrusted; exit 0 when trusted, 1 otherwise
 tack trusted --quiet   # the same trust check without output
 git config --global tack.enabled true   # every repo (a local disable still wins)
 ```
+
+### Project initialization
+
+`.tack` is a small **file marking shared activation**, created only by `enable --shared`. It is not a configuration directory, does not install tack on another machine and does not grant command execution trust. Plain `enable` changes local Git configuration and creates no project files. `--scaffold` is an explicit request for the four-file base and can be combined with `--shared`.
+
+| Base file | Purpose |
+| --- | --- |
+| `AGENTS.md` | Declared commands with evidence, architecture pointer, initialization guidance and local capability discovery. |
+| `CLAUDE.md` | The single `@AGENTS.md` bridge for Claude. |
+| `docs/architecture.md` | Initial observed manifests/directories, then the real components and flows after AI review. |
+| `docs-map.txt` | Initial source-to-architecture rules, refined to the project's existing docs. |
+
+Scaffolding needs Python 3, preserves existing files and rejects symlink destinations/parents before writing. It detects evidence without running project commands. Review markers intentionally keep `tack setup --check` failing until the assistant verifies guidance; a successful structural check does not prove that the described architecture or commands are correct. Existing documentation is reused through links. Empty projects keep their unknown stack explicit.
+
+On the next AI session, pending startup context routes to [the onboarding workflow](../skills/new-project/references/onboarding.md). The assistant inspects the repo and your intent, proposes exact optional files with reasons, then asks which you want. Examples include tests, CI, a PR template, `.env.example`, a development guide or a useful local skill/agent. Existing authorization counts; it does not ask again for already approved work. Read-only tasks remain read-only. An activation shell command cannot ask AI questions on its own.
+
+The assistant records accepted/declined/deferred additions in AGENTS.md, verifies selected additions, runs `tack setup --check`, then sets `tack config setup-review done`. `deferred` suppresses routine prompts without claiming completion; `pending` revisits them. Plans, handoffs, logs and extra docs are created when actual work needs them. The inventory is bounded to 3000 paths and is a starting point for analysis, especially in monorepos. `tack setup --json` exposes its evidence and findings without modifying files.
+
+`docs-map.txt` lines have `source glob | doc, doc`. The Stop hook reports a changed source path when **none** of its listed documents changed; a change to any one target satisfies the rule. It neither writes docs nor validates their accuracy. `features.txt` is tack's registry of settings, defaults, allowed values, scope and enforcement; `tack config` reads it. Neither file is a package/dependency manifest.
 
 | | Enabled project | Any other repo |
 | --- | --- | --- |
@@ -210,12 +263,12 @@ A project setting (`tack mode lite`) overrides your global default (`tack mode l
 
 ### Lite: save tokens
 
-`tack mode lite` is for small, well-defined tasks and whenever tokens matter more than process. It absorbed the former `lean` mode, which measured the same cost and outcome: `lean` still works as a name for `lite`, and `tack migrate` rewrites it. Its rules are self-contained, so the assistant does not load `dev-workflow`; it starts with only `AGENTS.md` as context, reads only the lines it needs, runs only the affected tests and replies in a few lines. It still branches, adds a test for changed logic and makes a Conventional Commit, and the hooks apply as in every mode. It skips plans, handoffs, the AI log, review agents and delegation, and suggests `standard` or `strict` when a task turns out risky.
+`tack mode lite` is for small, well-defined tasks and whenever tokens matter more than process. It absorbed the former `lean` mode, which measured the same cost and outcome: `lean` still works as a name for `lite`, and `tack migrate` rewrites it. Its rules are self-contained, so the assistant does not load `dev-workflow`; it starts with only `AGENTS.md` as context, reads only the lines it needs, runs only the affected tests and uses the selected reply style (brief by default). It still branches, adds a test for changed logic and makes a Conventional Commit, and the hooks apply as in every mode. It skips plans, handoffs, the AI log, review agents and delegation, and suggests `standard` or `strict` when a task turns out risky.
 
 The same savings are available one by one in any mode:
 
 ```bash
-tack config reply-style terse          # short replies (output tokens)
+tack config reply-style brief          # short replies (output tokens; the default)
 tack config skill-loading minimal      # load skills only when needed (input tokens)
 tack config subagent-model economical  # cheapest capable model when delegating
 tack config context false              # no startup context at all
@@ -365,7 +418,7 @@ tack config delegation --unset # restore the default automatic policy
 tack config delegation         # shows auto (default) when unset
 ```
 
-Delegation picks a tier, never a vendor's model: `economical` for mechanical work, `balanced` for standard implementation, `strongest` for design-heavy or risky work. `tack models` shows the model each tool uses for each tier, from `model-tiers.txt`; Codex tiers say `inherit` until you name your account's models in `~/.config/agent-tack/model-tiers.txt` (same columns; your lines win):
+Delegation picks a tier, never a vendor's model: `economical` for mechanical work, `balanced` for standard implementation, `strongest` for design-heavy or risky work. `tack models` shows each tool's mapping from `model-tiers.txt`. Codex defaults are `gpt-6-luna`, `gpt-6.1-sol` and `gpt-6-astra` respectively ([model guidance](https://learn.chatgpt.com/docs/models), checked 2026-10-07). Other tool mappings may inherit the active model. Override for your account in `~/.config/agent-tack/model-tiers.txt` (same columns; your lines win):
 
 ```bash
 tack models              # every tool and tier

@@ -2,6 +2,12 @@
 
 What tack changes in practice, measured on real sessions: the same tasks with and without it.
 
+## Context reduction and new measurement support (2026-10-07)
+
+The 19 shipped skill descriptions were shortened from 4,879 to 3,038 characters (37.7%). Purposes and activation boundaries remain; installed groups, safety controls and the 23 configuration options keep their existing behavior. This measures description characters, not tokens or monetary savings. The [component decision record](audits/2026-10-07-capability-simplification.md) explains why no component was removed without usage evidence.
+
+The runner now isolates both conditions, preserves prior outputs and records comparison fingerprints. Bounded batch manifests and JavaScript/fresh-session capability scenarios are available. Their automated tests validate the infrastructure; no new paid-model outcome comparison is claimed here. The historical tables below retain their original method and limitations and are not pooled with metric version 3.
+
 > **Model and tool.** The outcome, workflow-modes and lean benchmarks ran in Claude Code 2.1.288 with `claude-sonnet-5-5` (Claude Sonnet 5.5). Results depend on the model and the tool: another model (a different Claude model, GPT, DeepSeek, Qwen and others) or another AI tool can follow instructions more or less closely, take more or fewer turns and cost differently, so treat these numbers as one measurement, not a guarantee. Git hooks behave the same with any model; instruction-based rules vary.
 
 ## Security-sensitive input (2026-10-06)

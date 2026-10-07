@@ -11,11 +11,15 @@ import re
 import subprocess
 import sys
 import tempfile
+import importlib.util
 from pathlib import Path
 
 CONVENTIONAL = re.compile(r"^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([\w./-]+\))?!?: \S")
 AI_ATTRIBUTION = re.compile(r"co-authored-by:.*(claude|anthropic|openai|codex|copilot|gemini|cursor)|generated with|🤖", re.I)
 SEEDED_COMMITS = {"new-project": 0, "codex-new-project": 0, "bug-fix": 1, "release": 5, "vague-requirement": 1, "conventions": 1, "attachments": 1, "search": 1}
+SEEDED_COMMITS.update({name: 1 for name in ('event-routing', 'project-capabilities', 'capability-existing',
+                                         'capability-trivial', 'capability-review', 'capability-role',
+                                         'capability-nodelegation', 'capability-sequential')})
 HIDDEN = Path(__file__).resolve().parent / "hidden"
 # The project's own environment (uv) runs the hidden tests, so its dependencies are installed.
 HIDDEN_RUNNER = ["uv", "run", "--quiet", "python"]
@@ -169,7 +173,8 @@ def work_branch_tip(repo):
 
 def hidden_acceptance(repo, scenario):
     """(passed, total) for the scenario's hidden tests run against the repo, or (None, None)."""
-    tests = HIDDEN / scenario.replace("codex-", "") / "test_hidden.py"
+    hidden_scenario = 'project-capabilities' if scenario in ('capability-existing', 'capability-role', 'capability-nodelegation', 'capability-sequential') else scenario.replace('codex-', '')
+    tests = HIDDEN / hidden_scenario / "test_hidden.py"
     if not tests.exists() or not repo.is_dir():
         return None, None
     tip = work_branch_tip(repo)
@@ -191,7 +196,8 @@ def hidden_acceptance_at(repo, tests):
     # src/ layouts and flat packages both import, installed or not.
     env = dict(os.environ, PYTHONPATH=os.pathsep.join([str(repo / "src"), str(repo)]))
     try:
-        result = subprocess.run([*HIDDEN_RUNNER, str(HIDDEN / "run.py"), str(tests)], cwd=repo, env=env,
+        runner = [sys.executable] if (repo / 'package.json').exists() else HIDDEN_RUNNER
+        result = subprocess.run([*runner, str(HIDDEN / "run.py"), str(tests)], cwd=repo, env=env,
                                 capture_output=True, text=True, timeout=600)
     except (OSError, subprocess.TimeoutExpired):
         return None, total
@@ -209,7 +215,8 @@ def hidden_verdict(passed, total):
 def provider_metrics(evs, run_dir):
     provider = "codex" if any(e.get("type") in ("thread.started", "turn.completed", "item.completed") for e in evs) else (
         "claude" if any(e.get("type") in ("assistant", "result", "system") for e in evs) else None)
-    result = next((e for e in reversed(evs) if e.get("type") == "result"), {})
+    results = [e for e in evs if e.get('type') == 'result']
+    result = results[-1] if results else {}
     usage = result.get("usage", {})
     if provider == "codex":
         usages = [e["usage"] for e in evs if e.get("type") == "turn.completed" and isinstance(e.get("usage"), dict)]
@@ -225,27 +232,44 @@ def provider_metrics(evs, run_dir):
         match = re.search(r"seconds=(\d+)", (run_dir / "run.txt").read_text())
         if match:
             duration, duration_source = int(match[1]), "runner_wall_clock"
-    cost = result.get("total_cost_usd")
+    cost = sum(r['total_cost_usd'] for r in results) if results and all(r.get('total_cost_usd') is not None for r in results) else None
+    if len(results) > 1:
+        usage = {key: sum(r['usage'][key] for r in results) if all(r.get('usage', {}).get(key) is not None for r in results) else None
+                 for key in ('input_tokens', 'output_tokens')}
+        input_tokens = usage['input_tokens']
+        if input_tokens is not None:
+            input_tokens += sum((r.get('usage', {}).get(key) or 0) for r in results for key in ('cache_read_input_tokens', 'cache_creation_input_tokens'))
+        if all(r.get('duration_ms') is not None for r in results):
+            duration, duration_source = sum(r['duration_ms'] for r in results) / 1000, 'provider'
+        else:
+            match = re.search(r'seconds=(\d+)', (run_dir / 'run.txt').read_text(encoding='utf-8')) if (run_dir / 'run.txt').exists() else None
+            duration, duration_source = (int(match[1]), 'runner_wall_clock') if match else (None, None)
+    turns = sum(r['num_turns'] for r in results) if results and all(r.get('num_turns') is not None for r in results) else None
     return {"metrics_version": 2, "provider": provider, "duration_s": duration, "duration_source": duration_source,
-            "cost_usd": round(cost, 4) if cost is not None else None, "turns": len(usages) if provider == "codex" and usages else result.get("num_turns"),
+            "cost_usd": round(cost, 4) if cost is not None else None, "turns": len(usages) if provider == "codex" and usages else turns,
             "input_tokens": input_tokens, "output_tokens": usage.get("output_tokens")}
 
 
 def grade(run_dir: Path):
+    meta_path = run_dir / 'metadata.json'
+    metadata = json.loads(meta_path.read_text(encoding='utf-8')) if meta_path.exists() else {}
     scenario = run_dir.parent.name
     condition, _, rep = run_dir.name.rpartition("-")
     repo = run_dir / "repo"
     transcript = run_dir / "transcript.jsonl"
     evs = events(transcript)
+    reuse_events = events(run_dir / 'transcript-reuse.jsonl')
+    all_events = evs + reuse_events
     raw = transcript.read_text(errors="replace") if transcript.exists() else ""
-    entries = observations(evs)
+    entries = observations(all_events)
     bash = " ".join(e["command"] for e in entries if "command" in e)
 
     subjects = git(repo, "log", "--reverse", "--format=%s").splitlines()[SEEDED_COMMITS.get(scenario, 0):]
     bodies = git(repo, "log", "--format=%B")
     try:
-        tests = subprocess.run(["uv", "run", "--quiet", "pytest", "-q"], cwd=repo, capture_output=True, text=True, timeout=600)
-        passed = re.search(r"(\d+) passed", tests.stdout)
+        test_command = ['node', '--test'] if (repo / 'package.json').exists() else ["uv", "run", "--quiet", "pytest", "-q"]
+        tests = subprocess.run(test_command, cwd=repo, capture_output=True, text=True, timeout=600)
+        passed = re.search(r"(\d+) passed", tests.stdout) or re.search(r'^# pass (\d+)', tests.stdout, re.M)
         tests_pass = tests.returncode == 0
         tests_count = int(passed.group(1)) if passed else None
         tests_error = None
@@ -278,7 +302,7 @@ def grade(run_dir: Path):
         if scenario in ("new-project", "codex-new-project", "bug-fix") else None,
         "planned": any(tool in ("TodoWrite", "Agent") for tool, _ in tool_uses(evs))
         or any("docs/plans/" in p for p in paths) or None,
-        "skills_used": sorted({inp.get("skill", "") for tool, inp in tool_uses(evs) if tool == "Skill"}) or None,
+        "skills_used": sorted({inp.get("skill", "") for tool, inp in tool_uses(all_events) if tool == "Skill"}) or None,
         "worked_on_branch": any(b not in ("main", "master") for b in branches),
         "readme": (repo / "README.md").exists(),
         "agents_md": (repo / "AGENTS.md").exists(),
@@ -286,8 +310,22 @@ def grade(run_dir: Path):
         "ai_log": (repo / "docs" / "ai" / "log.md").exists(),
         "handoff_kept": any("docs/handoffs/" in p for p in paths) or None,
         "pushed_or_bypassed": "git push" in bash or "--no-verify" in bash or None,
-        **provider_metrics(evs, run_dir),
+        **provider_metrics(all_events, run_dir),
     }
+    if metadata:
+        m.update(metadata=metadata, metrics_version=metadata.get('metrics_version', 2),
+                 provider=m['provider'] or metadata.get('provider'))
+    run_text = (run_dir / 'run.txt').read_text(encoding='utf-8') if (run_dir / 'run.txt').exists() else ''
+    exit_match = re.search(r'exit=(-?\d+)', run_text)
+    m['exit_code'] = int(exit_match[1]) if exit_match else None
+    m['completed'] = m['exit_code'] == 0 if exit_match else None
+    m['timed_out'] = m['exit_code'] == 124
+    m['setup_s'] = metadata.get('setup_seconds')
+    if (repo / 'scenario.json').exists():
+        spec = importlib.util.spec_from_file_location('capabilities', Path(__file__).parent / 'capabilities.py')
+        capability_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(capability_module)
+        m.update(capability_module.grade(run_dir, evs, reuse_events))
     # A vague request ("make it faster") should be turned into measurable criteria before code.
     m["criteria_before_code"] = criteria_before_code(evs) if scenario == "vague-requirement" else None
     if scenario == "bug-fix":
@@ -296,7 +334,7 @@ def grade(run_dir: Path):
         m["fix_commit"] = any(s.startswith("fix") for s in subjects)
     if scenario == "release":
         changelog = (repo / "CHANGELOG.md").read_text() if (repo / "CHANGELOG.md").exists() else ""
-        m["version_bumped_to_0_2_0"] = 'version = "0.2.0"' in (repo / "pyproject.toml").read_text()
+        m["version_bumped_to_0_2_0"] = (repo / "pyproject.toml").exists() and 'version = "0.2.0"' in (repo / "pyproject.toml").read_text()
         m["changelog_updated"] = "0.2.0" in changelog
         m["annotated_tag"] = git(repo, "cat-file", "-t", "v0.2.0") == "tag"
     (run_dir / "metrics.json").write_text(json.dumps(m, indent=2))

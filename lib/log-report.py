@@ -116,7 +116,8 @@ def skills(log, days, as_csv, repo):
     agents = sorted(entry[:-3] for entry in os.listdir(os.path.join(repo, "agents")) if entry.endswith(".md"))
     unused = [name for name in shipped if ("skill", name) not in counts]
     unused += [name for name in agents if ("agent", name) not in counts]
-    print("\nNever used in the period: " + (", ".join(unused) if unused else "none"))
+    print("\nNo observed use in the period: " + (", ".join(unused) if unused else "none"))
+    print("This covers recorded events only; disabled logging or incomplete transcripts cannot establish non-use.")
 
 
 def levels(log, days, as_csv):

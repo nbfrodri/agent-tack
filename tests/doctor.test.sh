@@ -176,6 +176,12 @@ run_doctor
 check 'recorded optional target missing is an error even when CLI is absent' [ "$RC" -eq 1 ]
 ln -s "$REPO/global/AGENTS.md" "$HOME/.gemini/GEMINI.md"
 run_doctor
+check 'native Gemini skills are required alongside its recorded instructions' [ "$RC" -eq 1 ]
+mkdir -p "$HOME/.gemini/skills"
+for skill in "$REPO"/skills/*; do
+  ln -s "$skill" "$HOME/.gemini/skills/${skill##*/}"
+done
+run_doctor
 check 'valid ownership metadata and recorded links are healthy' [ "$RC" -eq 0 ]
 mkdir -p "$STATE/entries/2"
 printf 'git\n' > "$STATE/entries/2/kind"

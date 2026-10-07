@@ -13,12 +13,15 @@
 set -eEuo pipefail
 
 HARNESS_REPO="$(cd "$(dirname "$0")/.." && pwd)"
+if [ "${TACK_EVAL_ISOLATED:-}" != 1 ]; then
+  exec python3 "$HARNESS_REPO/evals/environment.py" "$@"
+fi
 EVALS="${EVALS_OUT:-${TMPDIR:-/tmp}/agent-tack-evals}"
 name="${1:?scenario name required}"
 condition="${2:-harness}"
 rep="${3:-1}"
 case "$name" in
-  new-project | bug-fix | release | codex-new-project | vague-requirement | conventions | attachments | search) ;;
+  new-project | bug-fix | release | codex-new-project | vague-requirement | conventions | attachments | search | event-routing | project-capabilities | capability-existing | capability-trivial | capability-review | capability-role | capability-nodelegation | capability-sequential) ;;
   *)
     echo "unknown scenario '$name' (new-project | bug-fix | release | codex-new-project | vague-requirement | conventions | attachments | search)" >&2
     exit 2
@@ -31,34 +34,34 @@ case "$condition" in
   *) echo "unknown condition '$condition' (baseline | harness | auto | lite | lean | standard | strict)" >&2; exit 2 ;;
 esac
 case "$rep" in *[!0-9]* | '') echo "repetition must be a number" >&2; exit 2 ;; esac
+provider="${EVALS_PROVIDER:-claude}"
+[ "$name" != codex-new-project ] || provider="${EVALS_PROVIDER:-codex}"
+case "$provider" in claude | codex) ;; *) echo "unknown provider '$provider'" >&2; exit 2 ;; esac
+[ -z "${EVALS_EFFORT:-}" ] || { echo 'effort selection is not supported; omit EVALS_EFFORT' >&2; exit 2; }
 
+mkdir -p "$EVALS"
+EVALS="$(cd "$EVALS" && pwd)"
 out="$EVALS/$name/$condition-$rep"
 dir="$out/repo"
-rm -rf "$out"
-mkdir -p "$dir"
+mkdir -p "$EVALS/$name"
+if ! mkdir "$out" 2>/dev/null; then echo "eval: output already exists: $out (choose another repetition or output root)" >&2; exit 2; fi
+mkdir "$dir"
 exec 2> "$out/stderr.log"
 start=$(date +%s)
-isolated_home=""
 # shellcheck disable=SC2317,SC2329 # Invoked indirectly by the EXIT trap.
 finish() {
   status=$?
   printf 'exit=%s seconds=%s\n' "$status" "$(( $(date +%s) - start ))" > "$out/run.txt"
   python3 "$HARNESS_REPO/evals/metadata.py" finish "$out" || true
-  if [ -n "$isolated_home" ]; then rm -rf "$isolated_home"; fi
 }
 trap finish EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 trap 'status=$?; echo "Scenario setup failed (exit=$status)" >> "$out/stderr.log"; exit "$status"' ERR
 
-if [ "$condition" = baseline ]; then
-  # A git config without the harness hooks, keeping only the user's identity
-  eval_user=$(git config --global --get user.name 2>/dev/null || echo Eval)
-  eval_email=$(git config --global --get user.email 2>/dev/null || echo eval@example.com)
-  export GIT_CONFIG_GLOBAL="$out/gitconfig"
-  git config --file "$GIT_CONFIG_GLOBAL" user.name "$eval_user"
-  git config --file "$GIT_CONFIG_GLOBAL" user.email "$eval_email"
-  git config --file "$GIT_CONFIG_GLOBAL" init.defaultBranch main
+if [ "$condition" != baseline ]; then
+  if [ -n "${EVALS_SKILL_GROUPS:-}" ]; then git config --global tack.skillGroups "$EVALS_SKILL_GROUPS"; fi
+  bash "$HARNESS_REPO/install.sh" --skip-plugins > "$out/install.log" 2>&1
 fi
 
 # Sessions are non-interactive: a question would end them, so every prompt waives questions.
@@ -324,6 +327,7 @@ EOF
 }
 
 case "$name" in
+  event-routing | project-capabilities | capability-*) python3 "$HARNESS_REPO/evals/scenarios.py" "$name" "$dir" "$out" ;;
   new-project | codex-new-project) (cd "$dir" && git init -q -b main) ;;
   attachments) seed_attachments_repo ;;
   search) seed_search_repo ;;
@@ -339,6 +343,7 @@ if [ -n "$mode" ]; then
 fi
 
 case "$name" in
+  event-routing | project-capabilities | capability-*) prompt="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))[0])' "$out/prompts.json")" ;;
   new-project | codex-new-project) prompt="$NEW_PROJECT_PROMPT" ;;
   bug-fix) prompt="When the cart is empty, average_price raises ZeroDivisionError. It should return 0. Fix it. $NO_QUESTIONS" ;;
   release) prompt="Prepare the next release of the project. No remote is configured yet. $NO_QUESTIONS" ;;
@@ -351,12 +356,13 @@ esac
 printf '%s\n' "$prompt" > "$out/prompt.txt"
 
 allowed_tools=("Bash(git *)" "Bash(uv *)" "Bash(python3 *)" "Bash(python *)" "Bash(PYTHONPATH=*)" "Bash(ls *)" "Bash(cat *)"
+  "Bash(node *)" "Bash(npm test*)"
   "Bash(mkdir *)" "Bash(pytest *)" "Bash(tail *)" "Bash(tack *)" "Bash(harness *)" "Bash(find *)" "Bash(grep *)" "Bash(head *)" "Bash(sed -n *)"
   Read Write Edit Glob Grep Skill Agent TodoWrite)
-provider=claude
-[ "$name" = codex-new-project ] && provider=codex
 cli_version=$("$provider" --version 2>/dev/null || true)
 harness_revision=$(git -C "$HARNESS_REPO" rev-parse HEAD)
+EVALS_SETUP_SECONDS=$(( $(date +%s) - start ))
+export EVALS_SETUP_SECONDS
 python3 "$HARNESS_REPO/evals/metadata.py" start "$out" "$name" "$condition" "$rep" "$provider" \
   "${EVALS_MODEL:-}" "$cli_version" "$harness_revision" "${allowed_tools[@]}"
 model_flags=()
@@ -365,32 +371,31 @@ model_flags=()
 baseline_flags=()
 [ "$condition" = baseline ] && baseline_flags=(--setting-sources "project,local" --disable-slash-commands)
 
-if [ "$condition" = baseline ] && [ "$name" = codex-new-project ]; then
-  auth_source="${CODEX_HOME:-$HOME/.codex}/auth.json"
-  isolated_home=$(mktemp -d "${TMPDIR:-/tmp}/harness-eval-home.XXXXXX")
-  chmod 700 "$isolated_home"
-  mkdir -m 700 "$isolated_home/.codex" "$isolated_home/.config"
-  if [ -f "$auth_source" ]; then
-    (umask 077; cat "$auth_source" > "$isolated_home/.codex/auth.json")
-  fi
-  export HOME="$isolated_home" CODEX_HOME="$isolated_home/.codex" XDG_CONFIG_HOME="$isolated_home/.config"
-fi
-
 start=$(date +%s)
 trap - ERR
 set +e
-case "$name" in
-  codex-new-project)
+invoke() {
+case "$provider" in
+  codex)
     codex exec --json "${model_flags[@]+"${model_flags[@]}"}" -s workspace-write -c sandbox_workspace_write.network_access=true \
-      --skip-git-repo-check -C "$dir" "$prompt" > "$out/transcript.jsonl" 2> "$out/stderr.log"
+      --skip-git-repo-check -C "$dir" "$prompt"
     ;;
   *)
     claude -p "$prompt" "${model_flags[@]+"${model_flags[@]}"}" --output-format stream-json --verbose \
       "${baseline_flags[@]+"${baseline_flags[@]}"}" \
       --permission-mode acceptEdits \
-      --allowedTools "${allowed_tools[@]}" \
-      > "$out/transcript.jsonl" 2> "$out/stderr.log"
+      --allowedTools "${allowed_tools[@]}"
     ;;
 esac
+}
+invoke > "$out/transcript.jsonl" 2>> "$out/stderr.log"
 status=$?
+if [ "$status" -eq 0 ] && [ -f "$out/prompts.json" ]; then
+  prompt="$(python3 -c 'import json,sys; p=json.load(open(sys.argv[1])); print(p[1] if len(p)>1 else "")' "$out/prompts.json")"
+  if [ -n "$prompt" ]; then
+    python3 "$HARNESS_REPO/evals/scenarios.py" snapshot "$dir" "$out"
+    invoke > "$out/transcript-reuse.jsonl" 2>> "$out/stderr.log"
+    status=$?
+  fi
+fi
 exit "$status"

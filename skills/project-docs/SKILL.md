@@ -1,6 +1,6 @@
 ---
 name: project-docs
-description: Project docs for humans (README, docs/) and AIs (AGENTS.md): technical sheet, architecture, ADRs, plans, audits, continuous handoffs, AI usage log, templates. Use when writing or updating docs, saving plans or audits, or for a handoff (document, write a handoff, summarise progress).
+description: "Maintain project instructions and human docs: architecture, ADRs, plans, audits and handoffs. Use for documentation work or saving project progress."
 ---
 
 # Project documentation
@@ -48,7 +48,7 @@ docs/
   assets/screenshots/YYYY-MM-DD-slug.png
   assets/diagrams/        # only for diagrams that can't be Mermaid
 ```
-**Create documents when there's something to put in them**, not empty placeholders. Minimum for a new project: `README.md`, `AGENTS.md`, `CLAUDE.md`, `docs/README.md`, `docs/overview.md`, `docs/architecture.md`, `docs/development.md`, and `docs/ai/README.md`. Add the rest as the project needs them.
+**Create documents when there's something to put in them**, not empty placeholders. The tack scaffold creates only `AGENTS.md`, `CLAUDE.md`, `docs/architecture.md` and `docs-map.txt`. The structure above is a menu. During initialization, follow `new-project` → `references/onboarding.md` to select useful additions with the user. Plans, handoffs and the AI log arise from actual work and its mode, not empty template copies.
 
 Templates for every document are in this skill's `assets/` (`assets/README.md`, `assets/AGENTS.md`, `assets/docs/...`). Copy them, fill them in, and delete any section that doesn't apply.
 
@@ -72,7 +72,7 @@ The project documents how AI is used. This is the place for it: commits stay fre
 - `docs/ai/prompts.md`: when a prompt or request worked notably well for this project, offer to save it (one line saying when to use it, then the prompt).
 
 ## Architecture docs
-Every tack-enabled project must document its actual architecture in `docs/architecture.md` and link it from `README.md` and `docs/README.md`. In an existing project without it, create it during the first significant task after inspecting the code. Keep it current in the same change that alters components, dependencies or flows.
+Document actual architecture in `docs/architecture.md` (or link to the project's established source there). Link it from the README and docs index when those files exist. During onboarding, select missing files with the user; later keep architecture current in the same authorized change that alters components, dependencies or flows. Never invent a stack or link to nonexistent documents.
 
 Use Mermaid, which GitHub renders, and keep each diagram small:
 - a **context** diagram: the system, its users and the external systems it talks to;

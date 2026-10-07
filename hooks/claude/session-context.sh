@@ -21,6 +21,7 @@ cwd="$(field .cwd)"
 
 client=claude
 [ "${1:-}" != --codex ] || client=codex
+case "${1:-}" in --gemini) client=gemini ;; --copilot) client=copilot ;; esac
 # shellcheck source=SCRIPTDIR/lib/activity-log.sh
 . "$(dirname "$0")/lib/activity-log.sh"
 cli="$(cd "$(dirname "$0")/../../bin" && pwd)/tack"
@@ -36,7 +37,7 @@ for state_dir in budget turns; do
   [ ! -d "$state_dir" ] || find "$state_dir" -type f -mtime +"$retention" -exec rm -f {} + 2>/dev/null
 done
 # Turn metrics start counting from here, so earlier history is not logged as new work.
-start_turns "$cwd" "$client" "$(field .session_id)" "$(field .transcript_path)"
+case "$client" in claude | codex) start_turns "$cwd" "$client" "$(field .session_id)" "$(field .transcript_path)" ;; esac
 
 # shellcheck source=SCRIPTDIR/lib/hook-control.sh
 . "$(dirname "$0")/lib/hook-control.sh"
@@ -57,14 +58,13 @@ if (cd "$cwd" && "$cli" status --quiet); then
   mode_rules="$(cd "$cwd" && "$cli" mode show)" || mode_rules=''
   setting() { local value; value="$(cd "$cwd" && "$cli" config "$1" 2>/dev/null)"; printf '%s' "${value%% *}"; }
   tokens=''
-  [ "$(setting reply-style)" != terse ] || tokens="$tokens Keep replies terse: what changed, the commit and what is pending, in a few lines."
   [ "$(setting skill-loading)" != minimal ] || tokens="$tokens Load a skill only when the task cannot be done without it; prefer the rules already in context."
   [ "$(setting subagent-model)" != economical ] || tokens="$tokens When delegating, use the most economical model that can do the task."
   workflow=''
   [ "$(setting ci-watch)" != false ] || workflow="$workflow Do not wait for CI after a push unless the user asks; merges still need green checks."
   [ "$(setting visual-review)" != false ] || workflow="$workflow Skip the visual review (tack shots and the ui-reviewer score) for UI changes."
-  settings=''
-  [ -z "$tokens" ] || settings="Token settings:$tokens"
+  settings="$(bash "${cli%/bin/tack}/lib/reply-style.sh" "$(setting reply-style)")"
+  [ -z "$tokens" ] || settings="${settings:+$settings$'\n'}Token settings:$tokens"
   [ -z "$workflow" ] || settings="${settings:+$settings$'\n'}Workflow settings:$workflow"
   activity_log "$cwd" "$client" session-start "mode=$mode"
   project_context="$(cd "$cwd" && "$cli" context)" || project_context=''

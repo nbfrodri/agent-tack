@@ -85,6 +85,8 @@ source "$REPO/lib/skill-groups.sh"
 source "$REPO/lib/vscode.sh"
 # shellcheck source=lib/codex.sh
 source "$REPO/lib/codex.sh"
+# shellcheck source=lib/native-agents.sh
+source "$REPO/lib/native-agents.sh"
 
 # Moves an existing file or directory aside instead of overwriting it.
 backup() {
@@ -615,6 +617,7 @@ main() {
   install_mods
   install_vscode
   install_codex_agents
+  install_native_agents
   explain_hooks
 
   section "Summary"

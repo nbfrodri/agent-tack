@@ -1,6 +1,6 @@
 ---
 name: git-history
-description: Fix and tidy git history safely: amend, fixup, squash, reword, split, undo or recover commits, rebase conflicts, wrong branch. Use when changing or undoing commits or cleaning up before a push (fix a commit, squash commits, undo, wrong branch).
+description: Repair or tidy Git history: amend, fixup, squash, split, reword, undo, recover commits and resolve rebases. Use for commit corrections or work on the wrong branch.
 ---
 
 # Git history

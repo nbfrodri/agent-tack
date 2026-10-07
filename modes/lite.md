@@ -8,7 +8,7 @@ Context: minimal
 - Tests: add or update a test when logic changes; run only the affected tests, with the test command from `AGENTS.md` or the startup context. If none is known, find it once and add it to `AGENTS.md` so later sessions do not probe.
 - Reading: search before reading, read only the needed lines, never re-read what is in context.
 - Review: read your own diff before committing.
-- Replies: terse; what changed, the commit and anything pending, in a few lines.
+- Replies: follow the selected reply-style (brief by default); a visual or detailed reply does not add workflow steps. Include the outcome, relevant verification and anything pending.
 - Docs: only if the change makes them wrong.
 - No plan file, handoff, AI log, review agent or delegation; suggest delegation and wait if the work would benefit from it.
 - Ask only when a wrong guess would be costly; otherwise pick the conventional option and say so in one line.

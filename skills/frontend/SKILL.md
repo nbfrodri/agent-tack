@@ -1,6 +1,6 @@
 ---
 name: frontend
-description: React and Next.js frontend: components, Server vs Client Components, data fetching, forms, state, styling, accessibility and component tests. Use when building or changing UI (frontend, interface, screen, component, form).
+description: Build React and Next.js interfaces: components, data loading, forms, state, accessibility and component tests. Use for UI implementation and changes.
 ---
 
 # Frontend (React / Next.js)

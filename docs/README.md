@@ -13,5 +13,8 @@
 | [results.md](results.md) | Measured behaviour with vs without tack |
 | [sharing.md](sharing.md) | Using it on someone else's machine |
 | [development.md](development.md) | Tests, evals, adding skills, agents and tools |
+| [Onboarding evaluation protocol](../evals/project-onboarding.md) | Prepared interactive cases; model runs require a separate budget |
+| [Project onboarding implementation](archive/plans/2026-10-07-project-onboarding-implementation.md) | Completed initialization and native integrations, preservation guarantees and local verification |
+| [Evidence and project capabilities plan](archive/plans/2026-10-07-evidence-and-project-capabilities-implementation.md) | Completed implementation, local test results and deferred model experiments |
 | [archive/](archive/) | Finished plans, handoffs and audits; open audits (improvement and review reports) go in `audits/` |
 | [ai/](ai/README.md) | How AI is used in this project, and the AI work log |

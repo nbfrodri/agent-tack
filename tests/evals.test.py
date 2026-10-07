@@ -7,6 +7,8 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import signal
+import time
 import unittest
 from unittest.mock import patch
 
@@ -516,6 +518,103 @@ class Runner(unittest.TestCase):
     def test_unknown_condition_is_rejected(self):
         self.assertEqual(self.run_eval('bug-fix', 'turbo').returncode, 2)
 
+    def test_R1_existing_run_is_preserved(self):
+        self.stub('claude', 'echo original')
+        self.assertEqual(self.run_eval('bug-fix').returncode, 0)
+        run = self.root / 'out/bug-fix/baseline-1/transcript.jsonl'
+        original = run.read_bytes()
+        self.assertNotEqual(self.run_eval('bug-fix').returncode, 0)
+        self.assertEqual(run.read_bytes(), original)
+
+    @unittest.skipUnless(os.name == 'posix', 'signal isolation requires POSIX')
+    def test_R1_interruption_removes_temporary_credentials(self):
+        marker = self.root / 'running-home'
+        self.stub('codex', 'if [ "$1" = --version ]; then echo fixture; exit; fi\n'
+                  'printf "%s" "$HOME" > "' + str(marker) + '"\nsleep 30')
+        process = subprocess.Popen(['bash', str(ROOT / 'evals/run.sh'), 'codex-new-project', 'baseline'],
+                                   env=self.env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+        try:
+            deadline = time.monotonic() + 10
+            while not marker.exists() and time.monotonic() < deadline:
+                time.sleep(0.05)
+            self.assertTrue(marker.exists())
+            isolated = Path(marker.read_text())
+            self.assertTrue((isolated / '.codex/auth.json').exists())
+            os.killpg(process.pid, signal.SIGTERM)
+            process.wait(timeout=10)
+            self.assertFalse(isolated.exists())
+            self.assertTrue((self.root / 'home/.codex/auth.json').exists())
+        finally:
+            if process.poll() is None:
+                os.killpg(process.pid, signal.SIGKILL)
+                process.wait()
+
+    def test_R1_both_conditions_isolate_inherited_configuration(self):
+        self.env.update(XDG_STATE_HOME=str(self.root / 'foreign-state'),
+                        XDG_DATA_HOME=str(self.root / 'foreign-data'),
+                        XDG_CACHE_HOME=str(self.root / 'foreign-cache'),
+                        CLAUDE_CONFIG_DIR=str(self.root / 'foreign-claude'),
+                        GIT_CONFIG_COUNT='1', GIT_CONFIG_KEY_0='tack.memory', GIT_CONFIG_VALUE_0='false')
+        self.stub('claude', 'if [ "$1" = --version ]; then echo fixture; exit; fi\n'
+                  'python3 -c \'import os,json; print(json.dumps({k:os.environ.get(k) for k in '
+                  '["HOME","XDG_CONFIG_HOME","XDG_STATE_HOME","XDG_DATA_HOME","XDG_CACHE_HOME",'
+                  '"CLAUDE_CONFIG_DIR","CODEX_HOME","GIT_CONFIG_COUNT"]}))\'')
+        for condition in ('baseline', 'auto'):
+            with self.subTest(condition=condition):
+                result = self.run_eval('bug-fix', condition)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                run = self.root / 'out/bug-fix' / (condition + '-1')
+                data = json.loads((run / 'transcript.jsonl').read_text())
+                self.assertIsNone(data.pop('GIT_CONFIG_COUNT'))
+                for key, value in data.items():
+                    self.assertNotEqual(value, self.env.get(key))
+                    self.assertFalse(Path(value).exists(), (key, value))
+
+    def test_R1_provider_is_independent_of_scenario(self):
+        self.env['EVALS_PROVIDER'] = 'codex'
+        self.stub('codex', 'if [ "$1" = --version ]; then echo fixture; exit; fi\necho codex-fixture')
+        self.stub('claude', 'exit 77')
+        result = self.run_eval('search')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        run = self.root / 'out/search/baseline-1'
+        self.assertEqual(json.loads((run / 'metadata.json').read_text())['provider'], 'codex')
+
+    def test_R6_fresh_session_and_hidden_javascript_checks(self):
+        # A fake CLI verifies the experiment mechanics, not a real model's decisions.
+        self.stub('claude', '''if [ "$1" = --version ]; then echo fixture-cli; exit; fi
+python3 - <<'FIXTURE'
+import json, os
+from pathlib import Path
+config=json.loads(Path('scenario.json').read_text())
+skill=Path('.agents/skills/event-contracts/SKILL.md')
+reuse=skill.exists()
+skill.parent.mkdir(parents=True, exist_ok=True)
+skill.write_text('---\\nname: event-contracts\\ndescription: Add invoice events.\\n---\\nRead the contract and run npm test.\\n')
+Path('AGENTS.md').write_text('[Contracts](.agents/skills/event-contracts/SKILL.md) for event changes.\\n')
+types=json.dumps([config['first'], config['second']] if reuse else [config['first']])
+Path('src/routes.js').write_text("import {validate} from './events.js';\\n" +
+    'export function handle(event) {const e=validate(event);const invoice=' + types +
+    ".includes(e.type);if(invoice && (!Number.isSafeInteger(e.amountCents)||e.amountCents<0))throw Error('amount');" +
+    "if(!invoice && e.type!=='order.created')throw Error('unknown');return {topic:invoice?'invoices':'orders',key:e.id,payload:e};}")
+with Path('docs/catalog.md').open('a') as f:f.write(config['second' if reuse else 'first']+'\\n')
+with Path('sessions.txt').open('a') as f:f.write(str(os.getpid())+'\\n')
+print(json.dumps({'type':'system','subtype':'init','model':'fixture-model'}))
+if reuse:
+    print(json.dumps({'type':'assistant','message':{'content':[{'type':'tool_use','id':'read','name':'Read','input':{'file_path':str(skill)}}]}}))
+    print(json.dumps({'type':'user','message':{'content':[{'type':'tool_result','tool_use_id':'read','content':'instructions'}]}}))
+print(json.dumps({'type':'result','total_cost_usd':0.01,'duration_ms':100,'num_turns':1}))
+FIXTURE''')
+        result = self.run_eval('project-capabilities')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        run = self.root / 'out/project-capabilities/baseline-1'
+        self.assertTrue((run / 'transcript-reuse.jsonl').exists())
+        self.assertEqual(len(set((run / 'repo/sessions.txt').read_text().splitlines())), 2)
+        metrics = grade.grade(run)
+        self.assertTrue(metrics['hidden_pass'], metrics)
+        self.assertTrue(metrics['capability_read_in_reuse'])
+        self.assertEqual(metrics['new_capability_count'], 1)
+        self.assertEqual(metrics['cost_usd'], 0.02)
+
     def test_cli_failure_retains_transcript_and_status(self):
         self.stub('claude', 'echo partial; echo diagnostic >&2; exit 42')
         outcome = self.run_eval('bug-fix')
@@ -539,7 +638,7 @@ class Runner(unittest.TestCase):
         self.assertEqual(metadata['requested_model'], 'fixture-model')
         self.assertEqual(metadata['resolved_model'], 'fixture-resolved')
         self.assertEqual(metadata['cli_version'], 'fixture-cli')
-        self.assertEqual(metadata['metrics_version'], 2)
+        self.assertEqual(metadata['metrics_version'], 3)
         self.assertEqual(metadata['permission_mode'], 'acceptEdits')
         self.assertIn('Bash(uv *)', metadata['allowed_tools'])
         # Agents often run `python -m pytest`, sometimes with an environment prefix; a blocked test

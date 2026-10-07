@@ -1,6 +1,6 @@
 ---
 name: release
-description: Versioning and releases: SemVer from Conventional Commits, CHANGELOG, tags, GitHub Releases, release automation and hotfixes. Use when releasing, tagging or writing a changelog (publish a version, prepare a release, choose the next version).
+description: Prepare versions, changelogs, tags and GitHub Releases using SemVer and Conventional Commits. Use for releases, hotfixes, version selection or release automation.
 ---
 
 # Releases and versioning

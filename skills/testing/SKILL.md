@@ -1,6 +1,6 @@
 ---
 name: testing
-description: Writing good tests with pytest, Pest/PHPUnit and Vitest/Jest: what to test per layer, factories, mocks at the boundaries, DB tests, coverage, legacy code, flaky tests. Use when writing, fixing or reviewing tests (add tests, improve test coverage).
+description: Write or review behavioral tests with pytest, Pest/PHPUnit and Vitest/Jest. Use for test coverage, fixtures, boundary mocks, database tests or flaky suites.
 ---
 
 # Testing
