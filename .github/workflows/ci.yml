@@ -68,6 +68,8 @@ jobs:
           tests/evals.test.sh
           tests/evidence.test.sh
           tests/project-capabilities.test.sh
+          tests/native-agents.test.sh
+          tests/project-setup.test.sh
           tests/smoke.test.sh
 
   windows:

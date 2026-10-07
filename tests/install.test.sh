@@ -381,7 +381,7 @@ git_global "$H" tack.skillGroups process
 run_install "$H"
 check "a deselected group's skills are removed" "[ ! -e '$H/.agents/skills/frontend' ] && [ ! -e '$H/.claude/skills/frontend' ]"
 check "selected groups stay" "[ -L '$H/.agents/skills/improve' ]"
-check "core skills are always installed" "[ -L '$H/.agents/skills/dev-workflow' ] && [ -L '$H/.agents/skills/lessons' ]"
+check "core skills including onboarding are always installed" "[ -L '$H/.agents/skills/dev-workflow' ] && [ -L '$H/.agents/skills/lessons' ] && [ -L '$H/.agents/skills/new-project' ]"
 check "the installer says which groups it installed" "grep -q 'skill groups: core, process' '$H.log'"
 H2="$WORK/groups-own"
 mkdir -p "$H2/.agents/skills/frontend"

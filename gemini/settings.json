@@ -1,0 +1,8 @@
+{
+  "hooks": {
+    "SessionStart": [{"hooks": [{"type": "command", "name": "tack-context", "command": "python3 '__REPO__/hooks/runtime/adapter.py' gemini session #tack", "timeout": 30000}]}],
+    "BeforeTool": [{"matcher": ".*", "hooks": [{"type": "command", "name": "tack-guard", "command": "python3 '__REPO__/hooks/runtime/adapter.py' gemini before #tack", "timeout": 25000}]}],
+    "AfterTool": [{"matcher": ".*", "hooks": [{"type": "command", "name": "tack-check", "command": "python3 '__REPO__/hooks/runtime/adapter.py' gemini after #tack", "timeout": 80000}]}],
+    "AfterAgent": [{"hooks": [{"type": "command", "name": "tack-stop", "command": "python3 '__REPO__/hooks/runtime/adapter.py' gemini stop #tack", "timeout": 150000}]}]
+  }
+}

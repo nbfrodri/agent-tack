@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [{"type": "command", "command": "python3 '__REPO__/hooks/runtime/adapter.py' copilot session #tack", "timeoutSec": 30}],
+    "preToolUse": [{"type": "command", "command": "python3 '__REPO__/hooks/runtime/adapter.py' copilot before #tack", "timeoutSec": 25}],
+    "postToolUse": [{"type": "command", "command": "python3 '__REPO__/hooks/runtime/adapter.py' copilot after #tack", "timeoutSec": 80}],
+    "agentStop": [{"type": "command", "command": "python3 '__REPO__/hooks/runtime/adapter.py' copilot stop #tack", "timeoutSec": 150}]
+  }
+}

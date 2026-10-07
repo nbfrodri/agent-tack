@@ -46,7 +46,7 @@ The assistant can make these local additions during authorized implementation, b
 
 ## Apply and check changes
 
-Instructions, skills, agents and hook scripts are installed through symlinks to the checkout. Editing them changes the installed files directly; start a new agent session to load updated instructions, skills and agent definitions.
+Instructions, skills, Claude agents and hook scripts are linked to the checkout. Other native agent definitions are generated; rerun the installer to refresh them. Edited generated files are preserved. Start a new agent session to load updated instructions, skills and agents.
 
 Re-run `./install.sh` after changing tool paths, registered hooks, Claude settings or plugins, or after adding or removing skills or agents. Use `./install.sh --skip-plugins` when you only need local configuration changes.
 

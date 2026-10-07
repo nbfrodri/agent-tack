@@ -19,6 +19,7 @@ Enabled when `tack status` prints `enabled`; Claude Code says so at session star
 - Delegate automatically only at strict, after plan approval, unless `tack config delegation` is `off`; otherwise suggest it and wait.
 - Commit as you go; when integrating, recommend a merge method and preserve commits unless I choose squash.
 - At session start or resume: if SessionStart gave no context, run `tack context`; always verify the listed handoff against git before continuing. Read other documents only when the task needs them.
+- For initialization or pending setup review, follow `new-project` → `references/onboarding.md`: inspect repo and intent, propose concrete optional files, ask which to create and remember choices. Respect prior authorization; read-only requests stay read-only.
 - Comment only the non-obvious *why*.
 - Spend tokens deliberately: search before reading, read ranges, batch tool calls, trim output, avoid commands the guard asks about.
 - Docs, plans, handoffs and the AI log follow the mode; keep `docs/architecture.md` current when structure changes.

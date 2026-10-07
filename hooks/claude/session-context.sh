@@ -21,6 +21,7 @@ cwd="$(field .cwd)"
 
 client=claude
 [ "${1:-}" != --codex ] || client=codex
+case "${1:-}" in --gemini) client=gemini ;; --copilot) client=copilot ;; esac
 # shellcheck source=SCRIPTDIR/lib/activity-log.sh
 . "$(dirname "$0")/lib/activity-log.sh"
 cli="$(cd "$(dirname "$0")/../../bin" && pwd)/tack"
@@ -36,7 +37,7 @@ for state_dir in budget turns; do
   [ ! -d "$state_dir" ] || find "$state_dir" -type f -mtime +"$retention" -exec rm -f {} + 2>/dev/null
 done
 # Turn metrics start counting from here, so earlier history is not logged as new work.
-start_turns "$cwd" "$client" "$(field .session_id)" "$(field .transcript_path)"
+case "$client" in claude | codex) start_turns "$cwd" "$client" "$(field .session_id)" "$(field .transcript_path)" ;; esac
 
 # shellcheck source=SCRIPTDIR/lib/hook-control.sh
 . "$(dirname "$0")/lib/hook-control.sh"

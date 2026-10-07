@@ -11,11 +11,11 @@ Paths come from each tool's documentation and live in `targets.txt` (add a line 
 | --- | --- | --- | --- |
 | Claude Code | `~/.claude/CLAUDE.md` | `~/.claude/skills` | ✔ |
 | Codex | `~/.codex/AGENTS.md` | `~/.codex/skills` | ✔ (generated `~/.codex/agents/*.toml`, hooks in `~/.codex/hooks.json`) |
-| Gemini CLI | `~/.gemini/GEMINI.md` | `~/.agents/skills` | — |
-| GitHub Copilot (CLI, and Copilot Chat in VS Code) | `~/.copilot/copilot-instructions.md` | `~/.copilot/skills` | — |
-| OpenCode | `~/.config/opencode/AGENTS.md` | `~/.agents/skills` | — |
-| Crush | `~/.config/AGENTS.md` | `~/.agents/skills` | — |
-| Cursor (editor and CLI) | none on disk: paste `global/AGENTS.md` in *Customize → Rules* once | `~/.agents/skills` | — |
+| Gemini CLI | `~/.gemini/GEMINI.md` | `~/.gemini/skills` | Native Markdown agents; hooks in `~/.gemini/settings.json` |
+| GitHub Copilot | `~/.copilot/copilot-instructions.md` | `~/.copilot/skills` | CLI agents in `~/.copilot/agents/*.agent.md`; CLI hooks in `~/.copilot/hooks/tack.json` |
+| OpenCode | `~/.config/opencode/AGENTS.md` | `~/.config/opencode/skills` | Native Markdown subagents; no managed runtime hooks |
+| Crush | `~/.config/AGENTS.md` | `~/.config/crush/skills` | Portable role instructions; no native agent/hook adapter |
+| Cursor (editor and CLI) | none on disk: paste `global/AGENTS.md` in *Customize → Rules* once | `~/.cursor/skills` | Native Markdown agents; command guard |
 
 Claude Code and Codex are always configured; the others only when installed. The Copilot line is detected through the `copilot` CLI or VS Code (`code`, `code-insiders`, `codium`). Git hooks apply to every tool.
 
@@ -25,20 +25,22 @@ Claude Code and Codex are always configured; the others only when installed. The
 - **GitHub Copilot Chat** reads the user instructions in `~/.copilot/copilot-instructions.md` and the skills in `~/.agents/skills`, `~/.claude/skills` and `~/.copilot/skills`, all installed by tack. In a project, it also reads `AGENTS.md` when the `chat.useAgentsMdFile` setting is on, which the installer turns on. Claude Code hooks, mods and subagents do not apply to Copilot; the git hooks still do.
 
 ### `targets.txt` columns
-One line per tool; `-` means unsupported or none. Files with only the first five columns still work.
+One line per tool; `-` means tack does not manage that integration, not that the tool necessarily lacks the capability. Files with only the first five columns still work.
 
 | Column | Meaning |
 | --- | --- |
 | `tool`, `when`, `commands` | Name, `always` or `detect`, and the commands that detect it |
 | `instructions`, `skills` | Global instructions file and extra skills directory |
-| `agents`, `hooks` | Subagents directory and hooks file the installer fills (Claude Code only today) |
+| `agents`, `hooks` | Native agent directory and hooks/settings file filled by the corresponding renderer/template |
 | `min_version` | Oldest supported version; older ones only produce a warning |
 | `smoke` | Arguments of a non-interactive diagnostic (`doctor`, `doctor,--summary`) |
 
 `tack doctor --tools` reads these columns: for each installed tool it prints the version, the configured capabilities, whether the minimum is met and the result of the smoke check. Missing tools are skipped; a failed smoke check or an old version is a warning; a broken managed link is an error. Tool output is never printed, so credentials and config values stay out of reports.
 
-### Codex agents and hooks
-Codex 0.160.0 supports both (`codex features list`: `hooks` and `multi_agent` stable). Per its official documentation, agents are TOML files in `~/.codex/agents/` (`name`, `description`, `developer_instructions`) and hooks live in `~/.codex/hooks.json` or `config.toml`. Tack agents are Markdown with Claude frontmatter and the hook scripts expect Claude Code's payload, so the installer does not write either for Codex yet; the `agents` and `hooks` columns stay `-` until a converter and a payload check exist.
+### Native agents and hooks
+`lib/codex_agents.py` renders TOML for Codex; `lib/native_agents.py` renders each additional tool's Markdown frontmatter and tool restrictions. Claude retains the source Markdown links. Generated files are tracked by checksum: existing foreign files and edited generated files are preserved during reinstall and uninstall. Model aliases from one vendor are not copied into another tool's definitions; delegation tier choices live in `model-tiers.txt`.
+
+`hooks/runtime/adapter.py` translates Gemini and Copilot CLI inputs/outputs to the shared guard, budget, startup context, fast check and Stop check. Gemini has no hook-level ask response, so guard asks become denials explaining the need for confirmation; Copilot receives its native ask response. Powershell calls are treated as opaque shell wrappers for review. Neither adapter implements per-file formatting or transcript token accounting. Cursor retains its command-guard adapter. OpenCode and Crush follow remaining checks as instructions; tack does not install speculative hook paths. [Editor support and upstream references](editors.md) describe the boundaries. Local tests cover protocol fixtures and filesystem lifecycle; they do not invoke live model sessions.
 
 **Platforms:** Linux and macOS (tested in CI). On Windows, use it inside WSL, where it works as on Linux; native Windows through Git Bash is experimental ([editors](editors.md#windows)): the checkout keeps LF endings and its git hooks are plain files, and the installer needs Developer Mode for symlinks.
 
@@ -46,8 +48,8 @@ Codex 0.160.0 supports both (`codex features list`: `hooks` and `multi_agent` st
 | Step | Details |
 | --- | --- |
 | Instructions and skills | Links `global/AGENTS.md` and every skill of the selected groups (`skill-groups.txt`, `tack config skill-groups`) into each tool's paths (above) and into `~/.agents/skills`; removes its own links to skills of deselected groups. |
-| Agents | Links `agents/*.md` into `~/.claude/agents`. |
-| Settings | Deep-merges `claude/settings.json` into `~/.claude/settings.json`; your keys and your own hooks are kept, hooks tagged `#tack` are replaced. |
+| Agents | Links Claude definitions and generates native Codex, Gemini, Copilot, OpenCode and Cursor definitions for selected tools. |
+| Settings | Deep-merges each declared tool template; your keys and hooks are kept, hooks tagged `#tack` are replaced. `--no-hooks` removes managed registrations while preserving your own. |
 | Git hooks | Points the global `core.hooksPath` at `git-hooks/`, unless you use a different one. |
 | Command | Links `bin/tack` into `~/.local/bin`, and the repo into `~/.agents/tack`. |
 | Plugins | Adds the marketplaces in `plugins.txt` and installs or updates each plugin. |

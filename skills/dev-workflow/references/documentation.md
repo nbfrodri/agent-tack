@@ -2,8 +2,10 @@
 
 Docs are updated in the same change as the code that affects them; outdated docs are worse than none. Structure, templates, docs for humans and AIs, plans, audits and handoffs: `project-docs` skill.
 
+Reuse existing document locations and recorded setup choices. The checklist identifies information to maintain, not mandatory new files. Propose additions outside the authorized scope through `new-project` → `references/onboarding.md`; do not recreate declined scaffolding.
+
 ## Before closing a task
-- Does this enabled project have `docs/architecture.md` linked from its README and docs index? → if missing, add it during a significant task, based on the code.
+- Is architecture guidance accurate and linked from the README/docs index when they exist? → maintain it from code evidence; propose missing guidance according to the project's setup choices.
 - Did installing, configuring or running change? → `README.md`, `docs/development.md` and `AGENTS.md` (commands).
 - New environment variables or config? → `.env.example` (no real values) and `docs/development.md`.
 - Did a public API, CLI or endpoint change? → `docs/api.md` or the generated reference, and examples.

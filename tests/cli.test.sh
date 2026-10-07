@@ -426,7 +426,8 @@ files_exist() { local file; for file in "$@"; do [ -f "$file" ] || return 1; don
 file_is() { [ "$(cat "$1")" = "$2" ]; }
 git_value_is() { [ "$(git -C "$1" config --get "$2")" = "$3" ]; }
 plain_enable_creates_nothing() { (cd "$PLAIN" && "$CLI" enable >/dev/null) && [ ! -e "$PLAIN/docs" ] && [ ! -e "$PLAIN/AGENTS.md" ]; }
-check "scaffold creates the architecture doc, docs map and plan and handoff templates" files_exist "$SCAF/docs/architecture.md" "$SCAF/docs-map.txt" "$SCAF/docs/plans/template.md" "$SCAF/docs/handoffs/template.md" "$SCAF/docs/ai/log.md" "$SCAF/CLAUDE.md"
+check "scaffold creates architecture, docs map and the Claude bridge" files_exist "$SCAF/docs/architecture.md" "$SCAF/docs-map.txt" "$SCAF/CLAUDE.md"
+check "scaffold leaves working documents to actual tasks" test ! -e "$SCAF/docs/plans"
 check "scaffold never overwrites an existing file" file_is "$SCAF/AGENTS.md" "# Mine"
 check "scaffold says what it created" contains 'created docs/architecture.md'
 check "scaffold says what it kept" contains 'kept AGENTS.md'
@@ -444,7 +445,9 @@ check "enable rejects unknown options" expect_exit 2 scaffold --everything
 # tack models: provider-neutral tiers mapped to each tool's models (model-tiers.txt).
 check "models lists every tier for each tool" expect_exit 0 "$CLI" models
 check "Claude Code's tiers are mapped" out_matches "^claude +economical +haiku"
-check "Codex tiers inherit until the user names them" out_matches "^codex +strongest +inherit"
+check "Codex economical tier has an explicit model" out_matches "^codex +economical +gpt-6-luna"
+check "Codex balanced tier has an explicit model" out_matches "^codex +balanced +gpt-6.1-sol"
+check "Codex strongest tier has an explicit model" out_matches "^codex +strongest +gpt-6-astra"
 check "models narrows to one tier" expect_exit 0 "$CLI" models balanced
 check "one tier leaves the others out" out_lacks "economical"
 mkdir -p "$XDG_CONFIG_HOME/agent-tack"
@@ -453,7 +456,7 @@ check "user tiers win over the shipped ones" expect_exit 0 "$CLI" models stronge
 check "a user-named Codex model is shown" out_matches "^codex +strongest +my-big-model"
 printf 'codex strongest\nclaude fastest foo\n' > "$XDG_CONFIG_HOME/agent-tack/model-tiers.txt"
 check "models with malformed user lines still runs" expect_exit 0 "$CLI" models
-check "a user line without a model does not blank the shipped one" out_matches "^codex +strongest +inherit"
+check "a user line without a model does not blank the shipped one" out_matches "^codex +strongest +gpt-6-astra"
 check "a user line with an unknown tier is ignored" out_lacks "foo"
 check "malformed user lines are reported" contains 'ignored'
 rm -f "$XDG_CONFIG_HOME/agent-tack/model-tiers.txt"

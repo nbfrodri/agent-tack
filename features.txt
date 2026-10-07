@@ -10,6 +10,7 @@
 #
 # name                key                          default  values    scope   enforcement  description
 context               tack.context              true     bool      any     instruction  Load project instructions, the docs index and the handoff check at session start
+setup-review          tack.setupReview          pending  pending|done|deferred any instruction Project onboarding conversation: inspect and propose optional files once; reset to pending to revisit choices
 conventional-commits  tack.conventionalCommits  true     bool      any     hook         Enforce Conventional Commits in enabled projects
 delegation            tack.delegation           auto     auto|off  any     instruction  Delegate separable strict-level work to subagents automatically
 mods                  tack.mods                 true     bool      global  installer    Install tack's Claude Code mods (usage band, activity pane)

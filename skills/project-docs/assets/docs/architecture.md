@@ -1,45 +1,16 @@
 # Architecture
 
-How the system is put together and why. Decisions in detail: [adr/](adr/).
+Describe the actual system after reading the code and clarifying user intent. Keep unknowns explicit; omit sections that do not apply.
 
 ## Context
 
-```mermaid
-flowchart LR
-  user([User]) --> app[Our system]
-  app --> payments[(Payment provider)]
-  app --> email[(Email service)]
-```
-
-## Containers
-
-```mermaid
-flowchart LR
-  web[Web app<br/>Next.js] -->|HTTPS / JSON| api[API<br/>FastAPI]
-  api --> db[(PostgreSQL)]
-  api --> queue[[Queue]]
-  worker[Worker] --> queue
-  worker --> db
-```
+Who uses the project, what it does, and which external systems are confirmed. A small Mermaid diagram is useful when relationships need explanation.
 
 ## Components
-| Component | Responsibility | Technology | Code |
-| --- | --- | --- | --- |
-| Web app | | | `apps/web/` |
-| API | | | `apps/api/` |
+For each real component, name its responsibility, technology, code location and relevant dependencies. Do not assume an application server, database, queue or payment provider exists.
 
 ## Key flows
-Only flows that are hard to follow in the code. One sequence diagram each.
-
-```mermaid
-sequenceDiagram
-  participant U as User
-  participant W as Web
-  participant A as API
-  U->>W: Submit order
-  W->>A: POST /orders
-  A-->>W: 201 Created
-```
+Explain only flows that are difficult to follow from the code. Use a small sequence diagram when it helps; use actual entrypoints and operations.
 
 ## Decisions
-- [ADR-0001](adr/0001-record-architecture-decisions.md): …
+Explain confirmed decisions and tradeoffs. Link to ADRs only after those records exist.

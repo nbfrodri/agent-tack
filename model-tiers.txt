@@ -4,13 +4,27 @@
 #   economical  fast and cheap: mechanical, well-specified work (docs, renames, fixtures)
 #   balanced    standard implementation following existing patterns
 #   strongest   design-heavy or risky work (architecture, security, tricky bugs)
-# "inherit" means the tool keeps its current model: set your account's model names when you know
-# them. Every tool with an agents directory in targets.txt needs all three tiers (tests/validate.sh).
+# "inherit" keeps the current model. Account-specific overrides remain available for every tier.
+# Codex defaults verified against official model guidance and the local catalog on 2026-10-07:
+# https://learn.chatgpt.com/docs/models
+# Every tool with an agents directory in targets.txt needs all three tiers (tests/validate.sh).
 #
 # tool    tier        model
 claude    economical  haiku
 claude    balanced    sonnet
 claude    strongest   opus
-codex     economical  inherit
-codex     balanced    inherit
-codex     strongest   inherit
+codex     economical  gpt-6-luna
+codex     balanced    gpt-6.1-sol
+codex     strongest   gpt-6-astra
+gemini    economical  inherit
+gemini    balanced    inherit
+gemini    strongest   inherit
+copilot   economical  inherit
+copilot   balanced    inherit
+copilot   strongest   inherit
+opencode  economical  inherit
+opencode  balanced    inherit
+opencode  strongest   inherit
+cursor    economical  inherit
+cursor    balanced    inherit
+cursor    strongest   inherit

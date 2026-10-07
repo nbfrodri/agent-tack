@@ -1,6 +1,6 @@
 # agent-tack
 
-**Dotfiles for AI coding agents** (formerly agent-harness). One install gives Claude Code, Codex, Copilot, Cursor, Gemini, OpenCode and Crush the same instructions and skills (Cursor needs its global rules pasted once), so they work like a disciplined senior engineer in every project. Git-level safety (commit rules, secrets, protected `main`) applies to every tool; agent-level enforcement runs in Claude Code and Codex, and the command guard in Cursor ([what each tool gets](docs/editors.md#what-each-tool-receives)).
+**Dotfiles for AI coding agents** (formerly agent-harness). One install gives Claude Code, Codex, Copilot, Cursor, Gemini, OpenCode and Crush the same instructions and skills (Cursor needs its global rules pasted once). Git-level safety applies to every tool; runtime hooks cover Claude Code, Codex, Gemini CLI and Copilot CLI, plus the command guard in Cursor ([what each tool gets](docs/editors.md#what-each-tool-receives)).
 
 [![CI](https://github.com/nbfrodri/agent-tack/actions/workflows/ci.yml/badge.svg)](https://github.com/nbfrodri/agent-tack/actions/workflows/ci.yml)
 
@@ -8,7 +8,7 @@
 
 - **One workflow, scaled to the task:** plan, test first, small commits, docs, review; light for a typo, thorough for a risky change.
 - **Rules that are enforced, not just suggested:** git hooks (every tool) and the Claude Code and Codex hooks block AI attribution, committed secrets, force-pushes to `main`, dangerous commands and merges with red or unfinished CI. The command guard catches an assistant's mistakes; it is not a sandbox against a determined one, so run untrusted or fully unattended work in a container or VM ([what it covers](docs/how-it-works.md#what-the-command-guard-covers-and-what-it-does-not)).
-- **Enforcement depends on the tool:** Claude Code gets everything; Codex gets the agent hooks; Cursor gets the command guard; Copilot, Gemini, OpenCode and Crush get the instructions and skills, with git hooks as their only enforcement ([per tool](docs/editors.md#what-each-tool-receives)).
+- **Enforcement depends on the tool:** Claude Code gets everything; Codex, Gemini CLI and Copilot CLI get shared runtime checks through native adapters; Cursor gets the command guard; OpenCode and Crush rely on instructions and git hooks ([per tool](docs/editors.md#what-each-tool-receives)).
 - **Opt-in per project:** everywhere else the assistant works normally with only the safety net on.
 - **Yours to change:** rules, skills, modes and toggles are plain files and commands. [Why →](docs/why.md)
 - **Learns project procedures:** during authorized implementation, the assistant can create useful local skills and specialist roles, index them for later sessions and reuse what already exists. Shared-catalog promotion stays separate. [Project capabilities →](docs/usage.md#project-skills-and-roles)
@@ -22,10 +22,12 @@ git clone https://github.com/nbfrodri/agent-tack.git ~/Projects/agent-tack
 ~/Projects/agent-tack/install.sh      # keep the checkout there: installed files link to it
 
 cd ~/Projects/my-app
-tack enable                           # turn the workflow on for this project (--scaffold: add the docs skeleton too)
+tack enable                           # turn the workflow on; add --scaffold for four base guidance files
 ```
 
 Restart your AI tools, then work as usual: *"Add Google login"*, *"Fix issue #12"*, *"What would you improve?"*, *"Prepare a release"*.
+
+For initialization, `tack enable --scaffold` creates missing guidance from repository evidence. The assistant then analyzes the project, asks which useful optional files to add and remembers your choices. `tack setup` shows the inventory; `tack setup --check` finds incomplete guidance. Plain activation creates no project files. [Project initialization →](docs/usage.md#project-initialization)
 
 Preview with `./install.sh --dry-run` (the first install lists every hook it adds; `--no-hooks` adds none), check with `tack doctor`, update with `git pull && ./install.sh`, remove with `./uninstall.sh`. [Installation details →](docs/usage.md#installation-diagnostics-and-removal) · [Editors and WSL →](docs/editors.md)
 
@@ -35,7 +37,7 @@ The mode decides how much process each task gets. `auto` is the default and pick
 
 | Mode | For | What the assistant does |
 | --- | --- | --- |
-| `lite` | Typos, config, small fixes; small tasks when tokens matter | Minimal self-contained rules, terse replies; still branch, commit and test (it absorbed the former `lean` mode, [measured](docs/benchmarks/2026-10-04-lean.md) at the same cost) |
+| `lite` | Typos, config, small fixes; small tasks when tokens matter | Minimal self-contained rules, selected reply style (brief by default); still branch, commit and test (it absorbed the former `lean` mode, [measured](docs/benchmarks/2026-10-04-lean.md) at the same cost) |
 | `standard` | A bounded feature or bug fix | Adds TDD, a short plan and the affected docs |
 | `strict` | Risky or multi-module work | Adds a saved plan you approve, handoffs, review and delegation |
 | `unleash` | Unattended work on a branch | Works without asking; the guard still blocks dangerous commands ([risks](docs/usage.md#unleash-autonomous-work)) |
@@ -55,6 +57,7 @@ tack mode new spike --from lite   # your own mode, in ~/.config/agent-tack/modes
 | `tack status` | Is the workflow on, which mode, is the formatter trusted |
 | `tack config` | List and change feature toggles (delegation, fast check, limits…) |
 | `tack doctor` / `--tools` | Diagnose the installation / each installed AI tool |
+| `tack setup` / `--check` | Inspect project foundations / check guidance readiness without running project code |
 | `tack log` | What the hooks did recently (opt in with `tack config activity-log true`) |
 | `tack trust` | Allow automatic formatting and the fast check in this checkout |
 | `tack disable` | Turn the workflow off for this project |

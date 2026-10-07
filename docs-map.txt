@@ -10,5 +10,11 @@ plugins/* | docs/usage.md
 uninstall.sh | docs/usage.md
 install.sh | docs/how-it-works.md
 targets.txt | docs/how-it-works.md
+lib/native* | docs/how-it-works.md
+hooks/runtime/* | docs/how-it-works.md
+lib/project_setup.py | docs/usage.md
+lib/scaffold.sh | docs/usage.md
+skills/new-project/* | docs/usage.md
+model-tiers.txt | docs/editors.md
 hooks/claude/* | docs/how-it-works.md
 git-hooks/* | docs/how-it-works.md

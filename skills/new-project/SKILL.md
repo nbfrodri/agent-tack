@@ -5,15 +5,15 @@ description: "Bootstrap a project or add missing foundations: structure, tests, 
 
 # New project
 
-A new project should be ready for the `dev-workflow` from its first commit: tests run with one command, lint runs with one command, CI checks both, and the README explains how to run everything.
+A new project should have clear instructions and reproducible checks appropriate to its purpose. For new repositories and existing projects adopting tack, first follow [references/onboarding.md](references/onboarding.md): inspect the project, select optional additions with the user, and remember the choices. The checklist below is a menu for the approved scope, not a set of mandatory files.
 
 ## 1. Clarify (one round of questions, with defaults)
-Language/runtime and framework, project type (API, web, CLI, library), database if any, whether the domain is complex enough for DDD layers, and **Docker**, always asked:
+Infer established choices from the repository and conversation. Ask only about unresolved language/runtime, project type, services and deployment choices. When services or the deployment target justify Docker, offer:
 - **Local development with docker-compose** (the app plus its services: database, cache…), so the project runs with one command on any machine;
 - **a production image** as well (multi-stage Dockerfile), for VPS or AWS deploys;
 - **no Docker**, e.g. for a library, a CLI or a Vercel-only frontend.
 
-Recommend the option that fits: compose when there's a database or other services, a production image when the target is a VPS or AWS, none for libraries and Vercel. Propose sensible defaults and the plan, then wait for approval, since scaffolding is a big change.
+Recommend the option that fits. Present concrete optional files and their purpose before creating them; reuse prior explicit approval instead of asking again. Continue authorized independent work while unresolved choices are pending.
 
 Follow `dev-workflow` → `references/conventions.md` and the stack's file in `references/languages/` (pnpm for JS/TS, uv for Python, Composer + Pint for PHP, English code, kebab-case files in TS). Prefer the ecosystem's official generator (e.g. `npm create vite`, `uv init`, `cargo new`, `go mod init`, `dotnet new`) over writing boilerplate by hand, and current stable versions of tools.
 
@@ -21,7 +21,7 @@ Follow `dev-workflow` → `references/conventions.md` and the stack's file in `r
 Keep the initial capability catalog empty unless concrete project work justifies a procedure or role. When it does, follow `lessons` → `references/project-capabilities.md`; index local definitions in AGENTS.md for later sessions.
 
 - `git init -b main`, plus a `.gitignore` for the language, editor and OS. Ignore `.env`.
-- Enable the workflow: `tack enable --shared` (commits a `.tack` marker so it travels with the repo). For a team repo where others don't use it, `tack enable` keeps it local instead.
+- Enable and create the common base: `tack enable --shared --scaffold` (creates a `.tack` marker to commit with the repo). For local activation use `tack enable --scaffold`. Review the four generated files against the project; commands are detected, not executed.
 - `.editorconfig` copied from this skill's `assets/editorconfig`.
 - Folder structure:
   - with a real domain: `domain/`, `application/`, `infrastructure/`, `interfaces/` (see `dev-workflow` → `references/design.md`);
@@ -30,7 +30,7 @@ Keep the initial capability catalog empty unless concrete project work justifies
 - Linter and formatter with the ecosystem's standard tool (ruff, eslint + prettier or biome, pint, clippy + rustfmt, golangci-lint…), plus scripts/commands to run them. Keep the formatter's defaults (no overrides for quotes, semicolons or line width).
 - Type checking where the language supports it (strict mode for TypeScript, mypy/pyright for Python).
 - `.env.example` with every variable documented and no real values.
-- Documentation following the `project-docs` skill, starting from its templates: `README.md`, `AGENTS.md`, a `CLAUDE.md` containing just `@AGENTS.md`, `docs/README.md`, `docs/overview.md`, `docs/architecture.md`, `docs/development.md` and `docs/ai/README.md`.
+- Documentation following `project-docs`: start with the common base; propose a README, index or development guide when useful, and add other documents only when there is concrete content and they are in the selected scope.
 - CI in `.github/workflows/ci.yml`: install, lint, type-check and test on push and pull requests.
 - Issue forms and a PR template: reuse existing templates; add missing ones from the `github-issues` skill's `assets/` into `.github/`, adapted to the project's validation commands. PR drafting follows `dev-workflow` → `references/git-github.md`.
 - Docker, if chosen: following `deployment` → `references/docker-vps.md`: a multi-stage, non-root `Dockerfile` with a healthcheck, a `.dockerignore` (`.git`, `.env`, dependencies, build output, tests), `compose.yaml` for the services plus `compose.override.yaml` for local development, the env vars in `.env.example`, and the Docker commands in the README and `AGENTS.md`. Build the image in CI.

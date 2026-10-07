@@ -49,6 +49,7 @@ CLIENT=claude
 [ "${1:-}" != --codex ] || CLIENT=codex
 # Cursor can ask the user, so it keeps asks; the flag only labels its activity log entries.
 [ "${1:-}" != --cursor ] || CLIENT=cursor
+case "${1:-}" in --gemini) CLIENT=gemini ;; --copilot) CLIENT=copilot ;; esac
 
 emit() {
   local decision="$1" reason="$2"

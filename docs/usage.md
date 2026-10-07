@@ -54,7 +54,7 @@ tack doctor --tools                # check each installed AI tool instead of the
 ./uninstall.sh                         # restore recorded unchanged state
 ```
 
-Skills come in groups (`skill-groups.txt`): `core` (the workflow, reviews and delegation, always installed), `process` (releases, new projects) and `stack` (frontend, APIs, databases, auth, end-to-end tests, deployment, observability). Fewer skills mean fewer descriptions in every session of every tool. Choose the optional groups once, then re-run the installer; it removes only its own links to the skills you left out:
+Skills come in groups (`skill-groups.txt`): `core` (workflow, onboarding, reviews and delegation, always installed), `process` (releases) and `stack` (frontend, APIs, databases, auth, end-to-end tests, deployment, observability). Fewer skills mean fewer descriptions in every session of every tool. Choose the optional groups once, then re-run the installer; it removes only its own links to the skills you left out:
 
 ```bash
 tack config skill-groups process --global   # core and process; or core, stack, or all (the default)
@@ -91,9 +91,11 @@ tack help              # CLI reference; aliases: --help and -h
 tack status            # workflow activation, mode and local formatter trust
 tack status --quiet    # no output; exit 0 when enabled, 1 when disabled
 tack enable            # this clone only (git config; nothing added to the repo)
-tack enable --scaffold # also add the missing AGENTS.md, CLAUDE.md, docs/architecture.md, docs-map.txt,
-                       # and plan, handoff and AI-log templates, never overwriting a file
-                       # (CLAUDE.md only points to AGENTS.md, so it is harmless for other tools)
+tack enable --scaffold # add only missing AGENTS.md, CLAUDE.md, docs/architecture.md, docs-map.txt
+tack setup             # read-only stack, command, capability and missing-foundation inventory
+tack setup --check     # readiness: review markers, base files, local links and docs-map targets
+tack config setup-review deferred # postpone optional additions without repeated startup prompts
+tack config setup-review pending  # revisit setup choices
 tack enable --shared   # commit a .tack file so every clone has it
 tack disable
 tack mode              # effective mode and its source
@@ -111,6 +113,25 @@ tack trusted           # trusted / untrusted; exit 0 when trusted, 1 otherwise
 tack trusted --quiet   # the same trust check without output
 git config --global tack.enabled true   # every repo (a local disable still wins)
 ```
+
+### Project initialization
+
+`.tack` is a small **file marking shared activation**, created only by `enable --shared`. It is not a configuration directory, does not install tack on another machine and does not grant command execution trust. Plain `enable` changes local Git configuration and creates no project files. `--scaffold` is an explicit request for the four-file base and can be combined with `--shared`.
+
+| Base file | Purpose |
+| --- | --- |
+| `AGENTS.md` | Declared commands with evidence, architecture pointer, initialization guidance and local capability discovery. |
+| `CLAUDE.md` | The single `@AGENTS.md` bridge for Claude. |
+| `docs/architecture.md` | Initial observed manifests/directories, then the real components and flows after AI review. |
+| `docs-map.txt` | Initial source-to-architecture rules, refined to the project's existing docs. |
+
+Scaffolding needs Python 3, preserves existing files and rejects symlink destinations/parents before writing. It detects evidence without running project commands. Review markers intentionally keep `tack setup --check` failing until the assistant verifies guidance; a successful structural check does not prove that the described architecture or commands are correct. Existing documentation is reused through links. Empty projects keep their unknown stack explicit.
+
+On the next AI session, pending startup context routes to [the onboarding workflow](../skills/new-project/references/onboarding.md). The assistant inspects the repo and your intent, proposes exact optional files with reasons, then asks which you want. Examples include tests, CI, a PR template, `.env.example`, a development guide or a useful local skill/agent. Existing authorization counts; it does not ask again for already approved work. Read-only tasks remain read-only. An activation shell command cannot ask AI questions on its own.
+
+The assistant records accepted/declined/deferred additions in AGENTS.md, verifies selected additions, runs `tack setup --check`, then sets `tack config setup-review done`. `deferred` suppresses routine prompts without claiming completion; `pending` revisits them. Plans, handoffs, logs and extra docs are created when actual work needs them. The inventory is bounded to 3000 paths and is a starting point for analysis, especially in monorepos. `tack setup --json` exposes its evidence and findings without modifying files.
+
+`docs-map.txt` lines have `source glob | doc, doc`. The Stop hook reports a changed source path when **none** of its listed documents changed; a change to any one target satisfies the rule. It neither writes docs nor validates their accuracy. `features.txt` is tack's registry of settings, defaults, allowed values, scope and enforcement; `tack config` reads it. Neither file is a package/dependency manifest.
 
 | | Enabled project | Any other repo |
 | --- | --- | --- |
@@ -397,7 +418,7 @@ tack config delegation --unset # restore the default automatic policy
 tack config delegation         # shows auto (default) when unset
 ```
 
-Delegation picks a tier, never a vendor's model: `economical` for mechanical work, `balanced` for standard implementation, `strongest` for design-heavy or risky work. `tack models` shows the model each tool uses for each tier, from `model-tiers.txt`; Codex tiers say `inherit` until you name your account's models in `~/.config/agent-tack/model-tiers.txt` (same columns; your lines win):
+Delegation picks a tier, never a vendor's model: `economical` for mechanical work, `balanced` for standard implementation, `strongest` for design-heavy or risky work. `tack models` shows each tool's mapping from `model-tiers.txt`. Codex defaults are `gpt-6-luna`, `gpt-6.1-sol` and `gpt-6-astra` respectively ([model guidance](https://learn.chatgpt.com/docs/models), checked 2026-10-07). Other tool mappings may inherit the active model. Override for your account in `~/.config/agent-tack/model-tiers.txt` (same columns; your lines win):
 
 ```bash
 tack models              # every tool and tier

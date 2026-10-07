@@ -173,7 +173,9 @@ ownership_git() {
 ownership_generated() {
   local path="$1" sha="$2"
   ownership_begin generated "$path" || return 1
-  (umask 077; printf '%s\n' "$sha" > "$OWN_ENTRY/sha256")
+  (umask 077
+   printf '%s\n' "$sha" > "$OWN_ENTRY/sha256" || exit 1
+   [ -f "$OWN_ENTRY/targets" ] || cp "$REPO/targets.txt" "$OWN_ENTRY/targets")
 }
 
 # Records a Claude Code plugin (id@marketplace) this installer installed. The entry path is a
