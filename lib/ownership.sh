@@ -21,6 +21,14 @@ ownership_init() {
   local entry state_base="${XDG_STATE_HOME:-$HOME}"
   OWN_PATHS=() OWN_KINDS=() OWN_ENTRIES=()
   OWN_COUNT=0
+  OWN_NATIVE=0
+  case "$(uname -s)" in
+    MINGW* | MSYS* | CYGWIN*)
+      has python3 || { fail 'native Windows ownership requires python3'; return 1; }
+      OWN_NATIVE="$(python3 -c 'import os; print(int(os.name == "nt"))')" || return 1
+      OWN_NATIVE="${OWN_NATIVE%$'\r'}"
+      ;;
+  esac
   OWNERSHIP="$(tool_dir "${XDG_STATE_HOME:-$HOME/.local/state}")/ownership"
   if ! ownership_plain_path "$HOME" || ! ownership_plain_path "$REPO" || ! ownership_plain_path "$OWNERSHIP"; then
     fail 'ownership requires absolute paths without tabs, newlines or dot components'; return 1
@@ -32,12 +40,14 @@ ownership_init() {
       fail 'invalid ownership state; installation stopped'; return 1
     fi
     [ -z "$(find "$OWNERSHIP" -type l -print)" ] || { fail 'ownership state contains symlinks'; return 1; }
-    [ -z "$(find "$OWNERSHIP" \( -type f ! -perm 0600 \) -o \( -type d ! -perm 0700 \))" ] || {
-      fail 'ownership state permissions are not private'; return 1;
-    }
-    for entry in "$OWNERSHIP"/* "$OWNERSHIP"/entries/* "$OWNERSHIP"/entries/*/*; do
-      [ ! -e "$entry" ] || [ -O "$entry" ] || { fail 'ownership state has another owner'; return 1; }
-    done
+    if [ "$OWN_NATIVE" -eq 0 ]; then
+      [ -z "$(find "$OWNERSHIP" \( -type f ! -perm 0600 \) -o \( -type d ! -perm 0700 \))" ] || {
+        fail 'ownership state permissions are not private'; return 1;
+      }
+      for entry in "$OWNERSHIP"/* "$OWNERSHIP"/entries/* "$OWNERSHIP"/entries/*/*; do
+        [ ! -e "$entry" ] || [ -O "$entry" ] || { fail 'ownership state has another owner'; return 1; }
+      done
+    fi
     if has python3; then
       python3 "$REPO/lib/ownership.py" validate "$OWNERSHIP" "$HOME" || {
         fail 'ownership state failed integrity checks'; return 1;
@@ -52,6 +62,11 @@ ownership_init() {
     OWN_COUNT=$((OWN_COUNT + 1))
   done
   [ "$DRY_RUN" -eq 0 ] || return 0
+  if [ "$OWN_NATIVE" -eq 1 ] && [ ! -e "$OWNERSHIP" ]; then
+    python3 "$REPO/lib/ownership_platform.py" create "$OWNERSHIP" || {
+      fail 'cannot create private native ownership state'; return 1;
+    }
+  fi
   (umask 077; mkdir -p "$OWNERSHIP/entries" && printf '1\n' > "$OWNERSHIP/version" &&
     printf '%s\n' "$HOME" > "$OWNERSHIP/home" && printf '%s\n' "$REPO" > "$OWNERSHIP/repo") || {
       fail 'cannot initialize ownership state'; return 1;
@@ -84,6 +99,7 @@ ownership_begin() {
     printf '%s\n' "$path" > "$OWN_ENTRY/path" &&
     (cd "$(dirname "$path")" && pwd -P) > "$OWN_ENTRY/parent" &&
     ownership_parent_identity "$(cat "$OWN_ENTRY/parent")" > "$OWN_ENTRY/parent_identity" &&
+    { [ "$OWN_NATIVE" -eq 0 ] || printf '1\n' > "$OWN_ENTRY/native_identity"; } &&
     printf '%s\n' "$REPO" > "$OWN_ENTRY/repo" &&
     { case "$kind" in link | settings) cp "$REPO/targets.txt" "$OWN_ENTRY/targets" ;; esac; })
 }
@@ -112,7 +128,9 @@ ownership_link_replaced() {
 }
 
 ownership_parent_identity() {
-  if has stat; then
+  if [ "${OWN_NATIVE:-0}" -eq 1 ]; then
+    python3 "$REPO/lib/ownership_platform.py" identity "$1"
+  elif has stat; then
     stat -c '%d:%i' "$1" 2>/dev/null || stat -f '%d:%i' "$1" 2>/dev/null
   elif has python3; then
     python3 -c 'import os,sys; s=os.stat(sys.argv[1]); print(str(s.st_dev)+":"+str(s.st_ino))' "$1"
@@ -129,6 +147,9 @@ ownership_link() {
       if [ -L "$path" ]; then
         printf 'symlink\n' > "$OWN_ENTRY/before_kind"
         readlink "$path" > "$OWN_ENTRY/before_target"
+        if [ "$OWN_NATIVE" -eq 1 ]; then
+          python3 "$REPO/lib/ownership_platform.py" link-directory "$path" > "$OWN_ENTRY/before_directory" || exit 1
+        fi
       elif [ -e "$path" ]; then
         printf 'backup\n' > "$OWN_ENTRY/before_kind"
         printf '%s\n' "$backup_path" > "$OWN_ENTRY/backup"
