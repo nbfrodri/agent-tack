@@ -1,6 +1,6 @@
 ---
 name: dev-workflow
-description: The user's engineering workflow for projects with tack enabled, scaled by workflow level (lite, standard, strict): planning, TDD, SOLID/DDD, code and git conventions (Conventional Commits, branches, PRs) and docs. Use whenever writing, changing or debugging code, committing or opening PRs in such projects (implement, fix, commit).
+description: Apply the active tack workflow to implementation, debugging, code changes and Git/PR work in enabled projects: planning, tests, conventions and docs scaled to task risk.
 ---
 
 # Dev Workflow
@@ -61,6 +61,8 @@ At standard and strict, number the acceptance criteria (`R1`, `R2`…) and check
 Read the relevant code, tests and docs before proposing anything. **Ask whenever you have a real doubt** about scope, behaviour, design or risk, grouping all questions in one round; don't guess. Decide alone only purely conventional details, and say what you chose.
 
 ### 2. Map the impact
+Check the project's capability index for reusable procedures and specialist roles relevant to the task. During authorized implementation, a concrete gap may justify a local addition under `lessons` → `references/project-capabilities.md`; do not create artifacts for routine one-off work.
+
 Before changing anything, list what the change touches beyond the obvious file: callers and dependants, tests, CLI help and usage text, README and `docs/` pages that describe the behaviour, `docs/architecture.md`, configuration and its examples, schemas and migrations, installer or setup steps, CI, translations. Search for the names you are changing (`grep` for the function, flag, setting or command) rather than relying on memory. Every affected item is updated in the same change or listed as pending; adding a mode to a CLI, for example, also means its `--help`, its validation, its tests and its usage docs. At lite this is a quick search; at standard and strict, put the list in the plan.
 
 Aim for the **smallest change that does the job**: touch as few files and lines as possible, extend through the existing extension points (data files, interfaces, registries, configuration) instead of editing many call sites, and keep unrelated refactors out (note them as suggestions). If the smallest correct change still has to touch many files, that is a design signal: see step 3.

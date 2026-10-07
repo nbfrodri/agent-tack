@@ -11,6 +11,7 @@
 - **Enforcement depends on the tool:** Claude Code gets everything; Codex gets the agent hooks; Cursor gets the command guard; Copilot, Gemini, OpenCode and Crush get the instructions and skills, with git hooks as their only enforcement ([per tool](docs/editors.md#what-each-tool-receives)).
 - **Opt-in per project:** everywhere else the assistant works normally with only the safety net on.
 - **Yours to change:** rules, skills, modes and toggles are plain files and commands. [Why →](docs/why.md)
+- **Learns project procedures:** during authorized implementation, the assistant can create useful local skills and specialist roles, index them for later sessions and reuse what already exists. Shared-catalog promotion stays separate. [Project capabilities →](docs/usage.md#project-skills-and-roles)
 
 ## Quick start
 

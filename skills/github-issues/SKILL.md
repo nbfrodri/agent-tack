@@ -1,6 +1,6 @@
 ---
 name: github-issues
-description: GitHub issues with gh: work an issue end to end (linked branch, PR that closes it), write bug reports and feature requests, split plans into issues, triage, templates. Use when an issue or ticket is mentioned (issue #12, create an issue, list pending work).
+description: Manage GitHub issues with gh: triage, bug reports, feature requests, plan breakdown and linked implementation PRs. Use for issue or ticket work and templates.
 ---
 
 # GitHub issues

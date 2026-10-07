@@ -18,7 +18,7 @@ Open Agent Skills format (`SKILL.md`), read by every supported tool.
 | `improve` | Prioritised improvement review with read-only reviewers |
 | `orchestrate` | Multi-agent delegation with model and effort per task; automatic only for strict-level work |
 | `auto-improve` | Autonomous score → fix → re-score loop up to a target score |
-| `lessons` | Turn corrections into versioned rules |
+| `lessons` | Turn corrections into versioned rules; create and reuse justified project-local skills and specialist roles |
 | `frontend` | React/Next.js components, state, forms, accessibility |
 | `api-design` | REST, errors, validation, OpenAPI; Python, Laravel, Node |
 | `database` | Modelling, safe migrations, indexes; PostgreSQL, MySQL, MongoDB |

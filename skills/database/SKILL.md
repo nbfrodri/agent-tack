@@ -1,6 +1,6 @@
 ---
 name: database
-description: PostgreSQL, MySQL and MongoDB: modelling, safe migrations, indexes, N+1, transactions, backups and read-only DB access for the AI. Use when changing tables, collections, models, migrations, queries or ORM code, or for slow queries (database, table, query, migration).
+description: Model data and change migrations, queries, indexes or ORM code safely in PostgreSQL, MySQL and MongoDB. Use also for slow queries, transactions and backup work.
 ---
 
 # Database

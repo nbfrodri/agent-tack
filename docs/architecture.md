@@ -109,6 +109,14 @@ Global `core.hooksPath` points to this checkout's `git-hooks/`. A repository wit
 
 ## Verification and evaluations
 
+`lib/capability_validation.py` provides read-only frontmatter checks shared by the catalog validator and project-local capability validation. Its project command checks `.agents/skills/`, `.agents/agents/`, local references and the discovery index in the project's AGENTS.md; alternate project-relative layouts can be supplied. Creating a local definition does not invoke a native agent or change installation ownership. The authoring and reuse policy is a reference of `lessons`; global instructions route enabled projects, including lite, to it when needed.
+
+`evals/environment.py` isolates HOME, XDG, Git and provider configuration for both baseline and tack conditions. Only provider authentication files are copied privately, or credentials are inherited through environment variables; temporary homes are removed after execution and termination. `run.sh` reserves its output atomically, installs tack only into the temporary home for non-baseline runs and selects provider independently of scenario. `scenarios.py` supplies the JavaScript and multi-session fixtures. A second CLI invocation starts a fresh session in the same fixture; its transcript is stored separately.
+
+`metadata.py` records source, effective experiment configuration, prompt, fixture and hidden-check fingerprints, CLI and model observations, setup time and run identity. Metric version 3 keeps these inputs in `metrics.json`; `report.py` separates incompatible cohorts and source/configuration variants, reports acceptance-rate intervals and includes failed-attempt costs. Unknown observed models remain separate rather than being inferred from a requested model.
+
+`evals/batch.py` validates a finite JSON manifest, shuffles conditions with a recorded seed, bounds concurrency and CLI duration, and resumes only finished matching runs. Output collisions and source changes stop execution. Spend limits use explicit estimates and observed costs between waves, so they are not hard provider billing caps. Run-count and timeout limits remain enforceable when cost is unavailable. There is no background or CI model experiment.
+
 CI runs ShellCheck and content validation on Linux, plus installer and hook tests on Linux and macOS. Tests use temporary homes and repositories so installation and git operations stay isolated.
 
 Behaviour evaluations are a separate, manually invoked flow: `evals/run.sh` prepares a temporary scenario and captures an agent transcript; `grade.py` inspects the resulting repository and transcript and writes `metrics.json`; `report.py` aggregates those metrics. They use real model tokens and are not part of CI. Published measurements and their limits are in [results](results.md).

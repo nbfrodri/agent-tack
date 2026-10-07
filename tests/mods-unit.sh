@@ -9,6 +9,9 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ESBUILD_VERSION=0.25.10
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/tack-mods-unit.XXXXXX")" || exit 1
 trap 'rm -rf "$WORK"' EXIT
+export HOME="$WORK/home" XDG_CONFIG_HOME="$WORK/home/.config" XDG_STATE_HOME="$WORK/home/.local/state"
+export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL="$WORK/home/.gitconfig" npm_config_cache="$WORK/npm-cache"
+mkdir -p "$HOME"
 
 if ! command -v node >/dev/null 2>&1 || ! command -v npx >/dev/null 2>&1; then
   echo "mods-unit: node and npx are required" >&2

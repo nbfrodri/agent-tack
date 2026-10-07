@@ -1,6 +1,6 @@
 ---
 name: project-docs
-description: Project docs for humans (README, docs/) and AIs (AGENTS.md): technical sheet, architecture, ADRs, plans, audits, continuous handoffs, AI usage log, templates. Use when writing or updating docs, saving plans or audits, or for a handoff (document, write a handoff, summarise progress).
+description: Maintain project instructions and human docs: architecture, ADRs, plans, audits and handoffs. Use for documentation work or saving project progress.
 ---
 
 # Project documentation

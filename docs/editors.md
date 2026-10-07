@@ -69,7 +69,10 @@ Restart the tool or editor after installing or updating so it reloads instructio
 
 They are configured only when installed; rerun `./install.sh` after installing one of them later.
 
+Project capabilities do not require a native agent adapter. The project's AGENTS.md indexes local skills and portable role definitions; read matching definitions explicitly when native discovery is unavailable. `.agents/agents/` is a tack convention, not a universal editor configuration directory. Existing delegation permissions still govern invocation, and unsupported roles can be followed sequentially. See [project capabilities](customization.md#project-capabilities).
+
 ## Windows
+
 
 - **WSL2 is the supported path** (below). Native Windows is not supported yet: tack is bash scripts, symlinks and bash git hooks.
 - **Native Windows with Git Bash (experimental):** the checkout keeps LF endings and holds no symlinks. CI runs the validator, the installer, commits through the git hooks and the command guard on `windows-latest` (`tests/smoke.test.sh`); `tack doctor` and `./uninstall.sh` still misjudge paths and permissions there ([#111](https://github.com/nbfrodri/agent-tack/issues/111)), and the AI tools themselves are not exercised. `./install.sh` needs symlinks: turn on Developer Mode (*Settings > System > For developers*), or the installer stops before changing anything. The test suites need Linux or macOS; on Windows run them in a container, for example from PowerShell: `docker run --rm -v "${PWD}:/src:ro" ubuntu:24.04 bash -c 'apt-get update -qq && apt-get install -yqq git jq python3 >/dev/null && git clone -q /src /w && cd /w && tests/run-all.sh'`.

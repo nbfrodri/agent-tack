@@ -386,7 +386,8 @@ check "CSV starts with its header" out_matches "^day_utc,project,tool,model,inpu
 check "skills report runs" expect_exit 0 "$CLI" log --skills
 check "skills report counts each skill" out_matches "^skill +dev-workflow +2$"
 check "skills report counts subagents" out_matches "^agent +code-reviewer +1$"
-check "skills report lists what was never used" out_matches "^Never used.*testing"
+check "skills report distinguishes unobserved capabilities" out_matches "^No observed use.*testing"
+check "skills report states its observation limit" out_matches "recorded events only"
 check "levels report runs" expect_exit 0 "$CLI" log --levels
 check "levels report counts levels per project" out_matches "^/p/app +strict +1$"
 check "levels report shows turns without a stated level" out_matches "^/p/app +missing +1$"

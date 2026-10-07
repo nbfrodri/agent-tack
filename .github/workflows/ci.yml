@@ -66,6 +66,8 @@ jobs:
           tests/safety.test.sh
           tests/guard.test.sh
           tests/evals.test.sh
+          tests/evidence.test.sh
+          tests/project-capabilities.test.sh
           tests/smoke.test.sh
 
   windows:

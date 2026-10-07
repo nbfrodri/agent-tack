@@ -2,6 +2,16 @@
 
 Day-to-day use: switching tack on and off, what to ask, and keeping it up to date.
 
+## Project skills and roles
+
+During authorized implementation in an enabled project, the assistant may create or refine a useful local skill or specialist role without a separate confirmation. It first reuses existing capabilities and only persists concrete project knowledge: a recurring procedure, planned repeated work or a distinct reusable review responsibility. Small one-off edits need no new capability.
+
+Skills live in `.agents/skills/<name>/SKILL.md`; portable role definitions live in `.agents/agents/<name>.md`. A short index in the project's `AGENTS.md` links their triggers and paths so later sessions can read them. An established project layout can be kept. Validate with `python3 ~/.agents/tack/lib/capability_validation.py project .`.
+
+Creating a role does not start an agent. Invocation still follows the workflow's delegation rules and actual runtime capabilities; a tool without native support can read the role and perform its checks sequentially. Read-only reviews stay read-only. Global promotion is a separate change after cross-project usefulness is demonstrated. See [customization](customization.md#project-capabilities).
+
+For everyday configuration, start with the workflow mode, `check-fast`, `skill-groups` and `delegation`. The remaining settings are available when a concrete need arises; no new toggle is required for local capability creation. A project's instructions can constrain this behavior.
+
 ## CLI help
 
 Run `tack help`, `tack --help` or `tack -h` for command syntax, options, exit codes and examples. Help also works outside a Git repository. Running `tack` without a command displays project status.

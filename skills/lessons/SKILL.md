@@ -1,6 +1,6 @@
 ---
 name: lessons
-description: Turn the user's corrections and lasting preferences into versioned rules in the right file, so mistakes don't repeat. Use when the user corrects how you worked or states a rule (corrections, always, never, from now on, remember this).
+description: Save corrections and lasting rules. During authorized implementation, create or refine reusable project skills and specialist roles when existing capabilities leave a concrete gap.
 ---
 
 # Lessons
@@ -24,7 +24,9 @@ A lasting fact about the user that is not a rule and not about one project (thei
 | One project only (its folders, commands, naming, domain terms, quirks) | That repo's `AGENTS.md` (create it if missing, plus a `CLAUDE.md` containing `@AGENTS.md`), committed in that repo |
 | How the user works everywhere (language, git, communication, approvals) | `global/AGENTS.md` in the user's config repo |
 | How to do something in a domain the skills cover (testing, API, DB, deploy…) | The relevant `skills/<name>/SKILL.md` or its `references/*.md` |
-| A recurring task that no skill covers yet | Propose a new skill to the user before creating it |
+| A reusable project procedure or specialist role missing from existing capabilities | Create or refine a local skill or agent during authorized implementation; follow `references/project-capabilities.md` |
+
+For project-capability creation and later reuse, read `references/project-capabilities.md`. A concrete repeated procedure can justify a skill without waiting for a correction. Keep global promotion separate from local work.
 
 The user's config repo is where the skills live:
 ```bash

@@ -1,6 +1,6 @@
 ---
 name: improve
-description: Review existing code or a project, propose prioritised improvements and create deduplicated GitHub issues for verified findings through read-only reviews. Always asks scope and focus first. Use for review, audit or improvement requests on existing work.
+description: Review existing work, prioritize improvements and record verified findings as deduplicated GitHub issues. Use for audits or improvement requests; establish scope first.
 ---
 
 # Improve

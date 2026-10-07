@@ -1,6 +1,6 @@
 ---
 name: new-project
-description: Bootstrap a new project: git, structure, tests ready for TDD, lint and format, CI, docs, issue templates, Dependabot, tack enabled. Use when starting or scaffolding a project or adding missing basics (create a project, start an app, initialise a repo).
+description: Bootstrap a project or add missing foundations: structure, tests, tooling, CI and docs. Use when starting, scaffolding or initializing a repository.
 ---
 
 # New project
@@ -18,6 +18,8 @@ Recommend the option that fits: compose when there's a database or other service
 Follow `dev-workflow` → `references/conventions.md` and the stack's file in `references/languages/` (pnpm for JS/TS, uv for Python, Composer + Pint for PHP, English code, kebab-case files in TS). Prefer the ecosystem's official generator (e.g. `npm create vite`, `uv init`, `cargo new`, `go mod init`, `dotnet new`) over writing boilerplate by hand, and current stable versions of tools.
 
 ## 2. Foundations checklist
+Keep the initial capability catalog empty unless concrete project work justifies a procedure or role. When it does, follow `lessons` → `references/project-capabilities.md`; index local definitions in AGENTS.md for later sessions.
+
 - `git init -b main`, plus a `.gitignore` for the language, editor and OS. Ignore `.env`.
 - Enable the workflow: `tack enable --shared` (commits a `.tack` marker so it travels with the repo). For a team repo where others don't use it, `tack enable` keeps it local instead.
 - `.editorconfig` copied from this skill's `assets/editorconfig`.
