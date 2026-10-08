@@ -1,6 +1,6 @@
 # Plan: measure the value and cost of a complete development journey
 
-Status: implementation in progress. Requested after the value-first pilot; supersedes its decision to defer lifecycle evaluation. Starting product: `47ae32d688a46359f0f9117c96b7b79ad3650e93`. The user additionally requested product improvements toward the four outcomes. Implement and regression-test the concrete gaps below, then freeze the candidate before model calls; do not tune it against delivered outputs.
+Status: implementation and the full evaluation are complete; the four broader outcome goals are not all achieved. Requested after the value-first pilot; supersedes its decision to defer lifecycle evaluation. Starting product: `47ae32d688a46359f0f9117c96b7b79ad3650e93`. The user additionally requested product improvements toward the four outcomes. The concrete gaps below were regression-tested and the candidate frozen before model calls; delivered outputs did not change the frozen product.
 
 ## Question and comparisons
 
@@ -46,3 +46,14 @@ The product and offline tests were committed in `145f3b1`; the protocol manifest
 During the first orders block, `m1-orders-1-project/change` ended with a provider capacity error after making changes. The worker retained the failed session, but the controller did not classify that turn failure as an infrastructure exception and continued the planned stages. It was not retried. This is a collection limitation: report the interruption, include its time, mark its missing token usage as unknown, and add a sensitivity view excluding the whole affected matched block. Do not attribute the outage to tack or treat missing usage as free work. Fixtures, acceptance criteria, product and scheduled comparisons remain unchanged.
 
 A read-only inspection also confirmed that both older value-first product archives contained evaluator source (`evals/quality_grade.py`) and reference tests. No logged read of that grader was found in those eight transcripts; absence of a logged read does not establish isolation. Preserve the old report and evidence, disclose this limitation in the new results, and use the lifecycle archive's explicit exclusions going forward.
+
+## Delivery record
+
+- Added and regression-tested clean-clone `verify --all`, reuse of recorded setup choices without shared execution trust, focused contract review and corrected strict-mode help. The functional regressions were observed failing before their fixes.
+- Completed all 24 journeys, 97 development attempts (including one failed provider turn and one final repair) and 20 independent reviews. The comparison retained every scheduled condition despite unfavorable costs. No model retries or replacements were hidden.
+- Published [complete results](../../benchmarks/2026-10-08-lifecycle-value.md), per-journey facts, anonymous review code/findings, supplemental probes, the sealed orchestrator assessment and raw archive hashes. README and current guides state the negative cost/quality conclusion.
+- Corrected reporting of missing token usage and transported commits. After collection, shared archive isolation was applied to older runners and provider failure detection was hardened; two real-archive/controller regression tests cover those changes. None altered the frozen evidence.
+- Added a small post-collection contract-guide clarification about serialization and outdated tests. It is documented as unmeasured, not credited to the frozen candidate.
+- Validation: all 27 local suites passed in 294 seconds after runner hardening, with CI-pinned lint clean. Final documentation links are checked separately. PR #137 remains subject to current-head CI before merge.
+
+The brief project guide matched tack's 8/8 acceptance and equaled or exceeded its average independent code quality, at lower cost. Tack's setup and later changes were slower. The broader goals remain product outcomes to prove; completing this implementation and evaluation is not evidence that those goals were met. Further work should target an observed project need, retain the simpler baseline and avoid adding mandatory generic workflow to explain away the overhead.

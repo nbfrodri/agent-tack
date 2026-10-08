@@ -4,7 +4,7 @@ Use for public interfaces, configuration, persistence or producer/consumer chang
 
 Read the canonical contract and affected callers. For each changed rule, identify the production path and a meaningful example that would fail without the change. Inspect invalid and boundary inputs as well as the happy path. Validate each supplied input before normalization or precedence can hide an invalid value; preserve documented error types and avoid mutating caller state.
 
-Check compatibility at the consumer boundary, not only inside the producer. Read the dependency at the actual branch/revision; distinguish planned, branch-only and merged behavior. Select both sides' contract/integration commands when a shared interface changes. A clean Git merge is not an integration test.
+Check compatibility at the consumer boundary, including serialization when it crosses a transport. Read the dependency at the actual branch/revision; distinguish planned, branch-only and merged behavior. Select both sides' contract/integration commands when a shared interface changes. When requirements change, update stale assertions instead of hiding fields or weakening behavior to make old tests pass. A clean Git merge is not an integration test.
 
 Use red/green for the behavioral change and inspect the assertion that failed. A syntax/import failure or unrelated failing command is not evidence that the regression test detected the defect. After implementation, compare the actual code and tests with the changed rules; add missing consequential coverage rather than relying on test count or a numeric review score.
 

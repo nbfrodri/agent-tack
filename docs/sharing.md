@@ -87,11 +87,14 @@ Leo pulls the change and runs:
 tack mode                       # auto (shared)
 tack config reply-style         # brief (shared)
 tack context
-tack verify --plan
+tack verify --all --plan         # preview declared checks even in a clean clone
 tack trust                      # after reviewing the commands in his clone
+tack verify --all               # establish a checked starting point
 ```
 
 He starts a new AI session. Shared defaults work without importing Maya's Git config. If Leo has an old local override, `tack config` shows it; `tack config reply-style --unset` removes it.
+
+Startup points the assistant to recorded setup choices. Leo checks that the effective collaboration setting and context paths match the agreement, then resolves only local gaps. A shared file transferring correctly does not prove that the original choices were correct. Keep the existing architecture guide instead of creating a second one at a default path.
 
 ### 3. Work on real tasks
 

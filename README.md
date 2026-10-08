@@ -89,13 +89,13 @@ Working on backend and frontend in parallel? Share canonical contracts and focus
 
 Claude Code, Codex, Gemini CLI, GitHub Copilot, OpenCode, Crush and Cursor receive the integrations they support. Git hooks are shared; native agent and runtime hook coverage varies. [Support matrix and setup](docs/editors.md).
 
-`tack verify` selects existing checks from changed paths. An optional `checks-map.json` maps areas of your code to commands. It reports failed, timed-out and unmapped work; it does not silently treat missing checks as success. [Verification guide](docs/verification.md).
+`tack verify` selects existing checks from changed paths; `tack verify --all` also checks a clean clone or completed integration. An optional `checks-map.json` maps code areas to commands. Results expose failures, timeouts and unmapped work. [Verification guide](docs/verification.md).
 
 ## What the evidence says
 
-The latest Codex comparison used ordinary task requests, 48 coding sessions and 32 blind code reviews. **Luna produced tests that caught the original defect in 8/8 tasks with tack, versus 1/8 without it.** Sol did so in every condition. Selected project preferences transferred correctly in all eight setup trials; execution trust stayed local.
+The latest comparison followed setup, delivery, a teammate's later change and review resolution: **97 development attempts and 20 independent code reviews**. Tack and a short project `AGENTS.md` each passed final acceptance in 8/8 journeys; plain adoption passed 7/8. Additional review still found defects, including one with tack.
 
-That benefit has overhead: the candidate took **1.86x the coding time with Luna and 1.40x with Sol** compared with plain projects. The proposed speed targets were not met, and independent review did not establish a general code-quality advantage. [Results, code review and limits](docs/benchmarks/2026-10-08-quality-efficiency.md) | [All results](docs/results.md) | [Decision](docs/adr/0003-project-verification-over-generic-process.md).
+Against the short guide, tack took **44.7% more time and 69.6% more input tokens with Luna**, and **30.4% more time with Sol**, without a general code-quality advantage. Setup and later changes were also slower. This study does **not** justify the extra cost against that simpler alternative. Use tack for concrete checks and portable team preferences you need; measure the tradeoff in your project. [Complete results and limits](docs/benchmarks/2026-10-08-lifecycle-value.md) | [All results](docs/results.md) | [Decision](docs/adr/0003-project-verification-over-generic-process.md).
 
 ## Learn more
 

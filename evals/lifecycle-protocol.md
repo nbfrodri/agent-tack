@@ -1,6 +1,6 @@
 # Lifecycle value protocol
 
-Frozen before live calls in `batches/lifecycle-value.json`. The implementation plan is [here](../docs/plans/2026-10-08-lifecycle-value-implementation.md). This experiment continues despite adverse product results; only infrastructure/access failures stop unscheduled work.
+Frozen before live calls in `batches/lifecycle-value.json`. The implementation record is [here](../docs/archive/plans/2026-10-08-lifecycle-value-implementation.md). This experiment continues despite adverse product results; only infrastructure/access failures stop unscheduled work.
 
 ## Equal requests and different development setups
 

@@ -24,6 +24,8 @@ Success means fewer faulty deliveries, clearer verification and less human rewor
 
 The [value-first preflight](benchmarks/2026-10-08-value-first.md) explicitly compared tack with ordinary project instructions. That cheaper baseline did best on one task and tied code quality on the other. Choose it when it meets your needs. Tack's optional coordination helpers may solve different problems, but their lifecycle benefit must be measured rather than inferred from more workflow activity.
 
+The subsequent [complete-journey comparison](benchmarks/2026-10-08-lifecycle-value.md) included setup, later changes and review resolution. Tack did not outperform a brief project guide on accepted deliveries or average code quality, and took more total time, including longer setup and later changes. Its additional cost is not justified by those results. Shared configuration and clean-clone checks are working capabilities; general productivity and onboarding savings remain unproven.
+
 ## When the extra work is worthwhile
 
 Use these four outcomes to decide what to enable. A longer conversation, a larger test suite or more documents is not the outcome.
