@@ -43,3 +43,5 @@ Codex execution uses the documented [non-interactive JSON event stream](https://
 ## Evaluator corrections
 
 During artifact inspection, before final grading, the PR-template detector was corrected to accept uppercase `PULL_REQUEST_TEMPLATE.md` in standard locations, with an offline regression test. The original lowercase-only implementation would incorrectly reject a valid template. The predeclared criterion (a suitable PR template), model prompts, product files and behavioral acceptance tests are unchanged; every journey uses the corrected detector.
+
+Final infrastructure review also isolated HOME/XDG/Git for every evaluator self-test and post-run npm mutation probe. Model sessions already had private homes; the original grading occurred in the disposable container. The correction prevents npm cache writes to a developer's home when running the evaluator locally. Acceptance criteria and mutants are unchanged; offline grading is repeated against the saved snapshots without new model sessions.

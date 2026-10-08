@@ -31,6 +31,21 @@ def reference(root):
 
 
 class AdoptionTests(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory(prefix='tack-adoption-test-')
+        self.addCleanup(temporary.cleanup)
+        context = runner.participant(Path(temporary.name) / 'home', None)
+        isolated = context.__enter__()
+        self.addCleanup(context.__exit__, None, None, None)
+        environment = patch.dict(os.environ, isolated, clear=True)
+        environment.start()
+        self.addCleanup(environment.stop)
+
+    def test_npm_cache_stays_in_the_temporary_home(self):
+        result = runner.command(['npm', 'config', 'get', 'cache'], os.environ)
+        cache = Path(result['stdout'].strip()).resolve()
+        self.assertTrue(cache.is_relative_to(Path(os.environ['HOME']).resolve()))
+
     def test_budget_bounds_and_fixed_order(self):
         manifest = json.loads((ROOT / 'evals/batches/project-adoption.json').read_text(encoding='utf-8'))
         self.assertEqual(len(runner.matrix(manifest)), 8)

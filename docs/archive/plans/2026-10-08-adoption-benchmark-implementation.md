@@ -23,5 +23,5 @@ This is a small synthetic adoption experiment, not a field study or proof of gen
 
 - All 24 sessions completed on the frozen product; 16/16 code tasks passed hidden acceptance and both conditions detected 12/12 injected faults. Configuration transfer and the two missing explicit shared defaults are reported separately.
 - All production/test diffs and red/green sequences reviewed; runtime model and medium-effort observations confirmed. Raw evidence archived locally with its published hash; temporary authentication removed.
-- Offline evidence tests: 15 existing plus eight adoption regressions passed. Pinned lint and documentation validation passed. CI remains the final integration gate.
+- Offline evidence tests: 15 existing plus nine adoption regressions passed. Pinned lint and documentation validation passed. CI remains the final integration gate.
 - Results, protocol, all-run facts, code review, architecture, README and owning engineering/verification guides updated. No runtime product behavior was changed or tuned during this comparison.

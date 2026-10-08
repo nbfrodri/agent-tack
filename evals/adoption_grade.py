@@ -9,6 +9,7 @@ import subprocess
 import tempfile
 
 from adoption_fixture import seed
+from adoption import participant
 
 
 HIDDEN = r'''
@@ -94,7 +95,9 @@ def mutations(root, stage):
             clone = Path(temp) / 'repo'
             shutil.copytree(root, clone, symlinks=True)
             (clone / file).write_text(content, encoding='utf-8')
-            result = subprocess.run(['npm', 'test'], cwd=clone, capture_output=True, text=True, encoding='utf-8', timeout=30)
+            with participant(Path(temp) / 'home', None) as env:
+                result = subprocess.run(['npm', 'test'], cwd=clone, env=env, capture_output=True,
+                                        text=True, encoding='utf-8', timeout=30)
             outcomes[name] = {'detected': result.returncode != 0, 'exit_code': result.returncode,
                               'output': (result.stdout + result.stderr)[-5000:]}
     return outcomes
