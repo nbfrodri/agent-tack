@@ -33,15 +33,16 @@ class EvidenceReporting(unittest.TestCase):
         original = dict(hash='a', subject='feat: quote', body='feat: quote')
         transport = dict(hash='b', subject='chore: transport evaluation snapshot', body='controller')
         current = dict(hash='c', subject='feat: shipping', body='feat: shipping')
+        labels = dict(hash='d', subject='feat: use agreed checkout label', body='controller')
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             self.stage(root, 'build', [original], [])
-            self.stage(root, 'change', [original, transport, current], [])
+            self.stage(root, 'change', [original, transport, labels, current], [])
             stages = dict(build=dict(workflow={}), change=dict(workflow={}))
             authored_history(root, stages)
             self.assertEqual(stages['build']['workflow']['new_authored_commits'], 1)
             self.assertEqual(stages['change']['workflow']['new_authored_commits'], 1)
-            self.assertEqual(stages['change']['workflow']['controller_commits_excluded'], 1)
+            self.assertEqual(stages['change']['workflow']['controller_commits_excluded'], 2)
             self.assertTrue(stages['change']['workflow']['new_conventional'])
 
 

@@ -33,16 +33,21 @@ def authored_history(directory, stages):
     seen = set()
     for name, metrics in stages.items():
         evidence = load(directory / name / 'git.json')
-        commits = [c for c in evidence['commits'] if c['subject'] != 'chore: transport evaluation snapshot']
+        controller_titles = {'chore: transport evaluation snapshot', 'feat: use agreed checkout label', 'feat: seed application'}
+        commits = [c for c in evidence['commits'] if c['subject'] not in controller_titles]
         new = [c for c in commits if c['hash'] not in seen]
         seen.update(c['hash'] for c in commits)
         metrics['workflow'].update(
             new_authored_commits=len(new),
             new_conventional=bool(new) and all(re.match(r'^[a-z]+(?:\([^)]+\))?!?: .+', c['subject']) for c in new),
             controller_commits_excluded=len(evidence['commits']) - len(commits),
-            clean_delivery=not evidence['status'],
+            clean_snapshot=not evidence['status'],
             unresolved_merge=bool(evidence['unresolved']),
-            branch_evidence_limit='Observed end branch; review/repair inherit a controller transport branch. Not proof the actor created it.')
+            branch_evidence_limit='Observed end branch; review/repair inherit a controller transport branch. Not proof the actor created it.',
+            status_limit='Raw status includes controller-supplied next-contract and review inputs; not by itself proof of uncommitted model changes.')
+        for field in ('commits', 'conventional'):
+            if field in metrics['workflow']:
+                metrics['workflow']['observed_history_' + field] = metrics['workflow'].pop(field)
 
 
 def changes(before, after, scenario):
@@ -69,7 +74,14 @@ def setup_evidence(directory, case):
     result = dict(has_instructions=bool(agents), instructions_characters=len(agents),
                   recorded_choices='setup choices' in agents.lower(), profile=profile,
                   shared_activation=(root / '.tack').is_file(),
+                  extra_default_architecture=(root / 'docs/architecture.md').is_file(),
                   declined_capability_files=[str(p.relative_to(root)) for p in root.rglob('SKILL.md')])
+    if case['condition'] == 'tack':
+        config = (profile or {}).get('config', {})
+        expected = {'architecture-path': 'guide/architecture.md', 'plans-path': 'work/plans',
+                    'handoffs-path': 'work/handoffs', 'collaboration': 'solo' if case['scenario'] == 'stock' else 'team',
+                    'reply-style': 'brief', 'conventional-commits': True}
+        result['explicit_shared_choices'] = {key: config.get(key) == value for key, value in expected.items()}
     clone = directory / 'change/clone.json'
     if clone.exists():
         result['clone_observations'] = load(clone)
@@ -127,6 +139,9 @@ def review_results(source):
         if digest(directory / 'bundle/bundle.json') != job['sha256']:
             raise ValueError('review bundle changed: ' + job['id'])
         grade = load(directory / 'grade.json')
+        session_file = directory / 'evidence/session.json'
+        if session_file.is_file():
+            grade = {**load(session_file), **grade}
         attempt = dict(id=job['id'], **identities[job['id']], grade=grade)
         attempts.append(attempt)
         if not grade.get('completed') or not grade.get('weighted_scores'):

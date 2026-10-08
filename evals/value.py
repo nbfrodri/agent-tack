@@ -12,6 +12,7 @@ import threading
 
 from quality import ROOT, digest, run, save, session
 from value_fixture import PILOT_TASKS, request
+from product_archive import create as create_product_archive
 
 CONDITIONS = ('plain', 'project', 'current', 'lean')
 
@@ -102,14 +103,11 @@ def execute(args, manifest, cases):
     args.output.mkdir(parents=True)
     save(args.output / 'manifest.json', manifest)
     save(args.output / 'order.json', cases)
-    save(args.output / 'controller.json', {p.name: digest(p) for p in [ROOT / 'evals/value.py',
-         ROOT / 'evals/value_fixture.py', ROOT / 'evals/quality.py', ROOT / 'evals/quality_worker.py', ROOT / 'evals/quality_fixture.py']})
+    save(args.output / 'controller.json', {p.name: digest(p) for p in (ROOT / 'evals').glob('*.py')})
     archives = {}
     for condition, revision in manifest['revisions'].items():
-        if run(['git', '-C', ROOT, 'rev-parse', revision + '^{commit}']) != revision:
-            raise ValueError('revision mismatch')
         archives[condition] = args.output / (condition + '.tar')
-        run(['git', '-C', ROOT, 'archive', '--output', archives[condition], revision])
+        create_product_archive(ROOT, revision, archives[condition])
     save(args.output / 'products.json', {k: digest(v) for k, v in archives.items()})
     save(args.output / 'image.json', json.loads(run(['docker', 'image', 'inspect', manifest['image']]))[0]['Id'])
     stopped = threading.Event()

@@ -5,7 +5,6 @@ import hashlib
 import json
 from pathlib import Path
 import random
-import tarfile
 import threading
 import time
 import uuid
@@ -13,6 +12,7 @@ import uuid
 from adoption import transcript_metrics
 from lifecycle_fixture import CONDITIONS, PROMPTS, SCENARIOS, STAGES
 from quality import ROOT, digest, run, save
+from product_archive import EXCLUDES, create as create_product_archive
 
 
 def matrix(manifest):
@@ -41,14 +41,7 @@ def matrix(manifest):
 
 
 def archive_product(revision, output):
-    if run(['git', '-C', ROOT, 'rev-parse', revision + '^{commit}']) != revision:
-        raise ValueError('unresolved product revision')
-    run(['git', '-C', ROOT, 'archive', '--output', output, revision, '--', '.',
-         ':(exclude)evals', ':(exclude)tests', ':(exclude)docs/benchmarks', ':(exclude)docs/plans',
-         ':(exclude)docs/archive', ':(exclude)docs/audits', ':(exclude).github'])
-    with tarfile.open(output) as archive:
-        if any(p.name.startswith(('evals/', 'tests/')) for p in archive):
-            raise ValueError('private evaluator code leaked into runtime archive')
+    create_product_archive(ROOT, revision, output)
 
 
 def isolated_grade(image, snapshot, scenario, stage, seed_probe=False):
@@ -116,6 +109,8 @@ def journey(case, args, manifest, archive, stopped):
             run(['docker', 'exec', container, 'tar', '-xf', '/home/dev/product.tar', '-C', '/home/dev/product'])
 
         def stage(name):
+            if stopped.is_set():
+                raise RuntimeError('another journey reported an infrastructure failure; stop remaining stages')
             run(['docker', 'exec', container, 'python3', '/home/dev/lifecycle_worker.py', name], timeout=manifest['timeout_seconds'] + 240)
             run(['docker', 'cp', container + ':/home/dev/evidence/.', output])
             data = json.loads((output / name / 'session.json').read_text(encoding='utf-8'))
@@ -128,6 +123,8 @@ def journey(case, args, manifest, archive, stopped):
             result['stages'][name] = data
             print(case['id'], name, data['completed'], data['seconds'], flush=True)
             save(output / 'journey.json', result)
+            if any(event.get('type') == 'turn.failed' for event in data['errors']):
+                raise RuntimeError('provider interrupted the recorded turn; retain this attempt and stop unscheduled work')
 
         for name in STAGES:
             stage(name)
@@ -174,11 +171,11 @@ def main():
         raise ValueError('image mismatch')
     save(args.output / 'manifest.json', manifest)
     save(args.output / 'order.json', cases)
-    save(args.output / 'controller.json', {p.name: digest(p) for p in (ROOT / 'evals').glob('lifecycle*.py')})
+    save(args.output / 'controller.json', {p.name: digest(p) for p in (ROOT / 'evals').glob('*.py')})
     archive = args.output / 'product.tar'
     archive_product(manifest['revision'], archive)
     save(args.output / 'product.json', dict(revision=manifest['revision'], sha256=digest(archive),
-         excludes=['evals', 'tests', 'docs/benchmarks', 'docs/plans', 'docs/archive', 'docs/audits', '.github']))
+         excludes=list(EXCLUDES)))
     stopped = threading.Event()
     with ThreadPoolExecutor(max_workers=2) as pool:
         results = list(pool.map(lambda case: journey(case, args, manifest, archive, stopped), cases))
