@@ -155,7 +155,7 @@ def main():
     args = parser.parse_args()
     manifest = json.loads(args.manifest.read_text(encoding='utf-8'))
     matrix(manifest, 'coding')
-    args.output.mkdir()
+    args.output.mkdir(parents=True)
     jobs = prepare(args.source, args.output, manifest['seed'])
     if len(jobs) not in (2, 32):
         raise ValueError('expected two pilot or 32 confirmation reviews')

@@ -167,7 +167,7 @@ def main():
     if not args.auth or not args.auth.is_file() or not args.output:
         parser.error('execution requires --auth and a new --output directory')
     args.output = args.output.resolve()
-    args.output.mkdir()
+    args.output.mkdir(parents=True)
     save(args.output / 'manifest.json', manifest)
     save(args.output / 'order.json', cases)
     save(args.output / 'controller.json', {p.name: digest(p) for p in (ROOT / 'evals').glob('quality*.py')})
