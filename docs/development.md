@@ -75,6 +75,8 @@ Offline regression suites are `tests/evidence.test.sh` and `tests/project-capabi
 
 ### Individual runs and historical metrics
 
+The [adoption comparison](benchmarks/2026-10-08-adoption-protocol.md) uses `evals/adoption.py`, a separate runner for setup and second-clone work. Its manifest is `evals/batches/project-adoption.json`; it is not a `batch.py` manifest. Supply a frozen product checkout, the pinned subscription launcher, a private authentication file and a new private output directory. `--dry-run` lists the matrix without model calls. Keep `adoption_grade.py` outside the model environment until all sessions finish, then run it against the output. `tests/evidence.test.sh` includes its offline isolation, timeout and grading regressions.
+
 Real sessions on throwaway repos, comparing tack with a plain assistant. They use tokens, so run them by hand after choosing the experiment budget.
 ```bash
 evals/run.sh <new-project|bug-fix|release|vague-requirement|conventions|attachments|search> <baseline|auto|lean|lite|standard|strict> [repetition]   # harness = auto

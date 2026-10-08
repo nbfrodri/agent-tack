@@ -1,6 +1,6 @@
 # Project adoption benchmark implementation
 
-Status: in progress. Product under test: `a54eda9`, before this benchmark's documentation changes.
+Status: implementation and experiment complete; integration is tracked by the PR checks. Product under test: `a54eda9`, before this benchmark's documentation changes.
 
 ## Outcome
 
@@ -18,3 +18,10 @@ Explain which engineering practices remain, what changed, and what `tack verify`
 ## Evidence boundaries
 
 This is a small synthetic adoption experiment, not a field study or proof of general quality improvement. Both conditions receive useful project guidance and equal engineering requirements. Branches, commits, test counts and file creation do not earn correctness points. Hidden acceptance, regression sensitivity, reuse across clones and observed time/tokens are reported separately. External skill downloads, live GitHub issue/PR creation, editor diversity and human decision time are outside this experiment.
+
+## Delivery evidence
+
+- All 24 sessions completed on the frozen product; 16/16 code tasks passed hidden acceptance and both conditions detected 12/12 injected faults. Configuration transfer and the two missing explicit shared defaults are reported separately.
+- All production/test diffs and red/green sequences reviewed; runtime model and medium-effort observations confirmed. Raw evidence archived locally with its published hash; temporary authentication removed.
+- Offline evidence tests: 15 existing plus eight adoption regressions passed. Pinned lint and documentation validation passed. CI remains the final integration gate.
+- Results, protocol, all-run facts, code review, architecture, README and owning engineering/verification guides updated. No runtime product behavior was changed or tuned during this comparison.

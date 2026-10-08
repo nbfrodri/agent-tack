@@ -6,12 +6,14 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ### Added
 
+- A reproducible adoption benchmark covering setup, a second clone and fresh-session changes, with published null quality results, configuration-transfer evidence and time/token overhead.
 - Optional versioned `tack.json` preferences and mode through `--shared`, with local overrides and private execution trust. Shared context paths are used by setup, scaffolding, context and trace discovery.
 - Stable `tack config --get` and `--json` reads, plus clone-to-clone and native Windows regressions.
 - Guided selection of external skills during requested onboarding, using existing installers and recording source, revision, references and local adaptations.
 
 ### Changed
 
+- Engineering guidance explicitly records retained TDD, pragmatic SOLID and Git/PR practices; verification documentation includes a concrete incomplete-result example.
 - README and human guides are organized around setup, daily use, configuration, verification and sharing, including personal use and custom forks. Local documentation links and anchors are checked during validation.
 - Formal trace links, documentation delegation and numeric review scores are optional. `tack trace` reports textual links rather than claiming test coverage; autonomous improvement uses bounded, observable findings.
 - Fast and Stop fallback checks use the verifier's bounded executor with pipeline failure detection, without requiring an external timeout utility.

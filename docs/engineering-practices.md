@@ -52,7 +52,7 @@ Use an ADR for a consequential design choice with alternatives; a handoff for wo
 - Regression tests exercise real commands and defects, including pipeline failures, timeouts, staged-only changes and a check that mutates the Git index. The latter cases were reproduced as failures before the fixes.
 - Installer ownership/restoration tests protect independent user settings. Trust stays local; project adoption cannot grant it.
 - CI checks shell/Python lint, Bash compatibility and native Windows behavior. A passing Linux test does not substitute for a claimed Windows capability.
-- Public benchmarks retain failed and adverse outcomes. The new verifier still needs a real-model comparison before claiming reduced defect rates or cost.
+- Public benchmarks retain failed and adverse outcomes. The [adoption comparison](benchmarks/2026-10-08-adoption.md) found useful configuration transfer, tied correctness and higher time cost; it does not establish reduced defect rates or improved productivity.
 
 The [development guide](development.md) gives the commands contributors use. The [team example](sharing.md#example-a-team-building-with-ai) shows adoption and daily use. Shared project preferences now live in optional `tack.json`; local overrides and personal defaults remain separate. See [configuration](configuration.md).
 
