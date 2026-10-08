@@ -46,6 +46,8 @@ Ask your assistant:
 
 In an existing project, the assistant reuses what is already there. In a new project, it asks about the intended application and stack. It can propose tests, CI, a PR template, a development guide, a check map or a reusable skill when there is a reason for one. It can also offer individual [external skills](external-skills.md) after checking for overlap with existing guidance. Nothing from those collections is downloaded by the base installer. Previous answers and approvals count; focused tasks do not need unrelated onboarding.
 
+For team preferences, the assistant can [preview and apply the selected values together](configuration.md#apply-several-selected-preferences), including values that match current defaults. This keeps the choices portable without copying personal settings. Local-only setup remains available.
+
 ## 4. Add base guidance if you want it
 
 ```bash
@@ -86,3 +88,5 @@ Trust is local to this clone. It permits tack to run project formatters and chec
 For scripts, `tack trusted --quiet` exits 0 when locally trusted and 1 otherwise. `tack status --quiet` checks activation with the same exit-code convention; it does not check trust.
 
 Start a new AI session to load saved choices. Leave the mode at `auto` for most work. See [daily use](usage.md), the [team walkthrough](sharing.md) or [configuration](configuration.md) for the next step.
+
+To stop using tack or retire old plans, see [leaving and tidying a project](leaving.md). Disabling a workflow and deleting project knowledge are separate decisions.

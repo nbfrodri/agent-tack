@@ -150,6 +150,8 @@ The 2026-10-08 Codex comparison uses experiment-only helpers in `docs/benchmarks
 
 `bin/tack config` delegates to `lib/project_config.py`; modes consult the same profile reader. Version 1 `tack.json` is optional and contains only mode and allowed preferences. Local overrides remain in Git config. Activation and trust continue through their existing CLI contracts, separate from the shared profile. No shared setting grants execution trust or selects project-only autonomy.
 
+`config --shared --apply FILE` uses the same profile validator to merge explicitly selected preferences and mode. It validates the complete merge and portable/effective context paths before one atomic write; `--dry-run` reports the same selection without writing. Unselected values and local overrides remain intact. It grants no trust, activation or setup-review completion, and an unchanged profile is not rewritten.
+
 Context, setup/scaffolding and default trace discovery share configured paths. Scaffolding still creates only missing base files. `tack setup` is read-only; the onboarding skill offers optional additions, including selected external skills through the existing upstream installer. It records source/revision and checks references rather than bundling collections or adding a package manager.
 
 The verifier and legacy fast/Stop checks use `check_execution.execute`. Its timeouts and pipeline failure behavior do not depend on an external timeout binary. No passing-result cache is shared across independent invocations.

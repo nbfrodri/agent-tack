@@ -15,7 +15,7 @@ Framework-specific guidance (read the one the project uses):
 - JavaScript / TypeScript (Vitest, Jest, Testing Library, Node APIs): `references/javascript.md`
 
 ## Before writing tests
-Find out how the project runs its tests (README, `package.json` scripts, `pyproject.toml`, `composer.json`, CI workflow) and run the existing suite once, so you know the baseline (what already fails and how long it takes). Match the existing style: framework, folder layout, naming, factories and helpers. Don't introduce a second test framework.
+Find the project's test commands (README, manifests or CI) and establish the relevant baseline: reuse a recent result for unchanged inputs, otherwise run the affected suite. Broaden when the project requires it or the change's risk justifies it. Match the existing framework, layout, factories and helpers; don't introduce a second test framework.
 
 ## What to test at each layer
 | Layer | Test type | Focus |
@@ -57,10 +57,10 @@ Use the same engine as production (testcontainers or a docker-compose service). 
 Before changing untested code, pin down what it does now: call it with representative inputs, record the actual outputs in assertions, and keep those tests while refactoring. If the current behaviour looks wrong, don't silently "fix" the expectation: note it, tell the user, and mark the test clearly (e.g. a `xfail`/`todo` with the reason). Break dependencies with seams (inject the clock, the HTTP client, the repository) to make code testable, in small, separate refactoring commits.
 
 ## Coverage
-Coverage shows what is *not* tested; it doesn't prove the tests are good. Aim for high coverage on domain and use-case code; don't chase 100% on glue code. Look at uncovered branches in changed files, not just the global percentage. Mutation testing (mutmut, Infection, Stryker) on core domain logic is the real quality check, when it's worth the time.
+Coverage shows what is *not* tested; it doesn't prove the tests are good. Aim for high coverage on domain and use-case code; don't chase 100% on glue code. Look at uncovered branches in changed files, not just the global percentage. Mutation testing can check whether assertions catch selected defects when worth the time; code and design still need review.
 
 ## Flaky and slow tests
 A flaky test is a bug, either in the test or in the code (race conditions). Reproduce it by running it many times or in random order, find the source of non-determinism (time, ordering, shared state, async waits, network), and fix it. Don't just add retries or sleeps. For slow suites, profile them (`pytest --durations`, `--profile`, Vitest reporters), move logic tests down to unit level, share expensive setup carefully, and run in parallel.
 
 ## Finishing
-Run the full suite (and lint/type checks) before saying you're done. A test you wrote must have been seen failing for the right reason at least once, either before the implementation (TDD) or by temporarily breaking the code. Commit tests with the code they cover (`feat`/`fix`), or as `test(<scope>): …` when only adding tests.
+Run the affected tests and relevant lint/type checks. Run the full suite when required by the project or justified by risk; don't repeat a passing check for unchanged inputs without new evidence. Report checks actually run and remaining gaps. A behavioral test you wrote must have been seen failing for the right reason at least once, either before implementation (TDD) or by temporarily reintroducing the defect. Commit tests with the code they cover (`feat`/`fix`), or as `test(<scope>): …` when only adding tests.

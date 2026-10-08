@@ -95,18 +95,7 @@ def unique_object(pairs):
     return result
 
 
-def load_profile(root, features):
-    if root is None:
-        return {}, None
-    path = root / FILENAME
-    if path.is_symlink():
-        raise ValueError(f'{FILENAME}: symlinks are not supported')
-    if not path.exists():
-        return {}, None
-    if not path.is_file() or path.stat().st_size > MAX_BYTES:
-        raise ValueError(f'{FILENAME}: expected a regular file at most 64 KiB')
-    original = path.read_bytes()
-    data = json.loads(original.decode('utf-8'), object_pairs_hook=unique_object)
+def validate_profile(data, features):
     if not isinstance(data, dict) or set(data) - {'version', 'mode', 'config'}:
         raise ValueError(f'{FILENAME}: unsupported top-level fields')
     if type(data.get('version')) is not int or data['version'] != 1:
@@ -120,7 +109,28 @@ def load_profile(root, features):
         if name not in features or not features[name]['shared'] or features[name]['scope'] == 'global':
             raise ValueError(f'{FILENAME}: {name} cannot be shared')
         validate_value(features[name], value, typed=True)
-    return data, original
+    return data
+
+
+def read_profile(path, features):
+    if path.is_symlink():
+        raise ValueError(f'{path.name}: symlinks are not supported')
+    if not path.is_file() or path.stat().st_size > MAX_BYTES:
+        raise ValueError(f'{path.name}: expected a regular file at most 64 KiB')
+    original = path.read_bytes()
+    if len(original) > MAX_BYTES:
+        raise ValueError(f'{path.name}: configuration exceeds 64 KiB')
+    data = json.loads(original.decode('utf-8'), object_pairs_hook=unique_object)
+    return validate_profile(data, features), original
+
+
+def load_profile(root, features):
+    if root is None:
+        return {}, None
+    path = root / FILENAME
+    if not path.exists() and not path.is_symlink():
+        return {}, None
+    return read_profile(path, features)
 
 
 def write_profile(root, data, original):
@@ -157,11 +167,7 @@ def effective(feature, profile, local, global_values, selected_scope=None):
     return feature['default'], 'default'
 
 
-def project_paths(root):
-    """Resolve the same safe locations for scaffolding, context and trace discovery."""
-    features = registry(Path(__file__).resolve().parent.parent)
-    profile, _ = load_profile(root, features)
-    local, global_values = git_values('local', root), git_values('global', root)
+def resolved_paths(root, features, profile, local, global_values):
     paths = {}
     for name in ('architecture-path', 'plans-path', 'handoffs-path'):
         feature = features[name]
@@ -176,6 +182,52 @@ def project_paths(root):
     return paths
 
 
+def project_paths(root):
+    """Resolve the same safe locations for scaffolding, context and trace discovery."""
+    features = registry(Path(__file__).resolve().parent.parent)
+    profile, _ = load_profile(root, features)
+    return resolved_paths(root, features, profile, git_values('local', root), git_values('global', root))
+
+
+def apply_profile(root, features, profile, original, local, global_values, selection, preview):
+    if root is None:
+        raise ValueError('not inside a git repository')
+    path = Path(selection).absolute()
+    if any(part.is_symlink() for part in (path, *path.parents)):
+        raise ValueError('selected profile: symlink paths are not supported')
+    selected, _ = read_profile(path, features)
+    if 'mode' not in selected and not selected.get('config'):
+        raise ValueError('selected profile needs a mode or at least one shared preference')
+    merged = {**profile, 'version': 1}
+    if 'mode' in selected:
+        merged['mode'] = selected['mode']
+    if 'config' in selected:
+        merged['config'] = {**profile.get('config', {}), **selected['config']}
+    validate_profile(merged, features)
+    # Validate portable paths as well as this clone's effective overrides.
+    resolved_paths(root, features, merged, {}, {})
+    resolved_paths(root, features, merged, local, global_values)
+    records = []
+    for name, value in selected.get('config', {}).items():
+        previous = profile.get('config', {})
+        change = 'added' if name not in previous else 'unchanged' if previous[name] == value else 'changed'
+        effective_value, origin = effective(features[name], merged, local, global_values)
+        shared_value = validate_value(features[name], value, typed=True)
+        records.append(f'{name}: {change}; shared {shared_value}; effective {effective_value} ({origin})')
+    if 'mode' in selected:
+        change = 'added' if 'mode' not in profile else 'unchanged' if profile['mode'] == selected['mode'] else 'changed'
+        mode = local.get('tack.mode')
+        detail = f'local override {mode!r}; run tack mode to inspect it' if mode else f'effective {merged["mode"]} (shared)'
+        if mode in SHARED_MODES:
+            detail = f'effective {mode} (local)'
+        records.insert(0, f'mode: {change}; shared {merged["mode"]}; {detail}')
+    if not preview and merged != profile:
+        write_profile(root, merged, original)
+    print('Shared profile preview (no writes)' if preview else 'Shared profile applied' if merged != profile else 'Shared profile unchanged')
+    print('\n'.join(records))
+    return 0
+
+
 def configure(source, args):
     parser = argparse.ArgumentParser(prog='tack config')
     parser.add_argument('name', nargs='?')
@@ -184,11 +236,22 @@ def configure(source, args):
     scope.add_argument('--global', dest='global_scope', action='store_true')
     scope.add_argument('--shared', action='store_true')
     parser.add_argument('--unset', action='store_true')
+    parser.add_argument('--apply', metavar='FILE', help='merge selected version-1 profile values; requires --shared')
+    parser.add_argument('--dry-run', action='store_true', help='preview --apply without writes')
     output = parser.add_mutually_exclusive_group()
     output.add_argument('--get', action='store_true')
     output.add_argument('--json', action='store_true')
     options = parser.parse_args(args)
     features = registry(source)
+    if options.apply is not None:
+        if not options.shared or any((options.name, options.value, options.unset, options.get, options.json)):
+            raise ValueError('--apply requires --shared and cannot combine with names, values, --unset, --get or --json')
+        root = project_root()
+        profile, original = load_profile(root, features)
+        local = git_values('local') if root else {}
+        return apply_profile(root, features, profile, original, local, git_values('global'), options.apply, options.dry_run)
+    if options.dry_run:
+        raise ValueError('--dry-run requires --shared --apply FILE')
     if options.name and options.name not in features:
         raise ValueError(f"unknown feature: {options.name} (run 'tack config' to list them)")
     if not options.name and (options.unset or options.shared or options.global_scope or options.get):

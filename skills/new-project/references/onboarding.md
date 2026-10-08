@@ -4,7 +4,7 @@ Use the same flow for a new repository and an existing repository adopting tack.
 
 ## Inspect before proposing
 
-Run `tack setup` (read-only) and inspect AGENTS.md, README, manifests, commands, existing docs, CI and relevant source entrypoints. Discovery is bounded and can miss nested packages or custom tooling; read the relevant manifests in a monorepo. Do not run commands merely because the detector found them. Use the user's stated purpose, deployment target and preferences; for an empty project ask only for missing decisions that affect the foundations.
+Run `tack setup --json` and `tack config --json` once for discovery and current preference origins, then inspect relevant project instructions, manifests and source entrypoints. Reuse these results during this setup; read help for an unresolved option rather than inspecting tack's implementation. Discovery is bounded and can miss nested packages or custom tooling. Do not run commands merely because the detector found them. Use the user's stated purpose and preferences; for an empty project ask only for missing decisions that affect the foundations.
 
 Read existing setup choices in AGENTS.md and `tack config setup-review`. `done` and `deferred` suppress routine startup prompts; revisit when the user asks or a material project change makes a new proposal useful. Preserve declined choices. A cloned repository may have shared choices but no local review flag: reuse the choices and finish local review without asking the same questions again.
 
@@ -14,14 +14,16 @@ Activation is `tack enable` locally or `tack enable --shared` for a shared `.tac
 
 Explain the observed project in a few sentences. Then offer a short, project-specific selection of optional additions, naming the exact paths, purpose and reason they fit. Ask which the user wants to create or adapt; offer the recommended set, a smaller set and deferral when useful. Let the user select individual items. Existing explicit instructions or an approved plan already authorizing an item count as the answer; ask only about undecided additions and continue independent authorized work while waiting.
 
-For team setup, reuse or agree on coding/testing/Git conventions, context entrypoints, where necessary decisions/plans/handoffs belong, and verification commands. Index the agreed locations in AGENTS.md instead of duplicating context for each tool. Use `tack mode auto --shared` and selected `tack config NAME VALUE --shared` preferences when the project wants a portable profile in `tack.json`. Local overrides win over shared values, then personal defaults; trust stays local. Configure architecture, plan and handoff paths before adding base files for an existing layout. Keep setup short by grouping unresolved choices and reusing recorded answers.
+For team setup, reuse or agree on coding/testing/Git conventions, context entrypoints, where necessary decisions/plans/handoffs belong, and verification commands. Index the agreed locations in AGENTS.md instead of duplicating context for each tool. Save every selected shared preference explicitly, including values that match defaults: an omitted setting can inherit a teammate's different personal preference. Local overrides win over shared values, then personal defaults; trust stays local.
+
+For several selected settings, use a temporary version-1 profile with `mode` and `config`, then `tack config --shared --apply FILE --dry-run` and `tack config --shared --apply FILE`. This merges only selected values and reports effective origins; remove the temporary input afterwards. For one choice, `tack config NAME VALUE --shared` or `tack mode auto --shared` remains sufficient. Do not export ambient personal settings as team policy. Configure context paths before scaffolding, then confirm selected values have shared origins or explain intentional local overrides. Group unresolved choices and reuse recorded answers.
 
 Examples to consider only when evidence supports them:
 
 | Addition | Evidence and benefit |
 | --- | --- |
 | Tests and a fast-check command | Missing coverage for real behavior; inspect current tooling before adding a framework. |
-| `checks-map.json` | Different changed paths require existing tests, type/schema checks or domain invariants; select useful commands with the user instead of generating a generic suite. |
+| `checks-map.json` | Different changed paths require existing checks. Inspect what commands cover: a small project may need only its canonical suite; avoid selecting both focused tests and a full suite that repeats them. Keep manual documentation review visible instead of mapping prose to unrelated tests. |
 | CI | Repository host is known and reproducible checks exist; reuse current workflows. |
 | `.github/pull_request_template.md` | Team uses PRs and has no suitable project or organization template; adapt validation to actual commands. |
 | README or a development guide | Setup knowledge is missing; link existing docs instead of copying them. |
