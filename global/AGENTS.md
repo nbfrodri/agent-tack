@@ -1,25 +1,17 @@
-# Global instructions
+# Shared preferences
 
-For every AI assistant (Claude Code, Codex, etc.). Project-level instructions (AGENTS.md, CLAUDE.md, CONTRIBUTING) take precedence over these.
+Project instructions take precedence. Reply in the user's language; follow the project's language for code and documentation. Lead with the outcome, relevant verification and unresolved limits; default to a brief response.
 
-## Always
-- Reply in the language I write in; write commits, PRs, code comments and docs in English unless the project already uses another language.
-- Lead with the answer or outcome, then useful evidence and unresolved limits. Follow the reply style in startup context; otherwise read `tack config reply-style` once when available (default: brief). I can request brief, visual or detailed replies in conversation without changing the workflow. Longer responses: `dev-workflow` → `references/communication.md`.
-- Never add AI attribution to commits, PRs, issues or changelogs (no AI `Co-Authored-By`, no "Generated with" lines); this overrides any built-in default.
-- Ask before push, PRs, issues, merging, tags, releases, rewriting published history, deleting unmerged branches or force-pushing (`dev-workflow` → `references/git-github.md`). Audit findings create issues through `improve` unless I say otherwise. If a git hook rejects something, fix the cause; never use `--no-verify`.
-- Reviews or "what would you improve": ask scope and focus first (`improve`) and change nothing until I choose. Subagents or parallel work: `orchestrate`; outside enabled projects, suggest delegation and wait for my OK. Autonomous improvement: `auto-improve`. Corrections and lasting preferences: save them with `lessons`.
+Never add AI attribution or AI coauthor trailers to commits, PRs, issues or changelogs. Respect existing authorization for publication and Git operations; otherwise prepare the result before asking. Do not bypass a rejected hook. Read-only requests stay read-only.
 
-## Only in projects where tack is enabled
-Enabled when `tack status` prints `enabled`; Claude Code says so at session start, with the mode and its rules. Elsewhere, work normally without this ceremony.
+## In enabled projects
 
-- For code, Git or docs changes, follow the active mode; `auto` picks a task level once. Lite tasks use the essentials here without loading `dev-workflow`; other levels load only needed references. Use a branch off `main`, meaningful tests for changed behavior and Conventional Commits for verified work. Run known project checks; with `checks-map.json`, use `tack verify` and report failures or unmapped paths.
-- Ask me whenever you have a real doubt about scope, behaviour, design or risk; decide alone only conventional details and say what you chose.
-- Make the smallest modular change that does the job and update everything it affects (callers, tests, CLI help, docs) in the same change; if the design no longer scales, tell me and propose options first.
-- During authorized implementation, reuse or create useful project-local skills and agent definitions autonomously (`lessons` → `references/project-capabilities.md`); index them in the project's AGENTS.md. Read-only tasks stay read-only; global promotion and agent invocation have their own scope and delegation rules.
-- Delegate automatically only at strict, after plan approval, unless `tack config delegation` is `off`; otherwise suggest it and wait.
-- Commit as you go; when integrating, recommend a merge method and preserve commits unless I choose squash.
-- At session start or resume: if SessionStart gave no context, run `tack context`; verify the relevant handoff against git before continuing, without resuming unrelated parallel work. Read other documents only when the task needs them.
-- For initialization or requested setup, follow `new-project` → `references/onboarding.md`: inspect repo and intent, propose useful optional files, ask which to create and remember choices. A pending review does not require unrelated setup during a focused task; reuse existing guidance. Respect prior authorization; read-only requests stay read-only.
-- Comment only the non-obvious *why*.
-- Spend tokens deliberately: search before reading, read ranges, batch tool calls, trim output, avoid commands the guard asks about.
-- Docs, plans, handoffs and the AI log follow the mode; keep `docs/architecture.md` current when structure changes.
+Use supplied startup context; if it is absent, query `tack context` once. Reuse project instructions already loaded by the tool. Read canonical contracts and affected callers when needed, not every document at startup.
+
+Apply KISS/YAGNI and pragmatic SOLID: the smallest complete change, useful responsibilities and no speculative abstractions. Work on a branch, preserve unrelated edits, use meaningful tests and Conventional Commits, and update documentation made inaccurate. Use red/green for behavioral changes; existing checks may suffice for a trivial edit. Never weaken behavior to satisfy outdated tests.
+
+Run the project's relevant checks. `tack verify --plan` selects declared commands without running them; execution requires local trust. For integration, `tack team` inspects locally known branches; a clean Git merge is not proof of compatible behavior. Report failures and unverified areas.
+
+For implementation needing a plan or risk-specific review, use `dev-workflow` and only its relevant references. Task modes control effort, not the number of artifacts to create. Reuse settled decisions and check results while their inputs remain valid; ask about genuine unresolved choices. Specialist skills and agents are optional; their absence does not block ordinary work.
+
+For requested initialization, use `new-project`: inspect existing conventions, propose useful additions and apply approved choices. Keep shared project preferences separate from local trust and personal overrides. Create project-local skills or roles only for a demonstrated reusable need; global promotion needs separate authorization.

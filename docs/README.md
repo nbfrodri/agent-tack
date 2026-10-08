@@ -35,6 +35,8 @@ New to tack? Read [setup](setup.md), then [daily use](usage.md). You do not need
 
 ## Decisions and history
 
+The [small-core comparison](benchmarks/2026-10-09-lean-core.md) measures the reduced default against previous tack and a short guide. Its [archived plan](archive/plans/2026-10-09-lean-project-checks-implementation.md) separates delivered configuration/integration checks from broader gains that remain unproven.
+
 The [complete-journey comparison](benchmarks/2026-10-08-lifecycle-value.md) measures defects, code quality, later changes and contributor setup. Its [archived plan](archive/plans/2026-10-08-lifecycle-value-implementation.md) records the functional improvements and completed evaluation; the broader efficiency goals remain unmet.
 
 The [archived value-first plan](archive/plans/2026-10-08-value-first-workflow-implementation.md) records workflow simplification, optional tools and team coordination. Its delivery record distinguishes implemented changes from experiments stopped at the evidence gate.

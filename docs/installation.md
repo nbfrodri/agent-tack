@@ -14,12 +14,17 @@ tack doctor --tools                # check each installed AI tool instead of the
 ./uninstall.sh                         # restore recorded unchanged state
 ```
 
-Skills come in groups (`skill-groups.txt`): `core` (workflow, onboarding, reviews and delegation, always installed), `process` (releases) and `stack` (frontend, APIs, databases, auth, end-to-end tests, deployment, observability). Fewer skills mean fewer descriptions in every session of every tool. Choose the optional groups once, then re-run the installer; it removes only its own links to the skills you left out:
+Fresh installations expose two skills: `dev-workflow` and `new-project`. Specialist agents are off by default. Engineering guidance, project configuration, checks and safety hooks remain available. This keeps the always-visible catalog small; it does not establish a measured token or speed improvement.
+
+Skills come in groups (`skill-groups.txt`): `core` (the two default skills, always installed), `process` (debugging, testing, documentation, GitHub, delegation and releases) and `stack` (frontend, APIs, databases, auth, end-to-end tests, deployment, observability). Choose optional groups when useful, then re-run the installer:
 
 ```bash
-tack config skill-groups process --global   # core and process; or core, stack, or all (the default)
+tack config skill-groups process --global   # core and process; or core, stack, or all
+tack config agent-roles true --global       # optional specialist agent catalog
 ./install.sh
 ```
+
+Upgrading preserves explicit group choices. To keep the previous full catalog, save `skill-groups all` and `agent-roles true` with `--global` before reinstalling. Without an explicit choice the new defaults apply. To return to the small catalog, save `skill-groups core` and `agent-roles false`, then reinstall. Deselection removes only tack's own skill links and unchanged generated roles; edited/foreign files stay. A link that displaced your original file remains until uninstall can restore it. These are personal installation choices, not shared project settings.
 
 The first install that registers hooks ends with a short list of them and what each does (from `hooks/summary.txt`), and how to turn them off; later installs skip it. `--no-hooks` registers no git, Claude Code or Codex hooks and removes tack's Claude Code and Codex hooks from an earlier install (your own hooks stay); global git hooks from an earlier install remain until `./uninstall.sh`, which restores your former `core.hooksPath`. Without hooks the rules apply only as instructions.
 

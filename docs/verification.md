@@ -2,6 +2,8 @@
 
 `tack verify` selects project checks for files changed on the branch and in the working tree, including untracked and deleted paths. It executes existing commands, not model calls. `tack verify --plan` inspects selection without running project code; add `--json` for structured results. Execution requires local `tack trust`, including manual use when workflow activation is off. Trust is not inherited from a global setting or another teammate's clone.
 
+To check two committed branches together before merging, use [`tack team --verify --against REF`](teamwork.md#test-a-prospective-merge). It reuses this selection and execution logic in a temporary checkout. To compare approved setup choices with saved and effective preferences, use [`tack config --check FILE`](configuration.md#apply-several-selected-preferences).
+
 By default the base is the branch's merge base with local `main`, `master` or `develop`; on those branches it is HEAD. With no local trunk it compares against HEAD and reports that base. Use `--base REF` to choose a known comparison reference, or `--base HEAD` for uncommitted changes only. A shallow clone or custom branch layout needs an appropriate explicit base. New repositories without commits include all nonignored files.
 
 Optional `checks-map.json` is versioned project data. Activation and scaffolding do not create it. During setup, select commands that exist and verify meaningful project behavior. For example, in a project that already has these tests and scripts:
@@ -35,6 +37,19 @@ Without a map, verification reuses `check-fast` when set, or the canonical test 
 Results identify commands, their source, matched paths, statuses and bounded failure output. Exit codes: **0** selected checks passed with unchanged inputs and no unmapped paths, or explicitly **no_changes**; **1** a check failed/timed out; **2** configuration/execution/trust error; **3** verification is incomplete or unavailable. `--plan` returns 0 for a valid plan even when it reports unmapped paths; it never claims checks passed. No checks for changed files is **unverified**, not success.
 
 The default total command budget is 120 seconds; `--budget-seconds N` accepts 1-600. Individual timeouts default to 60 seconds in maps and are capped by the remaining total budget. Budget-exhausted checks are not run. If a check changes tracked or nonignored untracked inputs, results are marked incomplete: review the edits and verify again. Ignored build outputs are outside that fingerprint; checks are trusted project code, not sandboxed. No cached success is reused.
+
+## Use the checks without installing AI guidance
+
+If your existing AGENTS.md and CI are enough, keep them. Clone tack, then call its CLI directly from your project; running `install.sh` or enabling the workflow is not required for these manual checks:
+
+```bash
+~/Projects/agent-tack/bin/tack verify --plan
+~/Projects/agent-tack/bin/tack trust
+~/Projects/agent-tack/bin/tack verify
+~/Projects/agent-tack/bin/tack team --verify --against YOUR_PARALLEL_BRANCH
+```
+
+Replace the checkout path and branch with your own. This adds no global skills, agents or hooks. Trust is still saved locally in this clone. You maintain the project checks and decide when to run them; the commands do not enforce a PR policy on their own.
 
 ## Read a result
 

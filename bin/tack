@@ -29,6 +29,9 @@ Commands:
   config --shared --apply FILE [--dry-run]
                       Merge selected tack.json preferences and mode in one write;
                       --dry-run previews values and local overrides without changes
+  config --check FILE [--json]
+                      Check approved choices against explicit shared and effective values;
+                      read-only; exit 1 for differences, 2 for invalid input
   enable [--shared] [--scaffold]
                       Enable this clone, or use a shareable .tack marker;
                       --scaffold adds four evidence-based guidance files (never overwrites)
@@ -37,6 +40,9 @@ Commands:
                       --check exits 1 for incomplete or broken base guidance
   team [--base REF] [--against REF ...] [--json]
                       Inspect known branch overlap and committed merge conflicts; no fetch
+  team --plan|--verify --against REF [--json] [--budget-seconds N]
+                      Preview or run checks in a temporary prospective merge;
+                      committed clean trees only; execution requires local trust
   bootstrap [--source URL] [--revision COMMIT] [--directory PATH] [--dry-run]
                       Create optional collaborator setup files pinned to a tack commit;
                       generation does not install, activate or trust anything
@@ -70,7 +76,7 @@ Commands:
                       Summarise the last N days (default 30): tokens and USD per
                       day, project, tool and model; skill and agent use; the
                       workflow level stated per task
-  context             Print project instructions plus an index (or, in strict
+  context             Point to project instructions plus an index (or, in strict
                       mode, excerpts) of architecture and the active handoff
   help                Show this help (also works outside a Git repository)
 
@@ -111,8 +117,8 @@ Examples:
   tack doctor --tools
   tack help
 
-Formatter execution requires both activation and local trust. Trust applies only
-to Claude Code's automatic formatter hook; it is not a general command permission.
+Local trust gates project commands run by tack's formatter/check hooks and verify
+commands; it is not a security sandbox or a general command permission.
 HELP
 }
 
@@ -156,6 +162,14 @@ TACK_ROOT="$(tack_root)" || fail "cannot locate the tack checkout"
 
 is_trusted() {
   [ "$(key_get --bool local trusted)" = true ]
+}
+
+verification_environment() {
+  TACK_VERIFY_TRUSTED=0
+  is_trusted && TACK_VERIFY_TRUSTED=1
+  TACK_VERIFY_BASH="$BASH"
+  if command -v cygpath >/dev/null 2>&1; then TACK_VERIFY_BASH="$(cygpath -m "$BASH")"; fi
+  export TACK_VERIFY_TRUSTED TACK_VERIFY_BASH
 }
 
 cmd="${1:-status}"
@@ -378,17 +392,14 @@ case "$cmd" in
   team)
     require_repo
     command -v python3 >/dev/null 2>&1 || fail 'team needs python3'
+    verification_environment
     python3 "$TACK_ROOT/lib/team.py" "$root" "$@"
     exit
     ;;
   verify)
     require_repo
     command -v python3 >/dev/null 2>&1 || fail 'verify needs python3'
-    TACK_VERIFY_TRUSTED=0
-    is_trusted && TACK_VERIFY_TRUSTED=1
-    TACK_VERIFY_BASH="$BASH"
-    if command -v cygpath >/dev/null 2>&1; then TACK_VERIFY_BASH="$(cygpath -m "$BASH")"; fi
-    export TACK_VERIFY_TRUSTED TACK_VERIFY_BASH
+    verification_environment
     python3 "$TACK_ROOT/lib/verification.py" "$root" "$TACK_ROOT" "$@"
     exit
     ;;

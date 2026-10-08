@@ -95,6 +95,7 @@ class Installation(unittest.TestCase):
                                         capture_output=True, text=True, timeout=120)
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
                 return result.stdout
+            run('bin/tack', 'config', 'agent-roles', 'true', '--global')
             run('install.sh', '--skip-plugins', '--dry-run')
             self.assertFalse((home / '.gemini/agents').exists())
             run('install.sh', '--skip-plugins')
@@ -108,7 +109,7 @@ class Installation(unittest.TestCase):
             for path in paths:
                 self.assertTrue(path.is_file(), path)
             for directory in ('.gemini/skills', '.config/opencode/skills', '.config/crush/skills', '.cursor/skills'):
-                self.assertTrue((home / directory / 'testing/SKILL.md').is_file())
+                self.assertTrue((home / directory / 'dev-workflow/SKILL.md').is_file())
             original = paths[0].read_bytes()
             changed = paths[1]
             changed.write_text(changed.read_text(encoding='utf-8') + '\nUser addition.\n', encoding='utf-8')
@@ -122,6 +123,12 @@ class Installation(unittest.TestCase):
             self.assertIn('echo user-hook', gemini_settings.read_text(encoding='utf-8'))
             copilot_hooks = home / '.copilot/hooks/tack.json'
             self.assertTrue(not copilot_hooks.exists() or '#tack' not in copilot_hooks.read_text(encoding='utf-8'))
+            run('bin/tack', 'config', 'agent-roles', 'false', '--global')
+            run('install.sh', '--skip-plugins')
+            for path in (paths[0], paths[2], paths[3]):
+                self.assertFalse(path.exists(), path)
+            self.assertIn('User addition.', changed.read_text(encoding='utf-8'))
+            self.assertTrue(user_agent.exists())
             run('uninstall.sh')
             self.assertEqual(json.loads(gemini_settings.read_text(encoding='utf-8'))['theme'], 'user-choice')
             for path in (paths[0], paths[2], paths[3]):

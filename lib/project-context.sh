@@ -58,7 +58,9 @@ handoff_freshness() {
   fi
 }
 
-include AGENTS.md 45
+if safe_file AGENTS.md; then
+  printf 'Project instructions: AGENTS.md (reuse if already loaded; otherwise read for the task).\n'
+fi
 active=''
 active_count=0
 matching_count=0

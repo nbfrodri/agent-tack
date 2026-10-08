@@ -69,9 +69,12 @@ Put the selected values in a temporary JSON file using the `version`, `mode` and
 ```bash
 tack config --shared --apply selected-profile.json --dry-run
 tack config --shared --apply selected-profile.json
+tack config --check selected-profile.json
 ```
 
 The preview shows additions, changes and local overrides. Apply validates everything before updating `tack.json` once, preserves unselected settings and leaves an unchanged file untouched. It rejects unsupported/private settings, invalid or duplicate keys, unsafe paths and conflicting context locations. Use `--unset` separately to remove a setting. Do not export all your personal defaults as project policy.
+
+`--check` is read-only. It compares the approved selection with both explicit shared values and the effective values in this clone. It catches omitted defaults and local overrides: for example, shared `collaboration: "team"` with a local `solo` override fails. Exit 0 means every selected value matches, 1 means differences, and 2 means invalid input. `--json` lists expected, shared and effective values with their origins. Unselected preferences are ignored. Use the same approved selection after applying settings or in a fresh clone; remove a temporary selection when finished. Checking `tack.json` against itself cannot establish what the user intended.
 
 Commit `tack.json`; remove the temporary input when finished. This does not activate tack, create scaffolding, grant execution trust or complete setup review. Existing single-setting commands remain available, and personal projects can continue using local preferences without a profile.
 

@@ -5,7 +5,7 @@ description: "Bootstrap a project or add missing foundations: structure, tests, 
 
 # New project
 
-A new project should have clear instructions and reproducible checks appropriate to its purpose. For new repositories and existing projects adopting tack, first follow [references/onboarding.md](references/onboarding.md): inspect the project, select optional additions with the user, and remember the choices. The checklist below is a menu for the approved scope, not a set of mandatory files.
+A new project should have clear instructions and reproducible checks appropriate to its purpose. For new repositories and existing projects adopting tack, first follow [references/onboarding.md](references/onboarding.md): inspect the project, select optional additions with the user, and remember the choices. The checklist below is a menu for the approved scope, not a set of mandatory files. References to other skills are optional shortcuts when those skills are installed; otherwise use the project's existing tooling and conventions. Do not install a catalog to complete a routine setup.
 
 ## 1. Clarify (one round of questions, with defaults)
 Infer established choices from the repository and conversation. Ask only about unresolved language/runtime, project type, services and deployment choices. When services or the deployment target justify Docker, offer:
@@ -18,7 +18,7 @@ Recommend the option that fits. Present concrete optional files and their purpos
 Follow `dev-workflow` → `references/conventions.md` and the stack's file in `references/languages/` (pnpm for JS/TS, uv for Python, Composer + Pint for PHP, English code, kebab-case files in TS). Prefer the ecosystem's official generator (e.g. `npm create vite`, `uv init`, `cargo new`, `go mod init`, `dotnet new`) over writing boilerplate by hand, and current stable versions of tools.
 
 ## 2. Foundations checklist
-Keep the initial capability catalog empty unless concrete project work justifies a procedure or role. When it does, follow `lessons` → `references/project-capabilities.md`; index local definitions in AGENTS.md for later sessions.
+Keep the initial capability catalog empty unless concrete project work justifies a procedure or role. When it does, define its trigger, bounded instructions and validation in the project; index local definitions in AGENTS.md for later sessions. Creating a role does not itself authorize delegation.
 
 - `git init -b main`, plus a `.gitignore` for the language, editor and OS. Ignore `.env`.
 - Enable and create the common base: `tack enable --shared --scaffold` (creates a `.tack` marker to commit with the repo). For local activation use `tack enable --scaffold`. Review the four generated files against the project; commands are detected, not executed.

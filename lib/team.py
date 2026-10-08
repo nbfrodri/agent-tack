@@ -38,7 +38,7 @@ def names(root, ancestor, revision):
                                         '--no-renames', '--name-only', '-z', ancestor, revision, '--').split('\0'))))
 
 
-def merge_probe(root, left, right):
+def merge_probe(root, left, right, inspect_tree=None):
     try:
         with tempfile.TemporaryDirectory(prefix='tack-merge-') as directory:
             probe = Path(directory) / 'probe.git'
@@ -56,8 +56,11 @@ def merge_probe(root, left, right):
                 if not path:
                     break
                 conflicts.append(path)
-            return {'status': 'clean' if result.returncode == 0 else 'conflict',
-                    'conflicts': sorted(set(conflicts))}
+            report = {'status': 'clean' if result.returncode == 0 else 'conflict',
+                      'conflicts': sorted(set(conflicts))}
+            if result.returncode == 0 and inspect_tree is not None:
+                report['verification'] = inspect_tree(probe, records[0])
+            return report
     except (OSError, subprocess.SubprocessError):
         return {'status': 'unknown', 'reason': 'Isolated merge probe could not finish'}
 
@@ -104,10 +107,26 @@ def main():
     parser.add_argument('--base')
     parser.add_argument('--against', action='append', default=[])
     parser.add_argument('--json', action='store_true')
+    action = parser.add_mutually_exclusive_group()
+    action.add_argument('--plan', action='store_true', help='preview checks for one prospective merge')
+    action.add_argument('--verify', action='store_true', help='check one prospective merge in a temporary checkout')
+    parser.add_argument('--budget-seconds', type=int, default=120)
     args = parser.parse_args()
     root = args.root
     if os.name == 'nt' and root.startswith('/'):
         root = subprocess.check_output(['cygpath', '-w', root], text=True, encoding='utf-8').strip()
+    if args.plan or args.verify:
+        if len(args.against) != 1 or args.base is not None:
+            parser.error('--plan/--verify require exactly one --against and no --base')
+        from integration_verify import inspect_integration, render
+        result, code = inspect_integration(Path(root).resolve(), args.against[0], args.plan, args.budget_seconds)
+        if args.json:
+            print(json.dumps(result, ensure_ascii=True, indent=2))
+        else:
+            render(result)
+        return code
+    if args.budget_seconds != 120:
+        parser.error('--budget-seconds requires --plan or --verify')
     result = report(Path(root).resolve(), args.base, args.against)
     if args.json:
         print(json.dumps(result, ensure_ascii=True, indent=2))

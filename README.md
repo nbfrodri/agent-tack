@@ -41,7 +41,7 @@ flowchart LR
 
 Ask for the change: **"Fix the checkout bug"** or **"Add CSV export."** Tack guides the assistant through work sized to the risk, meaningful tests, maintainable design and a reviewable Git history. TDD, pragmatic SOLID and documentation upkeep remain part of that guidance; executable checks provide narrower guarantees. [Engineering practices](docs/engineering-practices.md).
 
-Skills and specialist roles are available when a task needs them, including guided selection of external skills. Start small and add procedures that solve a real problem. [Why this direction](docs/why.md).
+The default catalog is just workflow and onboarding; specialist skills and roles are opt-in. Add procedures when they solve a real problem. [Installation choices](docs/installation.md) | [Why this direction](docs/why.md).
 
 ## Quick start
 
@@ -83,7 +83,7 @@ Leave `auto` as the usual mode: a small fix and a risky migration need different
 
 Your project stays portable: the shared setup is ordinary files in Git, and you can [disable tack or tidy old records](docs/leaving.md) without deleting useful project knowledge.
 
-Working on backend and frontend in parallel? Share canonical contracts and focused handoffs, inspect branch conflicts with `tack team`, and add optional PR checks. New collaborators can use a pinned setup command. [Team workflow](docs/teamwork.md).
+Working on backend and frontend in parallel? Share canonical contracts and run declared checks against a prospective merge with `tack team --verify --against REF`, before changing your branch. New collaborators can use a pinned setup command. [Team workflow and limits](docs/teamwork.md).
 
 ## Tools and checks
 
@@ -91,11 +91,13 @@ Claude Code, Codex, Gemini CLI, GitHub Copilot, OpenCode, Crush and Cursor recei
 
 `tack verify` selects existing checks from changed paths; `tack verify --all` also checks a clean clone or completed integration. An optional `checks-map.json` maps code areas to commands. Results expose failures, timeouts and unmapped work. [Verification guide](docs/verification.md).
 
+Already happy with your project guidance? [Run only the CLI checks](docs/verification.md#use-the-checks-without-installing-ai-guidance), without installing global instructions, skills or hooks.
+
 ## What the evidence says
 
-The latest comparison followed setup, delivery, a teammate's later change and review resolution: **97 development attempts and 20 independent code reviews**. Tack and a short project `AGENTS.md` each passed final acceptance in 8/8 journeys; plain adoption passed 7/8. Additional review still found defects, including one with tack.
+The small-core comparison completed **24 development sessions and eight blind code reviews**. The short guide and small core each passed acceptance in 8/8 deliveries, but both still had defects outside those checks. Mean code-quality grades did not improve. Compared with the guide, the core cost **61.9% more time / 67.6% more input tokens with Luna**, and **5.0% more time / 25.4% more input with Sol**. [Complete results](docs/benchmarks/2026-10-09-lean-core.md).
 
-Against the short guide, tack took **44.7% more time and 69.6% more input tokens with Luna**, and **30.4% more time with Sol**, without a general code-quality advantage. Setup and later changes were also slower. This study does **not** justify the extra cost against that simpler alternative. Use tack for concrete checks and portable team preferences you need; measure the tradeoff in your project. [Complete results and limits](docs/benchmarks/2026-10-08-lifecycle-value.md) | [All results](docs/results.md) | [Decision](docs/adr/0003-project-verification-over-generic-process.md).
+The earlier [full lifecycle study](docs/benchmarks/2026-10-08-lifecycle-value.md) also found higher cost without a general quality advantage. Tack's concrete checks can detect configuration drift and incompatible prospective merges; broader savings remain unproven. Enable what earns its cost in your project. [All results](docs/results.md) | [Direction](docs/adr/0003-project-verification-over-generic-process.md).
 
 ## Learn more
 

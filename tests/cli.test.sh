@@ -41,7 +41,7 @@ session() {
   python3 -c 'import json,sys; print(json.dumps({"cwd":sys.argv[1]}))' "$PWD" | bash "$REPO/hooks/claude/session-context.sh"
 }
 session_has_instructions() {
-  python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); assert "Project \"instructions\"\\path" in d["hookSpecificOutput"]["additionalContext"]' "$WORK/output"
+  python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); assert "Next: implement \"feature\"\\path" in d["hookSpecificOutput"]["additionalContext"]' "$WORK/output"
 }
 
 check "status shows disabled and untrusted independently" expect_status 1 disabled untrusted status
@@ -249,7 +249,8 @@ printf 'Architecture context\n' > docs/architecture.md
 printf '# Handoff\nStatus: in progress\nNext: implement feature\n' > docs/handoffs/2026-10-03-active.md
 printf '# Old handoff\nStatus: complete\nDo not include completed work\n' > docs/handoffs/2026-10-04-complete.md
 check "context succeeds in enabled projects" expect_exit 0 "$CLI" context
-check "context includes project instructions" contains 'Project "instructions"'
+check "context indexes project instructions without repeating them" contains 'Project instructions: AGENTS.md'
+check "context does not duplicate native project instructions" eval '! contains '\''Project "instructions"'\'''
 check "auto context indexes architecture instead of loading it" contains '- docs/architecture.md (1 lines)'
 check "auto context omits architecture text" eval '! contains "Architecture context"'
 check "auto context indexes the active handoff" contains '- Active handoff: docs/handoffs/2026-10-03-active.md'
@@ -262,7 +263,7 @@ check "standard context is an index too" contains '- docs/architecture.md (1 lin
 git config --local --unset tack.mode
 git config --local tack.mode lite
 check "lite context succeeds" expect_exit 0 "$CLI" context
-check "lite context keeps project instructions" contains 'Project "instructions"'
+check "lite context keeps the project instruction pointer" contains 'Project instructions: AGENTS.md'
 check "lite context skips architecture" eval '! contains "Architecture context"'
 check "lite context still indexes the active handoff" contains '- Active handoff: docs/handoffs/2026-10-03-active.md'
 check "lite context skips the handoff body" eval '! contains "# Handoff"'
@@ -317,6 +318,7 @@ printf 'Branch: `feat/other`\n' >> docs/handoffs/2026-10-03-active.md
 check "handoff for another branch is flagged" expect_exit 0 "$CLI" context
 check "branch mismatch names both branches" contains "handoff names branch feat/other; current branch is $(git branch --show-current)"
 printf '# Handoff\nStatus: in progress\nNext: implement feature\n' > docs/handoffs/2026-10-03-active.md
+printf '# Handoff\nStatus: in progress\nNext: implement "feature"\\path\n' > docs/handoffs/2026-10-03-active.md
 check "SessionStart returns valid JSON with project context" expect_exit 0 session
 check "SessionStart preserves quotes and backslashes" session_has_instructions
 mkdir -p "$HOME/.local/bin"

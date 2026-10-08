@@ -36,6 +36,7 @@ check 'every tool row has the 9 columns' column_count_ok
 check 'claude declares agents and hooks' grep -Eq '^claude .*~/.claude/agents +~/.claude/settings.json ' "$REPO/targets.txt"
 
 echo "legacy five-column targets.txt still installs"
+git config --global tack.agentRoles true
 mkdir -p "$WORK/legacy"
 cp -R "$REPO/." "$WORK/legacy/"
 grep -v '^#' "$REPO/targets.txt" | awk 'NF {print $1, $2, $3, $4, $5}' > "$WORK/legacy/targets.txt"

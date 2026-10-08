@@ -28,6 +28,8 @@ The subsequent [complete-journey comparison](benchmarks/2026-10-08-lifecycle-val
 
 ## When the extra work is worthwhile
 
+The [small-core comparison](benchmarks/2026-10-09-lean-core.md) also found no general quality advantage over a short guide. The reduced catalog stays optional beyond workflow/onboarding. Use `tack config --check FILE` for approved choices and `tack team --verify --against REF` for declared checks on a prospective merge. If those are the useful parts, [run the CLI directly](verification.md#use-the-checks-without-installing-ai-guidance) without installing AI guidance. Those concrete detections are working benefits; fewer real incidents or human onboarding savings have not been measured.
+
 Use these four outcomes to decide what to enable. A longer conversation, a larger test suite or more documents is not the outcome.
 
 | Outcome | Put in place | Evidence to look for |
