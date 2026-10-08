@@ -38,3 +38,11 @@ Two new scenarios cover a solo stock-allocation application and a backend/fronte
 ## Verification and delivery
 
 Use CI-pinned lint, the evaluation tests, documentation links and affected regression suites. Run the complete suite before merging changes to shared runner behavior. Work on `eval/lifecycle-value`, use Conventional Commits without AI attribution, publish a PR using the repository template and merge only after current-head CI succeeds. User authorization for subscription runs, publication and merging persists. No real GitHub review comments or issues are needed for synthetic review fixtures.
+
+## Collection notes
+
+The product and offline tests were committed in `145f3b1`; the protocol manifest was frozen in `b938ab6` before real model calls. All 27 local suites passed; the evaluator smoke used a fake CLI and is excluded from model results.
+
+During the first orders block, `m1-orders-1-project/change` ended with a provider capacity error after making changes. The worker retained the failed session, but the controller did not classify that turn failure as an infrastructure exception and continued the planned stages. It was not retried. This is a collection limitation: report the interruption, include its time, mark its missing token usage as unknown, and add a sensitivity view excluding the whole affected matched block. Do not attribute the outage to tack or treat missing usage as free work. Fixtures, acceptance criteria, product and scheduled comparisons remain unchanged.
+
+A read-only inspection also confirmed that both older value-first product archives contained evaluator source (`evals/quality_grade.py`) and reference tests. No logged read of that grader was found in those eight transcripts; absence of a logged read does not establish isolation. Preserve the old report and evidence, disclose this limitation in the new results, and use the lifecycle archive's explicit exclusions going forward.
