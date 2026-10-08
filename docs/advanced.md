@@ -40,7 +40,7 @@ Only lines starting with `- ` are loaded; other text you write in the file is ke
 
 ## Visual review of UI changes
 
-At standard and strict, a change to UI files (components, styles, templates) gets before and after screenshots and an independent score. The assistant captures the affected pages before editing and again after, at mobile (390×844) and desktop (1440×900) widths:
+At standard and strict, visible UI changes get before and after screenshots when capture is available. Review concrete usability and visual findings; a score or separate reviewer is not required. The assistant captures affected pages at useful sizes, such as mobile (390×844) and desktop (1440×900):
 
 ```bash
 tack shots --before http://localhost:3000/          # before changing anything

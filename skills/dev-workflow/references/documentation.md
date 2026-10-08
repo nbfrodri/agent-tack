@@ -14,7 +14,7 @@ Reuse existing document locations and recorded setup choices. The checklist iden
 - A significant or hard-to-reverse architecture decision? → an ADR in `docs/adr/`.
 - A new domain concept? → `docs/glossary.md`.
 - Was there a plan? → update its status in `docs/plans/`.
-- A significant AI-assisted task? → a row in `docs/ai/log.md`.
+- Does project policy require an AI log, or is there useful evidence beyond Git/PR history? → a concise row in `docs/ai/log.md`.
 - Left unfinished? → a handoff in `docs/handoffs/`.
 
 Comments and docstrings in code: see `conventions.md` (no comments by default; only the non-obvious why, and docstrings on the public API).

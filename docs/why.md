@@ -21,3 +21,5 @@ The accepted direction is **less generic instruction and more concrete project v
 Versioned conventions and capabilities help a team align across editors, while credentials, private memory, execution trust and personal settings stay local. Sharing configuration is not centralized administration, and instruction-following varies by model. [Tool support](editors.md) distinguishes executable checks from instruction-only behavior.
 
 Success means fewer faulty deliveries, clearer verification and less human rework at an acceptable time/token cost. Branches, commits, extra tests or more agents do not establish that on their own. [Measured results](results.md) retain successes, null results and limitations; no significant general quality improvement is claimed yet.
+
+The [value-first preflight](benchmarks/2026-10-08-value-first.md) explicitly compared tack with ordinary project instructions. That cheaper baseline did best on one task and tied code quality on the other. Choose it when it meets your needs. Tack's optional coordination helpers may solve different problems, but their lifecycle benefit must be measured rather than inferred from more workflow activity.

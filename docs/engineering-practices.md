@@ -43,7 +43,7 @@ No whole specialist catalog was removed. Skills and roles remain available when 
 
 Use `auto` as the usual preference, then select the level for the current task. A bounded low-risk fix needs a focused change and relevant verification. A change to authentication, migrations or a public API needs deeper compatibility and failure-case analysis. A new feature is not automatically strict, and a one-line change can still be high risk.
 
-Use an ADR for a consequential design choice with alternatives; a handoff for work another session must resume; a skill for a useful reusable procedure; a specialist role for a distinct review responsibility. Existing strict preferences remain valid, but empty artifacts and agent counts are not engineering outcomes.
+Use an ADR for a consequential design choice with alternatives; a handoff for work another session must resume; a skill for a useful reusable procedure; a specialist role for a distinct review responsibility. Strict no longer requires an AI log or independent reviewer solely because of its level: project policy or a concrete need decides. Explicit project requirements remain valid. Empty artifacts and agent counts are not engineering outcomes. File count and team membership alone do not determine task risk.
 
 ## Applied to tack itself
 

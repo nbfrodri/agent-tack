@@ -1,9 +1,11 @@
 ---
 name: github-issues
-description: "Manage GitHub issues with gh: triage, bug reports, feature requests, plan breakdown and linked implementation PRs. Use for issue or ticket work and templates."
+description: "Manage GitHub issues and PR feedback with gh: triage, linked implementation, review resolution and verified follow-ups. Use for issue/review work and templates."
 ---
 
 # GitHub issues
+
+For requested PR review work, use `references/review-resolution.md`: collect all review sources, verify findings, fix in scope, and link deduplicated follow-ups. The optional `assets/read-pr-reviews.py` collector is read-only.
 
 Issues are the project's to-do list and its memory: why something was built, what was decided and what's still pending. Good issues are small, specific and have acceptance criteria, so anyone (a person or an AI) can pick one up and know when it's done.
 

@@ -92,3 +92,7 @@ Absolute paths, parent traversal and symlink paths are rejected when these locat
 [`features.txt`](../features.txt) is tack's own registry of settings. It declares each name, Git key, default, allowed values, scope, enforcement and whether sharing is allowed. Most users never edit it: use `tack config` in your project instead.
 
 A `hook` setting affects executable behavior in supported integrations. An `instruction` setting guides the assistant. An `installer` setting takes effect when the installer runs; a `mod` setting needs the relevant Claude Code mod. These are different guarantees. See [customization](customization.md) if you are extending tack itself.
+
+## Configuration in linked worktrees
+
+Local Git preferences are local to the clone, not to each linked worktree. Linked worktrees share these settings and execution trust by default; a conversational mode override is suitable for an individual task. Area-specific instructions live in scoped AGENTS.md files, while shared tack preferences remain in the root tack.json. See [team workflow](teamwork.md).

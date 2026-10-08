@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -65,6 +66,38 @@ class TeamTests(unittest.TestCase):
         self.assertEqual((comparison['ahead'], comparison['behind']), (1, 0))
         self.assertEqual(comparison['merge']['status'], 'clean')
         self.assertIn('backend.txt', comparison['head_paths'])
+
+    def test_linked_worktree_resolves_clone_settings_and_its_own_shared_profile(self):
+        self.command(BASH, str(ROOT / 'bin/tack'), 'enable')
+        self.command(BASH, str(ROOT / 'bin/tack'), 'trust')
+        self.command(BASH, str(ROOT / 'bin/tack'), 'mode', 'standard')
+        linked = self.root / 'linked'
+        self.git('worktree', 'add', '-q', '-b', 'feat/other', str(linked))
+        self.repo = linked
+        self.assertIn('enabled', self.command(BASH, str(ROOT / 'bin/tack'), 'status'))
+        self.assertEqual(self.command(BASH, str(ROOT / 'bin/tack'), 'trusted').strip(), 'trusted')
+        self.assertEqual(self.command(BASH, str(ROOT / 'bin/tack'), 'mode').strip(), 'standard (local)')
+        self.command(BASH, str(ROOT / 'bin/tack'), 'config', 'reply-style', 'visual', '--shared')
+        self.assertEqual(self.command(BASH, str(ROOT / 'bin/tack'), 'config', 'reply-style', '--get').strip(), 'visual')
+        self.assertFalse((self.root / 'repo/tack.json').exists())
+
+    def test_clean_git_merge_can_still_fail_a_consumer_contract(self):
+        self.write('producer.py', "def emit(): return {'total': 5}\n")
+        self.write('consumer.py', "def read(record): return record['total']\n")
+        self.commit()
+        self.git('branch', 'integration-base')
+        self.write('producer.py', "def emit(): return {'amount': 5}\n")
+        self.commit()
+        self.git('checkout', '-qb', 'feat/frontend', 'integration-base')
+        self.write('consumer.py', "def read(record): return str(record['total'])\n")
+        self.commit()
+        report = self.report('--base', 'integration-base', '--against', 'feat/backend')
+        self.assertEqual(report['comparisons'][1]['merge']['status'], 'clean')
+        self.git('merge', '--no-edit', 'feat/backend')
+        program = 'from producer import emit; from consumer import read; assert read(emit()) == "5"'
+        self.command(sys.executable, '-c', program, expected=1)
+        self.write('consumer.py', "def read(record): return str(record['amount'])\n")
+        self.command(sys.executable, '-c', program)
 
     def test_overlap_without_conflict_is_distinct_from_text_conflict(self):
         content = (self.repo / 'contract.txt').read_text(encoding='utf-8')

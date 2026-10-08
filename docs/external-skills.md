@@ -10,8 +10,24 @@ Start with a real need: a recurring task or a missing procedure. Compare the can
 | --- | --- |
 | [Addy Osmani: agent-skills](https://github.com/addyosmani/agent-skills) | Engineering workflows; some overlap with tack's planning, testing and review skills. Some skills reference shared files outside their own directory. |
 | [Matt Pocock: skills](https://github.com/mattpocock/skills) | Composable engineering procedures and a repository setup skill. Reuse tack's agreed conventions, issue tracker and document locations when configuring them. |
+| [Ponytail](https://github.com/DietrichGebert/ponytail) | Guidance against unnecessary complexity. Much overlaps tack; choose one owner for modes/reply style rather than stacking workflows. |
+| [Superpowers](https://github.com/obra/superpowers) | Selective design/brainstorming procedures. Review its approval stages and document locations before adoption; do not impose its entire lifecycle on routine changes. |
 
-These are sources to inspect, not blanket endorsements of every instruction or future update. Both repositories currently publish under MIT; preserve their actual license and notices when copying files. The instructions below were checked against upstream documentation on 2026-10-08.
+These are sources to inspect, not blanket endorsements of every instruction or future update. These four repositories currently publish under MIT; preserve their actual license and notices when copying files. The instructions below were checked against upstream documentation on 2026-10-08. Upstream performance claims do not establish gains in tack.
+
+List the named candidates with `npx skills add DietrichGebert/ponytail --list` or `npx skills add obra/superpowers --list`, then use the selective installation procedure below. Keep tack's smaller workflow and add another skill only for a remaining need.
+
+## Other tools worth comparing
+
+| Tool | Fit and boundary |
+| --- | --- |
+| [Aislop](https://github.com/scanaislop/aislop) | Optional diagnostics; trial findings against existing lint. [Verification guidance](verification.md#optional-external-checks). |
+| [pre-commit](https://github.com/pre-commit/pre-commit) | Reuse the project's hook runner; avoid a competing manager. |
+| [reviewdog](https://github.com/reviewdog/reviewdog) | Optional static-analysis review reporting; public comments need the chosen authorization. |
+| [Worktrunk](https://github.com/max-sixty/worktrunk) | Optional worktree convenience; native Git remains sufficient. |
+| [Spec Kit](https://github.com/github/spec-kit) | Compare as an alternative workflow, not another mandatory layer. |
+
+The [evaluation plan](archive/plans/2026-10-08-value-first-workflow-implementation.md#6-evaluate-external-tools-and-hooks-selectively) records source/license observations and adoption criteria. The existing [skills CLI](https://github.com/vercel-labs/skills) remains the installation route; tack has no separate package manager or updater.
 
 ## Ask tack to help choose
 

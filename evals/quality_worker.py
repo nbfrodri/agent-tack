@@ -42,6 +42,8 @@ def environment(home):
 
 
 def prepare(job, env):
+    if job.get('project_guide'):
+        (WORK / 'AGENTS.md').write_text(job['project_guide'], encoding='utf-8')
     for key, value in [('user.name', 'Eval'), ('user.email', 'eval@example.invalid'), ('init.defaultBranch', 'main')]:
         checked(['git', 'config', '--global', key, value], env)
     checked(['git', 'init', '-q', '-b', 'main'], env)
@@ -133,7 +135,7 @@ def invoke(arguments, env, timeout):
 
 def capture(job, env):
     shutil.copytree(WORK, OUT / 'repo', symlinks=True,
-                    ignore=shutil.ignore_patterns('.git', 'node_modules', '__pycache__', '.cache'))
+                    ignore=shutil.ignore_patterns('.git', 'node_modules', '__pycache__', '.cache', '.private'))
     base = json.loads((OUT / 'base.json').read_text(encoding='utf-8'))['head']
     save('git.json', {name: call(['git', *args], env) for name, args in [
         ('status', ['status', '--porcelain']), ('diff', ['diff', '--binary', base]),

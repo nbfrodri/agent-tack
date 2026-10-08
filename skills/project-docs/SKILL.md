@@ -55,6 +55,8 @@ docs/
 Templates for every document are in this skill's `assets/` (`assets/README.md`, `assets/AGENTS.md`, `assets/docs/...`). Copy them, fill them in, and delete any section that doesn't apply.
 
 ## Working documents (plans, audits, handoffs)
+For optional personal scratch context, use `references/private-notes.md` and the preservation-aware `assets/setup-private.py`. Keep information teammates need versioned.
+
 When backend/frontend or other components have different consumers, use `references/integration.md` to keep contract links, availability and consumer actions in the implementation PR. Create a handoff only when it adds information beyond the canonical contract.
 
 These are committed so the reasons behind the work stay in history and anyone can pick the work up from another machine.
@@ -72,7 +74,7 @@ These are committed so the reasons behind the work stay in history and anyone ca
 ## AI usage
 The project documents how AI is used. This is the place for it: commits stay free of AI attribution (as the user decided), and this log is where AI involvement is recorded.
 - `docs/ai/README.md`: which assistants are used and with which configuration (skills, hooks, MCP servers), what the AI may do on its own and what needs human review.
-- `docs/ai/log.md`: after each strict-level task (and any audit), append one row in the same commit as the change it records, not in a separate commit: date, tool and model, task, outcome (the branch or PR; a commit cannot name its own SHA), what a human reviewed. Keep the newest entries at the top.
+- `docs/ai/log.md`: use when project policy requires it or the entry records useful information beyond Git/PR history. Strict mode or an audit alone does not require a log. Keep entries concise and commit with the work they describe.
 - `docs/ai/prompts.md`: when a prompt or request worked notably well for this project, offer to save it (one line saying when to use it, then the prompt).
 
 ## Architecture docs
