@@ -6,6 +6,9 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ### Added
 
+- Optional `tack bootstrap` generates a pinned, consent-based collaborator setup script while preserving existing installations, project activation and local trust.
+- Shared `collaboration` choice (`solo` or `team`), isolated `tack team` branch diagnostics and focused producer/consumer guidance for monorepos.
+- Optional, configurable PR metadata checks and a read-only GitHub Actions asset, also used by tack's own PRs.
 - Batch application of selected shared preferences and mode with `tack config --shared --apply FILE`, including a read-only preview and effective-origin reporting.
 - A bounded minimal-request benchmark with isolated Codex sessions, blind agent grades and a sealed orchestrator assessment. Published results retain all attempts, discovered defects and unmet speed targets; production-code scores remain separate from tests and workflow compliance.
 - A reproducible adoption benchmark covering setup, a second clone and fresh-session changes, with published null quality results, configuration-transfer evidence and time/token overhead.
@@ -15,6 +18,7 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ### Changed
 
+- Startup indexes parallel handoffs and selects a full excerpt only for a single active handoff or a unique current-branch match.
 - Onboarding saves agreed shared defaults explicitly; testing and setup guidance avoid redundant checks while preserving relevant verification and manual-review gaps.
 - README explains the everyday value for individuals and teams; a project departure guide separates disabling tack, archiving old work and uninstalling machine integrations.
 - Engineering guidance explicitly records retained TDD, pragmatic SOLID and Git/PR practices; verification documentation includes a concrete incomplete-result example.
@@ -24,6 +28,9 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ### Fixed
 
+- Windows collaborator setup selects Git Bash explicitly instead of the System32 WSL launcher.
+- Collaborator setup isolates inherited Git directory/index overrides and rejects junctions on older supported Python versions.
+- Team completion checks no longer ask to refresh another branch's handoff merely because its branch differs.
 - Project context resolves native Windows paths consistently, and configuration output uses LF records for Bash consumers.
 - Doctor retains partial diagnostics when Python is unavailable and reports malformed shared profiles when validation is available.
 

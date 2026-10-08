@@ -25,6 +25,7 @@ Each developer [installs tack](setup.md). Maya works on a branch in the service 
 tack enable --shared
 tack mode auto --shared
 tack config reply-style brief --shared
+tack config collaboration team --shared
 tack config architecture-path docs/system.md --shared
 tack setup
 ```
@@ -76,6 +77,8 @@ This is one example rule, not complete coverage for the service. They review unm
 
 ### 2. Review and share
 
+If some collaborators do not have tack, Maya can offer [optional pinned setup files](installation.md#optional-setup-for-collaborators) with `tack bootstrap`. Collaborators choose whether to install; existing personal installations are preserved.
+
 Maya reviews the generated changes and commits `.tack`, `tack.json` and the agreed guidance/maps through a PR. She keeps credentials, private memory and local trust out of Git.
 
 Leo pulls the change and runs:
@@ -97,6 +100,8 @@ For a small bug, Leo says: "Fix the empty search result error and add a regressi
 For a risky data migration, Maya says: "Use strict for this task. Plan the migration and recovery before implementing it." The task gets more review without changing the team's usual default.
 
 Both assistants use the same project evidence. Their models can still behave differently; shared configuration is not a guarantee of identical output. Review the diff, meaningful tests and actual CI results.
+
+For backend and frontend developers working on separate branches in one repository, continue with [team coordination](teamwork.md): canonical contracts, useful handoffs, branch diagnostics, conflict recovery and optional PR checks.
 
 ## Use a fork for deeper customization
 

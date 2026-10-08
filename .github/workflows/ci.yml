@@ -72,6 +72,9 @@ jobs:
           tests/project-setup.test.sh
           tests/verification.test.sh
           tests/project-config.test.sh
+          tests/bootstrap.test.sh
+          tests/team.test.sh
+          tests/pr-policy.test.sh
           tests/ownership-platform.test.sh
           tests/smoke.test.sh
 
@@ -93,6 +96,12 @@ jobs:
         run: tests/verification.test.sh
       - name: Check shared project preferences with native Python and Git Bash
         run: tests/project-config.test.sh
+      - name: Check optional collaborator bootstrap
+        run: tests/bootstrap.test.sh
+      - name: Check team diagnostics and PR metadata
+        run: |
+          tests/team.test.sh
+          tests/pr-policy.test.sh
       - name: Install, doctor, commit through hooks, guard and uninstall
         run: tests/smoke.test.sh
 

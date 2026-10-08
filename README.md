@@ -74,11 +74,14 @@ Use `tack enable --scaffold` if you want the missing base guidance files. Review
 tack enable --shared
 tack mode auto --shared
 tack config reply-style brief --shared
+tack config collaboration team --shared
 ```
 
 Leave `auto` as the usual mode: a small fix and a risky migration need different levels of work. Say "use strict for this task" when needed; that need not change the saved default. [Daily use](docs/usage.md) | [End-to-end team example](docs/sharing.md).
 
 Your project stays portable: the shared setup is ordinary files in Git, and you can [disable tack or tidy old records](docs/leaving.md) without deleting useful project knowledge.
+
+Working on backend and frontend in parallel? Share canonical contracts and focused handoffs, inspect branch conflicts with `tack team`, and add optional PR checks. New collaborators can use a pinned setup command. [Team workflow](docs/teamwork.md).
 
 ## Tools and checks
 

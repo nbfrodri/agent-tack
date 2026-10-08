@@ -28,6 +28,9 @@ tests/evidence.test.sh   # bounded batches, comparison identity and fresh-sessio
 tests/project-capabilities.test.sh # project definitions, references and discovery index
 tests/project-setup.test.sh # read-only discovery, minimal scaffold, readiness and remembered review state
 tests/project-config.test.sh # shared preferences, clone propagation, local trust, paths and hook consumers
+tests/bootstrap.test.sh  # optional pinned installation, consent, existing installs and cache failures
+tests/team.test.sh       # branch overlap, isolated merge conflicts and parallel handoff context
+tests/pr-policy.test.sh  # offline PR metadata, drafts, project conventions and inert event input
 tests/verification.test.sh # path-selected checks, real failure detection, trust, timeouts and Stop integration
 tests/native-agents.test.sh # native formats, installation preservation and Gemini/Copilot hook protocols
 tests/smoke.test.sh      # portable installation and hook smoke checks
@@ -47,6 +50,10 @@ The [onboarding conversation protocol](../evals/project-onboarding.md) prepares 
 `.github/workflows/tools-compat.yml` runs every Monday (and on demand from the Actions tab). It installs the latest Claude Code and Codex with npm, runs `./install.sh --skip-plugins` in a temporary HOME and then `tack doctor --tools`. It uses no credentials. A failure means a new tool release changed something the installer relies on: read the log, then adjust `targets.txt` or the installer.
 
 ## Behaviour evals
+
+### Backend/frontend integration
+
+The [teamwork pilot](benchmarks/2026-10-08-teamwork.md) uses `evals/teamwork.py` and its frozen manifest to run two producer/consumer pairs. Preview with `python3 evals/teamwork.py evals/batches/teamwork-pilot.json --dry-run`. Live execution requires a new output directory and private authentication; four sessions maximum, no retries. The worker reuses isolated Codex invocation/capture helpers; the separate `docs/benchmarks/support/probe-teamwork.py` grades delivered components offline. Do not mix these outcomes with the larger historical quality batch.
 
 ### Minimal requests and independent code review
 

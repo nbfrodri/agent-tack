@@ -55,6 +55,8 @@ docs/
 Templates for every document are in this skill's `assets/` (`assets/README.md`, `assets/AGENTS.md`, `assets/docs/...`). Copy them, fill them in, and delete any section that doesn't apply.
 
 ## Working documents (plans, audits, handoffs)
+When backend/frontend or other components have different consumers, use `references/integration.md` to keep contract links, availability and consumer actions in the implementation PR. Create a handoff only when it adds information beyond the canonical contract.
+
 These are committed so the reasons behind the work stay in history and anyone can pick the work up from another machine.
 - **Plans:** at the strict workflow level, when a plan is approved (from you or the `planner` agent), save it to `docs/plans/` with `Status: approved`. Update the status to `done` (or `abandoned`, with the reason) when the work finishes and move it to `docs/archive/plans/`, so `docs/plans/` shows only open work. Commit with the work it describes when you can, as `docs(plans): …` otherwise.
 - **Audits:** reports from `code-reviewer`, `security-auditor` and `performance-analyzer` (or manual reviews) that matter beyond the current conversation, such as pre-release audits or large reviews, go to `docs/audits/`, with findings and their status. The agents are read-only, so the main agent saves the file. Commit as `docs(audits): …`. Once every finding is fixed or tracked elsewhere, move it to `docs/archive/audits/`.

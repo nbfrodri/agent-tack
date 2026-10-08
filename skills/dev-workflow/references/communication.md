@@ -26,4 +26,6 @@ Scale the reply to the task; a small edit usually needs one short paragraph. Lar
 
 Distinguish implemented, tested, committed and published. Name failed or unrun checks with the reason and practical limit; summarize passing checks rather than pasting logs. Never imply an unrun check passed, or claim a score or improvement without evidence. A blocker belongs near the start when it prevents completion.
 
+If a completion hook asks for a repair or a handoff update, the eventual final reply still covers the original user request, its outcome and verification. Do not replace that result with a report only about the last hook-driven correction.
+
 Only include a next step when one is needed, with the responsible person or required input if relevant. Omit empty sections, repeated summaries, routine offers to continue and irrelevant implementation detail. Keep the final answer self-contained rather than relying on progress messages.

@@ -35,6 +35,8 @@ Shared modes are `auto`, `lite`, `standard` and `strict`. Personal custom modes 
 
 ## What tack.json contains
 
+Team coordination is a separate preference: `tack config collaboration team --shared` selects shared-contract and branch-integration guidance; `solo` is the default. It does not choose strict mode or configure GitHub protection. See the [backend/frontend example](teamwork.md).
+
 The commands above create this optional file. You can review and edit it like other project data:
 
 ```json
@@ -43,6 +45,7 @@ The commands above create this optional file. You can review and edit it like ot
   "mode": "auto",
   "config": {
     "reply-style": "brief",
+    "collaboration": "team",
     "conventional-commits": true,
     "architecture-path": "docs/architecture.md",
     "plans-path": "docs/plans",

@@ -52,7 +52,12 @@ dirty="$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')"
 # or as soon as that work is pushed, since others can then see the branch.
 handoff_check="$("$cli" context 2>/dev/null | grep '^Handoff check:')"
 case "$handoff_check" in
-  *"handoff names branch"*) add "the handoff may be stale: refresh it before stopping." ;;
+  *"handoff names branch"*)
+    # Parallel work belongs to its own task; a different branch is expected in team projects.
+    if [ "$("$cli" config collaboration --get 2>/dev/null)" != team ]; then
+      add "the handoff may be stale: refresh it before stopping."
+    fi
+    ;;
   *"may be stale: "*)
     behind="${handoff_check#*may be stale: }"
     behind="${behind%% *}"

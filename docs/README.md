@@ -10,6 +10,7 @@ New to tack? Read [setup](setup.md), then [daily use](usage.md). You do not need
 | Install and enable a new or existing project | [Setup](setup.md) |
 | Choose task modes and reply styles | [Daily use](usage.md) |
 | Work alone, share a project or maintain a fork | [Sharing](sharing.md) |
+| Coordinate backend/frontend branches and PRs | [Team workflow](teamwork.md) |
 | Save defaults and choose document locations | [Configuration](configuration.md) |
 | Select checks and understand their results | [Verification](verification.md) |
 | Add selected third-party skills | [External skills](external-skills.md) |
@@ -32,6 +33,8 @@ New to tack? Read [setup](setup.md), then [daily use](usage.md). You do not need
 | Measured outcomes and limitations | [Results](results.md) |
 
 ## Decisions and history
+
+The [backend/frontend pilot](benchmarks/2026-10-08-teamwork.md) reports a separate four-session comparison, its null acceptance gain and the completion-reminder defect it exposed.
 
 [The quality and efficiency comparison](benchmarks/2026-10-08-quality-efficiency.md) reports the completed experiment, independent code review and unmet speed targets. Its [archived implementation plan](archive/plans/2026-10-08-quality-and-efficiency-implementation.md) records the intended work and completion decisions.
 

@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "max_sessions": 4,
+  "model": "gpt-6.1-sol",
+  "image": "sha256:b3595972953b86399133c40386256f2b00facc6170d9be05a70891f24615963e",
+  "revisions": {
+    "baseline": "f4b88b447b533d7bf02d445994fbf0ad5065827e",
+    "candidate": "2166cf2572df65b6ff16e2a2a8ff670f88d84b77"
+  }
+}

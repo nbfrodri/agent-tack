@@ -16,6 +16,8 @@ Explain the observed project in a few sentences. Then offer a short, project-spe
 
 For team setup, reuse or agree on coding/testing/Git conventions, context entrypoints, where necessary decisions/plans/handoffs belong, and verification commands. Index the agreed locations in AGENTS.md instead of duplicating context for each tool. Save every selected shared preference explicitly, including values that match defaults: an omitted setting can inherit a teammate's different personal preference. Local overrides win over shared values, then personal defaults; trust stays local.
 
+Ask about collaboration only when it is not already known. Save `collaboration: "team"` for selected parallel team work, or `"solo"` for individual use; this is separate from task mode. Shared activation or multiple historical authors do not automatically select team coordination. For multiple components, locate canonical contracts and propose integration context only when consumers need it (`project-docs/references/integration.md`).
+
 For several selected settings, use a temporary version-1 profile with `mode` and `config`, then `tack config --shared --apply FILE --dry-run` and `tack config --shared --apply FILE`. This merges only selected values and reports effective origins; remove the temporary input afterwards. For one choice, `tack config NAME VALUE --shared` or `tack mode auto --shared` remains sufficient. Do not export ambient personal settings as team policy. Configure context paths before scaffolding, then confirm selected values have shared origins or explain intentional local overrides. Group unresolved choices and reuse recorded answers.
 
 Examples to consider only when evidence supports them:
@@ -25,8 +27,10 @@ Examples to consider only when evidence supports them:
 | Tests and a fast-check command | Missing coverage for real behavior; inspect current tooling before adding a framework. |
 | `checks-map.json` | Different changed paths require existing checks. Inspect what commands cover: a small project may need only its canonical suite; avoid selecting both focused tests and a full suite that repeats them. Keep manual documentation review visible instead of mapping prose to unrelated tests. |
 | CI | Repository host is known and reproducible checks exist; reuse current workflows. |
+| Minimum PR checks | Team requests automated title/review-information checks; use `github-issues/references/pr-checks.md` and keep real code checks separate. A PR template alone does not select this workflow. |
 | `.github/pull_request_template.md` | Team uses PRs and has no suitable project or organization template; adapt validation to actual commands. |
 | README or a development guide | Setup knowledge is missing; link existing docs instead of copying them. |
+| `scripts/setup-tack.py` and `scripts/tack-install.json` | Collaborators need a repeatable tack installation. Use `tack bootstrap --dry-run`, then generate only if selected; pin a reviewed source/commit, preserve existing installs and keep trust local. Cloning alone does not install anything. |
 | `.env.example` | Code consumes configuration variables; use placeholders, never copy real secrets. |
 | Docker or deployment docs | Local services or a specified deployment target make them useful. |
 | Release automation or dependency updates | Distribution and maintenance requirements justify them. |

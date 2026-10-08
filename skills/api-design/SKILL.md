@@ -7,6 +7,8 @@ description: Design backend APIs: contracts, validation, errors, pagination and 
 
 An API is a contract with its clients (your frontend, mobile apps, other teams). It should be predictable: the same conventions on every endpoint, input validated at the edge, errors in one format, and documentation that matches the code because it's generated from it.
 
+When another developer or assistant consumes the change, maintain the canonical contract in this PR and use `project-docs/references/integration.md` for decisions, availability and consumer actions not clear from the schema. Distinguish planned endpoints, branch implementations and behavior verified against the intended base.
+
 Framework-specific guidance (read the one that matches the project):
 - Python (FastAPI, Django/DRF): `references/python.md`
 - PHP (Laravel): `references/laravel.md`

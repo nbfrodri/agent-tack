@@ -75,6 +75,8 @@ Don't silently fix unrelated problems inside the current change, and don't forge
 - "What is pending?": `gh issue list --state open --limit 50` (filter with `--label`, `--assignee @me`, `--milestone`), then summarise by priority and suggest what to tackle next and why.
 
 ## Templates for a repository
+For selected automatic PR checks beyond a template, use `references/pr-checks.md`: reusable read-only CI for title and meaningful review information, separate from code checks.
+
 When asked for templates or setting up GitHub basics, first inspect the project's existing templates and contribution rules. Reuse what fits; add only missing, requested assets from this skill. A request for a PR template alone does not require adding issue forms:
 ```
 assets/ISSUE_TEMPLATE/bug_report.yml       -> .github/ISSUE_TEMPLATE/bug_report.yml
