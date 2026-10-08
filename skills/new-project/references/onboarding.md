@@ -27,6 +27,7 @@ Examples to consider only when evidence supports them:
 | CI | Repository host is known and reproducible checks exist; reuse current workflows. |
 | `.github/pull_request_template.md` | Team uses PRs and has no suitable project or organization template; adapt validation to actual commands. |
 | README or a development guide | Setup knowledge is missing; link existing docs instead of copying them. |
+| `scripts/setup-tack.py` and `scripts/tack-install.json` | Collaborators need a repeatable tack installation. Use `tack bootstrap --dry-run`, then generate only if selected; pin a reviewed source/commit, preserve existing installs and keep trust local. Cloning alone does not install anything. |
 | `.env.example` | Code consumes configuration variables; use placeholders, never copy real secrets. |
 | Docker or deployment docs | Local services or a specified deployment target make them useful. |
 | Release automation or dependency updates | Distribution and maintenance requirements justify them. |

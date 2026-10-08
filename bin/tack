@@ -35,6 +35,9 @@ Commands:
   setup [--check|--json]
                       Inspect project foundations without running project code;
                       --check exits 1 for incomplete or broken base guidance
+  bootstrap [--source URL] [--revision COMMIT] [--directory PATH] [--dry-run]
+                      Create optional collaborator setup files pinned to a tack commit;
+                      generation does not install, activate or trust anything
   verify [--plan] [--json] [--base REF] [--budget-seconds N]
                       Select checks for changed paths; execute only with local trust
                       --plan is read-only; report failures and verification gaps
@@ -361,6 +364,12 @@ case "$cmd" in
     require_repo
     command -v python3 >/dev/null 2>&1 || fail 'setup needs python3'
     python3 "$TACK_ROOT/lib/project_setup.py" "$root" "$@"
+    exit
+    ;;
+  bootstrap)
+    require_repo
+    command -v python3 >/dev/null 2>&1 || fail 'bootstrap needs python3'
+    python3 "$TACK_ROOT/lib/project_bootstrap.py" "$root" "$@"
     exit
     ;;
   verify)

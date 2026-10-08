@@ -31,6 +31,24 @@ Installation records changes privately under `${XDG_STATE_HOME:-$HOME/.local/sta
 
 Uninstall never deletes project files, project activation/trust configuration or shared plugins. It removes only the mods and local marketplace recorded by the installer; plugins from `plugins.txt`, and mods or marketplaces you already had, are kept.
 
+## Optional setup for collaborators
+
+Cloning an enabled project shares its instructions and preferences; it does not install tack on the new machine. To offer one setup command, the owner can generate two optional files:
+
+```bash
+tack bootstrap --dry-run
+tack bootstrap
+git add scripts/setup-tack.py scripts/tack-install.json
+```
+
+Review and commit them. The recipe pins the source and full commit of the owner's tack checkout. For a fork, supply both `--source https://github.com/YOUR-TEAM/agent-tack.git` and `--revision FULL_COMMIT`. Use `--directory PATH` for another project-relative scripts folder. Existing files are never overwritten; review later updates as ordinary project changes.
+
+A collaborator runs `python3 scripts/setup-tack.py --dry-run`, then `python3 scripts/setup-tack.py`. Missing tack is downloaded only after confirmation; `--yes` explicitly permits noninteractive installation, for example in an already selected Dev Container's `postCreateCommand`. Git, Bash and Python are prerequisites; on Windows, run from Git Bash.
+
+The script reuses `install.sh --skip-plugins`, keeping its checkout under `${XDG_DATA_HOME:-~/.local/share}/agent-tack/bootstrap/`. It preserves existing personal installations and reports that the requested revision was not enforced; check their version/source and `tack doctor` before deciding to replace anything. Dirty, mismatched or failed cached checkouts remain available for manual inspection. No automatic upgrade or cache deletion occurs.
+
+Installation changes machine integrations. It does not enable the current project, grant local execution trust or overwrite project preferences. Shared activation and `tack.json` remain separate decisions. Keep the cached checkout while its installation is in use because managed links point to it.
+
 ## Updating
 ```bash
 cd /path/to/your/agent-tack && git pull && ./install.sh
