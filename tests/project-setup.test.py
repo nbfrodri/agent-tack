@@ -5,10 +5,12 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / 'lib'))
 spec = importlib.util.spec_from_file_location('project_setup', ROOT / 'lib/project_setup.py')
 setup = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(setup)
@@ -46,7 +48,7 @@ class ProjectSetup(unittest.TestCase):
     def test_empty_project_minimal_base_is_neutral_idempotent_and_needs_review(self):
         self.tack('enable', '--scaffold')
         files = {str(p.relative_to(self.project)) for p in self.project.rglob('*') if p.is_file() and '.git' not in p.parts}
-        self.assertEqual(files, set(setup.BASE))
+        self.assertEqual(files, {'AGENTS.md', 'CLAUDE.md', 'docs/architecture.md', 'docs-map.txt'})
         self.assertFalse((self.project / '.tack').exists())
         report = json.loads(self.tack('setup', '--json'))
         self.assertEqual(report['manifests'], [])

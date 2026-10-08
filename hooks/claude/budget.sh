@@ -27,7 +27,7 @@ cli="$(cd "$(dirname "$0")/../../bin" && pwd)/tack"
 cd "$cwd" || exit 0
 "$cli" status --quiet || exit 0
 case "$("$cli" mode show 2>/dev/null)" in WARNING:*) ;; *) exit 0 ;; esac
-limit="$("$cli" config unleash-max-tool-calls 2>/dev/null)"
+limit="$("$cli" config unleash-max-tool-calls --get 2>/dev/null)"
 limit="${limit%% *}"
 case "$limit" in '' | *[!0-9]*) exit 0 ;; esac
 

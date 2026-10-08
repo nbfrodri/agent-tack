@@ -133,8 +133,8 @@ check "global mode works outside a repository" expect_exit 0 "$CLI" mode strict 
 check "mode outside a repository shows the global default" expect_mode 'strict (global)'
 git config --global --unset tack.mode
 check "help documents mode" expect_exit 0 "$CLI" help
-check "help includes mode syntax" contains 'mode [MODE] [--global]'
-check "help documents config" contains 'config [NAME [VALUE]] [--global]'
+check "help includes mode syntax" contains 'mode [MODE] [--global|--shared]'
+check "help documents config" contains 'config [NAME [VALUE]] [--global|--shared]'
 check "help documents user modes" contains 'mode new NAME --from MODE'
 cd "$WORK/project" || exit 1
 
@@ -562,8 +562,8 @@ printf 'def test_old_R9():\n    pass\n' > "$TRACE/tests/test_legacy.py"
 git -C "$TRACE" add -A
 trace() { (cd "$TRACE" && "$CLI" trace "$@"); }
 check "trace fails when a requirement has no test" expect_exit 1 trace
-check "trace lists covered requirements with their tests" out_matches "^R1 +covered +tests/test_login.py"
-check "trace lists every test that names a requirement" out_matches "^R2 +covered +tests/lockout.test.js"
+check "trace lists linked requirements with their tests" out_matches "^R1 +linked +tests/test_login.py"
+check "trace lists every test that names a requirement" out_matches "^R2 +linked +tests/lockout.test.js"
 check "trace names the requirement without a test" out_matches "^R3 +MISSING +a locked account says when it unlocks"
 check "trace ignores IDs outside test files" out_lacks "src/login.py"
 check "trace warns about tests tied to a requirement the plan lacks" contains 'R9 is named in tests/test_legacy.py but not in the plan'
@@ -581,7 +581,7 @@ cat > "$TRACE/docs/plans/2026-10-02-checklist.md" <<'EOF'
 1. R3: a locked account says when it unlocks
 EOF
 check "trace reads checkbox and numbered requirements" expect_exit 0 trace docs/plans/2026-10-02-checklist.md
-check "checkbox requirements are listed" out_matches "^R1 +covered"
+check "checkbox requirements are listed" out_matches "^R1 +linked"
 printf 'def test_R4a_variant():\n    pass\n' > "$TRACE/tests/test_variant.py"
 printf -- '- R4: exports a report\n' >> "$TRACE/docs/plans/2026-10-02-checklist.md"
 git -C "$TRACE" add -A

@@ -2,9 +2,14 @@
 set -uo pipefail
 export LC_ALL=C
 
-root="$1"
+root="$(cd "$1" && pwd -P)" || exit 2
 level="${2:-index}"
 remaining=6000
+source_root="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$root" || exit 2
+# shellcheck source=SCRIPTDIR/project-paths.sh
+. "$source_root/lib/project-paths.sh"
+load_project_paths "$source_root" || exit 2
 
 include() {
   local path="$1" limit="$2" line count=0 resolved_dir
@@ -40,7 +45,7 @@ handoff_freshness() {
   [ -z "$committed" ] || [ "$committed" -le "$since" ] || since="$committed"
   # Commits that only touch plans, handoffs or the archive record decisions about the work, not new work.
   commits="$(git -C "$root" rev-list --count --since="@$((since + 1))" HEAD -- . \
-    ':(exclude)docs/plans' ':(exclude)docs/handoffs' ':(exclude)docs/archive' 2>/dev/null)" || commits=0
+    ":(exclude)$TACK_PLANS" ":(exclude)$TACK_HANDOFFS" ':(exclude)docs/archive' 2>/dev/null)" || commits=0
   # shellcheck disable=SC2016 # The backticks are literal Markdown, not command substitution.
   named="$(sed -n 's/^[-[:space:]]*\**Branch:\**[[:space:]]*`\{0,1\}\([^`[:space:]]*\).*/\1/p' "$path" | head -n 1)"
   current="$(git -C "$root" branch --show-current 2>/dev/null)"
@@ -55,21 +60,21 @@ handoff_freshness() {
 
 include AGENTS.md 45
 active=''
-for file in "$root"/docs/handoffs/*.md; do
+for file in "$root/$TACK_HANDOFFS"/*.md; do
   if [ ! -f "$file" ] || [ -L "$file" ]; then continue; fi
   if grep -qiE '^[-[:space:]]*(\*\*)?Status:(\*\*)?[[:space:]]*(in progress|paused)' "$file"; then
     active="${file#"$root"/}"
   fi
 done
 if [ "$level" = full ]; then
-  include docs/architecture.md 45
+  include "$TACK_ARCHITECTURE" 45
   if [ -n "$active" ]; then include "$active" 40; handoff_freshness "$active"; fi
   exit 0
 fi
 # The minimal and index levels load documents on demand: an index costs a few lines, not full excerpts.
 printf '\n--- Index: read these in full only when the task needs them ---\n'
-if [ "$level" != minimal ] && safe_file docs/architecture.md; then
-  printf -- '- docs/architecture.md (%s lines)\n' "$(wc -l < "$root/docs/architecture.md" | tr -d ' ')"
+if [ "$level" != minimal ] && safe_file "$TACK_ARCHITECTURE"; then
+  printf -- '- %s (%s lines)\n' "$TACK_ARCHITECTURE" "$(wc -l < "$root/$TACK_ARCHITECTURE" | tr -d ' ')"
 fi
 if [ -n "$active" ] && safe_file "$active"; then
   printf -- '- Active handoff: %s\n' "$active"

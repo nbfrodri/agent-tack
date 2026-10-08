@@ -71,6 +71,7 @@ jobs:
           tests/native-agents.test.sh
           tests/project-setup.test.sh
           tests/verification.test.sh
+          tests/project-config.test.sh
           tests/ownership-platform.test.sh
           tests/smoke.test.sh
 
@@ -90,6 +91,8 @@ jobs:
         run: tests/ownership-platform.test.sh
       - name: Verify project checks with native Python and Git Bash
         run: tests/verification.test.sh
+      - name: Check shared project preferences with native Python and Git Bash
+        run: tests/project-config.test.sh
       - name: Install, doctor, commit through hooks, guard and uninstall
         run: tests/smoke.test.sh
 

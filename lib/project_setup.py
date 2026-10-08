@@ -6,7 +6,11 @@ from pathlib import Path
 import re
 import subprocess
 
-BASE = ('AGENTS.md', 'CLAUDE.md', 'docs/architecture.md', 'docs-map.txt')
+from project_config import project_paths
+
+def base_files(root):
+    return ('AGENTS.md', 'CLAUDE.md', project_paths(root)['architecture-path'], 'docs-map.txt')
+
 MANIFESTS = {'package.json': 'JavaScript/TypeScript', 'pyproject.toml': 'Python',
              'requirements.txt': 'Python', 'Cargo.toml': 'Rust', 'go.mod': 'Go',
              'composer.json': 'PHP', 'Gemfile': 'Ruby', 'pom.xml': 'Java',
@@ -80,12 +84,12 @@ def analyze(root):
     if not any(p.lower() == 'readme.md' for p in files):
         candidates.append({'item': 'README', 'reason': 'No root README.md; a short setup and usage guide may help.'})
     issues = []
-    for relative in BASE:
+    for relative in base_files(root):
         if not safe(root, relative):
             issues.append(f'{relative}: symlink or unsafe path; inspect manually')
         elif not (root / relative).is_file():
             issues.append(f'{relative}: missing base file')
-    for relative in ('AGENTS.md', 'docs/architecture.md'):
+    for relative in ('AGENTS.md', base_files(root)[2]):
         content = read(root, relative)
         if PENDING in content or re.search(r'`(?:…|\.\.\.|TODO)`', content):
             issues.append(f'{relative}: guidance still needs review against the project')
@@ -114,16 +118,17 @@ def analyze(root):
     return dict(manifests=[{'path': p, 'stack': MANIFESTS[Path(p).name]} for p in manifests],
                 commands=commands, directories=directories, capabilities=capabilities,
                 pr_templates=templates, candidates=candidates, issues=issues,
-                docs_map_rules=rules, truncated=truncated)
+                docs_map_rules=rules, truncated=truncated, paths=project_paths(root))
 
 
 def scaffold(root):
     # Preflight every destination, including parent symlinks, before writing any file.
-    for relative in BASE:
+    for relative in base_files(root):
         if not safe(root, relative):
             raise ValueError(f'unsafe scaffold path: {relative}; no files created')
         if (root / relative).exists() and not (root / relative).is_file():
             raise ValueError(f'scaffold destination is not a file: {relative}')
+    architecture_path = base_files(root)[2]
     report = analyze(root)
     commands = '\n'.join(f'- {name}: `{command}` ({source}; declared, not verified).' for name, (command, source) in report['commands'].items())
     manifests = '\n'.join(f"- `{item['path']}`: {item['stack']}." for item in report['manifests'])
@@ -137,7 +142,7 @@ Review these instructions against the code and user intent. Remove the review ma
 {commands or 'No root commands detected. Ask about the intended stack for an empty project; inspect existing tooling for an established project.'}
 
 ## Architecture
-See [architecture](docs/architecture.md). Keep it current when components or flows change.
+See [architecture](<{architecture_path}>). Keep it current when components or flows change.
 
 ## Initialization
 Run `tack setup` and follow the new-project onboarding workflow. Before optional repository additions, present concrete paths, their purpose and the evidence for them; ask the user which to create. Respect previous choices and existing files. Record accepted, declined or deferred additions here, then set `tack config setup-review done` (or `deferred` to postpone).
@@ -163,10 +168,10 @@ Document only decisions and flows supported by the project. Add diagrams and lin
     files, _ = inventory(root)
     patterns += [p for p in files if '/' not in p and Path(p).suffix in ('.py', '.sh', '.js', '.ts', '.go', '.rs')][:20]
     mapping = '# code glob | documentation targets (a change to any listed document covers the rule)\n# Initial architecture coverage; refine by component after reviewing the project.\n'
-    mapping += ''.join(f'{pattern} | docs/architecture.md\n' for pattern in patterns if not any(c in pattern for c in '\n\r|,'))
+    mapping += ''.join(f'{pattern} | {architecture_path}\n' for pattern in patterns if not any(c in pattern for c in '\n\r|,'))
     if not patterns:
         mapping += '# No source paths detected yet. Add real rules when implementation exists.\n'
-    for relative, content in zip(BASE, (agents, '@AGENTS.md\n', architecture, mapping)):
+    for relative, content in zip(base_files(root), (agents, '@AGENTS.md\n', architecture, mapping)):
         path = root / relative
         if path.exists():
             print(f'kept {relative}')
@@ -175,7 +180,7 @@ Document only decisions and flows supported by the project. Add diagrams and lin
         with path.open('x', encoding='utf-8', newline='\n') as output:
             output.write(content)
         print(f'created {relative}')
-    print('Next: review and fill AGENTS.md and docs/architecture.md from the code; run tack setup and select optional additions with the assistant.')
+    print(f'Next: review and fill AGENTS.md and {architecture_path} from the code; run tack setup and select optional additions with the assistant.')
 
 
 def main():

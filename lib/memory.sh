@@ -13,7 +13,7 @@ shift
 file="${XDG_CONFIG_HOME:-$HOME/.config}/agent-tack/memory.md"
 usage_error() { printf 'tack: %s (see --help)\n' "$1" >&2; exit 2; }
 cannot_write() { echo "tack: cannot write $file" >&2; exit 1; }
-setting() { local value; value="$("$root/bin/tack" config "$1" 2>/dev/null)"; printf '%s' "${value%% *}"; }
+setting() { local value; value="$("$root/bin/tack" config "$1" --get 2>/dev/null)"; printf '%s' "${value%% *}"; }
 
 # Credentials never belong in a file loaded into every session. Token formats are matched
 # case-sensitively at a word start; a password-style value must hold a digit or symbol, so

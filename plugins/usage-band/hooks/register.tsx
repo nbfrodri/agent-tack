@@ -109,7 +109,7 @@ export const register: Register = on => {
     await $.command.register({ name: 'usage-band', description: 'Show or hide the usage band above the prompt' })
     try {
       const mode = await $.process.run(['tack', 'mode', 'show'], { timeoutMs: 5000 })
-      const config = await $.process.run(['tack', 'config', 'unleash-max-cost'], { timeoutMs: 5000 })
+      const config = await $.process.run(['tack', 'config', 'unleash-max-cost', '--get'], { timeoutMs: 5000 })
       limitUsd = mode.exitCode === 0 && config.exitCode === 0 ? costLimit(mode.stdout, config.stdout) : undefined
     } catch {
       limitUsd = undefined

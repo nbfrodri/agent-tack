@@ -29,9 +29,19 @@ is_project_only() {
 # user's global default. Invalid values behave as auto so a typo never blocks work.
 effective_mode() {
   local scope value
-  [ "$#" -gt 0 ] || set -- local global
+  [ "$#" -gt 0 ] || set -- local shared global
   for scope in "$@"; do
-    value="$(key_get "$scope" mode)" || continue
+    if [ "$scope" = shared ]; then
+      local project status
+      project="$(git rev-parse --show-toplevel 2>/dev/null)" || continue
+      if [ ! -e "$project/tack.json" ] && [ ! -L "$project/tack.json" ]; then continue; fi
+      value="$(python3 "$TACK_ROOT/lib/project_config.py" "$TACK_ROOT" shared-mode)"
+      status=$?
+      [ "$status" -ne 2 ] || return 2
+      [ "$status" -eq 0 ] || continue
+    else
+      value="$(key_get "$scope" mode)" || continue
+    fi
     if [ "$scope" = global ] && is_project_only "$value"; then
       printf 'auto (%s is project-only; global value ignored)\n' "$value"
     elif is_mode "$value"; then printf '%s (%s)\n' "$value" "$scope"

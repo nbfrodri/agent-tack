@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # `tack trace [PLAN]`: checks that every requirement the plan numbers (R1, R2…) has a test
 # that names it, and warns about tests naming a requirement the plan no longer has.
-# PLAN defaults to the newest file in docs/plans/. Exit codes: 0 all covered, 1 a requirement
+# PLAN defaults to the newest file in docs/plans/. Exit codes: 0 all linked, 1 a requirement
 # lacks a test, 2 usage (not a repository, no plan).
 set -u
 export LC_ALL=C
@@ -11,9 +11,13 @@ plan="${1:-}"
 # A relative plan path is relative to where the user is, not to the repository root.
 case "$plan" in '' | /*) ;; *) plan="$PWD/$plan" ;; esac
 cd "$root" || exit 2
+source_root="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=SCRIPTDIR/project-paths.sh
+. "$source_root/lib/project-paths.sh"
+load_project_paths "$source_root" || exit 2
 if [ -z "$plan" ]; then
-  plan="$(find docs/plans -maxdepth 1 -name '*.md' 2>/dev/null | sort | tail -n 1)"
-  [ -n "$plan" ] || { echo "tack: no plan in docs/plans/; pass one: tack trace PLAN" >&2; exit 2; }
+  plan="$(find "$TACK_PLANS" -maxdepth 1 -name '*.md' 2>/dev/null | sort | tail -n 1)"
+  [ -n "$plan" ] || { echo "tack: no plan in $TACK_PLANS/; pass one: tack trace PLAN" >&2; exit 2; }
 fi
 [ -f "$plan" ] || { echo "tack: plan not found: $plan" >&2; exit 2; }
 
@@ -42,11 +46,11 @@ EOF
 }
 
 missing=0
-echo "Requirements in $plan:"
+echo "Requirement links in $plan (text references only; tests are not executed):"
 while IFS='|' read -r id text; do
   found="$(files_naming "$id")"
   if [ -n "$found" ]; then
-    printf '%-6s covered  %s\n' "$id" "$found"
+    printf '%-6s linked  %s\n' "$id" "$found"
   else
     printf '%-6s MISSING  %s\n' "$id" "$text"
     missing=1
