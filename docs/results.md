@@ -2,6 +2,14 @@
 
 What tack changes in practice, measured on real sessions: the same tasks with and without it.
 
+## Minimal requests and independent code review (2026-10-08)
+
+The latest comparison completed **93 sessions**: 5 pilot, 48 coding, 32 blind reviews and 8 setups. Plain projects received ordinary product requests without custom instructions to write tests, use TDD/SOLID or follow a Git workflow. GPT-6 Luna and GPT-6.1 Sol each solved four tasks twice with plain projects, current tack and a frozen candidate. Two fresh GPT-6 Astra reviews scored each anonymous triplet; the orchestrator inspected every delivery and saved its assessment before labels were revealed.
+
+The candidate passed 16/16 frozen acceptance checks; current tack and plain projects each passed 15/16. This small difference does not establish a quality advantage: plain projects had slightly higher mean blind grades, and review found additional defects in every condition. Luna's tests rejected the original defect in **8/8 runs with either tack version, versus 1/8 without tack**. Sol already did so in every condition. All selected settings transferred in all eight setups, with local trust kept private. No recorded red/green sequence demonstrated TDD in this batch.
+
+The speed targets were missed. Candidate coding time changed by **+7.7% for Luna and -1.6% for Sol** versus current tack; setup took **11.7% and 12.8% longer**. Compared with plain projects, candidate coding took 1.86x and 1.40x the time. Keep the new atomic configuration flow for explicit, validated choices, without claiming a measured speed gain. [Protocol, all attempts, code-quality grades, source findings and limitations](benchmarks/2026-10-08-quality-efficiency.md).
+
 ## Project adoption comparison (2026-10-08)
 
 The new shared-configuration/verifier version completed eight three-session journeys: setup, a second clone's bug fix and a feature. The baseline received the same useful project instructions and engineering requirements. **Both conditions passed 8/8 code tasks and caught 12/12 injected faults with their tests.** All 24 sessions completed, with red/green evidence in every code task.

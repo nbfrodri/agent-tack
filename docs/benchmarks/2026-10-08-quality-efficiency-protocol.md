@@ -1,6 +1,6 @@
 # Minimal-request quality and efficiency comparison
 
-Status: protocol frozen before model execution. Results will be reported separately, including failed attempts and unmet goals.
+Status: protocol frozen before model execution. The [completed results](2026-10-08-quality-efficiency.md) report all attempts, independent review and unmet goals separately; the experimental design below is unchanged.
 
 ## Questions
 

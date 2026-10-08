@@ -59,6 +59,8 @@ docker build -t tack-quality:20261008 -f evals/quality.Dockerfile evals
 
 For live runs, freeze the resolved image ID in the manifest, retain exact product commits, and supply `--auth /private/codex-auth.json --output /private/new-results` with `--stage pilot`, `setup` or `coding`. Each output directory must be new. Review calls use `quality_review.py MANIFEST --source RESULTS --output NEW-REVIEWS --auth PRIVATE-AUTH`. The review controller keeps condition mappings outside reviewer containers. Do not expose them to the orchestrator until its independent code assessment is saved. Run hidden grading in another disposable container after model execution. The public recipe pins the base and Codex version; rebuilt system packages may differ, so record tool versions and image identity.
 
+The completed [quality report](benchmarks/2026-10-08-quality-efficiency.md) publishes adverse outcomes as well as benefits. `docs/benchmarks/support/summarize-quality.py RESULTS --output FACTS.json` joins coding, setup and review evidence only after a complete `reviews/orchestrator-blind.json` matches the anonymous bundle and raw-review hashes. Save that assessment before opening mappings or grading outcomes. `probe-quality.py` runs separately in an isolated environment against captured deliveries; its post-hoc findings supplement frozen acceptance without changing it. These reporting helpers are not installed by tack.
+
 ### Reproducible batches and local capabilities
 
 Optional manifest fields `variant` (`primary` or `held-out`) and `skill_groups` fix the fixture family and installed skill groups. They override ambient evaluation settings and are included in resume identity. Endpoint changes also invalidate a batch's identity without storing the endpoint itself.

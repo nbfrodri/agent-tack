@@ -1,6 +1,8 @@
 # Faster adoption and independent code-quality evaluation
 
-Status: in progress. Shared-profile application, onboarding/testing guidance, README improvements and the departure guide are implemented. The new evaluator is under local validation; live outcomes are not yet reported here.
+Status: completed. Shared-profile application, onboarding/testing guidance, README improvements, the departure guide and the isolated evaluator are implemented. All 93 authorized model sessions completed; [published results](../../benchmarks/2026-10-08-quality-efficiency.md) include independent grades, sealed orchestrator review and adverse findings. The 20% coding and 30% setup speed targets were not met. This archive preserves the original implementation requirements below; it is not a pending roadmap.
+
+Completion decisions: keep atomic application for explicit shared choices and validation, without a performance claim. No verifier cache or speculative startup rewrite was justified. All selected preferences transferred in eight setup trials, and no frozen acceptance regression appeared against current tack. Candidate code added a minor defaults-duplication weakness in one delivery; a general quality improvement remains unproven. Relevant local suites and cross-platform CI validate the implementation separately from the model experiment. Optional external skills retain the existing guided installation flow; departure remains explicit disabling and reviewed archiving, without an automatic document purge.
 
 Starting revision: `8470e487527954304a8e4c5a80bf3420b85725bc` (PR #133). Conversation decisions: support individual and team use, retain practical engineering guidance, reduce avoidable overhead, and compare ordinary requests with and without tack. An independent agent must grade the delivered code, with evidence reviewed by the orchestrator.
 
@@ -12,7 +14,7 @@ Starting revision: `8470e487527954304a8e4c5a80bf3420b85725bc` (PR #133). Convers
 4. Evaluate a minimal user request without injecting TDD, tests, SOLID, modularity or Git practices into the untreated condition. Let tack supply its normal guidance in the treated conditions.
 5. Publish adverse and inconclusive outcomes as readily as improvements. Tack guides practices and enforces selected checks; it cannot guarantee that a model follows every recommendation.
 
-The earlier [adoption experiment](../benchmarks/2026-10-08-adoption.md) remains a valid comparison against good native project guidance. Do not rewrite its prompts, evidence or conclusions. The new experiment answers a different question.
+The earlier [adoption experiment](../../benchmarks/2026-10-08-adoption.md) remains a valid comparison against good native project guidance. Do not rewrite its prompts, evidence or conclusions. The new experiment answers a different question.
 
 External skills keep their existing optional, assistant-guided selection and reviewed installation through an existing installer. A proprietary package manager or background update service is outside this work. If repeated adoption failures justify more automation later, first consider bounded checks for provenance, duplicates and missing references, or a thin installer wrapper. Preserve explicit selection, project scope and reviewed updates.
 
@@ -46,7 +48,7 @@ tack config --shared --apply selected-profile.json --dry-run
 tack config --shared --apply selected-profile.json
 ```
 
-These flags do not exist yet. The input uses the existing version-1 `tack.json` shape, including an optional shared mode. It contains only decisions already selected by the user or authorized plan.
+These flags were added by this implementation. The input uses the existing version-1 `tack.json` shape, including an optional shared mode. It contains only decisions already selected by the user or authorized plan.
 
 - Reuse the existing registry and validators; extract reusable profile validation inside `lib/project_config.py` rather than duplicate it in setup.
 - Validate the entire input and merged result before writing. Merge only supplied mode/config keys; preserve other accepted project values. Keep current single-setting commands and precedence unchanged.

@@ -88,9 +88,9 @@ Claude Code, Codex, Gemini CLI, GitHub Copilot, OpenCode, Crush and Cursor recei
 
 ## What the evidence says
 
-The latest Codex adoption comparison completed 24 sessions: **8/8 code tasks passed with tack and 8/8 with native project guidance**. Shared mode, context paths and reply style reached all four teammate clones, with trust kept local. Tack took about **2x the total session time**.
+The latest Codex comparison used ordinary task requests, 48 coding sessions and 32 blind code reviews. **Luna produced tests that caught the original defect in 8/8 tasks with tack, versus 1/8 without it.** Sol did so in every condition. Selected project preferences transferred correctly in all eight setup trials; execution trust stayed local.
 
-Both conditions used the same engineering requirements and wrote useful regression tests. We do not claim a general code-quality or cost improvement. [Adoption results and limits](docs/benchmarks/2026-10-08-adoption.md) | [All results](docs/results.md) | [Decision](docs/adr/0003-project-verification-over-generic-process.md).
+That benefit has overhead: the candidate took **1.86x the coding time with Luna and 1.40x with Sol** compared with plain projects. The proposed speed targets were not met, and independent review did not establish a general code-quality advantage. [Results, code review and limits](docs/benchmarks/2026-10-08-quality-efficiency.md) | [All results](docs/results.md) | [Decision](docs/adr/0003-project-verification-over-generic-process.md).
 
 ## Learn more
 

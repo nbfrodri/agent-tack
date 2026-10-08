@@ -33,7 +33,7 @@ New to tack? Read [setup](setup.md), then [daily use](usage.md). You do not need
 
 ## Decisions and history
 
-[Planned work on setup speed and independent code-quality evaluation](plans/2026-10-08-quality-and-efficiency-implementation.md) defines the next implementation and experiments; it contains no new measured results.
+[The quality and efficiency comparison](benchmarks/2026-10-08-quality-efficiency.md) reports the completed experiment, independent code review and unmet speed targets. Its [archived implementation plan](archive/plans/2026-10-08-quality-and-efficiency-implementation.md) records the intended work and completion decisions.
 
 [ADRs](adr/) explain design decisions. [Audits](audits/) record findings against a dated revision; they are not the current usage manual. [Archived plans and handoffs](archive/) preserve completed work. Historical benchmarks describe the version tested, including old names and behavior.
 
