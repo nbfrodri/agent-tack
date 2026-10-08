@@ -1,6 +1,6 @@
 # Faster adoption and independent code-quality evaluation
 
-Status: planned. This document defines future implementation and experiments; it does not report new benchmark results.
+Status: in progress. Shared-profile application, onboarding/testing guidance, README improvements and the departure guide are implemented. The new evaluator is under local validation; live outcomes are not yet reported here.
 
 Starting revision: `8470e487527954304a8e4c5a80bf3420b85725bc` (PR #133). Conversation decisions: support individual and team use, retain practical engineering guidance, reduce avoidable overhead, and compare ordinary requests with and without tack. An independent agent must grade the delivered code, with evidence reviewed by the orchestrator.
 

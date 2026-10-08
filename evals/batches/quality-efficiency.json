@@ -1,0 +1,31 @@
+{
+  "batch_id": "quality-efficiency-20261008",
+  "revisions": {
+    "current": "8470e487527954304a8e4c5a80bf3420b85725bc",
+    "improved": "e3d788b6aec92e8d73343673f873a48a9a240e27"
+  },
+  "seed": 20261008,
+  "models": [
+    "gpt-6-luna",
+    "gpt-6.1-sol"
+  ],
+  "reviewer": "gpt-6-astra",
+  "effort": "medium",
+  "conditions": [
+    "plain",
+    "current",
+    "improved"
+  ],
+  "tasks": [
+    "window",
+    "shipment",
+    "settings",
+    "assignments"
+  ],
+  "repetitions": 2,
+  "concurrency": 2,
+  "implementation_timeout": 600,
+  "review_timeout": 300,
+  "max_sessions": 93,
+  "image": "sha256:b3595972953b86399133c40386256f2b00facc6170d9be05a70891f24615963e"
+}

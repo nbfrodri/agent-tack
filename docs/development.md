@@ -48,6 +48,17 @@ The [onboarding conversation protocol](../evals/project-onboarding.md) prepares 
 
 ## Behaviour evals
 
+### Minimal requests and independent code review
+
+The [quality/efficiency protocol](benchmarks/2026-10-08-quality-efficiency-protocol.md) compares plain projects, current tack and a candidate using the same minimal requests. `evals/quality.py` runs bounded implementation/setup stages in separate disposable containers; `quality_worker.py` handles one session. `quality_review.py` prepares anonymous production-only bundles and validates agent grades. `quality_grade.py` supplies hidden checks only after delivery. Offline coverage lives in `tests/quality.test.py` and runs through `tests/evidence.test.sh`.
+
+```bash
+python3 evals/quality.py evals/batches/quality-efficiency.json --stage coding --dry-run
+docker build -t tack-quality:20261008 -f evals/quality.Dockerfile evals
+```
+
+For live runs, freeze the resolved image ID in the manifest, retain exact product commits, and supply `--auth /private/codex-auth.json --output /private/new-results` with `--stage pilot`, `setup` or `coding`. Each output directory must be new. Review calls use `quality_review.py MANIFEST --source RESULTS --output NEW-REVIEWS --auth PRIVATE-AUTH`. The review controller keeps condition mappings outside reviewer containers. Do not expose them to the orchestrator until its independent code assessment is saved. Run hidden grading in another disposable container after model execution. The public recipe pins the base and Codex version; rebuilt system packages may differ, so record tool versions and image identity.
+
 ### Reproducible batches and local capabilities
 
 Optional manifest fields `variant` (`primary` or `held-out`) and `skill_groups` fix the fixture family and installed skill groups. They override ambient evaluation settings and are included in resume identity. Endpoint changes also invalidate a batch's identity without storing the endpoint itself.
