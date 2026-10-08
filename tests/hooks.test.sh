@@ -453,6 +453,7 @@ check "enabled project: says ENABLED" "session '$WORK/repo' | grep -q 'ENABLED f
 check "disabled project: says NOT enabled" "session '$R' | grep -q 'NOT enabled'"
 check "output is valid JSON for SessionStart" "session '$R' | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d[\"hookSpecificOutput\"][\"hookEventName\"]==\"SessionStart\"'"
 check "auto mode: asks the assistant to pick a level per task" "session '$WORK/repo' | grep -q 'mode: auto.*pick the workflow level'"
+check "auto mode: lite tasks avoid unnecessary workflow loading" "session '$WORK/repo' | grep -q 'For lite tasks the essentials here suffice: do not load dev-workflow'"
 check "every mode: asks the assistant to ask when in doubt" "session '$WORK/repo' | grep -q 'Ask the user whenever you have a real doubt'"
 check "every mode: states the core rules without loading the skill" "session '$WORK/repo' | grep -q 'At every level: work on a branch off main, test the change, and make a Conventional Commit for each verified milestone'"
 git -C "$WORK/repo" config tack.mode lite

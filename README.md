@@ -1,118 +1,379 @@
-# agent-tack
+<p align="center">
+  <img src="docs/assets/tack-logo.png" alt="tack — a teal pin symbol" width="144" height="144">
+</p>
+<h1 align="center">tack</h1>
+<p align="center"><strong>Your team's way of working. Across AI coding tools.</strong></p>
+<p align="center">Shared conventions, organized context and concrete project checks.</p>
+<p align="center">
+  <a href="https://github.com/nbfrodri/agent-tack/actions/workflows/ci.yml"><img src="https://github.com/nbfrodri/agent-tack/actions/workflows/ci.yml/badge.svg" alt="CI status"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-0d9488?style=flat" alt="MIT license"></a>
+  <img src="https://img.shields.io/badge/tools-7-0d9488?style=flat" alt="Seven supported AI tools">
+  <img src="https://img.shields.io/badge/runtime-Bash%20%2B%20Python-334155?style=flat" alt="Bash and Python runtime">
+</p>
+<p align="center">
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#example-a-team-building-with-ai">Team example</a> ·
+  <a href="#see-it-work">See it work</a> ·
+  <a href="#tool-support">Tool support</a> ·
+  <a href="#measured-results">Results</a> ·
+  <a href="#contributing">Contribute</a>
+</p>
 
-**Dotfiles for AI coding agents** (formerly agent-harness). One install gives Claude Code, Codex, Copilot, Cursor, Gemini, OpenCode and Crush the same instructions and skills (Cursor needs its global rules pasted once). Git-level safety applies to every tool; runtime hooks cover Claude Code, Codex, Gemini CLI and Copilot CLI, plus the command guard in Cursor ([what each tool gets](docs/editors.md#what-each-tool-receives)).
+---
 
-[![CI](https://github.com/nbfrodri/agent-tack/actions/workflows/ci.yml/badge.svg)](https://github.com/nbfrodri/agent-tack/actions/workflows/ci.yml)
+**Define how your team develops with AI, then share that setup.** tack keeps conventions, context entrypoints, artifact locations and useful checks in versioned files that travel across supported coding tools. Start from existing project guidance, adapt it with the assistant, and review it like code.
 
-## What it does
+> [!NOTE]
+> **A change in focus.** Our benchmarks found that more process did not consistently produce better code. tack is moving toward less generic instruction and more concrete project verification. Skills, agents and documents should solve a demonstrated need. [Read the decision](docs/adr/0003-project-verification-over-generic-process.md) · [See the evidence](docs/results.md)
 
-- **One workflow, scaled to the task:** plan, test first, small commits, docs, review; light for a typo, thorough for a risky change.
-- **Rules that are enforced, not just suggested:** git hooks (every tool) and the Claude Code and Codex hooks block AI attribution, committed secrets, force-pushes to `main`, dangerous commands and merges with red or unfinished CI. The command guard catches an assistant's mistakes; it is not a sandbox against a determined one, so run untrusted or fully unattended work in a container or VM ([what it covers](docs/how-it-works.md#what-the-command-guard-covers-and-what-it-does-not)).
-- **Enforcement depends on the tool:** Claude Code gets everything; Codex, Gemini CLI and Copilot CLI get shared runtime checks through native adapters; Cursor gets the command guard; OpenCode and Crush rely on instructions and git hooks ([per tool](docs/editors.md#what-each-tool-receives)).
-- **Opt-in per project:** everywhere else the assistant works normally with only the safety net on.
-- **Yours to change:** rules, skills, modes and toggles are plain files and commands. [Why →](docs/why.md)
-- **Learns project procedures:** during authorized implementation, the assistant can create useful local skills and specialist roles, index them for later sessions and reuse what already exists. Shared-catalog promotion stays separate. [Project capabilities →](docs/usage.md#project-skills-and-roles)
+## What tack brings
+
+| Align the team | Organize the context | Verify the change |
+| :--- | :--- | :--- |
+| Share coding conventions, useful procedures and workflow expectations across tools and teammates. | Agree where instructions, architecture, decisions and handoffs live, and when to read them. Reuse the project's layout. | Select existing tests, type checks or domain checks from changed paths. See failures and unmapped files before handoff. |
+
+**The goal:** fewer faulty deliveries and less repeated setup, at a measured time/token cost. Shared instructions align a team; they do not guarantee identical behavior from every model or tool.
 
 ## Quick start
 
-Requirements: Linux, macOS or Windows with WSL2; `git`, `bash`, `python3` or `jq`; at least one supported AI tool.
+**Requirements:** Git, Bash 3.2+ and Python 3. Linux and macOS are supported; Windows can use WSL2 or native Git Bash. Native Windows installation/restoration and verification have dedicated tests; AI tool behavior still varies by integration. [Platform details](docs/editors.md#windows).
 
 ```bash
+# Keep this checkout: installed files link to it.
 git clone https://github.com/nbfrodri/agent-tack.git ~/Projects/agent-tack
-~/Projects/agent-tack/install.sh      # keep the checkout there: installed files link to it
+~/Projects/agent-tack/install.sh
 
+# Opt a project into tack.
 cd ~/Projects/my-app
-tack enable                           # turn the workflow on; add --scaffold for four base guidance files
+tack enable
 ```
 
-Restart your AI tools, then work as usual: *"Add Google login"*, *"Fix issue #12"*, *"What would you improve?"*, *"Prepare a release"*.
+Restart the AI tool, then work normally. Use `tack doctor` to inspect the installation.
 
-For initialization, `tack enable --scaffold` creates missing guidance from repository evidence. The assistant then analyzes the project, asks which useful optional files to add and remembers your choices. `tack setup` shows the inventory; `tack setup --check` finds incomplete guidance. Plain activation creates no project files. [Project initialization →](docs/usage.md#project-initialization)
+| When you want to… | Use |
+| --- | --- |
+| Preview installation changes | `./install.sh --dry-run` |
+| Share activation with teammates | `tack enable --shared` |
+| Create four base guidance files | `tack enable --scaffold` |
+| Inspect optional project setup | `tack setup` |
+| Review selected checks without executing | `tack verify --plan` |
+| Allow local project commands, after review | `tack trust` |
+| Run selected checks | `tack verify` |
+| Disable workflow guidance in this project | `tack disable` |
 
-Preview with `./install.sh --dry-run` (the first install lists every hook it adds; `--no-hooks` adds none), check with `tack doctor`, update with `git pull && ./install.sh`, remove with `./uninstall.sh`. [Installation details →](docs/usage.md#installation-diagnostics-and-removal) · [Editors and WSL →](docs/editors.md)
+Plain activation creates no guidance files. Scaffolding creates missing `AGENTS.md`, `CLAUDE.md`, `docs/architecture.md` and `docs-map.txt`; it never overwrites them. During initialization, the assistant proposes useful optional additions and remembers your choices. It does not create a catalog of empty skills or agents. [Setup details](docs/usage.md#project-initialization).
 
-## Modes
+### Set up a shared way of working
 
-The mode decides how much process each task gets. `auto` is the default and picks a level per task.
+Ask your assistant:
 
-| Mode | For | What the assistant does |
-| --- | --- | --- |
-| `lite` | Typos, config, small fixes; small tasks when tokens matter | Minimal self-contained rules, selected reply style (brief by default); still branch, commit and test (it absorbed the former `lean` mode, [measured](docs/benchmarks/2026-10-04-lean.md) at the same cost) |
-| `standard` | A bounded feature or bug fix | Adds TDD, a short plan and the affected docs |
-| `strict` | Risky or multi-module work | Adds a saved plan you approve, handoffs, review and delegation |
-| `unleash` | Unattended work on a branch | Works without asking; the guard still blocks dangerous commands ([risks](docs/usage.md#unleash-autonomous-work)) |
+> Set up tack for this repository and our team. Inspect what already exists. Propose the conventions, context entrypoints, locations for useful work artifacts and verification commands we should share. Ask only about unresolved choices, then apply the agreed setup.
+
+| Agree once | Record it in |
+| --- | --- |
+| Coding, testing, review and Git conventions | Project `AGENTS.md`, linking detailed guides where needed |
+| What context matters and where work is saved | A short index in `AGENTS.md`; architecture, decisions and handoffs in the agreed project locations |
+| Commands that verify a change | Existing test/CI configuration and optional `checks-map.json` |
+| Procedures or specialist roles worth reusing | Project skills and role definitions, indexed from `AGENTS.md` |
+
+Commit the agreed project files so teammates start from the same foundation. Each teammate installs tack and reviews local execution trust. CLI preferences such as `tack mode` and `tack config` live in local/global Git configuration; **they do not synchronize through a commit**. Document any team defaults explicitly. Setup is currently guided by the assistant, not a single profile wizard. [Team setup and updates](docs/sharing.md).
+
+## Example: a team building with AI
+
+Maya uses Codex and Leo uses Claude Code on the same TypeScript app. They want the same conventions, context locations and checks without repeating the setup in every conversation. This example assumes their app already has working `pnpm lint`, `pnpm typecheck` and `pnpm test` scripts; substitute the commands and paths that exist in your project.
+
+### 1. Maya prepares the shared project setup
+
+Both developers install tack using the quick start above. Maya then starts a setup branch in their app:
 
 ```bash
-tack mode strict            # this project
-tack mode lite --global     # your default everywhere
-tack mode new spike --from lite   # your own mode, in ~/.config/agent-tack/modes/
+cd ~/Projects/team-app
+git switch -c chore/shared-ai-setup
+tack enable --shared --scaffold
+tack setup
 ```
 
-[Modes in detail →](docs/usage.md#workflow-modes)
+She asks her assistant:
 
-## Everyday commands
+> Configure this repository for our team. We use pnpm and TypeScript. Reuse our scripts and CI. Keep shared conventions in AGENTS.md, architecture in docs/architecture.md, and reusable project procedures in .agents/skills/. Use docs/plans/ and docs/handoffs/ only when the work needs them. Propose any additional files before creating them; reuse existing guidance and ask only about missing decisions. Include the verification map and our existing PR template in the review.
 
-| Command | What it does |
+The assistant inspects the repo, fills the scaffold from real code and records the agreed choices. A compact project `AGENTS.md` might contain:
+
+```markdown
+# Team conventions
+- Use pnpm and TypeScript; follow the existing module structure.
+- Add regression tests for changed behavior. Reuse existing dependencies.
+- Use Conventional Commits and include checks actually run in each PR.
+- Read docs/architecture.md when changing component boundaries.
+- Save necessary plans in docs/plans/ and resumable handoffs in docs/handoffs/.
+- Keep reusable procedures in .agents/skills/ and index them here.
+- Keep small fixes free of unnecessary plan or handoff files.
+
+## Checks
+- pnpm lint
+- pnpm typecheck
+- pnpm test
+- tack verify selects these checks from checks-map.json.
+
+## Setup choices
+- Share activation, base guidance and checks-map.json.
+- Reuse .github/pull_request_template.md; no new roles are needed yet.
+- Local defaults: auto mode, brief replies, delegation off.
+```
+
+Their selected `checks-map.json` connects app changes to those existing commands:
+
+```json
+{
+  "version": 1,
+  "checks": [
+    {
+      "id": "app-quality",
+      "paths": ["src/*", "tests/*", "package.json", "pnpm-lock.yaml", "tsconfig*.json"],
+      "command": "pnpm lint && pnpm typecheck && pnpm test",
+      "timeout_seconds": 90
+    }
+  ]
+}
+```
+
+This deliberately small map covers the example's app paths. Other paths are reported as unmapped; extend it with real checks as the project needs them. `docs-map.txt` separately records which existing docs need review when code changes.
+
+### 2. The team reviews and adopts the setup
+
+Maya reviews the generated files and selected commands:
+
+```bash
+tack setup --check
+tack verify --plan
+git add .tack AGENTS.md CLAUDE.md docs/architecture.md docs-map.txt checks-map.json
+git commit -m "chore: share AI development conventions"
+```
+
+She opens a PR using the team's existing process. Structural readiness and a verification plan are not passing test results: the team reviews the actual conventions and runs its existing CI before merging.
+
+After that PR merges, Leo pulls the project and both developers apply the agreed **local** preferences in their own clone:
+
+```bash
+git switch main
+git pull --ff-only
+tack mode auto
+tack config reply-style brief
+tack config delegation off
+tack context
+tack verify --plan
+tack trust                         # after reviewing the project commands
+```
+
+They restart their AI sessions. The committed `.tack` shares activation; AGENTS.md shares conventions and the context index; the map shares checks. Trust and CLI preferences remain local. Their editors may supply context differently, but both can inspect it with `tack context` and run the same verification CLI.
+
+`auto` lets the assistant choose the level for each task: a small bug may need lite, a bounded feature standard, and a broad or high-risk change strict. Either developer can request a different level in the conversation without saving a permanent project override.
+
+### 3. Leo implements a real change
+
+Leo asks Claude Code:
+
+> Fix the API validation bug that accepts an empty display name. Follow AGENTS.md, add a regression test, and use the shared verification map. Keep the change small and include the checks and any remaining gaps in the PR.
+
+The assistant reads the agreed entrypoints, creates a task branch, changes the API code and test, and runs:
+
+```bash
+tack verify --plan                  # inspect checks selected by the changed paths
+tack verify                        # run lint, types and tests from the map
+```
+
+A failed check supplies the command and failure output for the assistant to address. A pass reports only the selected checks, with unchanged inputs and no unmapped paths. The assistant then prepares the commit and PR using the team's template. It updates architecture or creates a handoff only if the change needs one. Maya can review the same code and rerun the same checks from Codex.
+
+### 4. Improve the setup through normal PRs
+
+If the team repeatedly needs an API compatibility procedure, add a project skill and index it in AGENTS.md. If migrations need a dedicated check, add a rule for those paths. Review and merge the change once; teammates receive it with the project. Cross-project conventions can move to a shared tack fork when useful. [Team configuration guide](docs/sharing.md).
+
+## See it work
+
+```mermaid
+flowchart LR
+    A[Shared project guidance] --> B[Your coding agent]
+    B --> C[Changed files]
+    C --> D[tack verify]
+    E[Existing project checks] --> D
+    D --> F[Results and gaps]
+    F --> B
+    classDef tack fill:#0d9488,color:#fff,stroke:#0f766e
+    classDef evidence fill:#ccfbf1,color:#134e4a,stroke:#0d9488
+    class D tack
+    class F evidence
+```
+
+A small, optional `checks-map.json` connects parts of your project to checks you already have:
+
+```json
+{
+  "version": 1,
+  "checks": [
+    {
+      "id": "api-contract",
+      "paths": ["src/api/*", "tests/api/*"],
+      "command": "uv run pytest tests/api",
+      "timeout_seconds": 60
+    }
+  ]
+}
+```
+
+For a Python project with those tests, an illustrative failed run looks like this:
+
+```text
+$ tack verify
+Verification: failed (2 changed paths)
+- api-contract: failed: uv run pytest tests/api (from checks-map.json)
+AssertionError: API invariant failed
+Selected checks are declared verification, not proof of complete semantic coverage.
+```
+
+| Result | Meaning |
 | --- | --- |
-| `tack status` | Is the workflow on, which mode, is the formatter trusted |
-| `tack config` | List and change feature toggles (delegation, fast check, limits…) |
-| `tack doctor` / `--tools` | Diagnose the installation / each installed AI tool |
-| `tack setup` / `--check` | Inspect project foundations / check guidance readiness without running project code |
-| `tack log` | What the hooks did recently (opt in with `tack config activity-log true`) |
-| `tack trust` | Allow automatic formatting and the fast check in this checkout |
-| `tack disable` | Turn the workflow off for this project |
+| `passed` | Selected commands passed, inputs stayed unchanged and no changed path was unmapped. |
+| `failed` | A command failed or timed out; the assistant gets the failure output. |
+| `incomplete` / `unverified` | Checks are missing, the budget was exhausted or inputs changed during verification. |
+| `untrusted` | Project commands were not executed. |
+| `no_changes` | No changed paths were found; this is distinct from tests passing. |
 
-Run `tack help` for everything. [Usage →](docs/usage.md)
+Without a map, tack reuses its existing test-command detector or your explicit `check-fast` command and reports uncovered paths. It does not invent semantic tests or silently install a framework. Native completion hooks use mapped verification where available; every tool can use the same CLI. [Configuration, exit codes and limits](docs/usage.md#project-verification).
 
-## What's included
+## Built for a shared repository
 
-- **Skills:** a core workflow (`dev-workflow`) plus process skills (debugging, testing, releases, issues, reviews, delegation) and stack skills (frontend, APIs, databases, auth, deployment…).
-- **Agents:** planner, implementer, reviewers (code, security, performance, architecture, UI), test and docs writers.
-- **Hooks:** commit conventions, secret scanning, a command guard (including green-only merges), auto-format, a fast check after edits, a check before the assistant stops (uncommitted work, code changed without a test, failing tests in trusted projects) and an opt-in activity log.
-- **Claude Code mods:** a usage band with the active tack mode and your 5-hour and weekly limits, and a live pane of what the agent is doing.
+```text
+my-project/
+├── .tack                 shared activation, if selected
+├── AGENTS.md             project conventions and capability index
+├── checks-map.json       optional checks for changed paths
+├── docs-map.txt          source-to-documentation relationships
+└── .agents/
+    ├── skills/           useful reusable project procedures
+    └── agents/           justified specialist role definitions
+```
 
-[Full list →](docs/components.md) · [How it works →](docs/how-it-works.md)
+This is an example of selected project files, not a template that tack always generates. Start with existing conventions and tools. Add a skill when it captures a useful reusable procedure, a specialist when a distinct review is needed, and a document when someone needs its information.
 
-## How it compares
+**Shared:** project instructions, check definitions, conventions and selected local capabilities.<br>
+**Local:** execution trust, credentials, private memory and personal settings.
 
-Other ways to shape an AI coding agent, and where agent-tack differs (as of October 2026):
+Teammates install the common tack configuration locally and review changes through normal PRs. tack is repository-based sharing, not a centralized administration service. [Sharing guide](docs/sharing.md) · [Project capabilities](docs/usage.md#project-skills-and-roles).
 
-| | A hand-written `AGENTS.md` / `CLAUDE.md` | Large plugin collections (e.g. [ECC](https://github.com/affaan-m/ECC)) | agent-tack |
-| --- | --- | --- | --- |
-| Approach | Instructions per project | A broad catalog: hundreds of skills, agents and commands you pick from and invoke | One opinionated workflow applied automatically, scaled per task by mode |
-| How you use it | The model reads it | You start workflows with commands (`/plan`, `/code-review`…) and install the parts you need | `tack enable`, then ask as usual; the mode decides the process |
-| Enforcement | None | Claude Code hooks, configured with environment variables | Git hooks (any tool, even manual commits) plus a command guard in Claude Code and Codex (Cursor: the command guard); toggles per project with `tack config` |
-| Tools | One file per tool | Claude Code first, adapters for many others | Claude Code, Codex, Copilot, Cursor, Gemini, OpenCode and Crush from one install (Cursor's global rules pasted once); rules in `AGENTS.md`, agent hooks in Claude Code and Codex, the command guard in Cursor |
-| Context cost | What you write | Grows with what you install; selective install recommended | Small core; documents and skills load on demand |
-| Footprint | None | Node.js runtime and packages | Bash and git, plus `python3` or `jq` |
+## Tool support
 
-Pick a catalog when you want breadth and choose workflows yourself; pick agent-tack when you want the same disciplined process in every project and tool, enforced by git everywhere and by agent hooks where the tool supports them, with little setup. They are not meant to be installed together: both add session hooks and overlapping rules.
+| Tool | Project guidance and skills | Runtime integration |
+| --- | :---: | --- |
+| Claude Code | ✓ | Native hooks and roles |
+| Codex | ✓ | Shared runtime checks through native adapters |
+| Gemini CLI | ✓ | Startup, command and completion adapters |
+| GitHub Copilot CLI | ✓ | Startup, command and completion adapters |
+| Cursor | ✓* | Command guard; guidance for other steps |
+| OpenCode | ✓ | Instructions, native roles and Git hooks |
+| Crush | ✓ | Instructions and Git hooks |
 
-## Results
+Git-level checks work independently of the AI tool. *Cursor's global rules require a one-time paste. Protocol tests and installed formats do not prove identical live behavior in every editor. [Exact capabilities and limitations](docs/editors.md#what-each-tool-receives).
 
-Measured on real Claude Code and Codex sessions, plain assistant versus tack, with hidden acceptance tests the assistant never sees. Results depend on the model and tool ([method, limits and every table](docs/results.md)). Historical Claude comparisons:
+## Safeguards and workflow choices
 
-| | Plain assistant | tack (`auto`) |
+tack also carries engineering guidance: small coherent changes, regression tests for real behavior, explicit contracts and failures, compatibility checks at affected boundaries, and recovery for persistent-state changes. Apply the practices the task needs and verify them with project tools. [What each practice solves and how tack applies it](docs/engineering-practices.md).
+
+- **Executable checks:** staged-secret scanning, commit conventions, protected Git operations and runtime checks where supported. The command guard is a safety net, not a sandbox. [Boundaries](docs/how-it-works.md#what-the-command-guard-covers-and-what-it-does-not).
+- **Configuration preservation:** installation tracks its changes; reinstall and uninstall preserve independent user edits.
+- **Task-scaled guidance:** use the process that fits the task, with optional capabilities loaded for a concrete need.
+
+| Mode | Intended scope | Additional guidance |
 | --- | --- | --- |
-| Path traversal from user input, smaller model (`claude-haiku-4-5`, 5 runs): every trap handled | 0/5 | 4/5 |
-| Path traversal, larger model (`claude-opus-5-5`, 2 runs) | 2/2 | 2/2 |
-| SQL search on user input, smaller model (5 runs): every trap handled | 0/5 | 0/5 |
-| Bug fix, new project and project conventions (Haiku and Opus): hidden tests pass | all | all |
-| Work on a branch with Conventional Commits | no run | every Opus run; most Haiku runs |
-| Cost | 1× | 1.1–1.9× |
+| `auto` | Default | Selects a level for the task |
+| `lite` | Small, bounded, low-risk changes | Useful tests and clean Git work; no plan files or review agents |
+| `standard` | A bounded feature or fix | Test-driven work and affected documentation |
+| `strict` | Broad or high-impact work | Explicit plan, deeper review and selected delegation |
+| `unleash` | User-selected autonomous work | Fewer confirmations within scope; safeguards remain |
 
-tack changed the outcome in one of two historical hidden-risk scenarios: the smaller model handled path traversal once tack had it pick the level by risk, while in a SQL search both conditions missed the same `LIKE` wildcard trap.
+```bash
+tack mode lite                      # project preference
+tack config reply-style brief       # brief, visual or detailed
+tack config delegation off          # keep work sequential
+```
 
-The [24-run Codex comparison](docs/benchmarks/2026-10-08-codex.md), with GPT-6 Luna and GPT-6.1 Sol at medium effort, found acceptance parity: 12/12 baseline and 12/12 auto runs pass. Auto adds useful regression tests with Luna and branch/commit discipline, but takes 2.27x/2.38x session time and 4.54x/3.49x input tokens for Luna/Sol. Most input is cached; subscription charges are unknown. A supplementary review found Unicode search failures in both Luna auto runs. These results do not establish a general code-quality gain or justify mandatory process on every task.
+Existing explicit workflow preferences remain during the transition. [Modes and settings](docs/usage.md#workflow-modes) · [Customization](docs/customization.md).
 
-## Learn more
+## Measured results
 
-| | |
+> [!IMPORTANT]
+> **A check runner is not proof of better AI code.** We publish positive, null and adverse results. The new verification increment has local behavior tests; its effect on real model outcomes and cost has not yet been benchmarked.
+
+| Experiment | Plain assistant | tack `auto` | What it shows |
+| --- | --- | --- | --- |
+| Historical Haiku attachment security, 5 runs per condition | 0/5 pass | 4/5 pass | A gain on this scenario; a later tack batch passed 5/5 |
+| Historical Haiku SQL search, 5 runs per condition | 0/5 pass | 0/5 pass | Process did not resolve the missed wildcard behavior |
+| Codex Luna + Sol, 3 scenarios, 2 runs per model/condition | 12/12 pass | 12/12 pass | Acceptance parity on the original hidden tests |
+
+In the Codex comparison, tack added useful regression tests with Luna and branch/commit discipline. It also took **2.27x / 2.38x session time** and **4.54x / 3.49x input tokens** for Luna / Sol; most input was cached. A supplementary review found Unicode search failures in both Luna auto outputs. Subscription token counts are not dollar charges. Small samples do not establish a general effect.
+
+[Full results](docs/results.md) · [Codex data and method](docs/benchmarks/2026-10-08-codex.md) · [Code-quality review](docs/benchmarks/2026-10-08-codex-quality.md).
+
+## Direction and roadmap
+
+| Delivered in this increment | Next to measure |
 | --- | --- |
-| [Usage](docs/usage.md) | Modes, toggles, startup context, delegation, overrides |
-| [Editors and AI tools](docs/editors.md) | VS Code, Cursor, JetBrains, each AI tool, WSL |
-| [Customization](docs/customization.md) | Change rules, skills, modes, guard rules and supported tools |
-| [How it works](docs/how-it-works.md) · [Architecture](docs/architecture.md) | Installer, hooks, components and flows |
-| [Components](docs/components.md) · [Conventions](docs/conventions.md) | Every skill, agent and mod; commit, PR and release rules |
-| [Results](docs/results.md) · [Development](docs/development.md) | Benchmarks; tests, evals and contributing |
-| [Sharing](docs/sharing.md) · [AI usage](docs/ai/README.md) | Using it on another machine; how AI builds this project |
+| Shared path-based check selection and explicit gaps | Defects caught on held-out real repository tasks |
+| Local trust, bounded execution and result reporting | Reduced task time and human rework |
+| Focused tasks avoid unrelated onboarding | Smaller, relevant context without missing necessary information |
+| Documented sources and negative results | Whether specialist review adds enough value to justify its cost |
+
+**Configuration UX next:** versioned project preferences with local overrides, simpler adoption after cloning, and task-specific mode selection with `auto` as the usual default. A shared `tack config`/`tack mode` file is not implemented yet; the team example above shows the current explicit local setup.
+
+The design borrows ideas about selective checks, bounded context and simple observable execution from other public projects. [Research and adoption decisions](docs/audits/2026-10-08-upstream-design-research.md) · [ADR: the change in focus](docs/adr/0003-project-verification-over-generic-process.md).
+
+## Contributing
+
+Useful contributions include a reproducible bug, a missing tool adapter, a project check with a real failure case, or a benchmark that tests a meaningful limitation. Use the repository's issue forms and PR template; keep claims tied to evidence.
+
+```bash
+tests/validate.sh          # content and cross-references
+tests/lint.sh              # pinned shell/Python checks
+tests/run-all.sh -j 4      # isolated regression suites
+```
+
+Tests use temporary homes and repositories. Follow [AGENTS.md](AGENTS.md) for Bash compatibility and repository rules, and [Development](docs/development.md) for dependencies and focused suites. Do not include credentials or private benchmark transcripts in contributions.
+
+## Documentation
+
+| Start here | Go deeper |
+| --- | --- |
+| [Usage and commands](docs/usage.md) | [Architecture](docs/architecture.md) |
+| [Editors and platforms](docs/editors.md) | [How checks work](docs/how-it-works.md) |
+| [Sharing configuration](docs/sharing.md) | [Components](docs/components.md) |
+| [Why tack](docs/why.md) | [Design decision](docs/adr/0003-project-verification-over-generic-process.md) |
+| [Customization](docs/customization.md) | [Benchmarks](docs/results.md) |
+| [Engineering practices](docs/engineering-practices.md) | [Contributing checks](docs/development.md) |
+
+<details>
+<summary><strong>Is tack an agent or a harness?</strong></summary>
+
+Tack configures and verifies work around existing coding agents. It does not provide a model or its own autonomous agent runtime. “Harness” describes that technical role; **shared configuration and verification layer** is the clearer product description.
+
+</details>
+
+<details>
+<summary><strong>Does sharing tack share my credentials or execution trust?</strong></summary>
+
+No. Share selected repository files and common configuration. Each clone grants its own command execution trust. Credentials, private user memory and personal settings should remain outside the shared project.
+
+</details>
+
+<details>
+<summary><strong>Can I keep using only my existing checks?</strong></summary>
+
+Yes. A check map names commands you already use; it does not replace your test framework, linter or CI. Without a map, tack retains the canonical-test/explicit-check fallback. Map coverage is only declared routing coverage: missing semantic checks still need to be added to the project.
+
+</details>
+
+## License
+
+Code and original project assets are available under the [MIT license](LICENSE).
+
+---
+
+<p align="center"><strong>Align the team. Verify the work. Keep the overhead honest.</strong></p>

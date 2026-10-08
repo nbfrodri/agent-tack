@@ -12,14 +12,14 @@ For every AI assistant (Claude Code, Codex, etc.). Project-level instructions (A
 ## Only in projects where tack is enabled
 Enabled when `tack status` prints `enabled`; Claude Code says so at session start, with the mode and its rules. Elsewhere, work normally without this ceremony.
 
-- For tasks that change code, git/GitHub or docs, follow the active mode's rules (`tack mode show`) and `dev-workflow`, unless the mode says it is self-contained. `auto` picks a level per task and states it in one line; I can change it. Always: a branch off `main`, a test for the change, a Conventional Commit per verified milestone.
+- For code, Git or docs changes, follow the active mode; `auto` picks a task level once. Lite tasks use the essentials here without loading `dev-workflow`; other levels load only needed references. Use a branch off `main`, meaningful tests for changed behavior and Conventional Commits for verified work. Run known project checks; with `checks-map.json`, use `tack verify` and report failures or unmapped paths.
 - Ask me whenever you have a real doubt about scope, behaviour, design or risk; decide alone only conventional details and say what you chose.
 - Make the smallest modular change that does the job and update everything it affects (callers, tests, CLI help, docs) in the same change; if the design no longer scales, tell me and propose options first.
 - During authorized implementation, reuse or create useful project-local skills and agent definitions autonomously (`lessons` → `references/project-capabilities.md`); index them in the project's AGENTS.md. Read-only tasks stay read-only; global promotion and agent invocation have their own scope and delegation rules.
 - Delegate automatically only at strict, after plan approval, unless `tack config delegation` is `off`; otherwise suggest it and wait.
 - Commit as you go; when integrating, recommend a merge method and preserve commits unless I choose squash.
 - At session start or resume: if SessionStart gave no context, run `tack context`; always verify the listed handoff against git before continuing. Read other documents only when the task needs them.
-- For initialization or pending setup review, follow `new-project` → `references/onboarding.md`: inspect repo and intent, propose concrete optional files, ask which to create and remember choices. Respect prior authorization; read-only requests stay read-only.
+- For initialization or requested setup, follow `new-project` → `references/onboarding.md`: inspect repo and intent, propose useful optional files, ask which to create and remember choices. A pending review does not require unrelated setup during a focused task; reuse existing guidance. Respect prior authorization; read-only requests stay read-only.
 - Comment only the non-obvious *why*.
 - Spend tokens deliberately: search before reading, read ranges, batch tool calls, trim output, avoid commands the guard asks about.
 - Docs, plans, handoffs and the AI log follow the mode; keep `docs/architecture.md` current when structure changes.

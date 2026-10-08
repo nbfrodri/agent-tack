@@ -110,7 +110,12 @@ fi
 # The project's tests must pass before the turn ends. It runs project code, so only in trusted
 # projects; a detected command runs only when source or test files changed, an explicit
 # check-fast always does.
-if "$cli" trusted --quiet; then
+if [ -e checks-map.json ] || [ -L checks-map.json ]; then
+  verification="$("$cli" verify 2>&1)"
+  verification_status=$?
+  [ "$verification_status" -eq 0 ] || add "project verification needs attention:
+$verification"
+elif "$cli" trusted --quiet; then
   IFS="$(printf '\t')" read -r check check_source <<EOF
 $(bash "$(dirname "$0")/../../lib/test-command.sh" "$(dirname "$0")/../.." "$root")
 EOF

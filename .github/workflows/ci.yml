@@ -70,6 +70,7 @@ jobs:
           tests/project-capabilities.test.sh
           tests/native-agents.test.sh
           tests/project-setup.test.sh
+          tests/verification.test.sh
           tests/ownership-platform.test.sh
           tests/smoke.test.sh
 
@@ -87,6 +88,8 @@ jobs:
         run: tests/validate.sh
       - name: Validate native ownership paths, ACLs and restoration
         run: tests/ownership-platform.test.sh
+      - name: Verify project checks with native Python and Git Bash
+        run: tests/verification.test.sh
       - name: Install, doctor, commit through hooks, guard and uninstall
         run: tests/smoke.test.sh
 

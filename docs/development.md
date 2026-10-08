@@ -2,6 +2,8 @@
 
 How to change this repo safely: commands, adding skills or agents, and measuring behaviour.
 
+The [engineering practices](engineering-practices.md) connect conventions to concrete failure cases, compatibility, recovery and measured outcomes. Keep one responsibility per component, reuse project commands across local checks and CI, and include tests that would fail for the defect being fixed. A new configuration format needs explicit version/validation behavior; a persistent-state change needs a recovery strategy and relevant tests.
+
 ## Commands
 ```bash
 tests/lint.sh            # ShellCheck on every script and ruff on the Python (ruff through uvx at the pinned version when uv is installed)
@@ -25,6 +27,7 @@ tests/evals.test.sh      # offline runner, transcript metrics and report fixture
 tests/evidence.test.sh   # bounded batches, comparison identity and fresh-session evidence
 tests/project-capabilities.test.sh # project definitions, references and discovery index
 tests/project-setup.test.sh # read-only discovery, minimal scaffold, readiness and remembered review state
+tests/verification.test.sh # path-selected checks, real failure detection, trust, timeouts and Stop integration
 tests/native-agents.test.sh # native formats, installation preservation and Gemini/Copilot hook protocols
 tests/smoke.test.sh      # portable installation and hook smoke checks
 ```
