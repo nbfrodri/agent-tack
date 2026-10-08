@@ -124,6 +124,18 @@ class BootstrapTests(unittest.TestCase):
         self.assertFalse((self.home / '.local/share').exists())
         self.assertIn('personal', existing.read_text(encoding='utf-8'))
 
+    def test_inherited_git_directory_cannot_redirect_setup_into_the_project(self):
+        self.generate()
+        before = self.command('git', 'config', '--local', '--list')
+        self.env.update(GIT_DIR=str(self.project / '.git'), GIT_WORK_TREE=str(self.project),
+                        GIT_INDEX_FILE=str(self.project / '.git/custom-index'))
+        self.run_setup('--yes')
+        for key in ('GIT_DIR', 'GIT_WORK_TREE', 'GIT_INDEX_FILE'):
+            self.env.pop(key)
+        self.assertEqual(self.command('git', 'config', '--local', '--list'), before)
+        self.assertFalse((self.project / '.git/custom-index').exists())
+        self.assertFalse((self.project / 'install.sh').exists())
+
     def test_rejects_bad_revision_credentials_duplicate_keys_and_extra_recipe_options(self):
         for extra in [('--revision', 'main'), ('--source', 'https://user:secret@example.invalid/tack'),
                       ('--source', 'file:///tmp/source'), ('--directory', '../outside')]:

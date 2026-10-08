@@ -29,6 +29,7 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 ### Fixed
 
 - Windows collaborator setup selects Git Bash explicitly instead of the System32 WSL launcher.
+- Collaborator setup isolates inherited Git directory/index overrides and rejects junctions on older supported Python versions.
 - Team completion checks no longer ask to refresh another branch's handoff merely because its branch differs.
 - Project context resolves native Windows paths consistently, and configuration output uses LF records for Bash consumers.
 - Doctor retains partial diagnostics when Python is unavailable and reports malformed shared profiles when validation is available.

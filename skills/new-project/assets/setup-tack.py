@@ -156,6 +156,14 @@ def main():
     if not shutil.which('git') or not bash:
         raise ValueError('Git and Bash are required; use Git Bash on Windows')
     env = dict(os.environ, GIT_TERMINAL_PROMPT='0', GIT_LFS_SKIP_SMUDGE='1')
+    # A setup invoked from another Git operation must not reuse its repository or index.
+    # Keep user-wide config and transport authentication, which may be needed for a team fork.
+    for key in list(env):
+        if key in ('GIT_DIR', 'GIT_WORK_TREE', 'GIT_COMMON_DIR', 'GIT_INDEX_FILE', 'GIT_OBJECT_DIRECTORY',
+                   'GIT_ALTERNATE_OBJECT_DIRECTORIES', 'GIT_PREFIX', 'GIT_SHALLOW_FILE', 'GIT_GRAFT_FILE',
+                   'GIT_CONFIG', 'GIT_CONFIG_PARAMETERS', 'GIT_CONFIG_COUNT', 'GIT_NAMESPACE',
+                   'GIT_IMPLICIT_WORK_TREE', 'GIT_INTERNAL_SUPER_PREFIX') or key.startswith(('GIT_CONFIG_KEY_', 'GIT_CONFIG_VALUE_')):
+            env.pop(key)
     checkout(recipe, directory, env)
     result = subprocess.run([bash, (directory / 'install.sh').as_posix(), '--skip-plugins'],
                             cwd=directory, env=env, timeout=600)
