@@ -122,6 +122,15 @@ test('invoice topic', () => assert.equal(handle({type:'invoice.paid', id:'i', am
             result = subprocess.run(['npm', 'test'], cwd=root, capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    def test_adoption_accepts_standard_uppercase_pr_template(self):
+        with tempfile.TemporaryDirectory() as temp:
+            directory = Path(temp)
+            root = directory / 'setup/repo'
+            fixture.seed(root)
+            fixture.write(root, '.github/PULL_REQUEST_TEMPLATE.md', '# Summary\n\n# Validation\n')
+            (directory / 'setup/status.txt').write_text('', encoding='utf-8')
+            self.assertTrue(grader.adoption(directory)['pr_template'])
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

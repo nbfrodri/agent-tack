@@ -108,7 +108,9 @@ def adoption(directory):
     result = {'production_and_tests_preserved': all((root / n).is_file() and (root / n).read_text(encoding='utf-8') == original[n]
                                                    for n in unchanged),
               'architecture_preserved': (root / 'guide/architecture.md').is_file(),
-              'pr_template': (root / '.github/pull_request_template.md').is_file(),
+              'pr_template': any(p.is_file() and p.name.lower() == 'pull_request_template.md'
+                                 for folder in (root, root / '.github', root / 'docs') if folder.is_dir()
+                                 for p in folder.iterdir()),
               'no_extra_capabilities': not (root / '.agents').exists(),
               'setup_committed_cleanly': not (directory / 'setup/status.txt').read_text(encoding='utf-8').strip()}
     observations = directory / 'second-clone-observations.json'

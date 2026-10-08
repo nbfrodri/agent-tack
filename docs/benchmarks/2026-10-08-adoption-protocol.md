@@ -39,3 +39,7 @@ The product is extracted from the declared Git revision, excluding `evals`, `tes
 Record fixture, prompt, source, configuration and hidden-check hashes, versions, exact prompts, transcripts, commit histories and artifact snapshots. Publish only non-secret summaries and diffs after review. Retain raw evidence locally as an ignored archive, remove temporary authentication, and preserve failed attempts rather than rerunning until green. Test the environment before the comparison; any model-consuming qualification is reported separately.
 
 Codex execution uses the documented [non-interactive JSON event stream](https://learn.chatgpt.com/docs/non-interactive-mode), inspected on 2026-10-08. Runtime model observations are configuration evidence, not independent server-side model identification.
+
+## Evaluator corrections
+
+During artifact inspection, before final grading, the PR-template detector was corrected to accept uppercase `PULL_REQUEST_TEMPLATE.md` in standard locations, with an offline regression test. The original lowercase-only implementation would incorrectly reject a valid template. The predeclared criterion (a suitable PR template), model prompts, product files and behavioral acceptance tests are unchanged; every journey uses the corrected detector.
