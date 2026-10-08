@@ -3,6 +3,8 @@
 Every skill, agent and plugin, in one line each.
 
 ## Skills
+
+The shared `tack verify` CLI selects existing project checks through optional `checks-map.json`, reports execution evidence and missing mappings, and is reused by completion hooks. It is a tool-neutral script, not another skill or agent. [Usage and limits](usage.md#project-verification).
 Open Agent Skills format (`SKILL.md`), read by every supported tool.
 
 | Skill | Purpose |

@@ -50,7 +50,7 @@ if (cd "$cwd" && "$cli" status --quiet); then
   mode="$(cd "$cwd" && "$cli" mode)" || mode=auto
   mode="${mode%% *}"
   if [ "$mode" = auto ]; then
-    level="Before each task, pick the workflow level from the modes below and dev-workflow, and state it in one line; the user can override it."
+    level="Before each task, pick the workflow level from the modes below and state it in one line; the user can override it. For lite tasks the essentials here suffice: do not load dev-workflow for routine ceremony."
   else
     level="Apply the $mode mode rules below to every task unless the user asks for another mode."
   fi

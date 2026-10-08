@@ -1,6 +1,6 @@
 # Project onboarding
 
-Use the same flow for a new repository and an existing repository adopting tack. An activation command does not run an AI conversation itself: the next assistant session receives a pending-setup hint. Run this flow when initializing or during authorized implementation, not during a read-only explanation or review.
+Use the same flow for a new repository and an existing repository adopting tack. An activation command does not run an AI conversation itself: the next assistant session receives a pending-setup hint. Run this flow when initializing or when setup is requested. For a focused task, reuse existing guidance and postpone unrelated onboarding; address only missing setup that blocks that task. A pending hint alone is not a reason to load this flow, add files or interrupt implementation. Read-only explanations and reviews remain read-only.
 
 ## Inspect before proposing
 
@@ -14,11 +14,14 @@ Activation is `tack enable` locally or `tack enable --shared` for a shared `.tac
 
 Explain the observed project in a few sentences. Then offer a short, project-specific selection of optional additions, naming the exact paths, purpose and reason they fit. Ask which the user wants to create or adapt; offer the recommended set, a smaller set and deferral when useful. Let the user select individual items. Existing explicit instructions or an approved plan already authorizing an item count as the answer; ask only about undecided additions and continue independent authorized work while waiting.
 
+For team setup, reuse or agree on coding/testing/Git conventions, context entrypoints, where necessary decisions/plans/handoffs belong, and verification commands. Index the agreed locations in AGENTS.md instead of duplicating context for each tool. Distinguish versioned project choices from local `tack mode`/`tack config` preferences; Git config is not synchronized by committing the project. Keep setup short by grouping unresolved choices and reusing recorded answers.
+
 Examples to consider only when evidence supports them:
 
 | Addition | Evidence and benefit |
 | --- | --- |
 | Tests and a fast-check command | Missing coverage for real behavior; inspect current tooling before adding a framework. |
+| `checks-map.json` | Different changed paths require existing tests, type/schema checks or domain invariants; select useful commands with the user instead of generating a generic suite. |
 | CI | Repository host is known and reproducible checks exist; reuse current workflows. |
 | `.github/pull_request_template.md` | Team uses PRs and has no suitable project or organization template; adapt validation to actual commands. |
 | README or a development guide | Setup knowledge is missing; link existing docs instead of copying them. |

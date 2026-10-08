@@ -25,6 +25,7 @@ tests/evals.test.sh      # offline runner, transcript metrics and report fixture
 tests/evidence.test.sh   # bounded batches, comparison identity and fresh-session evidence
 tests/project-capabilities.test.sh # project definitions, references and discovery index
 tests/project-setup.test.sh # read-only discovery, minimal scaffold, readiness and remembered review state
+tests/verification.test.sh # path-selected checks, real failure detection, trust, timeouts and Stop integration
 tests/native-agents.test.sh # native formats, installation preservation and Gemini/Copilot hook protocols
 tests/smoke.test.sh      # portable installation and hook smoke checks
 ```

@@ -1,5 +1,7 @@
 # How it works
 
+The [project verification flow](usage.md#project-verification) adds one shared command for path-selected checks. When `checks-map.json` exists, completion hooks use it to report failures or gaps; otherwise the previous test-command behavior remains. The [direction ADR](adr/0003-project-verification-over-generic-process.md) explains why concrete project evidence now takes priority over additional generic process. This does not remove safety controls or silently change explicit workflow modes.
+
 What the installer sets up, which tools it supports, and which rules are enforced by hooks.
 
 Internal component responsibilities and execution flows: [architecture](architecture.md).

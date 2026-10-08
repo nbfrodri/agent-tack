@@ -31,6 +31,9 @@ Commands:
   setup [--check|--json]
                       Inspect project foundations without running project code;
                       --check exits 1 for incomplete or broken base guidance
+  verify [--plan] [--json] [--base REF] [--budget-seconds N]
+                      Select checks for changed paths; execute only with local trust
+                      --plan is read-only; report failures and verification gaps
   disable             Disable this clone and remove the shared marker
   migrate             Move settings and the marker from the former harness name to tack
                       (this clone and user-wide); tack doctor says when it is needed
@@ -344,6 +347,17 @@ case "$cmd" in
     python3 "$TACK_ROOT/lib/project_setup.py" "$root" "$@"
     exit
     ;;
+  verify)
+    require_repo
+    command -v python3 >/dev/null 2>&1 || fail 'verify needs python3'
+    TACK_VERIFY_TRUSTED=0
+    is_trusted && TACK_VERIFY_TRUSTED=1
+    TACK_VERIFY_BASH="$BASH"
+    if command -v cygpath >/dev/null 2>&1; then TACK_VERIFY_BASH="$(cygpath -m "$BASH")"; fi
+    export TACK_VERIFY_TRUSTED TACK_VERIFY_BASH
+    python3 "$TACK_ROOT/lib/verification.py" "$root" "$TACK_ROOT" "$@"
+    exit
+    ;;
   context)
     allowed_option=''; check_args "$@"
     is_enabled || exit 0
@@ -352,9 +366,13 @@ case "$cmd" in
     source_root="$TACK_ROOT"
     case "$(key_get setupReview)" in
       done | deferred) ;;
-      *) echo 'Project setup review pending: during initialization or authorized implementation, run tack setup and follow new-project -> references/onboarding.md. Inspect existing guidance and recorded choices; ask which concrete optional files to add before creating them. Read-only requests stay read-only. Mark done or deferred with tack config setup-review to avoid repeated prompts.' ;;
+      *) echo 'Project setup review pending: when initializing or asked to configure the project, run tack setup and follow new-project -> references/onboarding.md; ask which optional files to add and remember choices. For focused tasks, reuse existing guidance and postpone unrelated setup unless it blocks the task. Read-only requests stay read-only.' ;;
     esac
     bash "$source_root/lib/project-context.sh" "$root" "$(context_level)"
+    if [ -e "$root/checks-map.json" ] || [ -L "$root/checks-map.json" ]; then
+      echo 'Project verification: tack verify selects checks from checks-map.json for changed paths. Use --plan for read-only selection; report failures and unmapped paths. Execution needs local trust.'
+      exit 0
+    fi
     detected="$(bash "$source_root/lib/test-command.sh" "$source_root" "$root")"
     [ -z "$detected" ] || printf '
 Test command: %s (from %s). Use it to verify changes instead of searching for one.
