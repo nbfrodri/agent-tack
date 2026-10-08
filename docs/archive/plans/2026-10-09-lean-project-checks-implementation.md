@@ -1,6 +1,6 @@
 # Plan: a smaller default and executable project agreements
 
-Status: in progress. Baseline: `d6fe887a405d5d0a22d3071b7e0f3d3f2d18cb2d` (PR #137). The user approved the proposed direction and authorized implementation and controlled Codex evaluation. They declined using their other repository; do not claim measurements of their team or human onboarding.
+Status: implemented and evaluated. Baseline: `d6fe887a405d5d0a22d3071b7e0f3d3f2d18cb2d` (PR #137). [PR #138](https://github.com/nbfrodri/agent-tack/pull/138) tracks publication and current-head CI. The user approved the direction and controlled Codex evaluation. They declined using their other repository; no measurements of their team or human onboarding are claimed.
 
 ## Outcomes and gates
 
@@ -27,3 +27,14 @@ The previous lifecycle study found no general advantage over a short project gui
 No hosted service, skill registry, broad autonomous orchestrator, automatic clone execution or promise to prevent all conflicts. Existing shared project settings and per-task modes remain supported. Reinstall applies the new default only where the user did not save a different choice; document how to keep the full catalog. Removed managed links must not erase user content or lose uninstall restoration metadata.
 
 The real-repository pilot is unavailable by the user's choice. Controlled examples establish executable behavior, not measured human savings. A faster model run alone does not establish better code; a green merge alone does not establish consumer compatibility.
+
+## Delivery record
+
+- The default catalog contains dev-workflow/new-project and no specialist agents. Explicit opt-ins, edited definitions and displaced-file restoration are preserved. Global instructions fell from 3,880 to 2,158 characters; these are not token measurements.
+- `config --check FILE` validates selected explicit shared/effective values without writes. Tests cover omitted defaults, overrides, a fresh clone and unchanged local trust.
+- `team --plan/--verify --against REF` pins the prospective tree, selects checks from both branches and preserves source Git state. The same consumer test passes separately on each branch but fails in two clean prospective merges (alias removal and unit conversion); compatible fixes pass. Missing checks, dependencies, trust, references, dirty state and timeouts have explicit outcomes.
+- Core guidance preserves pragmatic engineering practices and optional capabilities. Startup avoids repeating native AGENTS.md content. No general test-result cache was added. Direct CLI use without installing guidance is documented.
+- All 24 model sessions and eight blind reviews completed without retries or infrastructure failures. Guide/core acceptance tied at 8/8; previous tack passed 7/8. Core costs improved against previous tack with Sol and worsened with Luna; costs exceeded the short guide with both. Blind mean code-quality grades did not improve, and post-hoc probes found additional defects. [Complete report](../../benchmarks/2026-10-09-lean-core.md).
+- Pinned lint, repository suites and Linux/native-Windows integration/configuration checks were run. A stale Python bytecode fixture failure was corrected by disabling fixture bytecode, then reproduced successfully on both systems; the source-runtime behavior was unchanged. GitHub CI covers Linux, macOS and Windows, and publication waits for the current head.
+
+The implementation and controlled evaluation are complete. The broader goals of fewer defects than capable alternatives, reduced real rework, easier later changes and faster human onboarding remain unproven. Keep the new commands for their demonstrated narrow capabilities; do not represent lower installed footprint or passing regression tests as proof of those broader outcomes.

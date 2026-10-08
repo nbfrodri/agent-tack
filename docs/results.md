@@ -2,6 +2,12 @@
 
 What tack changes in practice, measured on real sessions: matched tasks with and without tack, or between versions.
 
+## Smaller default and executable agreements (2026-10-09)
+
+All **24 development sessions and eight independent blind reviews** completed. The short guide and small core passed frozen acceptance in **8/8** deliveries each; previous tack passed **7/8**. Supplemental probes found defects in every configuration, and the core's mean code-quality grades were slightly lower than the guide's. Compared with previous tack, cost improved with Sol and worsened with Luna; compared with the guide, the core cost **61.9% more time / 67.6% more input with Luna**, and **5.0% more time / 25.4% more input with Sol**. There is no general productivity or quality gain demonstrated.
+
+The shipped default has two skills and no specialist agent catalog, with optional capabilities retained. Separate deterministic tests demonstrate checking approved settings and catching two clean-merge consumer failures before changing source branches. These are narrower benefits than the four broader outcome goals. A [CLI-only path](verification.md#use-the-checks-without-installing-ai-guidance) lets projects use checks without installing global AI guidance. [Full comparison, all paired costs, source review and limitations](benchmarks/2026-10-09-lean-core.md).
+
 ## Complete development journeys (2026-10-08)
 
 The latest study completed the full 24-journey schedule: **97 development attempts and 20 independent code reviews**, covering setup, implementation, a fresh contributor's later change, integration and review resolution. One development attempt ended with a provider capacity error; its time remains counted and its missing token usage is unknown. Tack and a short project AGENTS.md each passed final acceptance in **8/8 journeys**, versus **7/8** for plain adoption. Source review and additional probes found defects outside those checks, including a valid-input rejection with tack.

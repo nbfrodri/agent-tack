@@ -20,8 +20,8 @@ class IntegrationTests(unittest.TestCase):
         f = self.fixture
         f.env['PYTHONDONTWRITEBYTECODE'] = '1'
         f.write('.gitignore', '__pycache__/\n.ran\n')
-        f.write('producer.py', "def emit(): return {'total': 5}\n")
-        f.write('consumer.py', "def read(record): return record['total']\n")
+        f.write('producer.py', "def emit(): return {'total': 5, 'amount': 5}\n")
+        f.write('consumer.py', "def read(record): return record['total'] if 'total' in record else record['amount']\n")
         f.write('check.py', 'from producer import emit\nfrom consumer import read\nassert str(read(emit())) == "5"\n')
         command = shlex.quote(sys.executable.replace('\\', '/')) + ' check.py'
         f.write('checks-map.json', json.dumps(dict(version=1, checks=[dict(
@@ -30,7 +30,7 @@ class IntegrationTests(unittest.TestCase):
         f.git('branch', '-f', 'main', 'HEAD')
         f.write('producer.py', "def emit(): return {'amount': 5}\n")
         f.commit()
-        f.command(sys.executable, '-c', 'from producer import emit; assert emit()["amount"] == 5')
+        f.command(sys.executable, 'check.py')
         f.git('checkout', '-qb', 'feat/frontend', 'main')
         f.write('consumer.py', "def read(record): return str(record['total'])\n")
         f.commit()
@@ -121,23 +121,23 @@ class IntegrationTests(unittest.TestCase):
     def test_unit_change_without_a_missing_field_is_detected(self):
         f = self.fixture
         f.git('checkout', '-q', 'main')
-        f.write('producer.py', 'def emit(): return 500\n')
-        f.write('consumer.py', 'def read(value): return value / 100\n')
+        f.write('producer.py', "def emit(): return {'value': 500, 'scale': 100}\n")
+        f.write('consumer.py', "def read(record): return record['value'] / record['scale']\n")
         f.write('check.py', 'from producer import emit\nfrom consumer import read\nassert read(emit()) == 5\n')
         f.commit()
         f.git('checkout', '-B', 'feat/backend')
-        f.write('producer.py', 'def emit(): return 5\n')
+        f.write('producer.py', "def emit(): return {'value': 5, 'scale': 1}\n")
         f.commit()
-        f.command(sys.executable, '-c', 'from producer import emit; assert emit() == 5')
+        f.command(sys.executable, 'check.py')
         f.git('checkout', '-B', 'feat/frontend', 'main')
-        f.write('consumer.py', 'def read(value): return round(value / 100, 2)\n')
+        f.write('consumer.py', "def read(record): return round(record['value'] / 100, 2)\n")
         f.commit()
         f.command(sys.executable, 'check.py')
         f.command(FIXTURE.BASH, str(ROOT / 'bin/tack'), 'trust')
         result = self.check('--verify', expected=1)
         self.assertEqual(result['merge']['status'], 'clean')
         self.assertIn('AssertionError', result['verification']['checks'][0]['output_tail'])
-        f.write('consumer.py', 'def read(value): return round(value, 2)\n')
+        f.write('consumer.py', "def read(record): return round(record['value'] / record['scale'], 2)\n")
         f.commit()
         self.assertEqual(self.check('--verify')['status'], 'passed')
 
