@@ -8,7 +8,7 @@ The [engineering practices](engineering-practices.md) connect conventions to con
 ```bash
 tests/lint.sh            # ShellCheck on every script and ruff on the Python (ruff through uvx at the pinned version when uv is installed)
 tests/run-all.sh         # every suite below, in parallel (-j N), with a one-line summary each
-tests/validate.sh        # skills, agents, cross-references, components list coverage, budgets, former names, closed docs
+tests/validate.sh        # skills, agents, references, budgets, former names, closed docs and local human-doc links/anchors
 tests/validate.test.sh   # the validator catches each kind of error
 tests/install.test.sh    # installer, in throwaway HOME directories
 tests/lifecycle.test.sh  # ownership, previews and safe uninstall
@@ -27,11 +27,14 @@ tests/evals.test.sh      # offline runner, transcript metrics and report fixture
 tests/evidence.test.sh   # bounded batches, comparison identity and fresh-session evidence
 tests/project-capabilities.test.sh # project definitions, references and discovery index
 tests/project-setup.test.sh # read-only discovery, minimal scaffold, readiness and remembered review state
+tests/project-config.test.sh # shared preferences, clone propagation, local trust, paths and hook consumers
 tests/verification.test.sh # path-selected checks, real failure detection, trust, timeouts and Stop integration
 tests/native-agents.test.sh # native formats, installation preservation and Gemini/Copilot hook protocols
 tests/smoke.test.sh      # portable installation and hook smoke checks
 ```
 CI runs ShellCheck 0.11.0 (pinned by checksum in `.github/workflows/ci.yml`; use the same version locally, as the runner's default one reports different warnings) and content validation on Linux, the installer and hook regression suites on Linux and macOS, and `claude plugin validate`/`test` for each mod on Linux when the claude CLI is available (it skips otherwise). Rules for contributors (bash 3.2, isolated tests…) are in [`AGENTS.md`](../AGENTS.md).
+
+Native Windows CI also checks ownership/restoration, the verifier, shared project configuration and the portable smoke flow. Symlink tests that need unavailable local privileges report an explicit skip. Keep command examples in their owning guide; the CLI drift check searches the current setup, usage, configuration, verification, installation and advanced guides.
 
 The [onboarding conversation protocol](../evals/project-onboarding.md) prepares interactive model evaluations for proposal relevance, user selection and remembered choices. It has not been run. Deterministic setup/protocol tests do not prove model compliance; real-model runs require an agreed budget.
 

@@ -1,16 +1,9 @@
 # Conventions
 
-The conventions tack applies, at a glance. Source of truth: [`skills/dev-workflow/references/conventions.md`](../skills/dev-workflow/references/conventions.md).
+Project instructions and existing tools take precedence over tack's fallback guidance. Choose conventions during setup and save the relevant ones in project `AGENTS.md`. A fork can change cross-project defaults.
 
-| | |
-| --- | --- |
-| Commits | Conventional Commits, English, no AI attribution (enforced by hooks) |
-| PRs | Merge commit to keep verified milestones (squash only when you choose it); the merged branch is deleted locally and on the remote |
-| PR descriptions | Reuse the project's template; explain the problem and resulting behavior, actual validation and relevant review notes. This repo uses [its PR template](../.github/pull_request_template.md). Prepare the body locally before any missing publication approval. |
-| Replies | `reply-style` selects brief (default), visual or detailed independently of workflow mode; a conversational preference takes priority. See [usage](usage.md#reply-styles). |
-| Releases | SemVer, annotated `vX.Y.Z` tags, release-please, `CHANGELOG.md` + GitHub Release |
-| Code | English; formatter defaults; functional first; no unnecessary comments |
-| JS/TS | pnpm, TypeScript strict, kebab-case files, named exports |
-| Python | uv, Ruff, mypy/pyright |
-| PHP | Composer, Pint, Larastan, Pest |
-| Docs | Short and precise; `AGENTS.md` for AIs, `docs/` shared; plans, audits, handoffs and AI log in `docs/` |
+For tack's own contributors, [AGENTS.md](../AGENTS.md), [development](development.md) and the [PR template](../.github/pull_request_template.md) define the repository contract: English content, Bash 3.2 compatibility, isolated tests and meaningful installer/hook regressions.
+
+Tack's default Git hooks enforce Conventional Commits in enabled projects, protect selected operations and remove AI attribution. Existing projects can turn off Conventional Commit enforcement with `tack config conventional-commits false`, including as an allowed shared preference. See [hook behavior and limits](how-it-works.md#enforced-rules-hooks).
+
+Language tools, formatter settings and release automation should match the project. A Python service need not adopt frontend tools, and a local script need not acquire a release pipeline. [Engineering practices](engineering-practices.md) explains the useful principles; [customization](customization.md) shows where the fallback instructions live.

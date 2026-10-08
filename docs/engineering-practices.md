@@ -1,6 +1,6 @@
 # Engineering practices with tack
 
-tack helps a team make its engineering practices explicit, reusable and checkable across AI coding tools. The intended result is less repeated setup, clearer ownership of context and fewer preventable defects. Those are goals to measure; sharing instructions or passing a selected check does not establish overall code quality.
+tack helps an individual or team make its engineering practices explicit, reusable and checkable across AI coding tools. The intended result is less repeated setup, clearer ownership of context and fewer preventable defects. Those are goals to measure; sharing instructions or passing a selected check does not establish overall code quality.
 
 ## From a problem to an observable practice
 
@@ -16,7 +16,7 @@ tack helps a team make its engineering practices explicit, reusable and checkabl
 | Documentation drifts from the code | Keep affected guidance alongside the change | `docs-map.txt`, PR evidence and architecture updates when structure changes |
 | More process costs time without improving delivery | Retain steps that solve a demonstrated problem | Task modes, on-demand capabilities and published positive, null and adverse benchmark results |
 
-Guidance still depends on the assistant following it. Runtime checks cover only their declared behavior, and a human review remains useful for design and semantic gaps. See [tool coverage](editors.md) and [verification limits](usage.md#project-verification).
+Guidance still depends on the assistant following it. Runtime checks cover only their declared behavior, and a human review remains useful for design and semantic gaps. See [tool coverage](editors.md) and [verification limits](verification.md).
 
 ## Scale by task and risk
 
@@ -33,7 +33,7 @@ Use an ADR for a consequential design choice with alternatives; a handoff for wo
 - CI checks shell/Python lint, Bash compatibility and native Windows behavior. A passing Linux test does not substitute for a claimed Windows capability.
 - Public benchmarks retain failed and adverse outcomes. The new verifier still needs a real-model comparison before claiming reduced defect rates or cost.
 
-The [development guide](development.md) gives the commands contributors use. The [team example](../README.md#example-a-team-building-with-ai) shows adoption and daily use. Portable shared preferences for `tack config` and `tack mode` remain follow-up work; the current CLI stores those preferences locally or globally.
+The [development guide](development.md) gives the commands contributors use. The [team example](sharing.md#example-a-team-building-with-ai) shows adoption and daily use. Shared project preferences now live in optional `tack.json`; local overrides and personal defaults remain separate. See [configuration](configuration.md).
 
 ## Sources and adaptation
 

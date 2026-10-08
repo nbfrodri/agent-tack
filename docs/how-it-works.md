@@ -1,30 +1,14 @@
 # How it works
 
-The [project verification flow](usage.md#project-verification) adds one shared command for path-selected checks. When `checks-map.json` exists, completion hooks use it to report failures or gaps; otherwise the previous test-command behavior remains. The [direction ADR](adr/0003-project-verification-over-generic-process.md) explains why concrete project evidence now takes priority over additional generic process. This does not remove safety controls or silently change explicit workflow modes.
+The [project verification flow](verification.md) adds one shared command for path-selected checks. When `checks-map.json` exists, completion hooks use it to report failures or gaps; otherwise the previous test-command behavior remains. The [direction ADR](adr/0003-project-verification-over-generic-process.md) explains why concrete project evidence now takes priority over additional generic process. This does not remove safety controls or silently change explicit workflow modes.
 
 What the installer sets up, which tools it supports, and which rules are enforced by hooks.
 
 Internal component responsibilities and execution flows: [architecture](architecture.md).
 
 ## Supported tools
-Paths come from each tool's documentation and live in `targets.txt` (add a line to support another tool).
 
-| Tool | Global instructions | Skills | Agents and hooks |
-| --- | --- | --- | --- |
-| Claude Code | `~/.claude/CLAUDE.md` | `~/.claude/skills` | ✔ |
-| Codex | `~/.codex/AGENTS.md` | `~/.codex/skills` | ✔ (generated `~/.codex/agents/*.toml`, hooks in `~/.codex/hooks.json`) |
-| Gemini CLI | `~/.gemini/GEMINI.md` | `~/.gemini/skills` | Native Markdown agents; hooks in `~/.gemini/settings.json` |
-| GitHub Copilot | `~/.copilot/copilot-instructions.md` | `~/.copilot/skills` | CLI agents in `~/.copilot/agents/*.agent.md`; CLI hooks in `~/.copilot/hooks/tack.json` |
-| OpenCode | `~/.config/opencode/AGENTS.md` | `~/.config/opencode/skills` | Native Markdown subagents; no managed runtime hooks |
-| Crush | `~/.config/AGENTS.md` | `~/.config/crush/skills` | Portable role instructions; no native agent/hook adapter |
-| Cursor (editor and CLI) | none on disk: paste `global/AGENTS.md` in *Customize → Rules* once | `~/.cursor/skills` | Native Markdown agents; command guard |
-
-Claude Code and Codex are always configured; the others only when installed. The Copilot line is detected through the `copilot` CLI or VS Code (`code`, `code-insiders`, `codium`). Git hooks apply to every tool.
-
-### VS Code
-
-- **Claude Code and Codex extensions** use the same configuration as their CLIs (`~/.claude`, `~/.codex`), so they get tack's instructions, skills, agents, hooks and mods without extra steps.
-- **GitHub Copilot Chat** reads the user instructions in `~/.copilot/copilot-instructions.md` and the skills in `~/.agents/skills`, `~/.claude/skills` and `~/.copilot/skills`, all installed by tack. In a project, it also reads `AGENTS.md` when the `chat.useAgentsMdFile` setting is on, which the installer turns on. Claude Code hooks, mods and subagents do not apply to Copilot; the git hooks still do.
+See [Editors and AI tools](editors.md) for the canonical support matrix and setup for each tool. Actual install paths are declared in [`targets.txt`](../targets.txt). Claude Code and Codex are always configured; other tools are detected before configuration. Git hooks are shared across tools.
 
 ### `targets.txt` columns
 One line per tool; `-` means tack does not manage that integration, not that the tool necessarily lacks the capability. Files with only the first five columns still work.
@@ -105,7 +89,7 @@ It does **not** cover: overwriting files through redirection (`> ~/.bashrc`, `tr
 ```
 global/AGENTS.md      # global instructions for every AI tool
 skills/<name>/        # Agent Skills (SKILL.md + references/ + assets/)
-agents/<name>.md      # Claude Code subagents
+agents/<name>.md      # portable roles rendered for native tools
 targets.txt           # supported AI tools and their paths
 claude/settings.json  # Claude Code settings and hooks
 hooks/claude/         # Claude hooks (guard-bash.sh dispatches to lib/guard-*.sh rule libraries; lib/shell-parse.py plus .sh bridge/fallback: parsing)

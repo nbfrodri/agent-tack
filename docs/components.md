@@ -4,7 +4,7 @@ Every skill, agent and plugin, in one line each.
 
 ## Skills
 
-The shared `tack verify` CLI selects existing project checks through optional `checks-map.json`, reports execution evidence and missing mappings, and is reused by completion hooks. It is a tool-neutral script, not another skill or agent. [Usage and limits](usage.md#project-verification).
+The shared `tack verify` CLI selects existing project checks through optional `checks-map.json`, reports execution evidence and missing mappings, and is reused by completion hooks. It is a tool-neutral script, not another skill or agent. [Usage and limits](verification.md).
 Open Agent Skills format (`SKILL.md`), read by every supported tool.
 
 | Skill | Purpose |
@@ -19,7 +19,7 @@ Open Agent Skills format (`SKILL.md`), read by every supported tool.
 | `project-docs` | Docs for humans and AIs, ADRs, plans, audits, handoffs, AI log |
 | `improve` | Prioritised improvement review with read-only reviewers |
 | `orchestrate` | Multi-agent delegation with model and effort per task; automatic only for strict-level work |
-| `auto-improve` | Autonomous score → fix → re-score loop up to a target score |
+| `auto-improve` | Bounded rounds of verified findings, fixes and checks; scores only when requested |
 | `lessons` | Turn corrections into versioned rules; create and reuse justified project-local skills and specialist roles |
 | `frontend` | React/Next.js components, state, forms, accessibility |
 | `api-design` | REST, errors, validation, OpenAPI; Python, Laravel, Node |
@@ -38,12 +38,12 @@ Portable role definitions, linked for Claude and rendered into native Codex, Gem
 | `implementer` | Implements one task on its own branch or worktree |
 | `code-reviewer` | Reviews a diff, branch or whole scope |
 | `test-writer` | Adds tests to existing code; never touches production code |
-| `docs-writer` | Keeps docs in sync and logs AI work; runs on an economical model and takes doc updates spanning 3 or more files |
-| `evaluator` | Scores a project 0–10 per dimension with evidence (`auto-improve`) |
+| `docs-writer` | Keeps docs in sync and logs AI work; runs on an economical model and handles useful independent doc updates when delegation is appropriate |
+| `evaluator` | Scores a project 0–10 per dimension with evidence when a scored assessment is requested |
 | `architecture-reviewer` | Layering, coupling, boundaries, debt hot spots |
 | `security-auditor` | OWASP Top 10, auth, secrets, dependencies, CI |
 | `performance-analyzer` | Measures and ranks performance problems |
-| `ui-reviewer` | Reviews a running app at mobile and desktop widths, or scores `tack shots` before and after screenshots on a fixed rubric |
+| `ui-reviewer` | Reviews a running app or before/after screenshots for concrete visual and usability findings |
 
 ## Plugins
 | Plugin | Purpose |

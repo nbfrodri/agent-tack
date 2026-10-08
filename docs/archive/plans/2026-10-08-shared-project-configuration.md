@@ -1,8 +1,8 @@
 # Shared project configuration and task-scaled engineering
 
-Status: approved; implementation in progress.
+Status: implemented and locally verified. CI and integration status are recorded by the pull request.
 
-The owner authorized auditing obsolete behavior, writing this plan and executing improvements autonomously with Conventional Commits, no AI attribution, CI review and merges only when green. The [audit](../audits/2026-10-08-product-direction.md) is the basis. Individual use and team use are equally valid; a fork is optional.
+The owner authorized auditing obsolete behavior, writing this plan and executing improvements autonomously with Conventional Commits, no AI attribution, CI review and merges only when green. The [audit](../../audits/2026-10-08-product-direction.md) is the basis. Individual use and team use are equally valid; a fork is optional.
 
 ## Acceptance criteria
 
@@ -15,6 +15,9 @@ The owner authorized auditing obsolete behavior, writing this plan and executing
 - R7: Consolidate command-execution behavior where it preserves the existing contract: local trust, bounded timeouts, pipeline failures and explicit errors. Do not reuse stale verification results or introduce an automatic cache. Keep legacy commands compatible or document a migration with regression coverage.
 - R8: Meaningful tests cover clone sharing, precedence, invalid data, local privacy, path safety, configuration preservation and affected hooks. Run pinned lint, full suites, native Windows checks and CI. Update architecture, usage, sharing, examples and the audit's status. Preserve commits in green-only merges.
 
+- R9: Audit human documentation for stale behavior, conflicting guidance, repetition and broken local links. Keep a short README, a single owning guide per topic, plain English instructions and clear separation from dated evidence.
+- R10: During requested onboarding, offer selected external skills from Addy Osmani or Matt Pocock only for a demonstrated gap. Reuse an existing installer, preserve project choices, record origin/revision and dependencies, and document updates. No automatic download or new package manager.
+
 ## Implementation milestones
 
 1. Commit the audit and plan. Keep PR #131 independent; merge it once its current CI is green.
@@ -26,3 +29,15 @@ The owner authorized auditing obsolete behavior, writing this plan and executing
 ## Deliberate limits
 
 No centralized team service, package-manager distribution, cloud synchronization, automatic specialist router, new model benchmark, blind capability deletion or change to private user settings is required. Do not change installed capability defaults without migration/discovery evidence. Safe deduplication of verification across independent invocations and model-outcome comparisons remain follow-ups unless implementation provides a complete freshness contract. Report deferred items honestly rather than claiming the entire roadmap is solved.
+
+
+## Delivery and verification
+
+- R1-R5: optional typed project preferences, local/shared/global precedence, stable reads and shared paths are implemented. Clone tests cover propagation while keeping execution trust local; solo use needs no profile.
+- R6: formal trace IDs, three-file documentation delegation and numeric visual gates are removed as universal requirements. Trace labels describe textual links; improvement rounds use verified findings and explicit limits.
+- R7: verifier and legacy fast/Stop checks share bounded Bash execution and pipeline failure behavior. Independent invocations still rerun commands; no unsafe cache was added.
+- R8: all 24 suites were exercised locally. The remaining single-manual documentation assumption was corrected and the CLI suite rerun: 394 checks passed. Pinned lint and content validation passed. Configuration has 17 behavioral cases; native Windows passed with two symlink-permission skips, and verification passed 23 cases with one such skip. CI includes the new suite on Linux, macOS and Windows.
+- R9: the documentation audit records twelve findings. README is 114 lines rather than 379; daily usage is 75 rather than 508. The content validator now checks local human-document links and anchors. The new logo and README were inspected in light/dark desktop previews; no mobile-browser coverage is claimed.
+- R10: external skill selection is part of requested onboarding, with a dedicated guide and origin/revision/dependency policy. The base installer makes no added downloads. Prepared model-evaluation cases remain unrun; no third-party collection is bundled or claimed universally compatible.
+
+Deferred experiments: real-model quality/cost comparison for the new direction, lighter installation profiles and cross-invocation verification scheduling. They require evidence and a freshness contract, not another generic workflow rule. No additional paid-model benchmark was run for this implementation.

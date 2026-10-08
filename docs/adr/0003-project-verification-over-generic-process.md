@@ -13,10 +13,10 @@ In the 24-run Codex comparison, both conditions passed the original hidden tests
 
 ## Decision
 
-Make **quickly configurable, shared ways of working with AI** the center of tack: conventions, context entrypoints, agreed locations for useful artifacts and concrete verification. The owner clarified that team alignment is the primary product value; verification supports it. Supply less generic guidance; select relevant checks from the project, run them within existing trust boundaries, and expose failures and verification gaps before work is handed back.
+Make **quickly configurable, shared ways of working with AI** the center of tack: conventions, context entrypoints, agreed locations for useful artifacts and concrete verification. The owner clarified that consistent individual work and team alignment are first-class product values; verification supports it. Supply less generic guidance; select relevant checks from the project, run them within existing trust boundaries, and expose failures and verification gaps before work is handed back.
 
 - Share versioned configuration: project instructions, conventions, check definitions and justified local capabilities. Each teammate installs tack in their own environment. Credentials, private memory, execution trust and personal settings are not synchronized by repository adoption.
-- Reuse the project's context and storage layout. Keep a concise entrypoint that tells assistants what to read and where to save necessary decisions, plans or handoffs. Guided setup should ask only unresolved questions and retain agreed choices. Local Git configuration is not automatically shared; a portable team profile remains future work.
+- Reuse the project's context and storage layout. Keep a concise entrypoint that tells assistants what to read and where to save necessary decisions, plans or handoffs. Guided setup should ask only unresolved questions and retain agreed choices. Local Git configuration is not automatically shared; the subsequent shared configuration increment adds an optional `tack.json` profile.
 - Prefer executable evidence: existing tests, type/lint checks, API/schema compatibility checks and domain invariants. Reuse project tools rather than introducing a new framework or treating a reviewer score as proof.
 - Scale added work by demonstrated need. Create a skill for a reusable project procedure, an agent role for a distinct review responsibility, and a document for information someone needs to use or maintain. File counts, agent counts, branches and commits are not quality metrics.
 - Keep deterministic safeguards and configuration preservation. User-selected strict workflows and explicitly requested plans/reviews remain valid. The new direction does not silently remove protections or rewrite local preferences.
@@ -45,3 +45,7 @@ Existing modes, safeguards and installed capabilities continue during the transi
 Compare plain assistants, current tack and the candidate on held-out real repository tasks with acceptance criteria fixed in advance. Assess actual defects, code review findings, useful tests, human interventions, total time and token usage. Keep functional tests and subjective review separate, publish negative results, and do not equate subscription tokens with dollar charges.
 
 A future comparison must fix its acceptance criteria and experiment thresholds before running. They are targets to validate, not marketing claims. Retain a new step only when it catches meaningful defects, reduces work or provides a concrete safety guarantee; remove or simplify steps whose overhead has no demonstrated benefit.
+
+## Follow-up implementation
+
+Shared project preferences, configurable context locations and reduced mandatory process were delivered after the initial verifier. See [configuration](../configuration.md) and the [direction audit](../audits/2026-10-08-product-direction.md). These updates do not change the historical benchmark results or establish a measured quality improvement.

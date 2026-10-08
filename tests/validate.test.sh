@@ -38,6 +38,10 @@ else
 fi
 
 echo "Detects"
+expect_failure "a broken human documentation link" "missing local target" \
+  "printf '\n[Missing](docs/does-not-exist.md)\n' >> README.md"
+expect_failure "a broken human documentation anchor" "missing heading" \
+  "printf '\n[Missing heading](docs/setup.md#does-not-exist)\n' >> README.md"
 expect_failure "a checker exception fails validation" "cross-reference checker failed" "rm docs/components.md"
 # Expected messages quote paths literally, as written in the docs
 # shellcheck disable=SC2088

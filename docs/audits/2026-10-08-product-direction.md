@@ -1,6 +1,6 @@
 # Audit: fit with tack's new direction
 
-Status: findings accepted for implementation by the owner; see the [delivery plan](../plans/2026-10-08-shared-project-configuration.md).
+Status: the configuration, process and documentation improvements below are implemented; see the [delivery plan](../archive/plans/2026-10-08-shared-project-configuration.md).
 
 Reviewed revision: `df979a7` (PR #131), 2026-10-08. Scope: product fit, configuration, instructions, modes, capabilities, verification and adoption. This audit proposes changes; it does not remove components or claim a new quality score.
 
@@ -51,3 +51,10 @@ The strongest removal candidates are **mandatory behaviors**, not entire subsyst
 4. Measure adoption effort, repeated setup, runtime overhead and meaningful defects on frozen scenarios. Evaluate slimmer installation profiles with evidence before changing defaults.
 
 Success measures: a second clone gets the same project defaults and context locations without manual repetition; a solo clone works without a project profile; local overrides and trust stay local; malformed configuration never executes code; skipped/unavailable checks remain visible. Real-model defect rates, human rework and time/token costs require a separate controlled comparison. No new 0–10 score is assigned.
+
+
+## Implementation disposition
+
+F1-F5 and F8-F10 are addressed by shared preferences/paths, stable runtime reads, simpler guidance and corrected documentation. F6 now uses a common bounded executor; independent invocations can still repeat checks, and test-file reminders remain advisory. No success cache was added. F7's smaller installation profiles remain deferred until discovery and adoption evidence justify a default change. Personal capabilities, existing tool integrations and deterministic protections remain available.
+
+The [documentation audit](2026-10-08-documentation.md) records stale and repeated content and its owning guides. The [delivery record](../archive/plans/2026-10-08-shared-project-configuration.md) lists local verification and deferred experiments. External skill selection uses existing installers through optional onboarding; it does not add an automatic catalog download or a second package manager.
