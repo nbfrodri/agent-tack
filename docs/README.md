@@ -1,20 +1,41 @@
 # Documentation
 
-| Document | What it's for |
+New to tack? Read [setup](setup.md), then [daily use](usage.md). You do not need the advanced pages to get started.
+
+## Use tack
+
+| I want to... | Read |
 | --- | --- |
-| [why.md](why.md) | The problem, the solution, strengths and limits |
-| [usage.md](usage.md) | On/off per project, what to ask, overrides, updating |
-| [editors.md](editors.md) | Using and enabling it in each editor and AI tool |
-| [how-it-works.md](how-it-works.md) | Supported tools, what the installer does, enforced rules, layout |
-| [architecture.md](architecture.md) | Component responsibilities, dependencies and key flows |
-| [customization.md](customization.md) | Personal rules, skills, agents, tools, plugins and hooks |
-| [components.md](components.md) | Every skill, agent and plugin |
-| [conventions.md](conventions.md) | Commits, PRs, releases, code and docs conventions |
-| [results.md](results.md) | Measured behaviour with vs without tack |
-| [sharing.md](sharing.md) | Using it on someone else's machine |
-| [development.md](development.md) | Tests, evals, adding skills, agents and tools |
-| [Onboarding evaluation protocol](../evals/project-onboarding.md) | Prepared interactive cases; model runs require a separate budget |
-| [Project onboarding implementation](archive/plans/2026-10-07-project-onboarding-implementation.md) | Completed initialization and native integrations, preservation guarantees and local verification |
-| [Evidence and project capabilities plan](archive/plans/2026-10-07-evidence-and-project-capabilities-implementation.md) | Completed implementation, local test results and deferred model experiments |
-| [archive/](archive/) | Finished plans, handoffs and audits; open audits (improvement and review reports) go in `audits/` |
-| [ai/](ai/README.md) | How AI is used in this project, and the AI work log |
+| Understand the purpose and limits | [Why tack](why.md) |
+| Install and enable a new or existing project | [Setup](setup.md) |
+| Choose task modes and reply styles | [Daily use](usage.md) |
+| Work alone, share a project or maintain a fork | [Sharing](sharing.md) |
+| Save defaults and choose document locations | [Configuration](configuration.md) |
+| Select checks and understand their results | [Verification](verification.md) |
+| Add selected third-party skills | [External skills](external-skills.md) |
+| Use a particular tool or platform | [Editors and AI tools](editors.md) |
+
+## Go deeper when needed
+
+| Topic | Reference |
+| --- | --- |
+| Updates, diagnosis, install options and removal | [Installation](installation.md) |
+| Delegation, screenshots, memory, logs and autonomous modes | [Optional features](advanced.md) |
+| Change tack itself or add a capability | [Customization](customization.md) |
+| Available skills, agents and mods | [Components](components.md) |
+| Portable engineering principles | [Engineering practices](engineering-practices.md) |
+| Project conventions and precedence | [Conventions](conventions.md) |
+| Installer and hook behavior | [How it works](how-it-works.md) |
+| Components, dependencies and execution flows | [Architecture](architecture.md) |
+| Contributor commands and tests | [Development](development.md) |
+| Measured outcomes and limitations | [Results](results.md) |
+
+## Decisions and history
+
+[ADRs](adr/) explain design decisions. [Audits](audits/) record findings against a dated revision; they are not the current usage manual. [Archived plans and handoffs](archive/) preserve completed work. Historical benchmarks describe the version tested, including old names and behavior.
+
+The [direction audit](audits/2026-10-08-product-direction.md) and [documentation audit](audits/2026-10-08-documentation.md) record this transition. [AI work records](ai/README.md) and the [onboarding evaluation protocol](../evals/project-onboarding.md) are supporting material.
+
+## Keep these guides current
+
+Each topic has one owning guide in the tables above. Summarize briefly elsewhere and link to that guide instead of copying the whole procedure. Update affected docs with behavior changes. `tests/validate.sh` checks local links and heading anchors, but factual accuracy still requires comparing prose with code and examples.

@@ -29,7 +29,7 @@ cli="$(cd "$(dirname "$0")/../../bin" && pwd)/tack"
 # Per-session state (tool-call counters) is pruned here: SessionStart is the one hook every
 # tool runs, whether or not the project is enabled. It is maintenance, so it runs even when
 # the session-context hook is turned off, and its period is user-wide because the state is.
-retention="$(cd "$cwd" && "$cli" config state-retention-days 2>/dev/null)"
+retention="$(cd "$cwd" && "$cli" config state-retention-days --get 2>/dev/null)"
 retention="${retention%% *}"
 case "$retention" in '' | *[!0-9]*) retention=30 ;; esac
 for state_dir in budget turns; do
@@ -56,7 +56,7 @@ if (cd "$cwd" && "$cli" status --quiet); then
   fi
   head="tack: ENABLED for this project (mode: $mode). $level At every level: work on a branch off main, test the change, and make a Conventional Commit for each verified milestone. Ask the user whenever you have a real doubt."
   mode_rules="$(cd "$cwd" && "$cli" mode show)" || mode_rules=''
-  setting() { local value; value="$(cd "$cwd" && "$cli" config "$1" 2>/dev/null)"; printf '%s' "${value%% *}"; }
+  setting() { local value; value="$(cd "$cwd" && "$cli" config "$1" --get 2>/dev/null)"; printf '%s' "${value%% *}"; }
   tokens=''
   [ "$(setting skill-loading)" != minimal ] || tokens="$tokens Load a skill only when the task cannot be done without it; prefer the rules already in context."
   [ "$(setting subagent-model)" != economical ] || tokens="$tokens When delegating, use the most economical model that can do the task."

@@ -8,10 +8,10 @@ tack_root="$1"
 root="$2"
 cd "$root" 2>/dev/null || exit 0
 
-explicit="$("$tack_root/bin/tack" config check-fast 2>/dev/null)"
+explicit="$("$tack_root/bin/tack" config check-fast --get)" || exit 2
 case "$explicit" in
-  'none (default)' | '') ;;
-  *) printf '%s\ttack config check-fast\n' "${explicit% (*}"; exit 0 ;;
+  none | '') ;;
+  *) printf '%s\ttack config check-fast\n' "$explicit"; exit 0 ;;
 esac
 
 found() { printf '%s\t%s\n' "$1" "$2"; exit 0; }

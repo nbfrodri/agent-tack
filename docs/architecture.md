@@ -26,7 +26,7 @@ flowchart LR
 
 `install.sh` configures tools, links content, merges settings, installs git hooks, updates plugins, installs mods and enables VS Code's AGENTS.md loading in that order. It counts failures while continuing other steps, then exits non-zero if any step failed. Links point to the checkout, so its location must remain available; re-running the installer repairs links after a move.
 
-Runtime activation and configuration read only `tack.*`, `.tack` and the `agent-tack` directories. Upgrade through v0.1.0 and run `tack migrate` in each old clone before installing a version that removes the former names. Legacy-name handling remains in explicit migrations, ownership restoration and the guard's fallback user-policy directory.
+Runtime activation and configuration read `tack.*`, optional project `tack.json`, `.tack` and the `agent-tack` directories. Upgrade through v0.1.0 and run `tack migrate` in each old clone before installing a version that removes the former names. Legacy-name handling remains in explicit migrations, ownership restoration and the guard's fallback user-policy directory.
 
 ## Components and dependency direction
 
@@ -51,7 +51,9 @@ Runtime activation and configuration read only `tack.*`, `.tack` and the `agent-
 | `lib/memory.sh` | `tack memory`: the user notes shared by Claude Code and Codex in `~/.config/agent-tack/memory.md` (add with a secret check, show, path, and the bounded block for session start) | `bin/tack config` for `memory` and `memory-max-chars`; read by `session-context.sh` |
 | `lib/shots.sh`, `lib/shots-index.py` | `tack shots`: before and after screenshots at mobile and desktop widths in `.tack-screenshots/<date>-<branch>/` (self-ignored), and the side-by-side `index.html` with the reviewer's `score.md` | Playwright CLI (the project's, or `TACK_PLAYWRIGHT`); Python for the index |
 | `modes/`, `lib/modes.sh` | Define each workflow mode as data; resolve, list, create and show modes (built-in first, then the user's `~/.config/agent-tack/modes/`) | Sourced by `bin/tack`; read by SessionStart through `tack mode show` |
-| `features.txt`, `lib/config.sh` | Declare feature toggles; list, validate, read and write them for `tack config` (project value, then global, then default) | Git configuration; consumers read each toggle's git key |
+| `features.txt`, `lib/config.sh`, `lib/project_config.py` | Declare, validate and resolve preferences: local override, shared `tack.json`, global default, shipped default; typed allowlisted shared data and atomic updates | Git and Python standard library; consumers use `tack config --get` or `--json` |
+| `lib/project-paths.sh`, `project_config.project_paths` | Resolve safe architecture, plan and handoff locations for context, setup and trace | Shared preference resolver; project-relative paths without symlink traversal |
+| `lib/check_execution.py`, `lib/run-check.sh`, `lib/run_check.py` | One bounded Bash executor for verification and legacy advisory checks; the hook adapter checks local trust | Pipeline failure propagation, process cleanup and bounded failure reports |
 | `reply-styles.txt`, `lib/reply-style.sh` | Define and render brief, visual and detailed reply guidance; legacy or invalid style values fall back to brief | The shared session-context hook reads `tack config reply-style`; other tools query the setting through global instructions |
 | `git-hooks/` | Check staged secrets, commit messages and pushed refs; delegate local hooks | `bin/tack`, git and `_chain` |
 | `hooks/cursor/`, `cursor/hooks.json` | Adapter layer: translate another tool's hook format to the shared scripts and back (Cursor's `beforeShellExecution` to `guard-bash.sh`), so rules live once; the installer merges each tool's template from the hooks column of `targets.txt` | `hooks/claude/guard-bash.sh`, `lib/settings-merge.{py,jq}` (which also replaces tagged plain command entries) |
@@ -141,6 +143,14 @@ CI runs ShellCheck and content validation on Linux, plus installer and hook test
 Behaviour evaluations are a separate, manually invoked flow: `evals/run.sh` prepares a temporary scenario and captures an agent transcript; `grade.py` inspects the resulting repository and transcript and writes `metrics.json`; `report.py` aggregates those metrics. They use real model tokens and are not part of CI. Published measurements and their limits are in [results](results.md).
 
 The 2026-10-08 Codex comparison uses experiment-only helpers in `docs/benchmarks/support/`: a launcher fixes reasoning effort and scoped fixture Git permissions, then records local session model/effort observations before HOME cleanup. The exporter preserves original metrics and emits public counters, transcript hashes and code/docs diffs; the Unicode probe supplements frozen acceptance tests without rewriting them. These helpers are not installed by tack. Subscription usage stays separate from USD cost, and supplementary model observations do not replace unknown generic metadata.
+
+## Shared project preferences
+
+`bin/tack config` delegates to `lib/project_config.py`; modes consult the same profile reader. Version 1 `tack.json` is optional and contains only mode and allowed preferences. Local overrides remain in Git config. Activation and trust continue through their existing CLI contracts, separate from the shared profile. No shared setting grants execution trust or selects project-only autonomy.
+
+Context, setup/scaffolding and default trace discovery share configured paths. Scaffolding still creates only missing base files. `tack setup` is read-only; the onboarding skill offers optional additions, including selected external skills through the existing upstream installer. It records source/revision and checks references rather than bundling collections or adding a package manager.
+
+The verifier and legacy fast/Stop checks use `check_execution.execute`. Its timeouts and pipeline failure behavior do not depend on an external timeout binary. No passing-result cache is shared across independent invocations.
 
 ## Design choices
 

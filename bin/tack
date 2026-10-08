@@ -11,19 +11,20 @@ Default command: status
 
 Commands:
   status [--quiet]     Show workflow activation, mode and local formatter trust
-  mode [MODE] [--global]
+  mode [MODE] [--global|--shared]
                       Show the effective mode, or set it for this project
                       (or as the global default with --global)
-  mode --unset [--global]
+  mode --unset [--global|--shared]
                       Remove the project (or global) mode setting
   mode list           List built-in and user modes with when to use each
   mode show           Print the effective mode's rules (auto: the modes to pick from)
   mode new NAME --from MODE
                       Create a user mode in ~/.config/agent-tack/modes/
                       from an existing one, to edit and select
-  config [NAME [VALUE]] [--global]
+  config [NAME [VALUE]] [--global|--shared] [--get|--json]
                       List feature toggles, show one, or set it for this project
                       (or user-wide with --global); config NAME --unset removes it
+                      --get prints a raw value; --json adds source and sharing metadata
                       reply-style: brief (default), visual or detailed
   enable [--shared] [--scaffold]
                       Enable this clone, or use a shareable .tack marker;
@@ -52,8 +53,8 @@ Commands:
                       Screenshots of a visual change at mobile and desktop widths,
                       side by side in .tack-screenshots/ (needs Playwright)
   trace [PLAN]        Check that every requirement the plan numbers (R1, R2…) has
-                      a test naming it (default: the newest docs/plans file);
-                      exits 1 when one has none
+                      a test naming it (default: newest file in plans-path);
+                      text links only, not test execution; exits 1 for missing links
   log [N]             Print the last N (default 20) activity log entries; turn the
                       log on with: tack config activity-log true
   log --cost|--skills|--levels [--days N] [--csv]
@@ -69,7 +70,7 @@ Global options:
 
 Command options:
   --quiet             Suppress output for status or trusted; preserve exit codes
-  --shared            Enable with a .tack file you can commit and share
+  --shared            enable: commit a .tack marker; mode/config: write tack.json
   --revoke            Revoke local formatter trust without disabling the workflow
   --tools             With doctor: check each installed AI tool (version, capabilities, smoke check)
   --global            Read or write the user's default instead of the project's
@@ -286,7 +287,12 @@ case "$cmd" in
     scope=local value='' unset=false
     for arg in "$@"; do
       case "$arg" in
-        --global) scope=global ;;
+        --global)
+          [ "$scope" != shared ] || { echo 'tack: --shared and --global conflict' >&2; exit 2; }
+          scope=global ;;
+        --shared)
+          [ "$scope" != global ] || { echo 'tack: --shared and --global conflict' >&2; exit 2; }
+          scope=shared ;;
         --unset) unset=true ;;
         *)
           if [ -z "$value" ] && is_mode "$arg"; then value="$arg"
@@ -298,7 +304,14 @@ case "$cmd" in
       echo "tack: --unset takes no mode (see --help)" >&2; exit 2
     fi
     if [ "$unset" = false ] && [ -z "$value" ]; then
-      if [ "$scope" = global ]; then effective_mode global; else effective_mode; fi
+      if [ "$scope" != local ]; then effective_mode "$scope"; else effective_mode; fi
+      exit
+    fi
+    if [ "$scope" = shared ]; then
+      require_repo
+      if [ "$unset" = true ]; then shared_value=--unset; else shared_value="$value"; fi
+      python3 "$TACK_ROOT/lib/project_config.py" "$TACK_ROOT" shared-mode "$shared_value" || exit $?
+      echo "Shared mode updated; effective mode: $(effective_mode)."
       exit 0
     fi
     if [ "$scope" = global ] && [ -n "$value" ] && is_project_only "$value"; then
@@ -361,7 +374,8 @@ case "$cmd" in
   context)
     allowed_option=''; check_args "$@"
     is_enabled || exit 0
-    [ "$(key_get --bool context)" != false ] || exit 0
+    context_enabled="$(bash "$TACK_ROOT/lib/config.sh" "$TACK_ROOT" context --get)" || exit 2
+    [ "$context_enabled" != false ] || exit 0
     root="$(repo_root)" || exit 0
     source_root="$TACK_ROOT"
     case "$(key_get setupReview)" in

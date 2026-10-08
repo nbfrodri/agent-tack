@@ -385,6 +385,15 @@ check_project() {
   if git config --local --get-regexp '^harness\.' >/dev/null 2>&1 || [ -f "$(git rev-parse --show-toplevel)/.harness" ]; then
     warn 'current project uses the former harness name: run tack migrate'
   fi
+  if has python3; then
+    if ! "$REPO/bin/tack" config --json >/dev/null 2>&1 \
+      || ! python3 "$REPO/lib/project_config.py" "$REPO" paths >/dev/null 2>&1; then
+      fail 'current project configuration is invalid: run tack config and tack setup for details'
+      return
+    fi
+  else
+    warn 'project preferences: Python 3 is unavailable; profile validation skipped'
+  fi
   mode="$("$REPO/bin/tack" mode)"
   if [ -z "${mode##*invalid*}" ] || [ -z "${mode##*ignored*}" ]; then
     warn "current project mode: $mode"

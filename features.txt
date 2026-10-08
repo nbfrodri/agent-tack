@@ -1,35 +1,39 @@
+# The column after enforcement is shared (yes/no): allowed in versioned tack.json.
 # Feature toggles that `tack config` lists, reads and writes. Add a feature by adding a line.
 # Columns: name, git config key, default, allowed values (bool, number: a positive integer,
 #          decimal: a positive amount, text: any non-empty value, list:a|b: a comma-separated list of
 #          those items, or alternatives such as auto|off), scope (any: project or
 #          global; global: user-wide only), enforcement (hook: a hook guarantees it; mod: a Claude
 #          Code mod guarantees it; instruction: the assistant follows it; installer: install.sh
-#          reads it), description.
+#          reads it), shared (yes/no: allowed in tack.json), description.
 # Safety checks (secret scanning, the command guard, protected main and tags) are deliberately
 # absent: they keep their one-off overrides, described in docs/usage.md.
 #
-# name                key                          default  values    scope   enforcement  description
-context               tack.context              true     bool      any     instruction  Load project instructions, the docs index and the handoff check at session start
-setup-review          tack.setupReview          pending  pending|done|deferred any instruction Project onboarding conversation: inspect and propose optional files once; reset to pending to revisit choices
-conventional-commits  tack.conventionalCommits  true     bool      any     hook         Enforce Conventional Commits in enabled projects
-delegation            tack.delegation           auto     auto|off  any     instruction  Delegate separable strict-level work to subagents automatically
-mods                  tack.mods                 true     bool      global  installer    Install tack's Claude Code mods (usage band, activity pane)
-skill-groups          tack.skillGroups          all      list:all|core|process|stack global installer Skill groups to install for every tool (skill-groups.txt): all, or core plus process and/or stack
-vscode-agents-md      tack.vscodeAgentsMd       true     bool      global  installer    Turn on VS Code's chat.useAgentsMdFile so Copilot Chat loads each project's AGENTS.md
-ci-watch              tack.ciWatch              true     bool      any     instruction  After a push or a new pull request, wait for CI in the background, report it and fix failures (standard, strict, unleash)
-activity-log          tack.activityLog          false    bool      any     hook         Record session starts, guard decisions and Stop findings for Claude Code and Codex; read them with tack log
-disabled-hooks        tack.disabledHooks        none     list:session-context|fast-check|stop-check|format-file any hook         Comma-separated advisory hooks to skip: session-context, fast-check, stop-check, format-file (the guard and tool-call limit always run)
-context-max-chars     tack.contextMaxChars      none     number    any     hook         Cap the context added at session start at this many characters, dropping project context first (the activation line always stays)
-state-retention-days  tack.stateRetentionDays   30       number    global  hook        Delete per-session state (tool-call counters) older than this many days at session start
-merge-requires-green  tack.mergeRequiresGreen  true     bool      any     hook         Refuse gh pr merge while the pull request's CI checks fail or are still running
-handoff-stale-commits tack.handoffStaleCommits  3        number    any     hook         The check before stopping asks for a handoff refresh once it is this many code commits behind, or when that work is pushed
-stop-check          tack.stopCheck            true     bool      any     hook         Before the assistant stops, report uncommitted work, a failing fast check, source changes without a test change, a stale handoff or docs the docs map expects
-reply-style           tack.replyStyle           brief    brief|visual|detailed|normal|terse any instruction Reply presentation: brief, visual or detailed; normal and terse are legacy aliases for brief
-skill-loading         tack.skillLoading         normal   normal|minimal    any  instruction  Load skills only when a task cannot be done without them, to save input tokens
-subagent-model        tack.subagentModel        inherit  inherit|economical any instruction  Delegate to the most economical capable model instead of inheriting the main one
-memory                tack.memory               true     bool      global  hook         Load the shared user memory (tack memory) at session start in Claude Code and Codex
-memory-max-chars      tack.memoryMaxChars       2000     number    global  hook         Cap the notes of the shared user memory added at session start at this many characters, keeping the newest
-visual-review         tack.visualReview         true     bool      any     instruction  For UI changes in standard, strict and unleash, capture before and after screenshots (tack shots) and have ui-reviewer score them
-check-fast            tack.checkFast            none     text      any     hook         Shell command run after each edit and before stopping in trusted projects; replaces the detected test command
-unleash-max-tool-calls tack.unleashMaxToolCalls none    number    any     hook         In a project-only mode such as unleash, refuse tool calls after this many in one session
-unleash-max-cost      tack.unleashMaxCost       none     decimal   any     mod          In a project-only mode such as unleash, refuse tool calls once the session cost passes this many USD
+# name key default values scope enforcement shared description
+architecture-path tack.architecturePath docs/architecture.md path any hook yes Project-relative architecture document used by scaffold, readiness and startup context
+plans-path tack.plansPath docs/plans path any hook yes Project-relative directory used to discover plans for optional trace links
+handoffs-path tack.handoffsPath docs/handoffs path any hook yes Project-relative directory for active handoffs and freshness checks
+context tack.context true bool any instruction yes Load project instructions, the docs index and the handoff check at session start
+setup-review tack.setupReview pending pending|done|deferred any instruction no Project onboarding conversation: inspect and propose optional files once; reset to pending to revisit choices
+conventional-commits tack.conventionalCommits true bool any hook yes Enforce Conventional Commits in enabled projects
+delegation tack.delegation auto auto|off any instruction yes Delegate separable strict-level work to subagents automatically
+mods tack.mods true bool global installer no Install tack's Claude Code mods (usage band, activity pane)
+skill-groups tack.skillGroups all list:all|core|process|stack global installer no Skill groups to install for every tool (skill-groups.txt): all, or core plus process and/or stack
+vscode-agents-md tack.vscodeAgentsMd true bool global installer no Turn on VS Code's chat.useAgentsMdFile so Copilot Chat loads each project's AGENTS.md
+ci-watch tack.ciWatch true bool any instruction yes After a push or a new pull request, wait for CI in the background, report it and fix failures (standard, strict, unleash)
+activity-log tack.activityLog false bool any hook no Record session starts, guard decisions and Stop findings for Claude Code and Codex; read them with tack log
+disabled-hooks tack.disabledHooks none list:session-context|fast-check|stop-check|format-file any hook no Comma-separated advisory hooks to skip: session-context, fast-check, stop-check, format-file (the guard and tool-call limit always run)
+context-max-chars tack.contextMaxChars none number any hook yes Cap the context added at session start at this many characters, dropping project context first (the activation line always stays)
+state-retention-days tack.stateRetentionDays 30 number global hook no Delete per-session state (tool-call counters) older than this many days at session start
+merge-requires-green tack.mergeRequiresGreen true bool any hook no Refuse gh pr merge while the pull request's CI checks fail or are still running
+handoff-stale-commits tack.handoffStaleCommits 3 number any hook yes The check before stopping asks for a handoff refresh once it is this many code commits behind, or when that work is pushed
+stop-check tack.stopCheck true bool any hook no Before the assistant stops, report uncommitted work, a failing fast check, source changes without a test change, a stale handoff or docs the docs map expects
+reply-style tack.replyStyle brief brief|visual|detailed|normal|terse any instruction yes Reply presentation: brief, visual or detailed; normal and terse are legacy aliases for brief
+skill-loading tack.skillLoading normal normal|minimal any instruction yes Load skills only when a task cannot be done without them, to save input tokens
+subagent-model tack.subagentModel inherit inherit|economical any instruction yes Delegate to the most economical capable model instead of inheriting the main one
+memory tack.memory true bool global hook no Load the shared user memory (tack memory) at session start in Claude Code and Codex
+memory-max-chars tack.memoryMaxChars 2000 number global hook no Cap the notes of the shared user memory added at session start at this many characters, keeping the newest
+visual-review tack.visualReview true bool any instruction yes For UI changes in standard, strict and unleash, capture before and after screenshots (tack shots) and review concrete usability and visual findings
+check-fast tack.checkFast none text any hook yes Shell command run after each edit and before stopping in trusted projects; replaces the detected test command
+unleash-max-tool-calls tack.unleashMaxToolCalls none number any hook no In a project-only mode such as unleash, refuse tool calls after this many in one session
+unleash-max-cost tack.unleashMaxCost none decimal any mod no In a project-only mode such as unleash, refuse tool calls once the session cost passes this many USD

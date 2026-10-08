@@ -16,7 +16,7 @@ The goal: every request ends as a small, tested change in a clean git history, w
 
 ## Workflow levels
 
-`tack mode` sets the level: `auto` (the default) picks one per task; `lite`, `standard` or `strict` fix it for every task. A project setting overrides the user's global default (`tack mode --global`). The user can change the level for any task in conversation ("do this in strict"). Each mode's rules live in a file (`modes/<name>.md` in tack, or the user's own in `~/.config/agent-tack/modes/`); SessionStart supplies the active one, and `tack mode show` prints it. A user mode overrides the table below where it differs. `lite` has self-contained rules (this skill is not loaded; the lite column is for reference), and `unleash` (autonomous, project-only) sits outside the table. The former `lean` mode is now `lite`.
+`tack mode` sets the level: `auto` (the default) picks one per task; `lite`, `standard` or `strict` fix it for every task. A local override wins over the shared `tack.json` mode, then the user's global default (`tack mode --global`). The user can change the level for any task in conversation ("do this in strict"). Each mode's rules live in a file (`modes/<name>.md` in tack, or the user's own in `~/.config/agent-tack/modes/`); SessionStart supplies the active one, and `tack mode show` prints it. A user mode overrides the table below where it differs. `lite` has self-contained rules (this skill is not loaded; the lite column is for reference), and `unleash` (autonomous, project-only) sits outside the table. The former `lean` mode is now `lite`.
 
 In `auto`, classify each request before acting and state it in one line, for example `Level: standard (bounded bug fix in one module)`; keep that shape (a one-word label, a colon, the mode name, the reason) in any language, because the activity log records it:
 - **lite:** questions, typos, renames, config tweaks, a one-line fix, small scripts or prototypes.
@@ -27,15 +27,15 @@ If a task turns out larger or riskier than its level, say so and move up before 
 
 | | lite | standard | strict |
 | --- | --- | --- | --- |
-| Plan | none | short plan in the tool's task list; not saved | written plan saved in `docs/plans/`; **wait for approval** |
+| Plan | none | short plan in the tool's task list; not saved | written plan in the configured `plans-path`; confirm scope unless already authorized |
 | Branch | off `main`/`master`/`develop` for any change | same | same |
 | Commits | Conventional Commits | each verified milestone | each verified milestone |
 | Tests | a test for changed logic; run the affected suite | TDD: red, green, refactor | TDD |
-| Docs | only if the change contradicts existing docs | docs affected by changed behaviour; `docs/architecture.md` if structure changes | full checklist in `references/documentation.md`, ADRs |
+| Docs | only if the change contradicts existing docs | docs affected by changed behaviour; the configured architecture document if structure changes | full checklist in `references/documentation.md`, ADRs |
 | Handoff | none | only if work spans sessions or context or usage looks low | only if work spans sessions, is delegated, or context or usage looks low; updated at milestones (a merged PR, a plan step), not every commit |
 | AI log | none | none | one row in `docs/ai/log.md`, in the same commit as the change it records |
 | Review | read your own diff | `code-reviewer` for large or risky diffs | `code-reviewer` before offering to push |
-| Visual review | none | UI changes: `tack shots --before`/`--after` on local or preview URLs, `ui-reviewer` scores them; below 7/10 fix and repeat once | same (unleash too) |
+| Visual review | none | UI changes: `tack shots --before`/`--after` on local or preview URLs, review concrete visual and usability findings; fix blockers and verify the affected views | same (unleash too) |
 | CI | none | after a push or new PR, wait for CI in the background, report it and fix failures from the log | same |
 | Delegation | suggest and wait | suggest and wait | automatic after approval unless `tack.delegation` is `off` |
 
@@ -47,7 +47,7 @@ Every level keeps the hooks' guarantees (Conventional Commits, no AI attribution
 - Do not re-read what is already in context, and do not re-verify an edit the tool reported as applied.
 - Batch independent tool calls in one response; run long commands in the background instead of polling.
 - Trim output: `tail`, quiet flags and summaries instead of full logs; never paste large outputs back.
-- Run the affected tests first and the full suite once, before committing or closing. Use the commands in the project's `AGENTS.md`; if they are missing, find them once and add them there instead of probing in every session.
+- Run affected checks first. Broaden to the full suite when required by the project or justified by risk; repeat passing checks only after relevant changes or new evidence. Use the commands in the project's `AGENTS.md`; if they are missing, find them once and add them there instead of probing in every session.
 - Keep replies, handoffs and docs concise: state what changed and what is pending, not the whole history.
 - Delegate only separable work, with self-contained prompts and the most economical model that can do it.
 - Avoid commands the command guard asks about (heredocs to interpreters, shell loops, dynamic commands): put multi-step logic in a script file and run it. Each confirmation costs the user time and a turn.
@@ -55,11 +55,11 @@ Every level keeps the hooks' guarantees (Conventional Commits, no AI attribution
 ## The flow for every request
 
 ### 1. Understand
-When starting or resuming a session, always look for an in-progress or paused handoff in `docs/handoffs/` (startup context lists it with a freshness check). Read it, then check it against `git log`, `git status` and the current branch: if work happened after its last update or it names another branch, tell the user what differs and refresh it before continuing. If the request comes from a GitHub issue ("issue #12", an issue URL), read it with its comments and use its acceptance criteria as the definition of done (`github-issues` skill).
+When starting or resuming a session, always look for an in-progress or paused handoff in the configured `handoffs-path` (default `docs/handoffs`; startup context lists it with a freshness check). Read it, then check it against `git log`, `git status` and the current branch: if work happened after its last update or it names another branch, tell the user what differs and refresh it before continuing. If the request comes from a GitHub issue ("issue #12", an issue URL), read it with its comments and use its acceptance criteria as the definition of done (`github-issues` skill).
 
-At standard and strict, number the acceptance criteria (`R1`, `R2`…) and check them for verifiability, consistency, completeness and traceability before any code; tests name the requirement they prove and `tack trace` checks the coverage (`references/requirements.md`).
+Define observable acceptance criteria before changing behavior. Numbered IDs and `tack trace` are optional when a larger plan or project policy needs explicit links. Trace checks text references, not assertions or test execution (`references/requirements.md`).
 
-Read the relevant code, tests and docs before proposing anything. **Ask whenever you have a real doubt** about scope, behaviour, design or risk, grouping all questions in one round; don't guess. Decide alone only purely conventional details, and say what you chose.
+Read the relevant code, tests and docs before proposing anything. Ask about unresolved scope, behavior or consequential tradeoffs when the answer changes the work. Reuse prior answers and authorization; decide routine implementation details and state material assumptions.
 
 ### 2. Map the impact
 Check the project's capability index for reusable procedures and specialist roles relevant to the task. During authorized implementation, a concrete gap may justify a local addition under `lessons` → `references/project-capabilities.md`; do not create artifacts for routine one-off work.
@@ -84,10 +84,10 @@ At standard and strict, red → green → refactor for all logic with behaviour.
 Commit each coherent verified milestone immediately in Conventional Commits. Recommend an integration method from the branch history in the existing merge confirmation; preserve commits unless the user explicitly chooses squash. Details: `references/git-github.md`.
 
 ### 8. Document
-Update everything on the impact list, plus what the level requires, following `project-docs`. When a committed change leaves docs pending in 3 or more files, delegate them to `docs-writer` (it runs on an economical model) with the diff range and the list of files; keep smaller updates, ADRs and design decisions yourself, and review its result before committing. Keep existing architecture guidance current; if it is missing, include it in the onboarding proposal and respect recorded setup choices.
+Update everything on the impact list, plus what the level requires, following `project-docs`. Delegate documentation only when the task has useful independent work and the active delegation policy permits it. File count alone is not a reason. Keep design decisions with the responsible implementer and review any delegated result. Keep existing architecture guidance current; if it is missing, include it in the onboarding proposal and respect recorded setup choices.
 
 ### 9. Verify
-Run the project's tests, linter, formatter and type checker. Re-run the impact search on the final diff to catch help text, docs or callers that still describe the old behaviour. Never say something works without having checked it; if something fails or couldn't run, say so clearly, with the output.
+Run the checks relevant to the change using the project's commands or `tack verify`. Review unmapped paths and skipped checks; a selected check alone is not proof of correctness. Re-run the impact search on the final diff to catch help text, docs or callers that still describe the old behaviour. Never say something works without having checked it; if something fails or couldn't run, say so clearly, with the output.
 
 ### 10. Close
 Lead with the outcome, then actual verification and material pending work, using the selected reply-style (`references/communication.md`). For a requested PR, prepare its title and body from the project's template before seeking any missing publication approval (`references/git-github.md`); avoid an automatic offer to publish after unrelated tasks. After a push, follow the CI row unless `tack config ci-watch` is `false`; the guard refuses `gh pr merge` while checks fail or are pending (`merge-requires-green`).

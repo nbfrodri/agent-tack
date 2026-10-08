@@ -4,6 +4,23 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+
+- Optional versioned `tack.json` preferences and mode through `--shared`, with local overrides and private execution trust. Shared context paths are used by setup, scaffolding, context and trace discovery.
+- Stable `tack config --get` and `--json` reads, plus clone-to-clone and native Windows regressions.
+- Guided selection of external skills during requested onboarding, using existing installers and recording source, revision, references and local adaptations.
+
+### Changed
+
+- README and human guides are organized around setup, daily use, configuration, verification and sharing, including personal use and custom forks. Local documentation links and anchors are checked during validation.
+- Formal trace links, documentation delegation and numeric review scores are optional. `tack trace` reports textual links rather than claiming test coverage; autonomous improvement uses bounded, observable findings.
+- Fast and Stop fallback checks use the verifier's bounded executor with pipeline failure detection, without requiring an external timeout utility.
+
+### Fixed
+
+- Project context resolves native Windows paths consistently, and configuration output uses LF records for Bash consumers.
+- Doctor retains partial diagnostics when Python is unavailable and reports malformed shared profiles when validation is available.
+
 ### Removed
 
 - Runtime reads of the former `harness.*` settings and `.harness` markers, the `harness` command and its managed links. Upgrade through v0.1.0 and follow its per-clone migration steps before installing this change ([#122](https://github.com/nbfrodri/agent-tack/pull/122)).

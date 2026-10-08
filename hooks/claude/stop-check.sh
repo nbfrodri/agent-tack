@@ -36,8 +36,7 @@ case "$client" in claude | codex) record_turn "$cwd" "$client" "$(field .session
 cli="$(cd "$(dirname "$0")/../../bin" && pwd)/tack"
 cd "$cwd" || exit 0
 "$cli" status --quiet || exit 0
-[ "$("$cli" config stop-check 2>/dev/null)" != "false (local)" ] || exit 0
-[ "$("$cli" config stop-check 2>/dev/null)" != "false (global)" ] || exit 0
+[ "$("$cli" config stop-check --get 2>/dev/null)" != "false" ] || exit 0
 root="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
 cd "$root" || exit 0
 
@@ -57,7 +56,7 @@ case "$handoff_check" in
   *"may be stale: "*)
     behind="${handoff_check#*may be stale: }"
     behind="${behind%% *}"
-    threshold="$("$cli" config handoff-stale-commits 2>/dev/null)"
+    threshold="$("$cli" config handoff-stale-commits --get 2>/dev/null)"
     threshold="${threshold%% *}"
     case "$threshold" in '' | *[!0-9]*) threshold=3 ;; esac
     # Some of the commits past the handoff are on the remote when fewer than all of them are local.
@@ -104,7 +103,7 @@ if ! printf '%s\n' "$changed" | grep -qE "$TEST_FILES" && git ls-files | grep -q
   done <<EOF
 $(printf '%s\n' "$changed" | grep -E "$SOURCE_FILES" | grep -vE "$TEST_FILES")
 EOF
-  [ "$sources" -eq 0 ] || add "$sources source file(s) changed ($first first) but no test did: add or update a test for the changed behaviour, or tell the user why none is needed."
+  [ "$sources" -eq 0 ] || add "$sources source file(s) changed ($first first) but no test did: check whether existing tests cover the changed behavior; add a regression test for a gap, or explain why the existing checks are sufficient."
 fi
 
 # The project's tests must pass before the turn ends. It runs project code, so only in trusted
@@ -121,9 +120,7 @@ $(bash "$(dirname "$0")/../../lib/test-command.sh" "$(dirname "$0")/../.." "$roo
 EOF
   if [ -n "$check" ] && { [ "$check_source" = 'tack config check-fast' ] \
     || printf '%s\n' "$changed" | grep -qE "$SOURCE_FILES|$TEST_FILES"; }; then
-    limit=()
-    command -v timeout >/dev/null 2>&1 && limit=(timeout 120)
-    ${limit[@]+"${limit[@]}"} bash -c "$check" >/dev/null 2>&1
+    bash "$(dirname "$cli")/../lib/run-check.sh" "$root" 120 "$check" >/dev/null 2>&1
     case $? in
       0) ;;
       124) add "the tests did not finish within 120 s: $check (set a faster target with tack config check-fast)" ;;

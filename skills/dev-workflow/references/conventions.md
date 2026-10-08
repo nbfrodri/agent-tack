@@ -1,6 +1,6 @@
 # Conventions
 
-Defaults for every project. **A project's existing conventions win**: follow its linter, formatter and style first, and use these where it has none (and in new projects).
+Portable guidance and selectable defaults. **A project's existing conventions win**: follow its linter, formatter and style first, and use these where it has none (and in new projects).
 
 ## Git
 
@@ -23,9 +23,9 @@ gh repo edit --enable-merge-commit --enable-squash-merge \
 
 | Topic | Convention |
 | --- | --- |
-| Versioning | [SemVer](https://semver.org) for every project, computed from Conventional Commits: `fix`/`perf` → patch, `feat` → minor, breaking change → major. Start at `0.1.0`; release `1.0.0` when the project reaches production or has a stable public API. |
+| Versioning | [SemVer](https://semver.org) for distributed packages with a defined public API; retain an existing version policy. If deriving versions from Conventional Commits: `fix`/`perf` → patch, `feat` → minor, breaking change → major. Start at `0.1.0`; release `1.0.0` when the project reaches production or has a stable public API. |
 | Tags | `vMAJOR.MINOR.PATCH` (e.g. `v1.4.2`), **annotated**, on `main`. Pre-releases: `v2.0.0-alpha.1`, `-beta.N`, `-rc.N`. No other tag names. Published tags are never moved or deleted. Enforced by the `pre-push` hook in enabled projects. |
-| How releases happen | **release-please** by default: a GitHub Action keeps a release PR open with the next version and the CHANGELOG computed from the commits on `main`; merging it creates the tag and the GitHub Release. Manual releases (`release` skill) only where release-please isn't set up. |
+| How releases happen | For projects that need GitHub release automation, **release-please** is one option: a GitHub Action keeps a release PR open with the next version and the CHANGELOG computed from the commits on `main`; merging it creates the tag and the GitHub Release. Manual releases (`release` skill) only where release-please isn't set up. |
 | Changelog | `CHANGELOG.md` in the repo (Keep a Changelog sections) **and** the same notes in the GitHub Release. |
 | Release commit | `chore(main): release X.Y.Z` (release-please) or `chore(release): vX.Y.Z` (manual). |
 | Hotfixes | A `fix` commit on `main` and a patch release; branch from the tag (`hotfix/X.Y.Z`) only when `main` holds unreleasable work. |
@@ -43,16 +43,16 @@ Details and setup: `release` skill.
 ## Code style (how code is written)
 
 ### Formatting: the tools decide
-Formatting is never discussed or done by hand: the formatter runs on save, in the Claude hook after every edit, and in CI. Use each tool's **defaults** and don't add config that overrides them:
+Reuse the project formatter and its configuration. Add formatting automation only when it serves the project, and run it through the available editor, trusted hook or CI. For a new project, these are possible choices to agree during setup:
 - TypeScript/JavaScript (Prettier or Biome): 2-space indentation, **double quotes, semicolons**, trailing commas, 80 columns.
 - Python (Ruff format): 4 spaces, double quotes, 88 columns.
 - PHP (Pint, Laravel preset): 4 spaces, PSR-12.
-- Every repo has an `.editorconfig` (UTF-8, LF line endings, final newline, trimmed trailing whitespace) so editors agree with the formatters.
+- An `.editorconfig` can share editor defaults (UTF-8, LF line endings, final newline, trimmed trailing whitespace) when editor settings otherwise disagree with the formatters.
 
 ### Writing style
 - **Functional first.** Pure functions and immutable data by default; side effects (I/O, DB, network, time, randomness) pushed to the edges and injected. Use classes where they add something: DDD entities and aggregates that protect invariants, value objects, and services or repositories with injected dependencies (and wherever a framework expects them, as NestJS or Laravel do).
-- **Flat control flow.** Use guard clauses and early returns instead of nesting; at most two levels of indentation inside a function; no nested ternaries.
-- **Small and focused.** A function does one thing at one level of abstraction; if it needs a comment to separate "parts", those parts are functions. Use an options object or a parameter object beyond three parameters.
+- **Flat control flow.** Use guard clauses and early returns instead of nesting; split deeply nested logic when it improves readability; avoid nested ternaries that obscure behavior.
+- **Small and focused.** A function does one thing at one level of abstraction; if it needs a comment to separate "parts", those parts are functions. Use a parameter object when several arguments form a coherent concept or are easy to confuse.
 - **Explicit over clever.** Use descriptive names rather than short ones, and readable steps rather than dense one-liners. Prefer `map`/`filter`/comprehensions for simple transformations and a plain loop when the logic gets complex.
 - **Immutability.** `const` by default (`let` only when reassigned); never mutate arguments; return new objects/arrays. In Python, no mutable default arguments; prefer tuples or frozen dataclasses for fixed data.
 - **Async.** Use `async`/`await` rather than `.then()` chains; run independent work in parallel (`Promise.all`, `asyncio.gather`); never leave a promise unhandled.

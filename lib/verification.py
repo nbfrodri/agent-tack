@@ -7,15 +7,13 @@ import json
 import os
 from pathlib import Path
 import re
-import shutil
-import signal
 import subprocess
 import sys
-import tempfile
 import time
 
+from check_execution import BASH, execute
+
 MAP = 'checks-map.json'
-BASH = os.environ.get('TACK_VERIFY_BASH') or shutil.which('bash') or 'bash'
 SOURCE = re.compile(r'\.(py|js|jsx|ts|tsx|mjs|cjs|go|rs|java|kt|rb|php|cs|swift|c|h|cc|cpp|hpp|scala|ex|exs|vue|svelte|dart|sh)$')
 CONFIG = {'package.json', 'pyproject.toml', 'pytest.ini', 'setup.cfg', 'tox.ini', 'Cargo.toml',
           'Cargo.lock', 'go.mod', 'go.sum', 'Makefile', 'makefile', 'GNUmakefile', 'uv.lock',
@@ -149,40 +147,6 @@ def snapshot(root):
                 for chunk in iter(lambda: stream.read(65536), b''):
                     digest.update(chunk)
     return digest.hexdigest()
-
-
-def execute(check, root, timeout):
-    started = time.monotonic()
-    environment = os.environ.copy()
-    environment.pop('BASH_ENV', None)
-    environment.pop('ENV', None)
-    options = {'start_new_session': True} if os.name != 'nt' else {'creationflags': subprocess.CREATE_NEW_PROCESS_GROUP}
-    with tempfile.TemporaryFile() as output:
-        process = subprocess.Popen([BASH, '--noprofile', '--norc', '-o', 'pipefail', '-c', check['command']],
-                                   cwd=root, env=environment, stdin=subprocess.DEVNULL, stdout=output,
-                                   stderr=subprocess.STDOUT, **options)
-        try:
-            code = process.wait(timeout=timeout)
-            check['status'] = 'passed' if code == 0 else 'failed'
-        except (subprocess.TimeoutExpired, KeyboardInterrupt) as error:
-            if os.name == 'nt':
-                subprocess.run(['taskkill', '/PID', str(process.pid), '/T', '/F'], capture_output=True, timeout=10)
-                if process.poll() is None:
-                    process.kill()
-            else:
-                try:
-                    os.killpg(process.pid, signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
-            process.wait(timeout=10)
-            if isinstance(error, KeyboardInterrupt):
-                raise
-            code, check['status'] = 124, 'timed_out'
-        check.update(exit_code=code, duration_s=round(time.monotonic() - started, 3))
-        if code:
-            output.seek(0, 2)
-            output.seek(max(0, output.tell() - 4096))
-            check['output_tail'] = output.read().decode('utf-8', errors='replace')
 
 
 def run(report, root, trusted, budget):

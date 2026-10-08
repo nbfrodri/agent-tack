@@ -211,7 +211,7 @@ check_tack() {
     config)
       shift
       for a in "$@"; do
-        case "$a" in --unset) positional=2 ;; --global) ;; *) positional=$((positional + 1)) ;; esac
+        case "$a" in --unset) positional=2 ;; --global | --shared | --get | --json) ;; *) positional=$((positional + 1)) ;; esac
       done
       # shellcheck disable=SC2034 # Read by guard-bash.sh after the analysis.
       [ "$positional" -lt 2 ] || SETTINGS_WRITE="Changing tack's settings is the user's decision in this mode." ;;
@@ -269,7 +269,7 @@ check_gh() {
   # Absolute, because it runs after cd "$cwd" and the hook may be started with a relative path.
   cli="$(cd "$GUARD_DIR/../../bin" && pwd)/tack"
   (cd "$cwd" && "$cli" status --quiet) 2>/dev/null || return 0
-  setting="$(cd "$cwd" && "$cli" config merge-requires-green 2>/dev/null)"
+  setting="$(cd "$cwd" && "$cli" config merge-requires-green --get 2>/dev/null)"
   [ "${setting%% *}" != false ] || return 0
   case "${selector[*]-} ${repo[*]-}" in
     *'__subst__'* | *'$'* | *'`'*) ask "Cannot confirm CI for a pull request chosen at run time; check that its checks passed before merging."; return 0 ;;

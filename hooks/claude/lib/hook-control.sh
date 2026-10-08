@@ -6,7 +6,7 @@ hook_disabled() {
   local cli list
   cli="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../bin" 2>/dev/null && pwd)/tack"
   [ -x "$cli" ] || return 1
-  list="$(cd "$1" 2>/dev/null && "$cli" config disabled-hooks 2>/dev/null)" || return 1
+  list="$(cd "$1" 2>/dev/null && "$cli" config disabled-hooks --get 2>/dev/null)" || return 1
   list="${list% (*}"
   list="$(printf '%s' "$list" | tr -d ' ')"
   case ",$list," in *",$2,"*) return 0 ;; esac

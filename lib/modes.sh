@@ -25,13 +25,23 @@ is_project_only() {
   [ "$(mode_field "$file" Scope)" = project ]
 }
 
-# Prints the effective mode and where it comes from: a project setting wins over the
-# user's global default. Invalid values behave as auto so a typo never blocks work.
+# Local override, shared project choice, then personal default. Invalid legacy Git
+# values fall back to auto; invalid shared profiles report an error.
 effective_mode() {
   local scope value
-  [ "$#" -gt 0 ] || set -- local global
+  [ "$#" -gt 0 ] || set -- local shared global
   for scope in "$@"; do
-    value="$(key_get "$scope" mode)" || continue
+    if [ "$scope" = shared ]; then
+      local project status
+      project="$(git rev-parse --show-toplevel 2>/dev/null)" || continue
+      if [ ! -e "$project/tack.json" ] && [ ! -L "$project/tack.json" ]; then continue; fi
+      value="$(python3 "$TACK_ROOT/lib/project_config.py" "$TACK_ROOT" shared-mode)"
+      status=$?
+      [ "$status" -ne 1 ] || continue
+      [ "$status" -eq 0 ] || return 2
+    else
+      value="$(key_get "$scope" mode)" || continue
+    fi
     if [ "$scope" = global ] && is_project_only "$value"; then
       printf 'auto (%s is project-only; global value ignored)\n' "$value"
     elif is_mode "$value"; then printf '%s (%s)\n' "$value" "$scope"

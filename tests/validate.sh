@@ -71,7 +71,7 @@ grep -qx "RUFF_VERSION=${ci_ruff:-missing}" "$REPO/tests/lint.sh" \
   || err "ruff ${ci_ruff:-?} in CI does not match tests/lint.sh"
 # The project is tack: the former command, git keys, marker, directories and override variables
 # appear only in compatibility code (a line saying legacy, former or renamed), the deprecated
-# alias, dated records, tests and the upgrade section of docs/usage.md.
+# alias, dated records, tests and the upgrade section of docs/installation.md.
 former_keys="$(awk '$2 ~ /^tack\./ { sub(/^tack\./, "", $2); printf "%s|", $2 }' "$REPO/features.txt")"
 former_names="harness\.(${former_keys}enabled|mode)([^A-Za-z]|$)|harness (help|status|enable|disable|config|doctor|mode|context|log|init|models|lesson|lessons|trace|trust|trusted)([^a-z-]|$)|agent-harness|HARNESS_ALLOW_|(^|[^A-Za-z/])\.harness([^A-Za-z]|$)|#harness"
 if [ -e "$REPO/.git" ]; then tracked=(git -C "$REPO" ls-files); else tracked=(find . -type f -not -path './.git/*'); fi
@@ -83,7 +83,7 @@ while IFS= read -r file; do
     *) name_files+=("$file") ;;
   esac
 done < <(cd "$REPO" && "${tracked[@]}")
-upgrade_notes="$(awk '/^### Upgrading from agent-harness/ { start = NR; next } start && !end && /^#{1,3} / { end = NR - 1 } END { if (start) print start ":" (end ? end : NR) }' "$REPO/docs/usage.md")"
+upgrade_notes="$(awk '/^### Upgrading from agent-harness/ { start = NR; next } start && !end && /^#{1,3} / { end = NR - 1 } END { if (start) print start ":" (end ? end : NR) }' "$REPO/docs/installation.md")"
 old_names=''
 if [ "${#name_files[@]}" -gt 0 ]; then
   old_names="$(cd "$REPO" && grep -nIHE -- "$former_names" "${name_files[@]}" | awk -v notes="$upgrade_notes" '
@@ -91,7 +91,7 @@ if [ "${#name_files[@]}" -gt 0 ]; then
     {
       path = $0; sub(/:.*/, "", path); rest = substr($0, length(path) + 2)
       line = rest; sub(/:.*/, "", line); text = tolower(substr(rest, length(line) + 2))
-      if (path == "docs/usage.md" && line + 0 >= range[1] + 0 && line + 0 <= range[2] + 0) next
+      if (path == "docs/installation.md" && line + 0 >= range[1] + 0 && line + 0 <= range[2] + 0) next
       if (text ~ /(^|[^a-z])(legacy|former|formerly|rename|renamed)([^a-z]|$)/) next
       print
     }')"
@@ -220,6 +220,9 @@ EOF
 else
   err "cross-reference checker failed"
 fi
+
+echo "Documentation links"
+if ! python3 "$REPO/tests/docs-links.py" "$REPO"; then err 'documentation link checker failed'; fi
 
 echo "plugins.txt"
 while read -r kind id source _; do

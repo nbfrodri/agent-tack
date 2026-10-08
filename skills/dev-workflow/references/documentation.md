@@ -1,6 +1,6 @@
 # Documentation checklist
 
-Docs are updated in the same change as the code that affects them; outdated docs are worse than none. Structure, templates, docs for humans and AIs, plans, audits and handoffs: `project-docs` skill.
+Docs are updated in the same change as the code that affects them; outdated docs are worse than none. Structure, templates, docs for humans and AIs, plans, audits and handoffs: `project-docs` skill. Paths below are defaults; use configured architecture, plan and handoff locations when different.
 
 Reuse existing document locations and recorded setup choices. The checklist identifies information to maintain, not mandatory new files. Propose additions outside the authorized scope through `new-project` → `references/onboarding.md`; do not recreate declined scaffolding.
 

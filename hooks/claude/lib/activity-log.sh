@@ -9,7 +9,7 @@ activity_log_enabled() {
   local cli setting
   cli="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../bin" 2>/dev/null && pwd)/tack"
   [ -x "$cli" ] || return 1
-  setting="$(cd "$1" 2>/dev/null && "$cli" config activity-log 2>/dev/null)" || return 1
+  setting="$(cd "$1" 2>/dev/null && "$cli" config activity-log --get 2>/dev/null)" || return 1
   [ "${setting%% *}" = true ]
 }
 

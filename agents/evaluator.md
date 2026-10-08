@@ -1,6 +1,6 @@
 ---
 name: evaluator
-description: Read-only scorer for auto-improve: rates a project 0-10 per dimension with a fixed rubric and evidence, compares against the previous scorecard, and lists the top issues holding each score back.
+description: Read-only scorer for requested assessments: rates applicable dimensions with a stated rubric and evidence, explains changes from earlier results, and identifies concrete issues. Scores are not proof of correctness.
 tools: Read, Grep, Glob, Bash
 model: inherit
 ---

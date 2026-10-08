@@ -16,6 +16,8 @@ Repeated work, explicitly planned repeated work or a substantial procedure learn
 
 For example, recurring event-schema changes may need a skill linking this repository's schemas, compatibility rules and consumer-test command. A contract reviewer may justify a separate role when several services need independent compatibility reviews. Ordinary code review can use an existing reviewer with project context.
 
+For user-selected external capabilities, follow `external-skills.md` for source review, installation, origin records and updates. Ordinary local capability creation does not authorize installing a third-party collection.
+
 ## Write and validate
 
 - Use a lowercase hyphenated name (under 64 characters) and English instructions. `name` must match the skill folder or agent filename. The YAML frontmatter needs `name` and a single-line `description` stating the purpose and trigger, at most 400 characters for a skill or 300 for a role.

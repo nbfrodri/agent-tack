@@ -23,14 +23,11 @@ fi
 cli="$(cd "$(dirname "$0")/../../bin" && pwd)/tack"
 cd "$cwd" || exit 0
 "$cli" status --quiet && "$cli" trusted --quiet || exit 0
-check="$("$cli" config check-fast 2>/dev/null)"
-check="${check% (*}"
+check="$("$cli" config check-fast --get 2>/dev/null)"
 [ -n "$check" ] && [ "$check" != none ] || exit 0
 root="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
 
-limit=()
-command -v timeout >/dev/null 2>&1 && limit=(timeout 60)
-output="$(cd "$root" && ${limit[@]+"${limit[@]}"} bash -c "$check" 2>&1)"
+output="$(bash "$(dirname "$cli")/../lib/run-check.sh" "$root" 60 "$check" 2>&1)"
 status=$?
 [ "$status" -ne 0 ] || exit 0
 

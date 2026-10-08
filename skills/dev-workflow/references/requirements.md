@@ -1,8 +1,8 @@
 # Requirements that can be checked
 
-At standard and strict, every task has acceptance criteria, and they are written so a test can prove each one. Do this before any code, in the plan or the issue.
+Use observable acceptance criteria to define completion. A short task can keep them in its issue or conversation. Use the formal links below when the project requests them or a larger plan benefits from them; they are optional for ordinary work.
 
-## Number them
+## Optional requirement IDs
 Give each criterion an ID that never changes: `R1`, `R2`… One observable behaviour per ID.
 
 ```markdown
@@ -22,14 +22,14 @@ Run this checklist on the list and ask the user about anything that fails (one r
 | **Complete** | Are the unhappy paths covered? | No criterion for errors, empty or boundary input, permissions, concurrency, or the performance and security limits that apply |
 | **Traceable** | Does each criterion come from the request, an issue or a decision you can point to? | A criterion nobody asked for (scope creep) or a request with no criterion |
 
-## Trace them
-- Each test names the requirement it proves, in its name or a comment: `test_lockout_after_five_failures_R2`, `// R2`.
-- The pull request lists requirement → tests → commit:
+## Optional trace links
+- When using IDs, each relevant test names the requirement it checks, in its name or a comment: `test_lockout_after_five_failures_R2`, `// R2`.
+- A larger pull request can list requirement → tests → commit:
 
   | Requirement | Tests | Commit |
   | --- | --- | --- |
   | R1 | `test_wrong_password_R1` | `a1b2c3d` |
 
-- `tack trace` checks it: every requirement in the newest plan has a test that names it, and no test names a requirement that was dropped. Run it before offering to push.
+- `tack trace [PLAN]` checks textual links in tracked test files. It reports `linked` or `MISSING`, and warns about unknown IDs. With no path, it reads the newest filename in `plans-path`. It does not execute tests, inspect assertions or prove coverage; an empty test can contain an ID. Run meaningful tests separately.
 
 A requirement that changes keeps its ID and its tests change with it; a dropped requirement's tests are removed or re-pointed in the same change.

@@ -1,20 +1,25 @@
-# Docs that should change when code changes: "code glob | doc, doc". The Stop hook reports a
-# changed file whose docs did not change on the branch (or in the working tree).
-bin/tack | docs/usage.md
-lib/config.sh | docs/usage.md
+# Source glob | owning guides to review (a reminder, not semantic validation)
+bin/tack | docs/usage.md, docs/configuration.md
+lib/config.sh | docs/configuration.md
+lib/project_config.py | docs/configuration.md, docs/architecture.md
+lib/project-paths.sh | docs/configuration.md
 lib/modes.sh | docs/usage.md
-lib/doctor.sh | docs/usage.md
-features.txt | docs/usage.md
-modes/* | docs/usage.md
-plugins/* | docs/usage.md
-uninstall.sh | docs/usage.md
-install.sh | docs/how-it-works.md
-targets.txt | docs/how-it-works.md
-lib/native* | docs/how-it-works.md
-hooks/runtime/* | docs/how-it-works.md
-lib/project_setup.py | docs/usage.md
-lib/scaffold.sh | docs/usage.md
-skills/new-project/* | docs/usage.md
-model-tiers.txt | docs/editors.md
-hooks/claude/* | docs/how-it-works.md
+features.txt | docs/configuration.md
+modes/* | docs/usage.md, docs/advanced.md
+plugins/* | docs/advanced.md
+uninstall.sh | docs/installation.md
+install.sh | docs/how-it-works.md, docs/installation.md
+targets.txt | docs/editors.md
+lib/native* | docs/editors.md
+hooks/runtime/* | docs/editors.md
+lib/project_setup.py | docs/setup.md
+lib/scaffold.sh | docs/setup.md
+skills/new-project/* | docs/setup.md
+skills/lessons/references/external-skills.md | docs/external-skills.md
+lib/verification.py | docs/verification.md
+lib/check_execution.py | docs/verification.md
+lib/run*check* | docs/verification.md
+lib/trace.sh | docs/verification.md
+model-tiers.txt | docs/advanced.md
+hooks/claude/* | docs/how-it-works.md, docs/verification.md
 git-hooks/* | docs/how-it-works.md
