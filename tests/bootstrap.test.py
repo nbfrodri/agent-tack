@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Collaborator setup with local Git sources and disposable machine configuration."""
 import json
+import importlib.util
 import os
 from pathlib import Path
 import shutil
@@ -9,6 +10,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 BASH = shutil.which('bash')
@@ -172,6 +174,23 @@ class BootstrapTests(unittest.TestCase):
             self.skipTest('Symlink creation requires local permission')
         self.generate(expected=2)
         self.assertEqual(list(outside.iterdir()), [])
+
+    @unittest.skipUnless(os.name == 'nt', 'Windows junction behavior')
+    def test_junction_destination_is_preserved(self):
+        outside = self.directory / 'junction-target'
+        outside.mkdir()
+        link = self.project / 'scripts'
+        self.command('cmd', '/d', '/c', 'mklink', '/J', str(link), str(outside))
+        self.addCleanup(link.rmdir)
+        self.generate(expected=2)
+        self.assertEqual(list(outside.iterdir()), [])
+        spec = importlib.util.spec_from_file_location('bootstrap', ROOT / 'skills/new-project/assets/setup-tack.py')
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        # This API did not exist on the project's minimum supported Python version.
+        with patch.object(type(link), 'is_junction', return_value=False, create=True):
+            with self.assertRaises(ValueError):
+                module.no_symlinks(link, self.project)
 
     def test_failed_installer_reports_failure_and_keeps_checkout_for_review(self):
         self.source.joinpath('install.sh').write_bytes(b'exit 7\n')

@@ -53,7 +53,12 @@ def no_symlinks(path, boundary):
     for part in (path, *path.parents):
         if part == boundary:
             break
-        if part.is_symlink() or getattr(part, 'is_junction', lambda: False)():
+        try:
+            # lstat also detects Windows junctions on Python versions before Path.is_junction.
+            reparse = bool(getattr(part.lstat(), 'st_file_attributes', 0) & 0x400)
+        except FileNotFoundError:
+            reparse = False
+        if part.is_symlink() or reparse:
             raise ValueError('Symlink or junction path left untouched: ' + str(part))
 
 
