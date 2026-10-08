@@ -56,7 +56,7 @@ You can also say "keep this answer brief" or "explain this in detail." Reply sty
 
 ## Context and continuity
 
-`tack context` shows project instructions and relevant context. `auto` and `standard` index architecture and the active handoff; `strict` includes bounded excerpts; `lite` keeps the handoff pointer. The locations come from [configuration](configuration.md#reuse-your-documentation-layout).
+`tack context` shows project instructions and relevant context. `auto` and `standard` index architecture and active handoffs; `strict` includes bounded excerpts; `lite` keeps handoff pointers. With parallel work, it lists up to five active handoffs and focuses an excerpt only when one matches the current branch or there is just one active handoff. Otherwise the assistant chooses context for the actual task. The locations come from [configuration](configuration.md#reuse-your-documentation-layout).
 
 An active handoff records work another session needs to resume. tack compares it with the branch and recent commits, but the assistant must still check `git status` and current code. A handoff is useful for interrupted work, not every small edit. Restart the AI session after changing saved settings; state immediate preferences in conversation.
 
@@ -66,6 +66,8 @@ An active handoff records work another session needs to resume. tack compares it
 | --- | --- |
 | `tack status` | Activation, saved mode and local trust |
 | `tack setup` | Read-only project inventory and setup gaps |
+| `tack bootstrap --dry-run` | Preview optional pinned collaborator setup files |
+| `tack team --base origin/main --against REF` | Inspect known branch overlap and merge conflicts without fetching; [team guide](teamwork.md) |
 | `tack config` | Effective settings and their sources |
 | `tack verify --plan` | Selected checks without running commands |
 | `tack verify` | Execute selected checks with local trust |

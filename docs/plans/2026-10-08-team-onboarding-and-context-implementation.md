@@ -44,7 +44,7 @@ Tests use disposable HOME/XDG/Git configuration and a local fixture source, with
 
 ## 2. Shared integration context
 
-The repository topology is an open user question: frontend/backend directories in one repository, or separate repositories. Continue bootstrap work while waiting; do not assume access to the other developer's repository or install anything there.
+The owner confirmed a monorepo: frontend and backend are separate directories in the same repository. This iteration targets that concrete arrangement. Cross-repository synchronization is outside scope; do not assume access to another repository or install anything there.
 
 Concrete acceptance example: after backend changes order creation, the frontend assistant can find the request/response shape, authentication and error behavior, examples or existing generated types, verification commands, consumer action items and the evidence for availability. Future endpoints remain explicitly planned. An old handoff must not become proof that a feature is still available after later changes or a revert.
 
@@ -57,12 +57,41 @@ Design constraints to resolve against the topology:
 - In separate repositories, use explicit shared contracts/references or selected exports. Do not scan unrelated directories, publish private code, create a synchronization service or assume cross-repository access.
 - Extend the existing documentation and API workflows so the producing assistant maintains the contract and handoff in the same change, and the consuming assistant verifies it before implementation. Add executable checks only when they can establish a concrete fact.
 
-Before implementing this part, record the selected design and owning files here. Test stale evidence, missing references, parallel handoffs, planned-only behavior and already-merged/reverted work as relevant to that design. An AI-written summary is guidance, not an executable proof of compatibility.
+Selected approach: extend `skills/project-docs` with an integration handoff reference/template that links existing contracts, implementation/PR references, planned changes and consumer action items. Extend `skills/api-design` and the development workflow to maintain these only when a change has another consumer. Improve `lib/project-context.sh` to index several active handoffs within its existing context budget, so simultaneous work is discoverable without assuming the last filename is the only task. Keep full excerpts focused and distinguish an index from an instruction to resume unrelated work. Test parallel handoffs, bounded output and branch/freshness notices. An AI-written summary is guidance, not an executable proof of compatibility; verify its claims against the contract/code in the relevant Git revision.
 
-## 3. Owning documentation and delivery
+## 3. Explicit solo/team coordination
+
+The owner approved adapting tack to individual or team development. Add a shared `collaboration` preference (`solo` by default, `team` when selected), separate from task effort (`auto`, `lite`, `standard`, `strict`). Shared activation and multiple commit authors are not sufficient authorization to change the workflow; onboarding may suggest team coordination from concrete project evidence and reuse a recorded selection.
+
+Add a focused `tack team` diagnostic with `--base REF`, repeatable `--against REF` and `--json`. It reads known local Git references, reports the branch/commit, uncommitted changes, ahead/behind counts, changed paths and overlapping files. Resolve the default base from the known origin HEAD/main/master or local main/master; missing or unborn references stay explicitly unknown. Do not fetch implicitly or imply that local remote-tracking references are current.
+
+Probe Git mergeability using a temporary local clone with shared objects, so the user's branches, index and worktree remain unchanged. Ignore global/system configuration in the probe and prevent custom merge drivers or hooks from executing. Resolve refs to commit IDs before passing them to commands. Use Git's supported merge-tree operation; unsupported Git versions or probe failures report unknown instead of a clean merge. Git mergeability is separate from API compatibility and tests. Do not claim to prevent every conflict or to prove that an old feature remains implemented merely because a commit is an ancestor.
+
+Owning implementation: new `lib/team.py`, thin dispatch in `bin/tack`, a data entry in `features.txt`, and focused tests in new `tests/team.test.py` plus its shell entrypoint. Cover clean/diverged branches, overlapping files without a text conflict, actual conflicts, deleted/renamed files as supported by Git, missing refs, malicious-looking arguments, dirty worktrees, unsupported merge probes, no source-repository mutations and no execution of configured drivers. Use temporary HOME/XDG/Git environments.
+
+Team workflow guidance belongs in a focused `skills/dev-workflow/references/teamwork.md`, linked only when team coordination is relevant:
+
+- Check shared contracts and relevant parallel handoffs before consumer-facing work. Identify dependencies on other branches or PRs; distinguish planned, branch-only and merged behavior.
+- Keep changes focused and communicate overlapping ownership before independently changing a shared interface. Do not require a new coordination document for every small task.
+- Refresh remote knowledge when appropriate before a PR/merge, using the user's existing authorization and Git workflow; run branch diagnostics against the actual intended integration reference.
+- Treat file overlap as a review signal and detected conflicts as required resolution. Use existing branch protection/CI or a merge queue when the project has one; do not add hosting services or change repository protection implicitly.
+- Resolve conflicts by preserving both changes' intended behavior, never by a blanket ours/theirs choice. Respect shared-branch history, run relevant contract/integration checks and record the decision and actual verification in the PR or relevant handoff.
+- Team coordination does not force strict mode, extra agents, a service or a mandatory diary. Solo mode keeps the existing lightweight workflow, and explicit diagnostics remain usable by an individual.
+
+## 4. Issues and automatic PR checks
+
+The owner also requested a clear audit-to-issue-to-branch-to-PR workflow and automatic minimum PR checks beyond a template. Preserve the existing issue skill's duplicate search, acceptance criteria, dependencies and prior-publication authorization. Link independently shippable findings to focused issues; use closing references only for fully completed work, and references for partial work. Keep conflict-resolution notes in the relevant PR/handoff instead of another mandatory log.
+
+Add a standalone, standard-library PR metadata checker and a GitHub Actions example under `skills/github-issues/assets/`. Default checks cover a Conventional Commit title, meaningful Summary and Validation sections, and unfilled template placeholders. Validation may honestly describe skipped checks with a reason; metadata cannot prove the checks ran or the code is correct. Make section headings/title policy configurable, with an optional required-issue-reference rule. Validate reference syntax only unless an actual API lookup is implemented; do not claim an issue exists or is complete from a number in prose.
+
+The workflow runs on PR creation, updates, reopening, edited metadata and readiness changes. Use read-only permissions, no secrets, no model calls, no comments and no mutation of the PR. Treat event contents as data, never shell interpolation. Existing project tests/type/contract checks remain separate. Adding this optional asset does not configure branch protection or make the check required by itself. Reuse a project's existing workflow/template and document how a maintainer can select the check in repository rules.
+
+Exercise the checker with offline event fixtures: valid/draft PRs, missing or placeholder sections, malformed titles, honest unrun-check reports, alternate headings, issue references, and hostile-looking strings that remain inert. Dogfood the checker in tack's own PR workflow, with the existing template, after its tests pass.
+
+## 5. Owning documentation and delivery
 
 Update `docs/setup.md`, `docs/sharing.md`, `docs/installation.md`, `docs/usage.md`, `docs/architecture.md`, `docs/development.md`, the documentation index and changelog where behavior changes. Keep the README short: explain collaborator onboarding and link to the complete backend/frontend walkthrough. Record proposed CLI commands as proposals until implemented.
 
 Use the existing PR template. Make conventional commits without AI attribution, run focused behavioral tests and pinned lint/validation, then required cross-platform CI. Publish and merge only after the exact candidate passes. Archive this plan on completion and report limitations explicitly.
 
-The 93-session quality experiment is complete and remains frozen. This work does not rerun or reinterpret it, and has no authorization to extend that batch. No new real-model benchmark is required to validate bootstrap or Git/context behavior.
+The 93-session quality experiment is complete and remains frozen. The owner subsequently authorized a relevant follow-up benchmark after implementation. First run local integration cases covering bootstrap, branch overlap/conflicts, handoff discovery and PR metadata. If a real-model comparison can establish additional collaboration behavior, freeze a separate protocol before execution: current tack at this plan's starting revision versus the completed candidate, the same minimal backend/frontend requests, fresh isolated Codex sessions, and at most eight implementation sessions for a small two-person handoff comparison. Record all attempts, concrete integration outcomes, time and limitations; do not extend or reinterpret the old batch or claim general productivity from a small pilot.

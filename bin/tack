@@ -35,6 +35,8 @@ Commands:
   setup [--check|--json]
                       Inspect project foundations without running project code;
                       --check exits 1 for incomplete or broken base guidance
+  team [--base REF] [--against REF ...] [--json]
+                      Inspect known branch overlap and committed merge conflicts; no fetch
   bootstrap [--source URL] [--revision COMMIT] [--directory PATH] [--dry-run]
                       Create optional collaborator setup files pinned to a tack commit;
                       generation does not install, activate or trust anything
@@ -372,6 +374,12 @@ case "$cmd" in
     python3 "$TACK_ROOT/lib/project_bootstrap.py" "$root" "$@"
     exit
     ;;
+  team)
+    require_repo
+    command -v python3 >/dev/null 2>&1 || fail 'team needs python3'
+    python3 "$TACK_ROOT/lib/team.py" "$root" "$@"
+    exit
+    ;;
   verify)
     require_repo
     command -v python3 >/dev/null 2>&1 || fail 'verify needs python3'
@@ -390,6 +398,10 @@ case "$cmd" in
     [ "$context_enabled" != false ] || exit 0
     root="$(repo_root)" || exit 0
     source_root="$TACK_ROOT"
+    collaboration="$(bash "$TACK_ROOT/lib/config.sh" "$TACK_ROOT" collaboration --get)" || exit 2
+    if [ "$collaboration" = team ]; then
+      echo 'Team coordination: dev-workflow -> references/teamwork.md. Check relevant contracts and parallel handoffs; tack team inspects locally known branches without fetching. Coordination does not change task mode.'
+    fi
     case "$(key_get setupReview)" in
       done | deferred) ;;
       *) echo 'Project setup review pending: when initializing or asked to configure the project, run tack setup and follow new-project -> references/onboarding.md; ask which optional files to add and remember choices. For focused tasks, reuse existing guidance and postpone unrelated setup unless it blocks the task. Read-only requests stay read-only.' ;;

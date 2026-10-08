@@ -12,6 +12,7 @@ The goal: every request ends as a small, tested change in a clean git history, w
 - **Language, attribution and what to ask before doing:** as in the global instructions; the git details are in `references/git-github.md`.
 - **Replies:** use the selected reply-style independently of the workflow level; longer progress, decisions and task closures follow `references/communication.md`.
 - **Code and git conventions:** `references/conventions.md` (style, naming, formatting, PR merging).
+- **Team coordination:** when selected with `tack config collaboration team --shared`, use `references/teamwork.md` for contracts, parallel branches and conflict recovery. It does not change task mode.
 - **The project's own conventions win.** If the repo has its own CONTRIBUTING, AGENTS.md, CLAUDE.md, linter, commit format or folder structure, follow them over this guide. This skill fills the gaps; it doesn't override what exists.
 
 ## Workflow levels
@@ -55,7 +56,7 @@ Every level keeps the hooks' guarantees (Conventional Commits, no AI attribution
 ## The flow for every request
 
 ### 1. Understand
-When starting or resuming a session, always look for an in-progress or paused handoff in the configured `handoffs-path` (default `docs/handoffs`; startup context lists it with a freshness check). Read it, then check it against `git log`, `git status` and the current branch: if work happened after its last update or it names another branch, tell the user what differs and refresh it before continuing. If the request comes from a GitHub issue ("issue #12", an issue URL), read it with its comments and use its acceptance criteria as the definition of done (`github-issues` skill).
+When starting or resuming a session, look for relevant in-progress or paused handoffs in the configured `handoffs-path` (default `docs/handoffs`). Startup indexes parallel work and selects an excerpt only for a unique branch match or a single active handoff. Read the handoff for this task, then check it against `git log`, `git status` and the current branch. If it is stale, explain the difference and refresh this task's notes; do not resume or rewrite unrelated work. If the request comes from a GitHub issue ("issue #12", an issue URL), read it with its comments and use its acceptance criteria as the definition of done (`github-issues` skill).
 
 Define observable acceptance criteria before changing behavior. Numbered IDs and `tack trace` are optional when a larger plan or project policy needs explicit links. Trace checks text references, not assertions or test execution (`references/requirements.md`).
 

@@ -60,12 +60,40 @@ handoff_freshness() {
 
 include AGENTS.md 45
 active=''
+active_count=0
+matching_count=0
+matching=''
+current_branch="$(git branch --show-current 2>/dev/null)"
+handoffs=()
 for file in "$root/$TACK_HANDOFFS"/*.md; do
-  if [ ! -f "$file" ] || [ -L "$file" ]; then continue; fi
+  relative="${file#"$root"/}"
+  safe_file "$relative" || continue
   if grep -qiE '^[-[:space:]]*(\*\*)?Status:(\*\*)?[[:space:]]*(in progress|paused)' "$file"; then
-    active="${file#"$root"/}"
+    active="$relative"
+    active_count=$((active_count + 1))
+    if [ "${#handoffs[@]}" -lt 5 ]; then handoffs+=("$relative"); fi
+    # shellcheck disable=SC2016 # Literal Markdown backticks.
+    named="$(sed -n 's/^[-[:space:]]*\**Branch:\**[[:space:]]*`\{0,1\}\([^`[:space:]]*\).*/\1/p' "$file" | head -n 1)"
+    if [ -n "$current_branch" ] && [ "$named" = "$current_branch" ]; then
+      matching="$relative"
+      matching_count=$((matching_count + 1))
+    fi
   fi
 done
+if [ "$active_count" -gt 1 ]; then
+  active=''
+  [ "$matching_count" -ne 1 ] || active="$matching"
+  printf '\nParallel work: choose context for this task, not work to resume automatically.\n'
+  for file in "${handoffs[@]}"; do
+    label="- Active handoff: $file"
+    if [ "${#label}" -lt "$remaining" ]; then
+      printf '%s\n' "$label"
+      remaining=$((remaining - ${#label} - 1))
+    fi
+  done
+  if [ "$active_count" -gt 5 ]; then printf 'More active handoffs: inspect %s as needed.\n' "$TACK_HANDOFFS"; fi
+  [ -n "$active" ] || printf 'Choose the handoff relevant to the task; no unique current-branch match.\n'
+fi
 if [ "$level" = full ]; then
   include "$TACK_ARCHITECTURE" 45
   if [ -n "$active" ]; then include "$active" 40; handoff_freshness "$active"; fi

@@ -17,6 +17,8 @@ For a local installation without downloading Claude plugins or mods, use `instal
 
 ## 2. Enable a project
 
+If your project already includes `scripts/setup-tack.py`, use its documented setup instead of a separate install. Owners can offer [optional pinned collaborator setup](installation.md#optional-setup-for-collaborators); cloning alone does not install tack.
+
 For your current clone:
 
 ```bash

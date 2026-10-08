@@ -8,7 +8,7 @@ set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SUITES=(validate.sh validate.test.sh lifecycle.test.sh doctor.test.sh install.test.sh tools.test.sh
 hooks.test.sh mods.test.sh vscode.test.sh codex.test.sh cli.test.sh settings.test.sh safety.test.sh
-guard.test.sh evals.test.sh evidence.test.sh project-capabilities.test.sh native-agents.test.sh project-setup.test.sh verification.test.sh project-config.test.sh bootstrap.test.sh ownership-platform.test.sh smoke.test.sh mods-unit.sh)
+guard.test.sh evals.test.sh evidence.test.sh project-capabilities.test.sh native-agents.test.sh project-setup.test.sh verification.test.sh project-config.test.sh bootstrap.test.sh team.test.sh pr-policy.test.sh ownership-platform.test.sh smoke.test.sh mods-unit.sh)
 
 jobs="$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 2)"
 while [ "$#" -gt 0 ]; do

@@ -10,6 +10,7 @@ New to tack? Read [setup](setup.md), then [daily use](usage.md). You do not need
 | Install and enable a new or existing project | [Setup](setup.md) |
 | Choose task modes and reply styles | [Daily use](usage.md) |
 | Work alone, share a project or maintain a fork | [Sharing](sharing.md) |
+| Coordinate backend/frontend branches and PRs | [Team workflow](teamwork.md) |
 | Save defaults and choose document locations | [Configuration](configuration.md) |
 | Select checks and understand their results | [Verification](verification.md) |
 | Add selected third-party skills | [External skills](external-skills.md) |
