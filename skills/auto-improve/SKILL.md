@@ -1,40 +1,35 @@
 ---
 name: auto-improve
-description: Iterate on a project using scored reviews and verified fixes until a target or limit. Use only when the user explicitly requests autonomous improvement; never push.
+description: Improve a project through bounded rounds of verified findings and fixes. Use only for an explicit request for autonomous improvement; respect scope and publication permission.
 ---
 
 # Auto-improve
 
-You are the team lead. The `evaluator` agent scores the project; you turn its findings into tasks, delegate them, verify the result and repeat. The user gets a better project on a separate branch and a report showing how the score changed, and decides what to keep.
+Find defects or costly friction, fix the most useful items, and verify the result. Scores are optional summaries when the user requests them; raising a score is not the objective.
 
-## 1. Set up (ask once, in one question round)
-- **Scope and focus areas:** as in `improve`: whole project, a module, recent work or a screen; and which rubric dimensions (see `~/.agents/tack/agents/evaluator.md`).
-- **Stop criteria**, proposing the defaults: overall score **≥ 8.0** with **no dimension under 6**; at most **5 iterations**; stop early if an iteration doesn't raise the overall score.
-- **Model policy:** the evaluator runs on the most capable model; each task gets a model and effort by complexity (`orchestrate` table). The user confirms the policy once; don't ask again every round.
-- Mention the cost: each iteration runs one evaluation plus several agents.
+## Agree on the bounds
 
-Then create the branch `improve/auto-YYYY-MM-DD` from an up-to-date main branch with a clean working tree, and start a handoff (`project-docs` → continuous handoffs).
+Use the user's existing scope, priorities, authorization and budget. Ask only for missing decisions that materially change the work. If no round limit was given, use at most three rounds and state that limit. Define observable completion criteria, such as correcting reproduced failures or making documented setup work in a fresh clone.
 
-## 2. The loop
-For each iteration (1..max):
-1. **Score:** run `evaluator` with the scope, the dimensions and the previous scorecard. Record the scorecard.
-2. **Check the stop criteria.** Stop if they're met, if the limit is reached, or if the score didn't improve over the previous iteration (report why).
-3. **Plan:** take the issues holding back the lowest dimensions first, and pick 3–5 tasks with the best impact for their effort. Each task is small, independent, with acceptance criteria and a regression test where it applies. Prefer fixes over rewrites.
-4. **Delegate:** follow `orchestrate`: `implementer` for code (in isolated worktrees when tasks run in parallel), `test-writer` for missing tests, `docs-writer` for docs, each with the confirmed model policy. Do simple tasks yourself instead of delegating.
-5. **Integrate and verify:** merge the task branches into the improve branch, then run the full test suite, lint and type checks; run `code-reviewer` on the iteration's diff and fix blocking findings. Revert any task that breaks the suite instead of patching around it.
-6. **Record:** append the iteration to the report (score before → after, tasks done with commits, anything reverted) and update the handoff.
+Check the working tree and use a separate branch. Keep a plan or handoff in the configured project locations when work spans sessions. Explain model costs before extra paid runs; local tests do not require a new model budget.
 
-## 3. Rules
-- Work only on the improve branch, with the user's workflow and conventions: TDD, Conventional Commits, docs. **Never push, merge, delete branches, or touch production, secrets or data.**
-- Don't game the score: no deleting tests, no lowering lint rules, no disabling checks, and no docs that claim what the code doesn't do. The evaluator checks results, and you must too.
-- Avoid risky changes the user hasn't approved: public API breaks, data migrations, dependency upgrades with breaking changes, large refactors. List them in the report as proposals instead.
-- If two iterations in a row don't move the score, stop: the remaining issues likely need a human decision.
+## Each round
 
-## 4. Report
-Save `docs/audits/YYYY-MM-DD-auto-improve.md` on the branch:
-- the scorecard per iteration (a table, dimension × iteration) and the final overall score;
-- what changed, with commits;
-- what was reverted or deliberately not done (proposals for the user);
-- how to review: `git log main..improve/auto-YYYY-MM-DD`, then the commands to test.
+1. Inspect relevant code and docs. Reproduce suspected problems or cite concrete evidence. Separate verified findings, hypotheses and preferences.
+2. Select a small coherent set of fixes within scope. Give each an observable expected result and a regression check when behavior changes. Prefer existing extension points to new machinery.
+3. Implement and verify. Delegate only useful independent work when authorized by the active policy. A role definition does not require launching an agent.
+4. Review the diff, run affected checks and broaden verification when project requirements or risk justify it. Do not repeat unchanged passing checks without a reason. Report checks that could not run.
+5. Commit a verified milestone. Record what improved, the evidence, remaining findings and changed assumptions.
 
-Log the run in `docs/ai/log.md`, set the handoff to `Status: done` and move it to `docs/archive/handoffs/`, and tell the user in a few lines: start → end score, iterations, the branch, and the open proposals. Offer to open a PR, after their OK.
+Stop when completion criteria hold, the round or budget limit is reached, a round yields no new actionable evidence, or further work requires an unresolved consequential decision. Do not create work just to fill another round.
+
+## Constraints
+
+- Keep protections, tests and meaningful lint rules. Do not hide failures, remove tests to improve a metric or claim behavior the code does not provide.
+- Public API breaks, migrations and changes outside approved scope require a separate decision unless already authorized.
+- Preserve unrelated work. Diagnose failures and repair or revert only your own changes when appropriate.
+- Push, PR and merge actions require user authorization, which may already have been given. Do not ask again for authorized actions. Follow the project's CI and integration policy.
+
+## Report
+
+For a substantial audit, save `docs/audits/YYYY-MM-DD-auto-improve.md` or the project's established equivalent. Include findings before and after, commits, actual checks, deferred items and the reason for stopping. If scores were requested, use a stable rubric with evidence and state their subjective limits. Close or archive the plan and handoff when their work is complete.

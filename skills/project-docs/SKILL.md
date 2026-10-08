@@ -5,6 +5,8 @@ description: "Maintain project instructions and human docs: architecture, ADRs, 
 
 # Project documentation
 
+Use the configured `architecture-path`, `plans-path` and `handoffs-path` from `tack config`. Paths below are defaults; keep an established layout.
+
 Documentation exists so that someone new, whether a person or an AI, can understand the project and work on it without asking. That only works if it's **short, precise and current**. A page nobody reads, or one that's out of date, is worse than none.
 
 ## Writing rules
@@ -13,7 +15,7 @@ Documentation exists so that someone new, whether a person or an AI, can underst
 - **No filler.** No marketing, no restating the code, no generic advice ("write clean code"). If a section has nothing specific to say, leave it out.
 - **One source of truth.** Each fact lives in one place; other docs link to it instead of repeating it.
 - **Same change, same PR.** Docs are updated in the change that makes them outdated (see the checklist in `dev-workflow` → `references/documentation.md`).
-- **Delegate large updates.** Docs pending in 3 or more files after a commit go to the `docs-writer` agent (economical model); ADRs and design decisions stay with the main assistant.
+- **Delegate only useful independent work.** Respect the active delegation setting and prior authorization. File count does not trigger an agent; keep architectural decisions with their author.
 - English (as decided in `conventions.md`), Markdown, file names in kebab-case.
 
 ## Two audiences, one set of docs
