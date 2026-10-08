@@ -51,9 +51,10 @@ def git_values(scope, root=None):
 
 def relative_path(value):
     return (isinstance(value, str) and bool(value) and len(value) <= 512
-            and not any(c in value for c in ('\0', '\n', '\r', '\\', ':', '*', '?', '[', '|', ','))
+            and not any(ord(c) < 32 or c in '\\:*?[]<>|",' for c in value)
             and not value.startswith(('/', '~')) and value != '.'
-            and all(part not in ('', '.', '..', '.git') for part in value.split('/'))
+            and all(part.casefold() not in ('', '.', '..', '.git') and not part.endswith((' ', '.'))
+                    for part in value.split('/'))
             and not PurePosixPath(value).is_absolute())
 
 

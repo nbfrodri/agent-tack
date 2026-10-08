@@ -179,7 +179,8 @@ class ProjectConfigTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_unsafe_paths_fail_before_scaffolding(self):
-        for value in ('../outside.md', '/outside.md', '.git/config', 'docs/../outside.md', 'C:/outside'):
+        for value in ('../outside.md', '/outside.md', '.git/config', '.GIT/config', '.git./config',
+                      'guide./system.md', 'docs/../outside.md', 'C:/outside', 'docs/\tprivate.md'):
             self.tack('config', 'architecture-path', value, '--shared', expected=2)
         outside = self.fixture.directory / 'outside'
         outside.mkdir()

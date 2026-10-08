@@ -42,4 +42,3 @@ def execute(check, root, timeout):
             output.seek(0, 2)
             output.seek(max(0, output.tell() - 4096))
             check['output_tail'] = output.read().decode('utf-8', errors='replace')
-
