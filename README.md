@@ -2,8 +2,8 @@
   <img src="docs/assets/tack-logo.png" alt="tack geometric t mark" width="144" height="144">
 </p>
 <h1 align="center">tack</h1>
-<p align="center"><strong>Your way of developing with AI. Consistent across projects and tools.</strong></p>
-<p align="center">Conventions, useful context and real project checks for you or your team.</p>
+<p align="center"><strong>Give your AI coding tools a shared way to work.</strong></p>
+<p align="center">Your conventions. Your project context. Your checks. For solo developers and teams.</p>
 <p align="center">
   <a href="https://github.com/nbfrodri/agent-tack/actions/workflows/ci.yml"><img src="https://github.com/nbfrodri/agent-tack/actions/workflows/ci.yml/badge.svg" alt="CI status"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-0d9488" alt="MIT license"></a>
@@ -19,15 +19,15 @@
 
 ---
 
-**Set up how you want AI to work, then keep that setup with your code.** tack helps the assistant follow project conventions, find useful context, save work in agreed places and run relevant checks. Use it locally for yourself, share it with teammates or customize a fork for several projects.
+**Your next AI session should not need the same project briefing.** tack turns your development preferences into reusable project guidance: how to make changes, where context belongs and what to check before calling the work done. Keep it personal, commit a shared setup for your team, or customize a fork across projects.
 
 It works around your existing coding agent. It does not provide a model or replace your test framework.
 
 ## What you get
 
-| Agree once | Find the right context | Check the work |
+| Agree once | Carry context forward | Make verification visible |
 | --- | --- | --- |
-| Keep project rules in `AGENTS.md` and shared preferences in `tack.json`. | Link architecture, plans and handoffs in the places your project uses. | Run existing commands for changed files and see failures or missing checks. |
+| Share conventions and preferences in Git instead of repeating them in every prompt. | Give the next session the same architecture, plan and handoff locations. | Run the project's real checks and see failures, timeouts and work that still needs review. |
 
 ```mermaid
 flowchart LR
@@ -37,7 +37,9 @@ flowchart LR
   D --> E[Reviewable result]
 ```
 
-Skills and specialist roles are optional tools for a demonstrated need. More instructions or agents are not an outcome in themselves. [Why this direction](docs/why.md).
+Ask for the change: **"Fix the checkout bug"** or **"Add CSV export."** Tack guides the assistant through work sized to the risk, meaningful tests, maintainable design and a reviewable Git history. TDD, pragmatic SOLID and documentation upkeep remain part of that guidance; executable checks provide narrower guarantees. [Engineering practices](docs/engineering-practices.md).
+
+Skills and specialist roles are available when a task needs them, including guided selection of external skills. Start small and add procedures that solve a real problem. [Why this direction](docs/why.md).
 
 ## Quick start
 
@@ -75,6 +77,8 @@ tack config reply-style brief --shared
 ```
 
 Leave `auto` as the usual mode: a small fix and a risky migration need different levels of work. Say "use strict for this task" when needed; that need not change the saved default. [Daily use](docs/usage.md) | [End-to-end team example](docs/sharing.md).
+
+Your project stays portable: the shared setup is ordinary files in Git, and you can [disable tack or tidy old records](docs/leaving.md) without deleting useful project knowledge.
 
 ## Tools and checks
 
