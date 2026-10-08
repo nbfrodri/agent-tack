@@ -64,7 +64,7 @@ def prepare(job, env):
             'reply-style': 'brief', 'conventional-commits': True, 'architecture-path': 'docs/architecture.md',
             'plans-path': 'work/plans', 'handoffs-path': 'work/handoffs',
             'check-fast': ' '.join(job['test_command'])}}), encoding='utf-8')
-        (WORK / 'AGENTS.md').write_text('# Project\n\nProduct behavior: [contract](docs/contract.md). '
+        (WORK / 'AGENTS.md').write_text(job.get('project_guide') or '# Project\n\nProduct behavior: [contract](docs/contract.md). '
             'Structure: [architecture](docs/architecture.md).\n\nCommand: `' + ' '.join(job['test_command']) + '`.\n', encoding='utf-8')
         (WORK / 'CLAUDE.md').write_text('@AGENTS.md\n', encoding='utf-8')
         checked([*tack, 'config', 'setup-review', 'done'], env)
