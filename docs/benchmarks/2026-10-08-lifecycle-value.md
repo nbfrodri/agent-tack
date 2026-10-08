@@ -4,6 +4,10 @@
 
 All 24 scheduled journeys were collected: 97 development attempts (96 completed and one provider interruption), plus 20 completed independent reviews. There were no model retries. These results support the specific functional improvements below, not a claim that all four product goals have been achieved.
 
+![Mean time and independent final code quality for all three conditions, with all four journey observations per model](2026-10-08-lifecycle-value.png)
+
+The [plot source](support/plot-lifecycle.py) reads the published facts. The following tables give exact costs, acceptance and limits.
+
 ## What this comparison measures
 
 The four questions are whether tack avoids important defects, reduces correction or integration effort, makes a later change easier, and saves contributor setup. Extra workflow activity is a cost. Passing tests and following conventions are useful evidence, but neither alone establishes better code or a worthwhile tradeoff.
