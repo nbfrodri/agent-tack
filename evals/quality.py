@@ -14,6 +14,7 @@ import uuid
 
 from adoption import transcript_metrics
 from quality_fixture import SETUP_PROMPT, TASKS, seed, test_command
+from product_archive import create as create_product_archive
 
 ROOT = Path(__file__).resolve().parents[1]
 CONDITIONS = ['plain', 'current', 'improved']
@@ -121,11 +122,8 @@ def product_archives(manifest, destination):
     result = {}
     for condition in ('current', 'improved'):
         revision = manifest['revisions'][condition]
-        resolved = run(['git', '-C', ROOT, 'rev-parse', '--verify', revision + '^{commit}'])
-        if revision != resolved:
-            raise ValueError('product revisions must be full commit hashes')
         archive = destination / (condition + '.tar')
-        run(['git', '-C', ROOT, 'archive', '--format=tar', '--output', archive, resolved])
+        create_product_archive(ROOT, revision, archive)
         result[condition] = archive
     return result
 
@@ -170,7 +168,7 @@ def main():
     args.output.mkdir(parents=True)
     save(args.output / 'manifest.json', manifest)
     save(args.output / 'order.json', cases)
-    save(args.output / 'controller.json', {p.name: digest(p) for p in (ROOT / 'evals').glob('quality*.py')})
+    save(args.output / 'controller.json', {p.name: digest(p) for p in (ROOT / 'evals').glob('*.py')})
     save(args.output / 'image.json', json.loads(run(['docker', 'image', 'inspect', manifest['image']]))[0]['Id'])
     archives = product_archives(manifest, args.output)
     save(args.output / 'products.json', {key: digest(path) for key, path in archives.items()})

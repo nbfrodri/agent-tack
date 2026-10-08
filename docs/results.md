@@ -2,9 +2,17 @@
 
 What tack changes in practice, measured on real sessions: matched tasks with and without tack, or between versions.
 
+## Complete development journeys (2026-10-08)
+
+The latest study completed the full 24-journey schedule: **97 development attempts and 20 independent code reviews**, covering setup, implementation, a fresh contributor's later change, integration and review resolution. One development attempt ended with a provider capacity error; its time remains counted and its missing token usage is unknown. Tack and a short project AGENTS.md each passed final acceptance in **8/8 journeys**, versus **7/8** for plain adoption. Source review and additional probes found defects outside those checks, including a valid-input rejection with tack.
+
+The short guide had slightly higher average code-quality grades with Luna and tied tack with Sol. Tack took **44.7% more total time and 69.6% more input tokens with Luna** than the guide. With Sol, it took **30.4% more time**; excluding the entire interrupted matched block, the increases were **32.3% time and 69.2% input**. Setup and later changes were slower, and the experiment cannot establish human onboarding savings. This does not justify the extra cost against the brief guide. [Full outcomes, per-pair costs, code review, confirmed defects and evidence](benchmarks/2026-10-08-lifecycle-value.md).
+
 ## Value-first preflight (2026-10-08)
 
 A shorter workflow completed eight implementation sessions and two independent blind reviews. It was **59.0% slower and used 41.5% more input tokens** than current tack on these two tasks. A conventional project-only AGENTS.md produced the best settings implementation; shipment quality tied across all four conditions. Review found real settings defects that the original passing checks missed. The larger proposed screen was stopped at its evidence gate; no general productivity gain is claimed. [Full results, supplemental probes and decisions](benchmarks/2026-10-08-value-first.md).
+
+A later archive audit found private evaluator source and reference tests in this older preflight's product archives. No logged read was found, but that is not proof of isolation. The [lifecycle report](benchmarks/2026-10-08-lifecycle-value.md#collection-limits-and-corrections) records the correction and the explicit exclusions used for its new collection. The historical report and raw evidence are preserved.
 
 ## Backend/frontend integration pilot (2026-10-08)
 
@@ -12,7 +20,7 @@ Four fresh Codex sessions compared a backend/consumer pair on the previous and t
 
 ## Minimal requests and independent code review (2026-10-08)
 
-The latest comparison completed **93 sessions**: 5 pilot, 48 coding, 32 blind reviews and 8 setups. Plain projects received ordinary product requests without custom instructions to write tests, use TDD/SOLID or follow a Git workflow. GPT-6 Luna and GPT-6.1 Sol each solved four tasks twice with plain projects, current tack and a frozen candidate. Two fresh GPT-6 Astra reviews scored each anonymous triplet; the orchestrator inspected every delivery and saved its assessment before labels were revealed.
+This earlier comparison completed **93 sessions**: 5 pilot, 48 coding, 32 blind reviews and 8 setups. Plain projects received ordinary product requests without custom instructions to write tests, use TDD/SOLID or follow a Git workflow. GPT-6 Luna and GPT-6.1 Sol each solved four tasks twice with plain projects, current tack and a frozen candidate. Two fresh GPT-6 Astra reviews scored each anonymous triplet; the orchestrator inspected every delivery and saved its assessment before labels were revealed.
 
 The candidate passed 16/16 frozen acceptance checks; current tack and plain projects each passed 15/16. This small difference does not establish a quality advantage: plain projects had slightly higher mean blind grades, and review found additional defects in every condition. Luna's tests rejected the original defect in **8/8 runs with either tack version, versus 1/8 without tack**. Sol already did so in every condition. All selected settings transferred in all eight setups, with local trust kept private. No recorded red/green sequence demonstrated TDD in this batch.
 

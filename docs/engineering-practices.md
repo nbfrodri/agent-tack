@@ -50,6 +50,8 @@ Use an ADR for a consequential design choice with alternatives; a handoff for wo
 - The verifier separates CLI dispatch, selection/execution and tool adapters. Check selection is project data rather than one hard-coded branch per stack.
 - Configuration is versioned and validated before execution. Invalid data, missing checks and untrusted execution are explicit results.
 - Regression tests exercise real commands and defects, including pipeline failures, timeouts, staged-only changes and a check that mutates the Git index. The latter cases were reproduced as failures before the fixes.
+- A clean checkout can still contain broken code. `tack verify --all` runs declared checks in that state, preserving local trust and explicit gaps. Its regression test starts with a committed defect, observes failure, then verifies the committed fix.
+- Fresh clones reuse recorded setup choices without inheriting completed local review or execution trust. Confirm the actual choices match the project; file propagation alone does not establish correct onboarding.
 - Installer ownership/restoration tests protect independent user settings. Trust stays local; project adoption cannot grant it.
 - CI checks shell/Python lint, Bash compatibility and native Windows behavior. A passing Linux test does not substitute for a claimed Windows capability.
 - Public benchmarks retain failed and adverse outcomes. The [adoption comparison](benchmarks/2026-10-08-adoption.md) found useful configuration transfer, tied correctness and higher time cost; it does not establish reduced defect rates or improved productivity.

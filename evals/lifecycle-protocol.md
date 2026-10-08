@@ -1,0 +1,29 @@
+# Lifecycle value protocol
+
+Frozen before live calls in `batches/lifecycle-value.json`. The implementation record is [here](../docs/archive/plans/2026-10-08-lifecycle-value-implementation.md). This experiment continues despite adverse product results; only infrastructure/access failures stop unscheduled work.
+
+## Equal requests and different development setups
+
+Every condition receives the same README, public contracts, working agreement, dependency-free tests and product requests. Plain has no added AGENTS.md or tack, but may discover the agreement or author its own instructions. Project starts with the short `GUIDE` in lifecycle_fixture.py. Tack starts with the pinned installation and local activation, then must configure its shared project in the setup stage. Coding prompts contain no request for tests, TDD, SOLID, commits or modularity. The setup request asks to apply already approved choices; the review request asks to address local feedback. These necessary task instructions are identical across conditions.
+
+The stock scenario covers atomic allocation, input preservation and a later partial-return feature. The orders scenario covers precise integer money calculations, a later shipping change, frontend migration and integration of two existing branches. The review fixture includes two real redirect defects (one outdated line reference), a follow-up already tracked as issue 42 and an optional style request. A local JSON record substitutes for GitHub; this does not measure network/API latency or prove a deployed bot's behavior.
+
+Two implementers, two repetitions, two scenarios and three conditions produce 24 journeys. Each has setup/build/change/review sessions. Setup/build share participant A's installed tool configuration, but each call is a new conversation. Change/review use a fresh participant B home and a clone. A stock clone starts at the delivered build; an orders clone starts at main with backend and labels branches available. Stage snapshots are captured before controller transport commits. The controller preserves uncommitted delivered bytes for comparison and records them; its commits are not credited as model workflow compliance or evidence that a deliverable was ready to merge.
+
+At most one final correction is allowed after frozen checks fail. The model receives observed failure descriptions, not evaluator code. The final result includes unresolved failures and all prior time/tokens. No model retry is discarded. 96 scheduled implementation sessions + at most 24 corrections + 20 independent review sessions = 140 maximum. At most two model calls run concurrently. Install time is recorded for two participants, separately from model sessions and included in lifecycle totals. Container provisioning, evidence copying, private grading and independent judging are evaluation costs, reported separately where measured.
+
+## Evaluator integrity
+
+Private grading runs after each build/change/review in another container with no network, credentials or host mounts. Runtime product archives exclude `evals/`, `tests/` and experimental reports/plans. Only public fixtures enter model repositories. Correct references pass and deliberately broken variants fail in offline evaluator tests before live execution. The no-model runner smoke is separate evidence and must never count as a successful AI session.
+
+Acceptance checks cover specified behavior, not every possible defect. Independent reviews inspect original and delivered production code with three anonymous labels. Six existing rubric dimensions retain their weights. Build reviews distinguish unchanged pre-existing redirect behavior from the requested feature; final reviews include the security fixes. Initial and final snapshots for eight matched blocks give 16 reviews; final blocks 0, 3, 4 and 7 receive an additional reversed-order review (20 total). Labels and condition mapping are kept outside reviewer bundles. Reviewers receive no tests, workflow artifacts, costs, acceptance results or condition names.
+
+Process evidence is evaluated separately: genuine commits and branch use; conventional titles and attribution; observed checks; whether delivered tests reject the initial defect; relevant canonical docs; reuse of the existing review follow-up. A nonzero command or test-file edit is not proof of TDD. Audit failure output, command order and edits for actual red/green evidence; ambiguous traces remain unproven. File counts, new classes and extra process documents do not earn quality points.
+
+## Interpretation
+
+Report results per scenario/model and paired repetition, along with medians/ranges and all failures. Do not pool unlike scenarios to hide a regression. These synthetic small applications cannot establish large-system scalability or human time saved. Later-change time is observed agent effort; readability/changeability scores are reviewer judgments. Questions are disabled equally because choices are already supplied, so this experiment cannot claim a reduction in real human clarification time.
+
+An overhead is justified only where a concrete outcome supports it: accepted deliveries alternatives miss, consequential defects avoided, less total repair/integration/change effort or cheaper configuration reuse. If accepted quality and lifecycle outcomes tie while costs rise, report that case as overhead without demonstrated compensation. Report hypotheses separately from outcomes. Input tokens include cached input; subscription tokens are not dollar prices. Never rewrite prior unfavorable benchmark results.
+
+Run `python3 evals/lifecycle.py evals/batches/lifecycle-value.json --dry-run` before authorized execution with `--auth PATH --output NEW_DIRECTORY`. Use `lifecycle_reviews.py` only after coding finishes so the two-call concurrency limit remains respected.

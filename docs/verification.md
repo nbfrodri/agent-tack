@@ -84,6 +84,10 @@ Set `check-fast` to an existing short command when feedback after edits is usefu
 
 The Stop hook also reports uncommitted work, stale handoffs, documentation reminders and source changes without test-file changes. Existing tests may already cover a change: review their behavior rather than adding a test just to change a filename. The hook asks once; a second stop is permitted. Separate invocations can repeat checks; tack does not cache a passing result.
 
+## Verify a clean checkout
+
+For a new clone or a completed integration, `tack verify --all --plan` previews every declared check, even with no changed files. After reviewing commands and granting local trust, run `tack verify --all`. It uses the same budget, failure and changed-input handling as ordinary verification. No available checks means `unverified`; a clean Git status is not a successful test run. Without `--all`, selection remains focused on changed paths. This does not infer missing consumer coverage or make every check mandatory after each edit.
+
 ## Optional external checks
 
 Reuse installed project tools before adding a checker. [Aislop](https://github.com/scanaislop/aislop) can be selected for supported languages when it finds useful issues your existing checks miss. Review and pin the chosen version in the project's normal dependency file; do not download latest during verification. A small local trial of 0.18.1 found a swallowed exception, but also warned about a deliberately retained public wrapper. Its score is not a code-quality verdict.

@@ -1,0 +1,71 @@
+{
+  "scope": "Orchestrator inspection of all eight primary final anonymous bundles, before opening their label mapping. Initial code is scored by the independent reviewers.",
+  "limits": "The orchestrator previously saw labeled runtime, acceptance and selected source during collection, and early anonymous numeric scores. This is not a fully blinded human assessment. Preferences are qualitative, not calibrated numeric grades. Potential additional boundaries need separate probes.",
+  "bundles": {
+    "review-02": {
+      "preferred": [
+        "B",
+        "C"
+      ],
+      "notes": "B and C are close, direct implementations. A adds descriptor-only input restrictions, a pass-through integer helper and repeated discount validation; extra complexity has no stated product requirement.",
+      "bundle_sha256": "59c2e16c6c164dcb3ae6a765371900e92bb4caa26317614ca9445b2ff9473400"
+    },
+    "review-05": {
+      "preferred": [
+        "A"
+      ],
+      "notes": "C makes shippingCents non-enumerable, breaking JSON transport and the expected object shape. B treats an explicitly undefined version as absent; distinguish this local-call validation edge from the significant transport defect. A has the clearest complete behavior.",
+      "bundle_sha256": "5c2c5885c405c4997ac6a4256a116d68986b33a61d07d28da28d33d8bf200f07"
+    },
+    "review-07": {
+      "preferred": [
+        "C"
+      ],
+      "notes": "A records invalid stock/held values but compares quantities before raising, so malformed values combined with real requests can raise TypeError rather than required ValueError. B rejects empty stock dictionaries without a minimum-size requirement. C gates arithmetic behind validation. Repeated valid/invalid bookkeeping makes A/B harder to change.",
+      "bundle_sha256": "1e9fa2a06fc6568450ace29e734c512bcfe2559e23e205cb484c1e7a0b6cc670"
+    },
+    "review-09": {
+      "preferred": [
+        "B"
+      ],
+      "notes": "All appear adequate on the stated ordinary inputs. B is somewhat more direct; A builds an intermediate validated list and C repeats request iteration. Validation duplication across two small functions is a maintenance consideration, not evidence of a large-system scalability defect.",
+      "bundle_sha256": "23918fd25df107c1787d7e03827d0abaae880aa2d60244a71a597a1e89e214a7"
+    },
+    "review-12": {
+      "preferred": [
+        "A",
+        "B",
+        "C"
+      ],
+      "notes": "Closely similar coherent implementations with exact arithmetic, explicit options and version checks, and ordinary object output. No material design winner established.",
+      "bundle_sha256": "a4631bbfcf025585c90d7b99616fbf446399e1a6bfc8877c04bbc07a4b022747"
+    },
+    "review-15": {
+      "preferred": [
+        "A",
+        "B",
+        "C"
+      ],
+      "notes": "All keep the domain and formatting boundaries small, preserve precision and reject invalid inputs before shipping overrides. Stylistic BigInt/Number choices do not establish better scalability.",
+      "bundle_sha256": "cb37a707377d1edd729d2ff117fa5b4b77d83b8934b5f1970f8fc33215d209c0"
+    },
+    "review-17": {
+      "preferred": [
+        "A",
+        "B",
+        "C"
+      ],
+      "notes": "A/B reuse focused validation/aggregation helpers; C reuses reservation for returns, which is reasonable while semantics coincide. C rejects double slashes anywhere in a redirect; the public wording is ambiguous about interior double slashes, so do not count this as a confirmed contract defect.",
+      "bundle_sha256": "2b75ff7fc0c898d47136a30a35c67438a6ef32d1a9678a6fe2b98d1ded1dd7ec"
+    },
+    "review-19": {
+      "preferred": [
+        "A",
+        "B",
+        "C"
+      ],
+      "notes": "The three implementations are nearly equivalent: focused validation, aggregate quantities, checks before applying new copied balances, and a small redirect function. No material maintainability distinction established.",
+      "bundle_sha256": "4b6c419eaa82ca9ffa23c08f5f2f30809f20414ba5411e045b1a8f090655f2f0"
+    }
+  }
+}

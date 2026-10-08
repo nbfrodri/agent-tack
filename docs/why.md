@@ -23,3 +23,22 @@ Versioned conventions and capabilities help a team align across editors, while c
 Success means fewer faulty deliveries, clearer verification and less human rework at an acceptable time/token cost. Branches, commits, extra tests or more agents do not establish that on their own. [Measured results](results.md) retain successes, null results and limitations; no significant general quality improvement is claimed yet.
 
 The [value-first preflight](benchmarks/2026-10-08-value-first.md) explicitly compared tack with ordinary project instructions. That cheaper baseline did best on one task and tied code quality on the other. Choose it when it meets your needs. Tack's optional coordination helpers may solve different problems, but their lifecycle benefit must be measured rather than inferred from more workflow activity.
+
+The subsequent [complete-journey comparison](benchmarks/2026-10-08-lifecycle-value.md) included setup, later changes and review resolution. Tack did not outperform a brief project guide on accepted deliveries or average code quality, and took more total time, including longer setup and later changes. Its additional cost is not justified by those results. Shared configuration and clean-clone checks are working capabilities; general productivity and onboarding savings remain unproven.
+
+## When the extra work is worthwhile
+
+Use these four outcomes to decide what to enable. A longer conversation, a larger test suite or more documents is not the outcome.
+
+| Outcome | Put in place | Evidence to look for |
+| --- | --- | --- |
+| Catch important defects before delivery | Real project checks for contracts, invalid inputs and affected callers; inspect what those checks do not cover | A consequential defect caught before delivery that the cheaper setup missed |
+| Need fewer corrections and integration fixes | Shared contracts, branch availability, focused handoffs and review follow-up reuse | Fewer failed deliveries, correction rounds or broken consumer integrations |
+| Make the next change easier | Small responsibilities, compatible interfaces and useful regression tests | Less effort for a later change without losing behavior; inspect the code as well as tests |
+| Bring another contributor up to speed | Versioned choices and context paths; a fresh clone reuses them, with execution trust still local | Successful setup and task completion with less repeated configuration or clarification |
+
+For a fresh clone or an integration check, `tack verify --all --plan` previews all declared checks even when the working tree is clean. After local trust is granted, `tack verify --all` runs them. This closes a concrete verification gap; it cannot detect behavior the project's checks do not cover. Recorded setup choices tell the assistant what to reuse, but do not silently approve execution. See [verification](verification.md) and [setup](setup.md).
+
+Compare a complete piece of work against a short project AGENTS.md: setup, delivery, review, corrections and a later change. Count failed attempts and the cost of maintaining the guidance. Extra instructions, context reads, check runs and Git operations can add time and tokens; these are possible cost sources, not a measured breakdown. A doubled cost needs a concrete compensating benefit. If accepted behavior and code quality tie while total effort rises, the extra work has not earned its cost in that case. Keep the useful checks and shared facts, and simplify the rest.
+
+Token counts on a subscription are not dollar charges. Cached input is part of input, not an additional amount. Independent benchmark reviewers are evaluation overhead; reviews performed to finish a real delivery belong in that delivery's cost. Do not infer human onboarding savings or large-system scalability from a small agent-only test.
