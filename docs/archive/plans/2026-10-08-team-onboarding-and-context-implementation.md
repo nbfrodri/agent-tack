@@ -1,6 +1,14 @@
 # Team onboarding and integration context
 
-Status: in progress. Starting revision: `f4b88b447b533d7bf02d445994fbf0ad5065827e` (PR #134, including passing post-merge CI). The owner approved optional collaborator setup and described a concrete coordination problem: backend work must be understandable to a frontend developer's assistant without repeatedly writing explanatory documents by hand.
+Status: implementation complete. Starting revision: `f4b88b447b533d7bf02d445994fbf0ad5065827e` (PR #134, including passing post-merge CI). Delivery and exact-head cross-platform CI are tracked in [PR #135](https://github.com/nbfrodri/agent-tack/pull/135); integration remains gated on passing checks. The owner approved optional collaborator setup and described a concrete coordination problem: backend work must be understandable to a frontend developer's assistant without repeatedly writing explanatory documents by hand.
+
+## Completion record
+
+Implemented optional pinned bootstrap, shared solo/team selection, isolated branch diagnostics, parallel handoff discovery, producer/consumer references, minimum PR metadata checks and their human guides. The four-file scaffold is unchanged. Existing issue workflows now link audit findings, implementation and selected PR checks without new publication approval gates.
+
+All local suites passed across disposable Linux environments. Focused coverage includes 10 bootstrap, 10 team/context/Stop and 6 PR metadata tests. Native Windows checks pass too (two bootstrap symlink cases need privileges unavailable locally); CI initially found bare Bash selecting WSL, corrected by choosing Git Bash explicitly. Pinned lint, reference and human-link validation pass. GitHub CI remains the final delivery gate.
+
+The separate four-session Codex pilot completed without retries: both versions passed 7/7 integration checks, with the candidate 5.5% slower overall. Review found unnecessary completion repairs caused by unrelated handoffs. A failing regression reproduced the issue before the team-specific Stop fix; final-reply guidance now keeps the original task outcome after repairs. These follow-ups were not re-benchmarked. Frozen products, all attempts and limitations are published in `docs/benchmarks/2026-10-08-teamwork.md`; the previous 93-session batch is unchanged.
 
 ## Intended outcome
 

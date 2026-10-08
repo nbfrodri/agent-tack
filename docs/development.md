@@ -51,6 +51,10 @@ The [onboarding conversation protocol](../evals/project-onboarding.md) prepares 
 
 ## Behaviour evals
 
+### Backend/frontend integration
+
+The [teamwork pilot](benchmarks/2026-10-08-teamwork.md) uses `evals/teamwork.py` and its frozen manifest to run two producer/consumer pairs. Preview with `python3 evals/teamwork.py evals/batches/teamwork-pilot.json --dry-run`. Live execution requires a new output directory and private authentication; four sessions maximum, no retries. The worker reuses isolated Codex invocation/capture helpers; the separate `docs/benchmarks/support/probe-teamwork.py` grades delivered components offline. Do not mix these outcomes with the larger historical quality batch.
+
 ### Minimal requests and independent code review
 
 The [quality/efficiency protocol](benchmarks/2026-10-08-quality-efficiency-protocol.md) compares plain projects, current tack and a candidate using the same minimal requests. `evals/quality.py` runs bounded implementation/setup stages in separate disposable containers; `quality_worker.py` handles one session. `quality_review.py` prepares anonymous production-only bundles and validates agent grades. `quality_grade.py` supplies hidden checks only after delivery. Offline coverage lives in `tests/quality.test.py` and runs through `tests/evidence.test.sh`.

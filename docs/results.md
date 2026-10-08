@@ -1,6 +1,10 @@
 # Results
 
-What tack changes in practice, measured on real sessions: the same tasks with and without it.
+What tack changes in practice, measured on real sessions: matched tasks with and without tack, or between versions.
+
+## Backend/frontend integration pilot (2026-10-08)
+
+Four fresh Codex sessions compared a backend/consumer pair on the previous and team-coordination versions. **Both passed 7/7 cross-language integration checks; the candidate took 5.5% longer.** Both wrote useful tests and understood the branch dependency. The pilot exposed an unrelated-handoff completion reminder, now covered by a regression and corrected for team projects. [Protocol, all attempts, code review and limits](benchmarks/2026-10-08-teamwork.md). This small two-version comparison does not establish a productivity or quality gain and is not pooled with earlier batches.
 
 ## Minimal requests and independent code review (2026-10-08)
 
