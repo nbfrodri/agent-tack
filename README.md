@@ -84,9 +84,9 @@ Claude Code, Codex, Gemini CLI, GitHub Copilot, OpenCode, Crush and Cursor recei
 
 ## What the evidence says
 
-The small Codex comparison had **12/12 original acceptance passes with and without tack**, while tack took about **2.3x the session time**. It added useful regression tests in some runs, but a later review also found missed Unicode cases. These results motivated less mandatory process and more concrete verification.
+The latest Codex adoption comparison completed 24 sessions: **8/8 code tasks passed with tack and 8/8 with native project guidance**. Shared mode, context paths and reply style reached all four teammate clones, with trust kept local. Tack took about **2x the total session time**.
 
-The shared configuration and verifier changes still need a new model comparison. We do not claim a general code-quality or cost improvement. [Results and limitations](docs/results.md) | [Decision](docs/adr/0003-project-verification-over-generic-process.md).
+Both conditions used the same engineering requirements and wrote useful regression tests. We do not claim a general code-quality or cost improvement. [Adoption results and limits](docs/benchmarks/2026-10-08-adoption.md) | [All results](docs/results.md) | [Decision](docs/adr/0003-project-verification-over-generic-process.md).
 
 ## Learn more
 

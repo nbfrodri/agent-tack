@@ -2,6 +2,12 @@
 
 What tack changes in practice, measured on real sessions: the same tasks with and without it.
 
+## Project adoption comparison (2026-10-08)
+
+The new shared-configuration/verifier version completed eight three-session journeys: setup, a second clone's bug fix and a feature. The baseline received the same useful project instructions and engineering requirements. **Both conditions passed 8/8 code tasks and caught 12/12 injected faults with their tests.** All 24 sessions completed, with red/green evidence in every code task.
+
+Shared mode, context paths and reply style transferred in all four tack journeys; trust remained local. Luna omitted an explicit shared Conventional Commit value in both runs and inherited the current default, an adoption gap. Tack took **2.11x total session time with Luna and 1.96x with Sol**; excluding setup, the ratios were 1.80x and 1.71x. Input-token ratios were 3.19x and 2.33x, with most input cached. No code-quality or productivity advantage was established on this small synthetic fixture. [Protocol, detailed results, code review and all-run facts](benchmarks/2026-10-08-adoption.md).
+
 ## Codex subscription comparison (2026-10-08)
 
 GPT-6 Luna and GPT-6.1 Sol, medium effort, Codex CLI 0.160.1: **24/24 runs pass the hidden acceptance tests**, with two runs per model/condition on bug-fix, attachments and search. There is no acceptance gain in this sample. tack adds regression tests to Luna's outputs and branch/commit discipline to both models; Sol already writes useful tests without it. A separate review/probe found Unicode search failures in both Luna auto runs that the original ASCII-focused hidden tests miss.

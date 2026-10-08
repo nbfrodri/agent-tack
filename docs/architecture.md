@@ -86,7 +86,7 @@ POSIX ownership still requires the current UID and private mode bits. Windows us
 flowchart LR
   project[Project git config or shared .tack marker] --> status[bin/tack status]
   status --> session[Claude session context]
-  mode[Local or global tack.mode] --> session
+  mode[Local override, shared tack.json or global mode] --> session
   status --> gitpolicy[Conditional git checks]
   status --> formatter[Claude file formatter]
   preferences[Global instructions] --> workflow[Agent workflow and skills]
@@ -95,7 +95,7 @@ flowchart LR
 
 `bin/tack` is the source of truth for activation. An explicit `tack.enabled=false` wins; otherwise `true` enables the workflow, followed by a shared `.tack` file. Hooks call the CLI rather than reading these markers themselves. Formatter execution additionally requires `tack trusted --quiet`, which reads only local trust configuration. Claude receives activation, the effective mode and `tack context` excerpts at session start, and again after context compaction because the SessionStart hook has no matcher; other tools follow the instructions to run the same commands.
 
-`tack mode` resolves the workflow mode: a local `tack.mode` wins over the global default, and a missing or invalid value means `auto`. The mode selects the `dev-workflow` level (lite, standard or strict) or, in `auto`, asks the assistant to pick one per task. Levels scale plans, handoffs, the AI log, reviews and delegation; hooks enforce the same checks at every level.
+`tack mode` resolves the workflow mode: local Git override, shared `tack.json`, global Git preference, then `auto`. Invalid shared profiles produce an error; invalid legacy Git mode values fall back to `auto`. The mode selects the `dev-workflow` level (lite, standard or strict) or, in `auto`, asks the assistant to pick one per task. Levels scale plans, handoffs, the AI log, reviews and delegation; hooks enforce the same checks at every level.
 
 Human-readable `tack status` reports activation and local formatter trust together. Its exit code, including `--quiet`, depends only on activation. `tack trusted` and its quiet mode depend only on local trust; both commands share the same trust predicate.
 
@@ -105,7 +105,7 @@ Project initialization is shared by new repositories and existing ones. `enable`
 
 Gemini and Copilot startup hooks receive the same context, reply style and setup hint through the runtime adapter. OpenCode, Crush and Cursor follow the instruction fallback. Scripted scaffolding and checks are deterministic; the actual proposal and confirmation conversation remains model-guided. Tests validate local protocol/filesystem behavior, not the reliability of a live model following the instructions.
 
-`lib/project-context.sh` reads a bounded excerpt of project instructions and, depending on the mode, only the active handoff's status and next step (`lite`), an index of `docs/architecture.md` plus that handoff summary (`auto`, `standard`), or bounded excerpts of both (`strict`). A handoff check compares the handoff's modification or last commit time with later commits and its `Branch:` line with the current branch. The agent reads indexed documents in full only when the task needs them. It has a shared byte budget and per-file line limits and skips missing files and external symlinks. `tack.context=false` disables these extra excerpts.
+`lib/project-context.sh` reads a bounded excerpt of project instructions and, depending on the mode, only the active handoff's status and next step (`lite`), an index of the configured architecture document plus that handoff summary (`auto`, `standard`), or bounded excerpts of both (`strict`). Locations come from the same project-path resolver used by setup and scaffolding. A handoff check compares the handoff's modification or last commit time with later commits and its `Branch:` line with the current branch. The agent reads indexed documents in full only when the task needs them. It has a shared byte budget and per-file line limits and skips missing files and external symlinks. `tack.context=false` disables these extra excerpts.
 
 In enabled projects, `skills/orchestrate/` routes complex independent strict-level tasks to available models and effort settings under an approved plan; at lite and standard it only suggests delegation. `tack.delegation=off` opts out of automatic delegation; missing/auto uses it. Capability detection and sequential fallbacks avoid promises that the current runtime cannot fulfil.
 
@@ -137,6 +137,8 @@ Startup context points mapped projects to this CLI; the shared Stop hook invokes
 `metadata.py` records source, effective experiment configuration, prompt, fixture and hidden-check fingerprints, CLI and model observations, setup time and run identity. Metric version 3 keeps these inputs in `metrics.json`; `report.py` separates incompatible cohorts and source/configuration variants, reports acceptance-rate intervals and includes failed-attempt costs. Unknown observed models remain separate rather than being inferred from a requested model.
 
 `evals/batch.py` validates a finite JSON manifest, shuffles conditions with a recorded seed, bounds concurrency and CLI duration, and resumes only finished matching runs. Output collisions and source changes stop execution. Spend limits use explicit estimates and observed costs between waves, so they are not hard provider billing caps. Run-count and timeout limits remain enforceable when cost is unavailable. There is no background or CI model experiment.
+
+`evals/adoption.py` runs a separate three-stage experiment: project setup, a second clone's bug fix and a fresh-session feature. `adoption_fixture.py` owns public inputs and prompts; `adoption_grade.py` runs hidden acceptance and mutation probes only after model execution. Each participant has a private HOME and Git configuration, and only committed project files pass to the second clone. The subscription launcher fixes effort and records runtime observations. This runner refuses existing output, caps sessions/concurrency/duration and records product integrity; it does not implement generic batch resume or API spend estimation. The [adoption protocol](benchmarks/2026-10-08-adoption-protocol.md) defines its comparison and limits.
 
 CI runs ShellCheck and content validation on Linux, plus installer and hook tests on Linux and macOS. The native Windows job runs ownership path/ACL regressions and the smoke flow through installation, repeated installation, doctor, hooks, guard and uninstall, including original configuration restoration. Tests use temporary homes and repositories so installation and git operations stay isolated; native AI tool sessions are separate from these filesystem tests.
 

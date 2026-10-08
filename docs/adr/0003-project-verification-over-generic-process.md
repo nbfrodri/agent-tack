@@ -49,3 +49,5 @@ A future comparison must fix its acceptance criteria and experiment thresholds b
 ## Follow-up implementation
 
 Shared project preferences, configurable context locations and reduced mandatory process were delivered after the initial verifier. See [configuration](../configuration.md) and the [direction audit](../audits/2026-10-08-product-direction.md). These updates do not change the historical benchmark results or establish a measured quality improvement.
+
+The subsequent [adoption comparison](../benchmarks/2026-10-08-adoption.md) measured the delivered version against useful native project guidance: configuration transfer worked, correctness tied and session time increased. It supports keeping engineering practices while improving setup precision and reducing unnecessary work; it does not establish a general quality gain.

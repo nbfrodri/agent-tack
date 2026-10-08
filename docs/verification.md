@@ -34,6 +34,21 @@ Results identify commands, their source, matched paths, statuses and bounded fai
 
 The default total command budget is 120 seconds; `--budget-seconds N` accepts 1-600. Individual timeouts default to 60 seconds in maps and are capped by the remaining total budget. Budget-exhausted checks are not run. If a check changes tracked or nonignored untracked inputs, results are marked incomplete: review the edits and verify again. Ignored build outputs are outside that fingerprint; checks are trusted project code, not sandboxed. No cached success is reused.
 
+## Read a result
+
+Suppose a map associates `src/api/*` with `npm run test:api`. You change `src/api/orders.js` and `guide/orders.md`. `tack verify --plan` shows the selected command without executing it. After local trust, `tack verify` might print this illustrative result:
+
+```text
+Verification: incomplete (2 changed paths)
+- api: passed: npm run test:api (from checks-map.json)
+No check selected for: 'guide/orders.md'
+Selected checks are declared verification, not proof of complete semantic coverage.
+```
+
+The API tests passed, while the guide still needs review. This returns exit code 3; do not add a meaningless command just to make every file green. If a test fails, the result names the failed command and includes its recent output. `tack verify --json` provides the same report as data, including changed paths, selected checks, statuses and unmapped paths.
+
+The verifier does not write tests, ask a model to grade the code, prove TDD/SOLID, or decide that the feature meets every requirement. It connects existing project checks to the current changes and makes the evidence and gaps visible.
+
 With a map, the shared Stop hook uses this verification instead of its older single-test-command path, and reports failures, untrusted execution and mapping gaps before the assistant stops. The existing one-retry limit still applies. `fast-check` after edits retains its existing explicit command. Other tools can use the same CLI even without a native completion hook. A path having a selected check is only declared routing coverage, not a guarantee of semantic correctness.
 
 ## Documentation reminders
