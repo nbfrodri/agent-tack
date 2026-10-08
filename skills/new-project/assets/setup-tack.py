@@ -73,6 +73,19 @@ def existing_installation(home):
     return None
 
 
+def installer_bash():
+    # Windows searches System32 before PATH for a bare subprocess name; its bash.exe is WSL.
+    if os.name == 'nt':
+        git_exe = shutil.which('git')
+        if git_exe:
+            for parent in Path(git_exe).resolve().parents[:3]:
+                candidate = parent / 'bin/bash.exe'
+                if candidate.is_file():
+                    return str(candidate)
+        raise ValueError('Git Bash was not found beside Git; run setup from a Git for Windows installation')
+    return shutil.which('bash')
+
+
 def checkout(recipe, directory, env):
     no_symlinks(directory, directory.parents[3])
     if not directory.exists():
@@ -134,11 +147,12 @@ def main():
         if input('Download and install this revision? [y/N] ').strip().lower() not in ('y', 'yes'):
             print('Installation declined; no changes made.')
             return 0
-    if not shutil.which('git') or not shutil.which('bash'):
+    bash = installer_bash()
+    if not shutil.which('git') or not bash:
         raise ValueError('Git and Bash are required; use Git Bash on Windows')
     env = dict(os.environ, GIT_TERMINAL_PROMPT='0', GIT_LFS_SKIP_SMUDGE='1')
     checkout(recipe, directory, env)
-    result = subprocess.run(['bash', (directory / 'install.sh').as_posix(), '--skip-plugins'],
+    result = subprocess.run([bash, (directory / 'install.sh').as_posix(), '--skip-plugins'],
                             cwd=directory, env=env, timeout=600)
     if result.returncode:
         raise ValueError(f'Installer exited {result.returncode}. Checkout preserved at {directory}; inspect and rerun its installer to repair.')

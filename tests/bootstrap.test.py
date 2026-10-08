@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -35,14 +36,21 @@ class BootstrapTests(unittest.TestCase):
             if key.startswith(('GIT_CONFIG_KEY_', 'GIT_CONFIG_VALUE_')) or key in (
                     'GIT_CONFIG_COUNT', 'GIT_DIR', 'GIT_WORK_TREE', 'BASH_ENV', 'ENV'):
                 self.env.pop(key)
+        # Keep the interpreter available even when the real user's PATH entries are removed.
+        tool_dir = self.directory / 'tools'
+        tool_dir.mkdir()
+        python_shim = tool_dir / 'python3'
+        python_shim.write_bytes(('#!/usr/bin/env bash\nexec ' + shlex.quote(Path(sys.executable).as_posix()) + ' "$@"\n').encode())
+        python_shim.chmod(0o755)
+        self.env['PATH'] = str(tool_dir) + os.pathsep + self.env['PATH']
         for path in (self.project, self.source):
             self.command('git', 'init', '-q', '-b', 'main', cwd=path)
             self.command('git', 'config', 'user.name', 'Test', cwd=path)
             self.command('git', 'config', 'user.email', 'test@example.invalid', cwd=path)
         self.source.joinpath('bin').mkdir()
-        self.source.joinpath('bin/tack').write_text('#!/usr/bin/env bash\necho fixture\n', encoding='utf-8')
-        self.source.joinpath('install.sh').write_text(
-            '#!/usr/bin/env bash\nset -eu\nprintf "%s\\n" "$@" >> "$HOME/installed.txt"\n', encoding='utf-8')
+        self.source.joinpath('bin/tack').write_bytes(b'#!/usr/bin/env bash\necho fixture\n')
+        self.source.joinpath('install.sh').write_bytes(
+            b'#!/usr/bin/env bash\nset -eu\nprintf "%s\\n" "$@" >> "$HOME/installed.txt"\n')
         self.command('git', 'add', '.', cwd=self.source)
         self.command('git', 'commit', '-qm', 'test: source', cwd=self.source)
         self.revision = self.command('git', 'rev-parse', 'HEAD', cwd=self.source).strip()
@@ -166,7 +174,7 @@ class BootstrapTests(unittest.TestCase):
         self.assertEqual(list(outside.iterdir()), [])
 
     def test_failed_installer_reports_failure_and_keeps_checkout_for_review(self):
-        self.source.joinpath('install.sh').write_text('exit 7\n', encoding='utf-8')
+        self.source.joinpath('install.sh').write_bytes(b'exit 7\n')
         self.command('git', 'add', '.', cwd=self.source)
         self.command('git', 'commit', '-qm', 'test: failing installer', cwd=self.source)
         self.revision = self.command('git', 'rev-parse', 'HEAD', cwd=self.source).strip()
