@@ -174,6 +174,25 @@ class TeamTests(unittest.TestCase):
         self.assertNotIn('Backend focus', context)
         self.assertIn('Choose the handoff relevant', context)
 
+    def test_stop_does_not_demand_refresh_of_another_teams_handoff(self):
+        self.command(BASH, str(ROOT / 'bin/tack'), 'enable')
+        self.command(BASH, str(ROOT / 'bin/tack'), 'config', 'collaboration', 'team', '--shared')
+        (self.repo / 'docs/handoffs').mkdir(parents=True)
+        self.write('docs/handoffs/analytics.md', 'Status: paused\nBranch: `feat/analytics`\nNext: chart colors.\n')
+        self.commit()
+        event = json.dumps({'cwd': str(self.repo), 'stop_hook_active': False})
+
+        def stop():
+            result = subprocess.run([BASH, str(ROOT / 'hooks/claude/stop-check.sh'), '--codex'],
+                                    input=event, cwd=self.repo, env=self.env, capture_output=True,
+                                    text=True, encoding='utf-8', errors='replace', timeout=30)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            return result.stdout
+
+        self.assertEqual(stop().strip(), '')
+        self.command(BASH, str(ROOT / 'bin/tack'), 'config', 'collaboration', 'solo')
+        self.assertIn('handoff may be stale', stop())
+
 
 if __name__ == '__main__':
     unittest.main()
