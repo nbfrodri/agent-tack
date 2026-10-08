@@ -37,7 +37,7 @@ def prepare(root, shared=False, preview=False):
     before = ignore.read_bytes() if ignore.exists() else b''
     rule = b'/.private/'
     # Append even if an earlier identical rule is followed by an exception.
-    needs_rule = not before.rstrip().endswith(rule)
+    needs_rule = not before.splitlines() or before.splitlines()[-1].strip() != rule
     report = dict(notes=str(notes), ignore=str(ignore), append_rule=needs_rule, preview=preview)
     if preview:
         return report

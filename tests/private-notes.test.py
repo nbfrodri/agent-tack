@@ -70,7 +70,7 @@ class PrivateNotes(unittest.TestCase):
         self.assertFalse((self.repo / '.gitignore').exists())
 
     def test_project_exception_cannot_silently_expose_private_notes(self):
-        (self.repo / '.gitignore').write_text('!.private/\n', encoding='utf-8')
+        (self.repo / '.gitignore').write_text('!/.private/\n', encoding='utf-8')
         with self.assertRaisesRegex(ValueError, 'overriding rules'):
             notes.prepare(self.repo)
         self.assertFalse((self.repo / '.private').exists())
