@@ -12,6 +12,7 @@ and tests/run-all.sh when the change needs full integration coverage. -->
 ## Review notes
 
 <!-- Optional: compatibility, settings or migration impact, risks and follow-ups.
+For public interfaces or persisted settings, explain compatibility and recovery when relevant.
 Update docs/architecture.md when components or flows change. Remove this section if irrelevant. -->
 
 <!-- Add Closes #123 only for a real issue fully resolved by this PR; use Refs #123 for partial work. -->

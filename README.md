@@ -276,6 +276,8 @@ Git-level checks work independently of the AI tool. *Cursor's global rules requi
 
 ## Safeguards and workflow choices
 
+tack also carries engineering guidance: small coherent changes, regression tests for real behavior, explicit contracts and failures, compatibility checks at affected boundaries, and recovery for persistent-state changes. Apply the practices the task needs and verify them with project tools. [What each practice solves and how tack applies it](docs/engineering-practices.md).
+
 - **Executable checks:** staged-secret scanning, commit conventions, protected Git operations and runtime checks where supported. The command guard is a safety net, not a sandbox. [Boundaries](docs/how-it-works.md#what-the-command-guard-covers-and-what-it-does-not).
 - **Configuration preservation:** installation tracks its changes; reinstall and uninstall preserve independent user edits.
 - **Task-scaled guidance:** use the process that fits the task, with optional capabilities loaded for a concrete need.
@@ -345,6 +347,7 @@ Tests use temporary homes and repositories. Follow [AGENTS.md](AGENTS.md) for Ba
 | [Sharing configuration](docs/sharing.md) | [Components](docs/components.md) |
 | [Why tack](docs/why.md) | [Design decision](docs/adr/0003-project-verification-over-generic-process.md) |
 | [Customization](docs/customization.md) | [Benchmarks](docs/results.md) |
+| [Engineering practices](docs/engineering-practices.md) | [Contributing checks](docs/development.md) |
 
 <details>
 <summary><strong>Is tack an agent or a harness?</strong></summary>

@@ -2,7 +2,7 @@
 
 - Status: accepted (2026-10-08); first verification increment implemented. Real-model outcome measurement remains pending.
 - Evidence: [Codex comparison](../benchmarks/2026-10-08-codex.md), [code-quality review](../benchmarks/2026-10-08-codex-quality.md), [audit round 8](../audits/2026-10-08-evidence-review.md).
-- Delivery: [implementation plan](../plans/2026-10-08-project-verification-implementation.md).
+- Delivery: [implementation plan](../archive/plans/2026-10-08-project-verification-implementation.md).
 - External ideas: [upstream research and adoption decisions](../audits/2026-10-08-upstream-design-research.md).
 
 ## Context

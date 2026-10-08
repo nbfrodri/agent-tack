@@ -17,7 +17,7 @@ OpenHands' SDK repository was also inspected but no SDK integration was selected
 2. **Next experiment:** compact task-relevant context and removal of redundant discovery. Compare current tack, the candidate and plain Codex on the same frozen tasks.
 3. **Only with evidence:** richer dependency maps or specialist routing. Require a demonstrated defect reduction or human-effort saving that justifies additional latency and maintenance.
 
-This research informs [ADR 0003](../adr/0003-project-verification-over-generic-process.md) and the [implementation plan](../plans/2026-10-08-project-verification-implementation.md). Document the final adaptation and its tests; similarities to a popular project are not evidence of benefit.
+This research informs [ADR 0003](../adr/0003-project-verification-over-generic-process.md) and the [implementation plan](../archive/plans/2026-10-08-project-verification-implementation.md). Document the final adaptation and its tests; similarities to a popular project are not evidence of benefit.
 
 ## README presentation
 
