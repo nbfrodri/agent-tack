@@ -18,6 +18,7 @@ class IntegrationTests(unittest.TestCase):
         self.fixture.setUp()
         self.addCleanup(self.fixture.doCleanups)
         f = self.fixture
+        f.env['PYTHONDONTWRITEBYTECODE'] = '1'
         f.write('.gitignore', '__pycache__/\n.ran\n')
         f.write('producer.py', "def emit(): return {'total': 5}\n")
         f.write('consumer.py', "def read(record): return record['total']\n")
