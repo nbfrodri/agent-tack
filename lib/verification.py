@@ -102,14 +102,14 @@ def matches(path, pattern):
     return fnmatch.fnmatchcase(path, pattern) or ('**/' in pattern and fnmatch.fnmatchcase(path, pattern.replace('**/', '')))
 
 
-def plan(root, source, base=None):
+def plan(root, source, base=None, all_checks=False):
     changed, base = changes(root, base)
     checks, mapped = definitions(root, source)
     selected, covered = [], set()
     for check in checks:
         matched = [p for p in changed if (p == MAP or any(matches(p, pattern) for pattern in check['paths']))] if mapped else [
             p for p in changed if check['source'] == 'tack config check-fast' or SOURCE.search(p) or Path(p).name in CONFIG]
-        if not matched:
+        if not matched and not all_checks:
             continue
         covered.update(matched)
         duplicate = next((c for c in selected if c['command'] == check['command']), None)
@@ -119,7 +119,7 @@ def plan(root, source, base=None):
             duplicate['timeout_seconds'] = min(duplicate['timeout_seconds'], check['timeout_seconds'])
         else:
             selected.append({**check, 'ids': [check['id']], 'matched_paths': matched, 'status': 'planned'})
-    return dict(version=1, base=base, changed_paths=changed, checks=selected,
+    return dict(version=1, base=base, selection='all' if all_checks else 'changed', changed_paths=changed, checks=selected,
                 unmapped_paths=sorted(set(changed) - covered), mapped=mapped, status='planned',
                 note='Selected checks are declared verification, not proof of complete semantic coverage.')
 
@@ -156,8 +156,9 @@ def run(report, root, trusted, budget):
         report['status'] = 'untrusted'
         return 2
     if not report['checks']:
-        report['status'] = 'unverified' if report['changed_paths'] else 'no_changes'
-        return 3 if report['changed_paths'] else 0
+        unverified = report['changed_paths'] or report.get('selection') == 'all'
+        report['status'] = 'unverified' if unverified else 'no_changes'
+        return 3 if unverified else 0
     before = snapshot(root)
     deadline = time.monotonic() + budget
     for check in report['checks']:
@@ -199,6 +200,7 @@ def main():
     parser.add_argument('root', type=Path)
     parser.add_argument('source', type=Path)
     parser.add_argument('--plan', action='store_true')
+    parser.add_argument('--all', action='store_true', help='select all declared checks, even on a clean checkout')
     parser.add_argument('--json', action='store_true')
     parser.add_argument('--base')
     parser.add_argument('--budget-seconds', type=int, default=120)
@@ -206,7 +208,7 @@ def main():
     try:
         if not 1 <= args.budget_seconds <= 600:
             raise ValueError('budget-seconds must be 1..600')
-        report = plan(args.root, args.source, args.base)
+        report = plan(args.root, args.source, args.base, args.all)
         code = 0 if args.plan else run(report, args.root, os.environ.get('TACK_VERIFY_TRUSTED') == '1', args.budget_seconds)
     except (OSError, ValueError, subprocess.SubprocessError) as error:
         report, code = {'version': 1, 'status': 'error', 'error': str(error)}, 2

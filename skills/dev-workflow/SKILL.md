@@ -38,6 +38,7 @@ Respect existing authorization for pushes, GitHub writes and merges. Prepare req
 | Design tradeoffs or TDD details | `references/design.md`, `references/tdd.md` |
 | Changed documentation | `references/documentation.md`; `project-docs` for substantial documentation work |
 | Parallel team dependencies | `references/teamwork.md` |
+| Public contracts, configuration or producer/consumer changes | `references/contract-review.md` |
 | Concurrent working directories | `references/worktrees.md` |
 | Reply presentation | `references/communication.md` |
 | Explicit requirement IDs | `references/requirements.md`; trace is optional text linkage, not coverage |

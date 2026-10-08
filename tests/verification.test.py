@@ -92,6 +92,27 @@ class VerificationTests(unittest.TestCase):
         self.assertEqual(report['changed_paths'], ['src/api.py'])
         self.assertFalse((self.root / '.results').exists())
 
+    def test_all_checks_exposes_a_broken_clean_checkout_without_granting_trust(self):
+        self.define([self.check(command="python3 -c \"exec(open('src/api.py').read()); assert value == 2\""),
+                     self.check('web', ['web/*'], 'node --check web/app.js')])
+        self.assertEqual(self.verify()['status'], 'no_changes')
+        planned = self.verify('--all', '--plan')
+        self.assertEqual({c['id'] for c in planned['checks']}, {'api', 'web'})
+        self.assertEqual(self.verify('--all', expected=2)['status'], 'untrusted')
+        self.trust()
+        self.assertEqual(self.verify('--all', expected=1)['status'], 'failed')
+        self.write('src/api.py', 'value = 2\n')
+        self.commit()
+        self.git('branch', '-f', 'main', 'HEAD')
+        report = self.verify('--all')
+        self.assertEqual(report['status'], 'passed')
+        self.assertEqual(report['changed_paths'], [])
+
+    def test_all_without_any_check_is_unverified_even_on_clean_checkout(self):
+        self.define([])
+        self.trust()
+        self.assertEqual(self.verify('--all', expected=3)['status'], 'unverified')
+
     def test_untrusted_never_executes_even_with_environment_override(self):
         self.define([self.check(command='touch .results')])
         self.write('src/api.py', 'value = 2\n')

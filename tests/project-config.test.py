@@ -46,6 +46,21 @@ class ProjectConfigTests(unittest.TestCase):
         self.assertFalse((self.fixture.root / '.tack').exists())
         self.assertFalse((self.fixture.root / 'AGENTS.md').exists())
 
+    def test_fresh_clone_reuses_recorded_choices_without_inheriting_local_review_or_trust(self):
+        self.tack('enable', '--shared')
+        self.fixture.write('AGENTS.md', '# Project\n\n## Setup choices\nUse existing tests. No extra agents.\n')
+        self.tack('config', 'setup-review', 'done')
+        self.tack('trust')
+        self.fixture.commit()
+        clone = self.fixture.directory / 'choices-clone'
+        self.fixture.git('clone', '-q', str(self.fixture.root), str(clone))
+        self.fixture.root = clone
+        context = self.tack('context')
+        self.assertIn('Reuse recorded setup choices', context)
+        self.assertNotIn('ask which optional files to add', context)
+        self.assertEqual(self.tack('config', 'setup-review', '--get'), 'pending')
+        self.assertEqual(self.tack('trusted', expected=1), 'untrusted')
+
     def test_batch_shared_default_beats_teammate_personal_default(self):
         self.selection(**{'conventional-commits': True})
         self.tack('config', '--shared', '--apply', 'selected.json')

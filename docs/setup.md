@@ -91,4 +91,6 @@ For scripts, `tack trusted --quiet` exits 0 when locally trusted and 1 otherwise
 
 Start a new AI session to load saved choices. Leave the mode at `auto` for most work. See [daily use](usage.md), the [team walkthrough](sharing.md) or [configuration](configuration.md) for the next step.
 
+On a fresh clone, use `tack verify --all --plan` to inspect all declared checks, then `tack verify --all` after local trust to establish a tested starting point. Ordinary `verify` may select nothing on an unchanged checkout. If AGENTS.md has a `Setup choices` section, startup points the assistant to those decisions so it can reuse them; this does not grant trust or mark local review complete.
+
 To stop using tack or retire old plans, see [leaving and tidying a project](leaving.md). Disabling a workflow and deleting project knowledge are separate decisions.

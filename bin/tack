@@ -40,9 +40,10 @@ Commands:
   bootstrap [--source URL] [--revision COMMIT] [--directory PATH] [--dry-run]
                       Create optional collaborator setup files pinned to a tack commit;
                       generation does not install, activate or trust anything
-  verify [--plan] [--json] [--base REF] [--budget-seconds N]
+  verify [--all] [--plan] [--json] [--base REF] [--budget-seconds N]
                       Select checks for changed paths; execute only with local trust
                       --plan is read-only; report failures and verification gaps
+                      --all selects all declared checks, including on a clean clone
   disable             Disable this clone and remove the shared marker
   migrate             Move settings and the marker from the former harness name to tack
                       (this clone and user-wide); tack doctor says when it is needed
@@ -88,7 +89,7 @@ Modes:
   auto                Default: the assistant picks lite, standard or strict per task
   lite                Branch, Conventional Commits and tests; no plans, handoffs or logs
   standard            Adds TDD, a short plan and docs when behaviour changes
-  strict              The full workflow: plans, handoffs, AI log, reviews, delegation
+  strict              Risk-specific plans, tests and review for consequential changes
 
 Exit codes:
   status              0 if enabled, 1 if disabled; independent of formatter trust
@@ -404,7 +405,13 @@ case "$cmd" in
     fi
     case "$(key_get setupReview)" in
       done | deferred) ;;
-      *) echo 'Project setup review pending: when initializing or asked to configure the project, run tack setup and follow new-project -> references/onboarding.md; ask which optional files to add and remember choices. For focused tasks, reuse existing guidance and postpone unrelated setup unless it blocks the task. Read-only requests stay read-only.' ;;
+      *)
+        if [ -f "$root/AGENTS.md" ] && [ ! -L "$root/AGENTS.md" ] && grep -qiE '^#{1,6}[[:space:]]+Setup choices[[:space:]]*$' "$root/AGENTS.md"; then
+          echo 'Reuse recorded setup choices in AGENTS.md; do not repeat settled questions. Local review and execution trust remain separate. On requested onboarding, inspect local readiness and only resolve new gaps.'
+        else
+          echo 'Project setup review pending: when initializing or asked to configure the project, run tack setup and follow new-project -> references/onboarding.md; ask which optional files to add and remember choices. For focused tasks, reuse existing guidance and postpone unrelated setup unless it blocks the task. Read-only requests stay read-only.'
+        fi
+        ;;
     esac
     bash "$source_root/lib/project-context.sh" "$root" "$(context_level)"
     if [ -e "$root/checks-map.json" ] || [ -L "$root/checks-map.json" ]; then
