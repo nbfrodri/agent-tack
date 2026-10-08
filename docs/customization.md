@@ -4,13 +4,14 @@ Tack is meant to be your own configuration. After cloning the repository, you ca
 
 ## Make it yours
 
-Clone it into any directory you choose and install from that checkout, as shown in the [README](../README.md#install). Use a fork or your own copy if you want to keep personal changes in a separate remote repository; a local clone is enough for changes on one machine.
+Clone it into any directory you choose and install from that checkout, as shown in the [README](../README.md#quick-start). Use a fork or your own copy if you want to keep personal changes in a separate remote repository; a local clone is enough for changes on one machine.
 
 | What you want to change | Where to edit |
 | --- | --- |
 | Conversation language, permissions and global preferences | `global/AGENTS.md` |
 | Planning, testing, commits and documentation workflow, and what each level requires | `skills/dev-workflow/` and its references; each level's rules in `modes/<name>.md` (default level: `tack mode <mode> --global`) |
 | Which docs must change with which code (checked before the assistant stops) | `docs-map.txt` in each project's root: `code glob \| doc, doc` |
+| Which existing checks run for changed paths | Optional project `checks-map.json`; inspect with `tack verify --plan` before granting local trust |
 | Your own workflow modes, without touching the repository | `tack mode new <name> --from <mode>`, then edit `~/.config/agent-tack/modes/<name>.md` |
 | Task-specific guidance or reusable templates | `skills/<name>/SKILL.md`, `references/` and `assets/`; a new skill also needs a line in `skill-groups.txt` (`core`, `process` or `stack`) |
 | Which skills are installed | `tack config skill-groups --global` (`all`, or `core` plus `process` and/or `stack`), then `./install.sh` |
