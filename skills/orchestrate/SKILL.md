@@ -9,7 +9,7 @@ You plan, delegate, integrate and verify. Delegation pays off when a complex tas
 
 ## 1. Check mode, plan and split
 
-In an enabled project, automatic delegation applies only to tasks at the strict workflow level (`dev-workflow`); at lite and standard, suggest it and wait for approval. Then read `git config --get tack.delegation`: absent or `auto` allows automatic delegation; `off` disables it. Treat any other value as off and explain the invalid setting. Outside enabled projects, suggest delegation and wait for approval unless the user requested it. An explicit request for subagents authorises delegation for that task even when automatic mode is off.
+In an enabled project, automatic delegation applies only to useful separable work at the strict workflow level (`dev-workflow`); at lite and standard, suggest it and wait for approval. Read `tack config delegation --get` once so shared preferences and local overrides apply: `auto` permits eligible delegation; `off` disables it. Treat an invalid value as off and explain it. Outside enabled projects, suggest delegation and wait for approval unless the user requested it. An explicit request for subagents authorises delegation for that task even when automatic mode is off.
 
 - Follow the approved scope and planning requirements in `dev-workflow`. Automatic delegation does not authorise an unapproved large or risky implementation plan.
 - After the plan is approved, automatically delegate complex separable work in auto mode. Show the task, owner, files, model, effort and reason in a concise progress update; do not ask again for delegation approval.
@@ -30,7 +30,7 @@ Inspect the current tool's actual model and reasoning controls before choosing. 
 
 The capabilities map to tiers (`economical`, `balanced`, `strongest`); `tack models TIER` gives the current tool's model for one, from data the user can override, so rules never name a vendor's model. When `tack config subagent-model` is `economical`, start every task on the most economical model that can do it and move up only when it cannot. Bump the recommendation for unclear requirements, missing tests or costly mistakes. If the runtime exposes no model choice, inherit the available model. If a model or effort cannot be set, report the actual fallback; do not claim a selection was applied. Do not rewrite shared agent definitions just to change one invocation's effort. Ask only when an unresolved choice materially affects the approved budget or scope.
 
-Record actual models, effort settings, fallbacks, branches/worktrees and task status in the orchestration handoff and `docs/ai/log.md`. Keep the handoff current as agents report so work can resume after interruption.
+Record actual models, effort settings, fallbacks, branches/worktrees and task status in a useful orchestration handoff. Use an AI log only when project policy requires it or it adds evidence beyond that handoff and Git/PR history. Keep the handoff current at milestones so work can resume after interruption.
 
 ## 2. Delegate
 Check the project's AGENTS.md capability index before choosing a role. Reuse a matching local definition; follow `lessons` → `references/project-capabilities.md` when a reusable specialist is missing. Creating a definition does not change delegation authorization or prove native registration.

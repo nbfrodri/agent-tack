@@ -72,7 +72,7 @@ These are committed so the reasons behind the work stay in history and anyone ca
 ## AI usage
 The project documents how AI is used. This is the place for it: commits stay free of AI attribution (as the user decided), and this log is where AI involvement is recorded.
 - `docs/ai/README.md`: which assistants are used and with which configuration (skills, hooks, MCP servers), what the AI may do on its own and what needs human review.
-- `docs/ai/log.md`: after each strict-level task (and any audit), append one row in the same commit as the change it records, not in a separate commit: date, tool and model, task, outcome (the branch or PR; a commit cannot name its own SHA), what a human reviewed. Keep the newest entries at the top.
+- `docs/ai/log.md`: use when project policy requires it or the entry records useful information beyond Git/PR history. Strict mode or an audit alone does not require a log. Keep entries concise and commit with the work they describe.
 - `docs/ai/prompts.md`: when a prompt or request worked notably well for this project, offer to save it (one line saying when to use it, then the prompt).
 
 ## Architecture docs

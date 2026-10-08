@@ -34,6 +34,8 @@ New to tack? Read [setup](setup.md), then [daily use](usage.md). You do not need
 
 ## Decisions and history
 
+The [value-first workflow plan](plans/2026-10-08-value-first-workflow-implementation.md) proposes reducing workflow cost, evaluating optional tools and improving team coordination. It is planned work, not shipped behavior.
+
 The [backend/frontend pilot](benchmarks/2026-10-08-teamwork.md) reports a separate four-session comparison, its null acceptance gain and the completion-reminder defect it exposed.
 
 [The quality and efficiency comparison](benchmarks/2026-10-08-quality-efficiency.md) reports the completed experiment, independent code review and unmet speed targets. Its [archived implementation plan](archive/plans/2026-10-08-quality-and-efficiency-implementation.md) records the intended work and completion decisions.
