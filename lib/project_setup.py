@@ -212,7 +212,9 @@ def main():
             print(f"Docs-map: {report['docs_map_rules']} active rule(s)")
             if report['truncated']:
                 print('Inventory limited to 3000 paths; inspect omitted packages before proposing additions.')
-            print('Ask which optional files to add; record choices in AGENTS.md. Finish with tack setup --check and tack config setup-review done, or deferred to postpone.')
+            print('Next: read tack config --json for values and origins; select only unresolved preferences and optional additions.')
+            print('Save selected shared values, including defaults, with tack config --shared --apply FILE (preview with --dry-run). Local overrides remain local.')
+            print('Record choices in AGENTS.md; finish with tack setup --check and tack config setup-review done, or deferred to postpone.')
         return 1 if args.check and report['issues'] else 0
     except (OSError, ValueError, subprocess.SubprocessError) as error:
         parser.exit(1, f'tack setup: {error}\n')

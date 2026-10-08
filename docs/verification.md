@@ -28,6 +28,8 @@ Optional `checks-map.json` is versioned project data. Activation and scaffolding
 
 Patterns use case-sensitive forward-slash project paths. `*` spans directories; `**/` also matches zero directories. Each selected command runs from the repository root, once even when multiple rules select it; duplicate commands use the shortest declared timeout. File names are never interpolated into commands. Changes to the map select every check. Commands run in Bash with pipeline failure propagation. Reuse a project's existing pre-commit/lint/type/test commands when appropriate; tack installs no extra checker.
 
+Keep maps proportionate. If `npm test` already runs the focused suites, selecting all three repeats work; use the full command alone or map focused suites where appropriate. Tack cannot infer command containment. Retain project-required checks and keep prose needing manual review visible rather than mapping it to unrelated tests.
+
 Without a map, verification reuses `check-fast` when set, or the canonical test command already detected by tack for source/test/recognized build-config changes. Other paths remain unmapped. This fallback is not dependency analysis or proof that every relevant test ran.
 
 Results identify commands, their source, matched paths, statuses and bounded failure output. Exit codes: **0** selected checks passed with unchanged inputs and no unmapped paths, or explicitly **no_changes**; **1** a check failed/timed out; **2** configuration/execution/trust error; **3** verification is incomplete or unavailable. `--plan` returns 0 for a valid plan even when it reports unmapped paths; it never claims checks passed. No checks for changed files is **unverified**, not success.

@@ -13,6 +13,7 @@ New to tack? Read [setup](setup.md), then [daily use](usage.md). You do not need
 | Save defaults and choose document locations | [Configuration](configuration.md) |
 | Select checks and understand their results | [Verification](verification.md) |
 | Add selected third-party skills | [External skills](external-skills.md) |
+| Disable tack or tidy old project records | [Leaving a project](leaving.md) |
 | Use a particular tool or platform | [Editors and AI tools](editors.md) |
 
 ## Go deeper when needed
@@ -31,6 +32,8 @@ New to tack? Read [setup](setup.md), then [daily use](usage.md). You do not need
 | Measured outcomes and limitations | [Results](results.md) |
 
 ## Decisions and history
+
+[The quality and efficiency comparison](benchmarks/2026-10-08-quality-efficiency.md) reports the completed experiment, independent code review and unmet speed targets. Its [archived implementation plan](archive/plans/2026-10-08-quality-and-efficiency-implementation.md) records the intended work and completion decisions.
 
 [ADRs](adr/) explain design decisions. [Audits](audits/) record findings against a dated revision; they are not the current usage manual. [Archived plans and handoffs](archive/) preserve completed work. Historical benchmarks describe the version tested, including old names and behavior.
 

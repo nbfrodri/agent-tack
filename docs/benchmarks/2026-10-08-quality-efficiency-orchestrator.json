@@ -1,0 +1,666 @@
+{
+  "review-01-1": {
+    "bundle_sha256": "d12a843244b82b0a1da003403981ddf15d23734833fce2b7b56c27fa17c6e0f9",
+    "review_sha256": "ee1e73fcf0bd15be392eebe92f0945b3df1abe0f32c92de189029b2955165727",
+    "source_assessment": "All three settings implementations preserve mutable isolation and validate supplied override values before env precedence. Small helpers are proportionate. C adds Mapping validation and clearer int conversion errors; B is compact; E separates validation from merging. No common-path functional defect or severe design issue found. All three int(attempts) conversions can reject an otherwise valid decimal string with more than the Python digit limit of leading zeros; investigate this low-frequency boundary separately, without treating it as hidden acceptance evidence.",
+    "source_labels": "Source assessment uses first-presentation labels.",
+    "labels_to_first_presentation": {
+      "C": [
+        "C"
+      ],
+      "B": [
+        "B"
+      ],
+      "E": [
+        "E"
+      ]
+    },
+    "review_findings": "Both reviews correctly identify the long leading-zero conversion boundary. I confirm it from int() use and the documented lack of a length bound. Normal copying, validation and layer order are sound in every candidate.",
+    "disagreement": "The narrow preference changes from first-presentation E to B; differences are style/extensibility judgments. Neither is a decisive winner. No severe finding or two-point dimension disagreement.",
+    "blinding": "Condition mapping and acceptance results unopened. No condition assignment used; code familiarity can still create residual expectation bias."
+  },
+  "review-01-2": {
+    "bundle_sha256": "8601822e9ce5d7d165a073bdb0f93a783d4ea74fa7411b232b002b97ea9ca31e",
+    "review_sha256": "d080181e4bcc42d496a87bb6fa19f6dc89a3328c0a6ba1443e57bc7c7e32128a",
+    "source_assessment": "All three settings implementations preserve mutable isolation and validate supplied override values before env precedence. Small helpers are proportionate. C adds Mapping validation and clearer int conversion errors; B is compact; E separates validation from merging. No common-path functional defect or severe design issue found. All three int(attempts) conversions can reject an otherwise valid decimal string with more than the Python digit limit of leading zeros; investigate this low-frequency boundary separately, without treating it as hidden acceptance evidence.",
+    "source_labels": "Source assessment uses first-presentation labels.",
+    "labels_to_first_presentation": {
+      "C": [
+        "E"
+      ],
+      "D": [
+        "B"
+      ],
+      "A": [
+        "C"
+      ]
+    },
+    "review_findings": "Both reviews correctly identify the long leading-zero conversion boundary. I confirm it from int() use and the documented lack of a length bound. Normal copying, validation and layer order are sound in every candidate.",
+    "disagreement": "The narrow preference changes from first-presentation E to B; differences are style/extensibility judgments. Neither is a decisive winner. No severe finding or two-point dimension disagreement.",
+    "blinding": "Condition mapping and acceptance results unopened. No condition assignment used; code familiarity can still create residual expectation bias."
+  },
+  "review-02-1": {
+    "bundle_sha256": "7d97351d22b344a8f8884442343cae0c918e6fa442677a84da5cb22991336a48",
+    "review_sha256": "df07452db13b5ff9182c962b1967cb95caa0b991357343363d35b5ade9b27e1e",
+    "source_assessment": "E and C have equivalent validation and routing; C only expands the routing table formatting. D retains the original weak envelope check at src/validate.js:2 and can accept a function with attached event fields; E/C reject it. Enriched arrays are a contract-interpretation edge, since ordinary serialized arrays lack the named fields. Prefer E/C for defensive input handling, but this is inherited weakness, not a newly introduced failure. No speculative event framework is needed.",
+    "source_labels": "Source assessment uses first-presentation labels.",
+    "labels_to_first_presentation": {
+      "E": [
+        "E"
+      ],
+      "C": [
+        "C"
+      ],
+      "D": [
+        "D"
+      ]
+    },
+    "review_findings": "Confirm the weak envelope guard in first-presentation D. Also confirm the first review's shared inherited/non-enumerable ID observation: validation reads event.id but dispatch reads payload.id after spread. Preserve this caveat even though the second review assumes ordinary own data properties.",
+    "disagreement": "The same envelope issue is minor in one review and major in the other; I treat it as a narrow inherited input-validation defect, not a new severe design regression. The two-point robustness difference for E/C is due to the different inherited-property assumption. E/C remain the narrow preference; scores stay unchanged.",
+    "blinding": "Condition mapping and acceptance results unopened. No condition assignment used; code familiarity can still create residual expectation bias."
+  },
+  "review-02-2": {
+    "bundle_sha256": "4320efd622c8440aa3610c112e79b280abb9015a7ca0214a6469ef898a325d06",
+    "review_sha256": "898e401f914cb2b65ea0f07833457b34d26e86b47c179793e6ca5d49d8611890",
+    "source_assessment": "E and C have equivalent validation and routing; C only expands the routing table formatting. D retains the original weak envelope check at src/validate.js:2 and can accept a function with attached event fields; E/C reject it. Enriched arrays are a contract-interpretation edge, since ordinary serialized arrays lack the named fields. Prefer E/C for defensive input handling, but this is inherited weakness, not a newly introduced failure. No speculative event framework is needed.",
+    "source_labels": "Source assessment uses first-presentation labels.",
+    "labels_to_first_presentation": {
+      "D": [
+        "D"
+      ],
+      "F": [
+        "C"
+      ],
+      "E": [
+        "E"
+      ]
+    },
+    "review_findings": "Confirm the weak envelope guard in first-presentation D. Also confirm the first review's shared inherited/non-enumerable ID observation: validation reads event.id but dispatch reads payload.id after spread. Preserve this caveat even though the second review assumes ordinary own data properties.",
+    "disagreement": "The same envelope issue is minor in one review and major in the other; I treat it as a narrow inherited input-validation defect, not a new severe design regression. The two-point robustness difference for E/C is due to the different inherited-property assumption. E/C remain the narrow preference; scores stay unchanged.",
+    "blinding": "Condition mapping and acceptance results unopened. No condition assignment used; code familiarity can still create residual expectation bias."
+  },
+  "review-03-1": {
+    "bundle_sha256": "a98ae3813b4201ac43d2d9b887f5399237266caa2b8d162aa1af43785a08dd07",
+    "review_sha256": "5fea9100e40a20adee57a1423bd416cf70cd71aa7bc714d4ce52348a7d3d06ca",
+    "source_assessment": "All three production files are identical and correctly use safe-integer bounds and slice. Tie. Offset+limit beyond the safe-integer range cannot wrap into a real JavaScript array position, so it is not a practical slicing defect. Items-type behavior is underspecified beyond the implied array input; do not invent a large score difference for identical code.",
+    "source_labels": "Source assessment uses first-presentation labels.",
+    "labels_to_first_presentation": {
+      "C": [
+        "C",
+        "A",
+        "D"
+      ],
+      "A": [
+        "C",
+        "A",
+        "D"
+      ],
+      "D": [
+        "C",
+        "A",
+        "D"
+      ]
+    },
+    "review_findings": "Confirm both complete ties: all three files are identical and implement the specified numeric bounds and slicing. Non-array handling remains an explicit scope ambiguity, not a reason to distinguish identical candidates.",
+    "disagreement": "No score or finding disagreement.",
+    "blinding": "Condition mapping and acceptance results unopened. No condition assignment used; code familiarity can still create residual expectation bias."
+  },
+  "review-03-2": {
+    "bundle_sha256": "eb7ce7e0ffb1e2e82876d2bf1d9a6f052ff7050c98ce302f7cda8c38de30313f",
+    "review_sha256": "e098cc2e38f24078e70d9a3b4c47751fb7a79143f5b85f6196d48c1d288715f9",
+    "source_assessment": "All three production files are identical and correctly use safe-integer bounds and slice. Tie. Offset+limit beyond the safe-integer range cannot wrap into a real JavaScript array position, so it is not a practical slicing defect. Items-type behavior is underspecified beyond the implied array input; do not invent a large score difference for identical code.",
+    "source_labels": "Source assessment uses first-presentation labels.",
+    "labels_to_first_presentation": {
+      "A": [
+        "C",
+        "A",
+        "D"
+      ],
+      "C": [
+        "C",
+        "A",
+        "D"
+      ],
+      "F": [
+        "C",
+        "A",
+        "D"
+      ]
+    },
+    "review_findings": "Confirm both complete ties: all three files are identical and implement the specified numeric bounds and slicing. Non-array handling remains an explicit scope ambiguity, not a reason to distinguish identical candidates.",
+    "disagreement": "No score or finding disagreement.",
+    "blinding": "Condition mapping and acceptance results unopened. No condition assignment used; code familiarity can still create residual expectation bias."
+  },
+  "review-04-1": {
+    "bundle_sha256": "6ca0bcc0394f72dfbc36d0d190cf021e69bcb1c50a097d0d310dbc061d63fa1d",
+    "review_sha256": "13dfee26fda49d634f188e6072f7880bccee78f13373a61e2a8fd1b38fcaca7b",
+    "source_assessment": "C/A/E preserve a useful split between pure parsing and CLI presentation. Fullmatch rejects trailing key junk, split with maxsplit=1 retains equals signs, pop(default) makes missing unset safe, and missing/trailing operands fail cleanly. Differences are names, error wording and whitespace. Tie; no substantiated functional or design issue.",
+    "source_labels": "Source assessment uses first-presentation labels.",
+    "labels_to_first_presentation": {
+      "C": [
+        "C"
+      ],
+      "A": [
+        "A"
+      ],
+      "E": [
+        "E"
+      ]
+    },
+    "review_findings": "Confirm both ties. Every implementation cleanly separates the pure parser from CLI output/error translation and satisfies the inspected operation and error contracts. Names, whitespace and error prefixes do not support a preference.",
+    "disagreement": "No score or finding disagreement.",
+    "blinding": "Condition mapping and acceptance results unopened. No condition assignment used; code familiarity can still create residual expectation bias."
+  },
+  "review-04-2": {
+    "bundle_sha256": "af2538b817aa9d5a4b11e3d7f7bc73690d5b6ed1ca920b4551ca2a7885ba01dc",
+    "review_sha256": "b37d7ffd2ff718941ed961ac4f8bdfe405fdcb4105d5504355682091d5623666",
+    "source_assessment": "C/A/E preserve a useful split between pure parsing and CLI presentation. Fullmatch rejects trailing key junk, split with maxsplit=1 retains equals signs, pop(default) makes missing unset safe, and missing/trailing operands fail cleanly. Differences are names, error wording and whitespace. Tie; no substantiated functional or design issue.",
+    "source_labels": "Source assessment uses first-presentation labels.",
+    "labels_to_first_presentation": {
+      "F": [
+        "E"
+      ],
+      "A": [
+        "A"
+      ],
+      "C": [
+        "C"
+      ]
+    },
+    "review_findings": "Confirm both ties. Every implementation cleanly separates the pure parser from CLI output/error translation and satisfies the inspected operation and error contracts. Names, whitespace and error prefixes do not support a preference.",
+    "disagreement": "No score or finding disagreement.",
+    "blinding": "Condition mapping and acceptance results unopened. No condition assignment used; code familiarity can still create residual expectation bias."
+  },
+  "review-05-1": {
+    "bundle_sha256": "17731e59cc27a4456616ba07b41fbe910dc154cdad4f5dcda3c1aadb6d826b29",
+    "review_sha256": "4ff006e8c6e4256f3ab8e75d02fa393a21966c2d935a3f6074b54e909df2d0ef",
+    "source_assessment": "B/A are identical. F adds an explicit array guard but combines all failures into one less-specific message. All satisfy normal array pagination and preserve identity. Prefer F defensively for non-array input if reject-invalid-arguments is read broadly; the items type is not explicitly specified, so this is a small robustness distinction, not decisive proof of functional superiority.",
+    "source_labels": "Source assessment uses first-presentation labels.",
+    "labels_to_first_presentation": {
+      "F": [
+        "F"
+      ],
+      "B": [
+        "B",
+        "A"
+      ],
+      "A": [
+        "B",
+        "A"
+      ]
+    },
+    "review_findings": "Confirm the observed non-array behavior and F's stricter guard. Both judges call its absence major under a broad invalid-arguments interpretation. I retain it as a useful boundary finding with explicit contract ambiguity; an assumed-array interpretation makes all three acceptable, as the second judgment itself states.",
+    "disagreement": "This is also a cross-bundle calibration problem: identical unguarded code in group 03 received 10, while here robustness is 6/7. Preserve raw grades, but do not interpret these contextual differences as an objective effect of a development setup. No new severe architecture regression is established.",
+    "blinding": "Condition mapping and acceptance results unopened. No condition assignment used; code familiarity can still create residual expectation bias."
+  },
+  "review-05-2": {
+    "bundle_sha256": "6181681d8a73c57e07586058d7a9fd3ff6eaf1ec58578b4037b41164f34e59e6",
+    "review_sha256": "b4ffeb09edddb9748fe76906cf2d178847d562d1ef4e78cfa4982a3bb3aa9b90",
+    "source_assessment": "B/A are identical. F adds an explicit array guard but combines all failures into one less-specific message. All satisfy normal array pagination and preserve identity. Prefer F defensively for non-array input if reject-invalid-arguments is read broadly; the items type is not explicitly specified, so this is a small robustness distinction, not decisive proof of functional superiority.",
+    "source_labels": "Source assessment uses first-presentation labels.",
+    "labels_to_first_presentation": {
+      "C": [
+        "B",
+        "A"
+      ],
+      "A": [
+        "B",
+        "A"
+      ],
+      "B": [
+        "F"
+      ]
+    },
+    "review_findings": "Confirm the observed non-array behavior and F's stricter guard. Both judges call its absence major under a broad invalid-arguments interpretation. I retain it as a useful boundary finding with explicit contract ambiguity; an assumed-array interpretation makes all three acceptable, as the second judgment itself states.",
+    "disagreement": "This is also a cross-bundle calibration problem: identical unguarded code in group 03 received 10, while here robustness is 6/7. Preserve raw grades, but do not interpret these contextual differences as an objective effect of a development setup. No new severe architecture regression is established.",
+    "blinding": "Condition mapping and acceptance results unopened. No condition assignment used; code familiarity can still create residual expectation bias."
+  },
+  "review-06-1": {
+    "bundle_sha256": "0092d76bf6aa99392f45e60ebd14c8b65cf438076219c050bd786f6d3740904a",
+    "review_sha256": "cad19f92b59dfd7379e2d45c8ab0f358ddc266a39c0d4c64b634f8bbf444d77e",
+    "source_assessment": "D explicitly validates the event envelope; E/A retain the preexisting weak guard and can admit functions with attached event fields. Integer plus explicit upper/lower bounds in A/D is equivalent to safe-integer plus lower bound in E. D is a small robustness preference, E/A otherwise remain focused and compatible. No need for new abstractions.",
+    "source_labels": "Source assessment uses first-presentation labels.",
+    "labels_to_first_presentation": {
+      "E": [
+        "E"
+      ],
+      "D": [
+        "D"
+      ],
+      "A": [
+        "A"
+      ]
+    },
+    "review_findings": "Confirm both envelope findings for first-presentation E/A and the narrow preference for D. Integer/range checks and safe-integer checks are equivalent here. Both reviews assume ordinary event records and omit the shared inherited-ID boundary found in group 02; that caveat also applies to this source.",
+    "disagreement": "A one-point changeability difference does not alter the preference or substantive findings. No severe disagreement.",
+    "blinding": "Condition mapping and acceptance results unopened. No condition assignment used; code familiarity can still create residual expectation bias."
+  },
+  "review-06-2": {
+    "bundle_sha256": "efbf3d59b3cd8b32be68f194a683babf5079833986b937e09136dd93b8270db8",
+    "review_sha256": "c0386514b7f3be1acf5f5610cb29940cd861edb7efb4161c4d72cd4b7d0a8ae5",
+    "source_assessment": "D explicitly validates the event envelope; E/A retain the preexisting weak guard and can admit functions with attached event fields. Integer plus explicit upper/lower bounds in A/D is equivalent to safe-integer plus lower bound in E. D is a small robustness preference, E/A otherwise remain focused and compatible. No need for new abstractions.",
+    "source_labels": "Source assessment uses first-presentation labels.",
+    "labels_to_first_presentation": {
+      "A": [
+        "A"
+      ],
+      "E": [
+        "D"
+      ],
+      "F": [
+        "E"
+      ]
+    },
+    "review_findings": "Confirm both envelope findings for first-presentation E/A and the narrow preference for D. Integer/range checks and safe-integer checks are equivalent here. Both reviews assume ordinary event records and omit the shared inherited-ID boundary found in group 02; that caveat also applies to this source.",
+    "disagreement": "A one-point changeability difference does not alter the preference or substantive findings. No severe disagreement.",
+    "blinding": "Condition mapping and acceptance results unopened. No condition assignment used; code familiarity can still create residual expectation bias."
+  },
+  "review-07-1": {
+    "bundle_sha256": "c1dbae5bfd71f7f5cab6de80de291c0c02acd076ac8da163211dea71ad637dc8",
+    "review_sha256": "12bdaec2b386cb57d7ba0826c834129faa433ba0ef10fef74703e6dd5e497251",
+    "source_assessment": "A/D are identical; B adds a redundant beyond-end early return before slice. All validate numeric bounds and solve the original issue. Prefer the direct slice version slightly for simplicity, not correctness; no severe issue.",
+    "source_labels": "Source assessment uses first-presentation labels.",
+    "labels_to_first_presentation": {
+      "A": [
+        "A",
+        "D"
+      ],
+      "D": [
+        "A",
+        "D"
+      ],
+      "B": [
+        "B"
+      ]
+    },
+    "review_findings": "Confirm both reviews: all candidates implement ordinary-array pagination correctly; B adds only a redundant beyond-end return. Prefer direct slice slightly on simplicity, not functional success.",
+    "disagreement": "Identical preferences and grades after relabeling. Non-array behavior remains the same contract ambiguity seen in groups 03 and 05.",
+    "blinding": "Condition mapping and acceptance results unopened. No condition assignment used; code familiarity can still create residual expectation bias."
+  },
+  "review-07-2": {
+    "bundle_sha256": "b72f76d3472dde3d90afa143add636ba4c66c73238933d4c29acd19e72bea248",
+    "review_sha256": "a0af6b59008de139c2e57e2c6c154cfcb76f742dd430cca252b139ae65e3bfec",
+    "source_assessment": "A/D are identical; B adds a redundant beyond-end early return before slice. All validate numeric bounds and solve the original issue. Prefer the direct slice version slightly for simplicity, not correctness; no severe issue.",
+    "source_labels": "Source assessment uses first-presentation labels.",
+    "labels_to_first_presentation": {
+      "F": [
+        "B"
+      ],
+      "B": [
+        "A",
+        "D"
+      ],
+      "C": [
+        "A",
+        "D"
+      ]
+    },
+    "review_findings": "Confirm both reviews: all candidates implement ordinary-array pagination correctly; B adds only a redundant beyond-end return. Prefer direct slice slightly on simplicity, not functional success.",
+    "disagreement": "Identical preferences and grades after relabeling. Non-array behavior remains the same contract ambiguity seen in groups 03 and 05.",
+    "blinding": "Condition mapping and acceptance results unopened. No condition assignment used; code familiarity can still create residual expectation bias."
+  },
+  "review-08-1": {
+    "bundle_sha256": "6de66067f496bef47e596f47fb7bf1b1a5db8641119a4d43635ec02334a3a079",
+    "review_sha256": "95f3849cc2b829ccb671d220c918e4368c2e0cd7ec349fc2fc50a85b7e4ca57e",
+    "source_assessment": "All three settings implementations avoid mutable aliasing. E parses decimal digits incrementally and rejects above 10 early, correctly handling arbitrarily many leading zeros without Python int string-length failures; C/F call int on the whole string and can reject that valid edge case. This is a real but narrow robustness distinction. E adds some parsing complexity for that reason; no framework or unnecessary classes are introduced.",
+    "source_labels": "Source assessment uses first-presentation labels.",
+    "labels_to_first_presentation": {
+      "C": [
+        "C"
+      ],
+      "F": [
+        "F"
+      ],
+      "E": [
+        "E"
+      ]
+    },
+    "review_findings": "Confirm both findings about whole-string int conversion and the preference for first-presentation E, whose bounded digit loop covers long leading-zero inputs. The extra parser has a concrete reason; no bonus for size or abstraction is warranted.",
+    "disagreement": "Preferences and boundary findings agree. The second review gives higher scores in several design dimensions (up to 0.7 in the weighted total for C/F) without a corresponding new factual finding. Treat this as grading variability, retain both opinions and do not claim precision from their average.",
+    "blinding": "Condition mapping and acceptance results unopened. No condition assignment used; code familiarity can still create residual expectation bias."
+  },
+  "review-08-2": {
+    "bundle_sha256": "d59f50758677dda8b361293e785f54f5ac9e2e5a23e8b5b9d05d04a8b52f81fe",
+    "review_sha256": "cefa0b6450c0b9502b49385a49614ac2b2b5b2f50423eb33cfbc2d683a0f08eb",
+    "source_assessment": "All three settings implementations avoid mutable aliasing. E parses decimal digits incrementally and rejects above 10 early, correctly handling arbitrarily many leading zeros without Python int string-length failures; C/F call int on the whole string and can reject that valid edge case. This is a real but narrow robustness distinction. E adds some parsing complexity for that reason; no framework or unnecessary classes are introduced.",
+    "source_labels": "Source assessment uses first-presentation labels.",
+    "labels_to_first_presentation": {
+      "A": [
+        "E"
+      ],
+      "E": [
+        "F"
+      ],
+      "C": [
+        "C"
+      ]
+    },
+    "review_findings": "Confirm both findings about whole-string int conversion and the preference for first-presentation E, whose bounded digit loop covers long leading-zero inputs. The extra parser has a concrete reason; no bonus for size or abstraction is warranted.",
+    "disagreement": "Preferences and boundary findings agree. The second review gives higher scores in several design dimensions (up to 0.7 in the weighted total for C/F) without a corresponding new factual finding. Treat this as grading variability, retain both opinions and do not claim precision from their average.",
+    "blinding": "Condition mapping and acceptance results unopened. No condition assignment used; code familiarity can still create residual expectation bias."
+  },
+  "review-09-1": {
+    "bundle_sha256": "c75bcba8abbf1578b06910490b6dac6632a93e6674f2868a513a67e9e0c5eb46",
+    "review_sha256": "ed5d4f482ffb36045ab09fdb25727072298fceecf7bf6652f196ddd0bcae1e5a",
+    "source_assessment": "B adds the strongest envelope check, F rejects functions but allows arrays with named fields, D retains the weaker original guard. Switch versus if/else and topic-map layout are reasonable local alternatives, not architecture wins. All derive key from the shallow copy, so the reviewer-identified inherited/non-enumerable ID issue also applies here. Prefer B narrowly for defensive validation; ordinary event behavior remains aligned.",
+    "source_labels": "Source assessment uses first-presentation labels.",
+    "labels_to_first_presentation": {
+      "F": [
+        "F"
+      ],
+      "B": [
+        "B"
+      ],
+      "D": [
+        "D"
+      ]
+    },
+    "review_findings": "Confirm the function-envelope defect in first-presentation D. I accept the reviewers' qualification that array acceptance is unresolved; B's stronger array guard is a defensive preference, not proof F violates an explicit non-array restriction. All retain the inherited-ID boundary noted in group 02.",
+    "disagreement": "Both judgments prefer F/B and agree on the finding. One-point robustness variation for D is severity calibration, not a different defect. No severe disagreement.",
+    "blinding": "Condition mapping and acceptance results unopened. No condition assignment used; code familiarity can still create residual expectation bias."
+  },
+  "review-09-2": {
+    "bundle_sha256": "bfc857f63a1a5f057a0a4187a0d27fbfa89b55d244fb29868126a90c55078ab4",
+    "review_sha256": "8ca825a20ce136d7b5b0dcb11988b16da31e993ac7227081922d6b5e16d0f6ea",
+    "source_assessment": "B adds the strongest envelope check, F rejects functions but allows arrays with named fields, D retains the weaker original guard. Switch versus if/else and topic-map layout are reasonable local alternatives, not architecture wins. All derive key from the shallow copy, so the reviewer-identified inherited/non-enumerable ID issue also applies here. Prefer B narrowly for defensive validation; ordinary event behavior remains aligned.",
+    "source_labels": "Source assessment uses first-presentation labels.",
+    "labels_to_first_presentation": {
+      "C": [
+        "D"
+      ],
+      "F": [
+        "B"
+      ],
+      "B": [
+        "F"
+      ]
+    },
+    "review_findings": "Confirm the function-envelope defect in first-presentation D. I accept the reviewers' qualification that array acceptance is unresolved; B's stronger array guard is a defensive preference, not proof F violates an explicit non-array restriction. All retain the inherited-ID boundary noted in group 02.",
+    "disagreement": "Both judgments prefer F/B and agree on the finding. One-point robustness variation for D is severity calibration, not a different defect. No severe disagreement.",
+    "blinding": "Condition mapping and acceptance results unopened. No condition assignment used; code familiarity can still create residual expectation bias."
+  },
+  "review-10-1": {
+    "bundle_sha256": "90d2b1292feb234c80c996a2ff55c1369a112dade0768c0f1f01c98870154b53",
+    "review_sha256": "8d7e479a3ca0cef55ba88522b1459d1e1c1df00290778fa5fcf4e0ae259e451a",
+    "source_assessment": "A fixes the two requested happy paths but leaves substantial documented error behavior unimplemented: options.py:3-8 silently ignores unknown/trailing options, accepts invalid keys and raises IndexError for missing operands; __main__.py:6 has no ValueError translation, producing a traceback/exit 1. F/E validate and translate errors correctly. Prefer F slightly over E because key validation is shared instead of duplicated; both are acceptable designs. A is an incomplete delivery regardless of its brevity.",
+    "source_labels": "Source assessment uses first-presentation labels.",
+    "labels_to_first_presentation": {
+      "F": [
+        "F"
+      ],
+      "E": [
+        "E"
+      ],
+      "A": [
+        "A"
+      ]
+    },
+    "review_findings": "Confirm every major finding for first-presentation A: unknown/trailing arguments are ignored, missing operands raise IndexError, keys are unchecked and CLI errors escape. Its short code is an incomplete delivery. F/E satisfy the inspected contracts; F shares key validation, a small maintainability benefit.",
+    "disagreement": "Both agree on the major defects and preferred candidate. Responsibilities varies by two points for A: one judgment rewards the remaining module split while the other penalizes the missing CLI error boundary. The split exists but is incomplete; retain both scores and prioritize the shared substantive defect findings.",
+    "blinding": "Condition mapping and acceptance results unopened. No condition assignment used; code familiarity can still create residual expectation bias."
+  },
+  "review-10-2": {
+    "bundle_sha256": "24f2df9c5719ba16edc6f4f81d7a2ca636b6c376b36f286c47cefc18c00ab98b",
+    "review_sha256": "89d0a74afff0712b512f368211b27186ad84ea318e5a29f2a26221313d75cb47",
+    "source_assessment": "A fixes the two requested happy paths but leaves substantial documented error behavior unimplemented: options.py:3-8 silently ignores unknown/trailing options, accepts invalid keys and raises IndexError for missing operands; __main__.py:6 has no ValueError translation, producing a traceback/exit 1. F/E validate and translate errors correctly. Prefer F slightly over E because key validation is shared instead of duplicated; both are acceptable designs. A is an incomplete delivery regardless of its brevity.",
+    "source_labels": "Source assessment uses first-presentation labels.",
+    "labels_to_first_presentation": {
+      "C": [
+        "A"
+      ],
+      "A": [
+        "E"
+      ],
+      "D": [
+        "F"
+      ]
+    },
+    "review_findings": "Confirm every major finding for first-presentation A: unknown/trailing arguments are ignored, missing operands raise IndexError, keys are unchecked and CLI errors escape. Its short code is an incomplete delivery. F/E satisfy the inspected contracts; F shares key validation, a small maintainability benefit.",
+    "disagreement": "Both agree on the major defects and preferred candidate. Responsibilities varies by two points for A: one judgment rewards the remaining module split while the other penalizes the missing CLI error boundary. The split exists but is incomplete; retain both scores and prioritize the shared substantive defect findings.",
+    "blinding": "Condition mapping and acceptance results unopened. No condition assignment used; code familiarity can still create residual expectation bias."
+  },
+  "review-11-1": {
+    "bundle_sha256": "6adc78687e4e48a74709173a8d8d624f3198342422738b2471e0760b484fec36",
+    "review_sha256": "1d17a9663cf97e69112b2f558d7ba8b20e001452617d8c73e03ec0e42f959943",
+    "source_assessment": "E rejects non-object function envelopes, while C/A retain that inherited weakness. All route and validate cancellation fields properly, preserve shallow-copy behavior and use equivalent safe integer bounds. E has a narrow robustness preference; all retain the inherited/non-enumerable ID weakness noted by the earlier independent review. No new broad abstraction would be justified.",
+    "source_labels": "Source assessment uses first-presentation labels.",
+    "labels_to_first_presentation": {
+      "E": [
+        "E"
+      ],
+      "C": [
+        "C"
+      ],
+      "A": [
+        "A"
+      ]
+    },
+    "review_findings": "Confirm the function-envelope findings for first-presentation C/A and the preference for E. The inherited-ID weakness reported only by review one is also demonstrable in all three: an inherited valid id is omitted by spread before key selection. Keep that boundary caveat instead of silently adopting the second reviewer's narrower assumption.",
+    "disagreement": "E robustness differs by two points because only one review includes inherited properties. This is a scope-assumption disagreement, not conflicting source evidence. No score rewriting; retain the narrow preference and disclose the shared inherited weakness.",
+    "blinding": "Condition mapping and acceptance results unopened. No condition assignment used; code familiarity can still create residual expectation bias."
+  },
+  "review-11-2": {
+    "bundle_sha256": "839eef26a402ebf61d2d5d6cd54f10bf1ba3caa9b5cabe2a55ca2648986054e2",
+    "review_sha256": "680158d02079cf4e8f6219fac82e519c1e1e6aeed08a92d1cd3ca268b75a2a3e",
+    "source_assessment": "E rejects non-object function envelopes, while C/A retain that inherited weakness. All route and validate cancellation fields properly, preserve shallow-copy behavior and use equivalent safe integer bounds. E has a narrow robustness preference; all retain the inherited/non-enumerable ID weakness noted by the earlier independent review. No new broad abstraction would be justified.",
+    "source_labels": "Source assessment uses first-presentation labels.",
+    "labels_to_first_presentation": {
+      "E": [
+        "A"
+      ],
+      "C": [
+        "C"
+      ],
+      "F": [
+        "E"
+      ]
+    },
+    "review_findings": "Confirm the function-envelope findings for first-presentation C/A and the preference for E. The inherited-ID weakness reported only by review one is also demonstrable in all three: an inherited valid id is omitted by spread before key selection. Keep that boundary caveat instead of silently adopting the second reviewer's narrower assumption.",
+    "disagreement": "E robustness differs by two points because only one review includes inherited properties. This is a scope-assumption disagreement, not conflicting source evidence. No score rewriting; retain the narrow preference and disclose the shared inherited weakness.",
+    "blinding": "Condition mapping and acceptance results unopened. No condition assignment used; code familiarity can still create residual expectation bias."
+  },
+  "review-12-1": {
+    "bundle_sha256": "80c96ed6b8ff352f7dd291334c8427c561e93653e76cfafe717f7c15bcc485a7",
+    "review_sha256": "6e78510b02eea90cdd5b0bc0f6824e7b541815a19bb8f75e6fbf5218f122415e",
+    "source_assessment": "C requires env to be dict at settings.py:49 although the contract permits a mapping; a UserDict or MappingProxyType is rejected. A/F accept Mapping and have useful small validators. All three constrain decimal input to ASCII (not explicitly stated by the contract) and use whole-string int conversion, rejecting long valid leading-zero inputs under the runtime limit. Treat Unicode scope as an ambiguity to disclose rather than silently revise acceptance. C also has repeated long inline checks; A/F are easier to follow, with only a small preference between their approaches.",
+    "source_labels": "Source assessment uses first-presentation labels.",
+    "labels_to_first_presentation": {
+      "F": [
+        "F"
+      ],
+      "C": [
+        "C"
+      ],
+      "A": [
+        "A"
+      ]
+    },
+    "review_findings": "Confirm both major mapping findings for first-presentation C: dict-only validation rejects documented Mapping inputs. A/F accept those inputs and use suitable small helpers; A is a reasonable readability/validation reuse preference. Confirm whole-string int boundaries in all three. Unicode digit acceptance is explicitly unresolved and must not silently become a frozen acceptance requirement.",
+    "disagreement": "Both reviews agree on major defects and prefer A after relabeling. F differs by one point in readability/simplicity; this is ordinary subjective calibration with no new finding.",
+    "blinding": "Condition mapping and acceptance results unopened. No condition assignment used; code familiarity can still create residual expectation bias."
+  },
+  "review-12-2": {
+    "bundle_sha256": "2a84d409fcd5acf930160f49ad83b7b7d3def9eaf8a8e7f1e4030c8c4d92095d",
+    "review_sha256": "31425f3df10b4009a75c14dcf50840fb04a0b589b2014c9e5c7e69b473ffe118",
+    "source_assessment": "C requires env to be dict at settings.py:49 although the contract permits a mapping; a UserDict or MappingProxyType is rejected. A/F accept Mapping and have useful small validators. All three constrain decimal input to ASCII (not explicitly stated by the contract) and use whole-string int conversion, rejecting long valid leading-zero inputs under the runtime limit. Treat Unicode scope as an ambiguity to disclose rather than silently revise acceptance. C also has repeated long inline checks; A/F are easier to follow, with only a small preference between their approaches.",
+    "source_labels": "Source assessment uses first-presentation labels.",
+    "labels_to_first_presentation": {
+      "E": [
+        "A"
+      ],
+      "A": [
+        "C"
+      ],
+      "F": [
+        "F"
+      ]
+    },
+    "review_findings": "Confirm both major mapping findings for first-presentation C: dict-only validation rejects documented Mapping inputs. A/F accept those inputs and use suitable small helpers; A is a reasonable readability/validation reuse preference. Confirm whole-string int boundaries in all three. Unicode digit acceptance is explicitly unresolved and must not silently become a frozen acceptance requirement.",
+    "disagreement": "Both reviews agree on major defects and prefer A after relabeling. F differs by one point in readability/simplicity; this is ordinary subjective calibration with no new finding.",
+    "blinding": "Condition mapping and acceptance results unopened. No condition assignment used; code familiarity can still create residual expectation bias."
+  },
+  "review-13-1": {
+    "bundle_sha256": "24a4558423127ce8ea0f6199bff5b05f355d5980660994388935dce3ee01dc1d",
+    "review_sha256": "6afa064f2990ed668182d1919848e713b19c3e0ce28478f882ebc2782b48daa6",
+    "source_assessment": "A applies environment first and overrides last (settings.py:67-82), reversing the explicit contract: an endpoint/attempts override wins over env. This is a major common-path defect despite its decomposed design. D and F use the right precedence but validate only final endpoint/attempts, allowing an invalid supplied override when a valid env value masks it; the contract says invalid override values raise ValueError. F additionally repeats default literals instead of using DEFAULTS, a maintenance risk. Prefer D narrowly, but none is fully contract-compliant. Long decimal leading-zero limits affect all three; ASCII-only in A/D is an interpretation caveat.",
+    "source_labels": "Source assessment uses first-presentation labels.",
+    "labels_to_first_presentation": {
+      "A": [
+        "A"
+      ],
+      "D": [
+        "D"
+      ],
+      "F": [
+        "F"
+      ]
+    },
+    "review_findings": "Confirm every major finding. A reverses env precedence; D/F allow invalid supplied overrides to be hidden by valid env values. F also duplicates DEFAULTS and uses a validator name for a function that selects and merges layers. D is the proportionate design preference, but it still needs a correctness fix. No candidate is fully compliant.",
+    "disagreement": "Both agree on defects and prefer D after relabeling. One-point severity/style differences do not change that outcome. Keep the unmeasured long-string and Unicode scope caveats separate from these clear defects.",
+    "blinding": "Condition mapping and acceptance results unopened. No condition assignment used; code familiarity can still create residual expectation bias."
+  },
+  "review-13-2": {
+    "bundle_sha256": "20843a009fb2fbe999360e1d00b0c432012d8097113f420acc0d2a922c928985",
+    "review_sha256": "45e6cd478609b97bf90797b1742e9f3a18f999df9453cd51d38ed70feb93e687",
+    "source_assessment": "A applies environment first and overrides last (settings.py:67-82), reversing the explicit contract: an endpoint/attempts override wins over env. This is a major common-path defect despite its decomposed design. D and F use the right precedence but validate only final endpoint/attempts, allowing an invalid supplied override when a valid env value masks it; the contract says invalid override values raise ValueError. F additionally repeats default literals instead of using DEFAULTS, a maintenance risk. Prefer D narrowly, but none is fully contract-compliant. Long decimal leading-zero limits affect all three; ASCII-only in A/D is an interpretation caveat.",
+    "source_labels": "Source assessment uses first-presentation labels.",
+    "labels_to_first_presentation": {
+      "D": [
+        "F"
+      ],
+      "F": [
+        "D"
+      ],
+      "B": [
+        "A"
+      ]
+    },
+    "review_findings": "Confirm every major finding. A reverses env precedence; D/F allow invalid supplied overrides to be hidden by valid env values. F also duplicates DEFAULTS and uses a validator name for a function that selects and merges layers. D is the proportionate design preference, but it still needs a correctness fix. No candidate is fully compliant.",
+    "disagreement": "Both agree on defects and prefer D after relabeling. One-point severity/style differences do not change that outcome. Keep the unmeasured long-string and Unicode scope caveats separate from these clear defects.",
+    "blinding": "Condition mapping and acceptance results unopened. No condition assignment used; code familiarity can still create residual expectation bias."
+  },
+  "review-14-1": {
+    "bundle_sha256": "00d9207064d54ac03fa1ca3f6a26f1328592c8a4942ae54a62200f5e97a2c98b",
+    "review_sha256": "f156b34e40cbe3a2f03f1d950618cf99cc53362ed78280411452847a22bca792",
+    "source_assessment": "B/E identical; C adds a clear Array.isArray guard with a specific error. All implement safe bounds and slicing correctly for array inputs. Prefer C for defensive behavior with non-arrays while recording the same items-type ambiguity as group 05. No architectural difference.",
+    "source_labels": "Source assessment uses first-presentation labels.",
+    "labels_to_first_presentation": {
+      "C": [
+        "C"
+      ],
+      "B": [
+        "B",
+        "E"
+      ],
+      "E": [
+        "B",
+        "E"
+      ]
+    },
+    "review_findings": "Confirm the observed difference: C explicitly rejects non-arrays, B/E do not. Prefer C defensively, while qualifying the judges' major finding with the same items-type contract ambiguity recorded in groups 03/05/07. No evidence supports a design advantage beyond that guard.",
+    "disagreement": "Both judgments agree within this triplet. Across triplets, identical unguarded code receives different scores depending on whether array-input handling is assumed or required. Publish that calibration drift; preserve raw grades rather than use it as a precise quality-effect estimate.",
+    "blinding": "Condition mapping and acceptance results unopened. No condition assignment used; code familiarity can still create residual expectation bias."
+  },
+  "review-14-2": {
+    "bundle_sha256": "df6dda7b4bb5277d2c93ba62a27628b14c91a0566075175f32b3450898421d02",
+    "review_sha256": "ff6de1e2807435b847f5818c9cc3ee5e7c857f91a475fcf7bcc93dfd0110dc7b",
+    "source_assessment": "B/E identical; C adds a clear Array.isArray guard with a specific error. All implement safe bounds and slicing correctly for array inputs. Prefer C for defensive behavior with non-arrays while recording the same items-type ambiguity as group 05. No architectural difference.",
+    "source_labels": "Source assessment uses first-presentation labels.",
+    "labels_to_first_presentation": {
+      "D": [
+        "B",
+        "E"
+      ],
+      "F": [
+        "B",
+        "E"
+      ],
+      "B": [
+        "C"
+      ]
+    },
+    "review_findings": "Confirm the observed difference: C explicitly rejects non-arrays, B/E do not. Prefer C defensively, while qualifying the judges' major finding with the same items-type contract ambiguity recorded in groups 03/05/07. No evidence supports a design advantage beyond that guard.",
+    "disagreement": "Both judgments agree within this triplet. Across triplets, identical unguarded code receives different scores depending on whether array-input handling is assumed or required. Publish that calibration drift; preserve raw grades rather than use it as a precise quality-effect estimate.",
+    "blinding": "Condition mapping and acceptance results unopened. No condition assignment used; code familiarity can still create residual expectation bias."
+  },
+  "review-15-1": {
+    "bundle_sha256": "28d72c87182020e739dd1dab317355666dae841c139c6ded7d04f3b8c26226a6",
+    "review_sha256": "73f2eca1f92cf5d2cf86deee3f5f2f6b04e2420d274e66c881c4b633d5c36702",
+    "source_assessment": "All three implementations retain pure ordered parsing and clean CLI error translation. Regex fullmatch, bounded split, no-op unset and operand checking are correct. Duplicate key-validation statements are a minor maintenance point shared across candidates, not a functional issue or reason to introduce an abstraction hierarchy. Tie.",
+    "source_labels": "Source assessment uses first-presentation labels.",
+    "labels_to_first_presentation": {
+      "F": [
+        "F"
+      ],
+      "E": [
+        "E"
+      ],
+      "A": [
+        "A"
+      ]
+    },
+    "review_findings": "Confirm both complete ties. Every parser processes all argument pairs, validates keys and missing operands, preserves values and input, and translates errors in the CLI. The small repeated key-check block is shared by all candidates and does not support a comparative preference.",
+    "disagreement": "No score or finding disagreement; all receive the same grades.",
+    "blinding": "Condition mapping and acceptance results unopened. No condition assignment used; code familiarity can still create residual expectation bias."
+  },
+  "review-15-2": {
+    "bundle_sha256": "fb6752934b8cfe060cd6dd52fed1507c1bebe0a83c4355f146184c48557ad5e0",
+    "review_sha256": "b1ea4885d21cfa2cad50fbc3322c212e995ec102b7d1773f4146b307e8271b84",
+    "source_assessment": "All three implementations retain pure ordered parsing and clean CLI error translation. Regex fullmatch, bounded split, no-op unset and operand checking are correct. Duplicate key-validation statements are a minor maintenance point shared across candidates, not a functional issue or reason to introduce an abstraction hierarchy. Tie.",
+    "source_labels": "Source assessment uses first-presentation labels.",
+    "labels_to_first_presentation": {
+      "F": [
+        "A"
+      ],
+      "B": [
+        "E"
+      ],
+      "E": [
+        "F"
+      ]
+    },
+    "review_findings": "Confirm both complete ties. Every parser processes all argument pairs, validates keys and missing operands, preserves values and input, and translates errors in the CLI. The small repeated key-check block is shared by all candidates and does not support a comparative preference.",
+    "disagreement": "No score or finding disagreement; all receive the same grades.",
+    "blinding": "Condition mapping and acceptance results unopened. No condition assignment used; code familiarity can still create residual expectation bias."
+  },
+  "review-16-1": {
+    "bundle_sha256": "dffb5493369ba1e28a0386e5d852f2dc8bb365de0cb74f549e20adf618d9ab56",
+    "review_sha256": "3621a8954c45310bd5c385acd800c03dfd2a0aa35047a1d15720bf2b83399807",
+    "source_assessment": "All three candidates implement the same focused parser and clean CLI error translation. Fullmatch, split on first equals, ordered updates, no-op unset and argv preservation are sound. Differences are naming, blank lines and error prefix capitalization. Tie; no substantiated quality distinction.",
+    "source_labels": "Source assessment uses first-presentation labels.",
+    "labels_to_first_presentation": {
+      "F": [
+        "F"
+      ],
+      "D": [
+        "D"
+      ],
+      "C": [
+        "C"
+      ]
+    },
+    "review_findings": "Confirm both complete ties. Parsing and CLI presentation remain separate, validation is shared by operations, and the first-equals and unset behavior follow the contract. Names, blank lines and error-prefix capitalization provide no substantive distinction.",
+    "disagreement": "No score or finding disagreement; all receive the same grades.",
+    "blinding": "Condition mapping and acceptance results unopened. No condition assignment used; code familiarity can still create residual expectation bias."
+  },
+  "review-16-2": {
+    "bundle_sha256": "6482b2b36c5781e3a6fc6f40d43eca9312a542df3e9967cf5c4398ee4759d0bc",
+    "review_sha256": "879d54c45ce46e157f17e7cd2fb045f03ad672efef2e70a417e2ff0176fdb490",
+    "source_assessment": "All three candidates implement the same focused parser and clean CLI error translation. Fullmatch, split on first equals, ordered updates, no-op unset and argv preservation are sound. Differences are naming, blank lines and error prefix capitalization. Tie; no substantiated quality distinction.",
+    "source_labels": "Source assessment uses first-presentation labels.",
+    "labels_to_first_presentation": {
+      "B": [
+        "C"
+      ],
+      "C": [
+        "D"
+      ],
+      "F": [
+        "F"
+      ]
+    },
+    "review_findings": "Confirm both complete ties. Parsing and CLI presentation remain separate, validation is shared by operations, and the first-equals and unset behavior follow the contract. Names, blank lines and error-prefix capitalization provide no substantive distinction.",
+    "disagreement": "No score or finding disagreement; all receive the same grades.",
+    "blinding": "Condition mapping and acceptance results unopened. No condition assignment used; code familiarity can still create residual expectation bias."
+  }
+}

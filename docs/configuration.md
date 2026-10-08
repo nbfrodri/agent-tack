@@ -57,6 +57,21 @@ Only settings marked `shared: true` in `tack config --json` may go here. Executi
 
 The reader rejects unknown fields, unsupported versions, duplicate JSON keys, invalid value types and symlink profiles. The file is limited to 64 KiB. Writes preserve other accepted entries and refuse a file that changed during the update. Invalid profiles need correction; they are not silently replaced with defaults.
 
+## Apply several selected preferences
+
+For team setup, save every agreed value explicitly, even if it matches tack's default. Otherwise a teammate's different personal default can take its place.
+
+Put the selected values in a temporary JSON file using the `version`, `mode` and `config` shape above, then run:
+
+```bash
+tack config --shared --apply selected-profile.json --dry-run
+tack config --shared --apply selected-profile.json
+```
+
+The preview shows additions, changes and local overrides. Apply validates everything before updating `tack.json` once, preserves unselected settings and leaves an unchanged file untouched. It rejects unsupported/private settings, invalid or duplicate keys, unsafe paths and conflicting context locations. Use `--unset` separately to remove a setting. Do not export all your personal defaults as project policy.
+
+Commit `tack.json`; remove the temporary input when finished. This does not activate tack, create scaffolding, grant execution trust or complete setup review. Existing single-setting commands remain available, and personal projects can continue using local preferences without a profile.
+
 ## Reuse your documentation layout
 
 ```bash

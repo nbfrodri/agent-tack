@@ -1,0 +1,246 @@
+{
+  "file_edit_order": {
+    "m0-assignments-1-current": {
+      "first_test_edit_event": 11,
+      "first_production_edit_event": 11,
+      "test_edit_before_source": false
+    },
+    "m0-assignments-1-improved": {
+      "first_test_edit_event": 13,
+      "first_production_edit_event": 13,
+      "test_edit_before_source": false
+    },
+    "m0-assignments-1-plain": {
+      "first_test_edit_event": null,
+      "first_production_edit_event": 12,
+      "test_edit_before_source": false
+    },
+    "m0-assignments-2-current": {
+      "first_test_edit_event": 13,
+      "first_production_edit_event": 16,
+      "test_edit_before_source": true
+    },
+    "m0-assignments-2-improved": {
+      "first_test_edit_event": 13,
+      "first_production_edit_event": 13,
+      "test_edit_before_source": false
+    },
+    "m0-assignments-2-plain": {
+      "first_test_edit_event": null,
+      "first_production_edit_event": 10,
+      "test_edit_before_source": false
+    },
+    "m0-settings-1-current": {
+      "first_test_edit_event": 20,
+      "first_production_edit_event": 13,
+      "test_edit_before_source": false
+    },
+    "m0-settings-1-improved": {
+      "first_test_edit_event": 17,
+      "first_production_edit_event": 20,
+      "test_edit_before_source": true
+    },
+    "m0-settings-1-plain": {
+      "first_test_edit_event": null,
+      "first_production_edit_event": 13,
+      "test_edit_before_source": false
+    },
+    "m0-settings-2-current": {
+      "first_test_edit_event": 13,
+      "first_production_edit_event": 16,
+      "test_edit_before_source": true
+    },
+    "m0-settings-2-improved": {
+      "first_test_edit_event": 21,
+      "first_production_edit_event": 17,
+      "test_edit_before_source": false
+    },
+    "m0-settings-2-plain": {
+      "first_test_edit_event": null,
+      "first_production_edit_event": 15,
+      "test_edit_before_source": false
+    },
+    "m0-shipment-1-current": {
+      "first_test_edit_event": 13,
+      "first_production_edit_event": 13,
+      "test_edit_before_source": false
+    },
+    "m0-shipment-1-improved": {
+      "first_test_edit_event": 16,
+      "first_production_edit_event": 18,
+      "test_edit_before_source": true
+    },
+    "m0-shipment-1-plain": {
+      "first_test_edit_event": null,
+      "first_production_edit_event": 13,
+      "test_edit_before_source": false
+    },
+    "m0-shipment-2-current": {
+      "first_test_edit_event": 22,
+      "first_production_edit_event": 24,
+      "test_edit_before_source": true
+    },
+    "m0-shipment-2-improved": {
+      "first_test_edit_event": 13,
+      "first_production_edit_event": 16,
+      "test_edit_before_source": true
+    },
+    "m0-shipment-2-plain": {
+      "first_test_edit_event": null,
+      "first_production_edit_event": 10,
+      "test_edit_before_source": false
+    },
+    "m0-window-1-current": {
+      "first_test_edit_event": 26,
+      "first_production_edit_event": 31,
+      "test_edit_before_source": true
+    },
+    "m0-window-1-improved": {
+      "first_test_edit_event": 12,
+      "first_production_edit_event": 10,
+      "test_edit_before_source": false
+    },
+    "m0-window-1-plain": {
+      "first_test_edit_event": null,
+      "first_production_edit_event": 15,
+      "test_edit_before_source": false
+    },
+    "m0-window-2-current": {
+      "first_test_edit_event": 13,
+      "first_production_edit_event": 13,
+      "test_edit_before_source": false
+    },
+    "m0-window-2-improved": {
+      "first_test_edit_event": 13,
+      "first_production_edit_event": 13,
+      "test_edit_before_source": false
+    },
+    "m0-window-2-plain": {
+      "first_test_edit_event": 13,
+      "first_production_edit_event": 13,
+      "test_edit_before_source": false
+    },
+    "m1-assignments-1-current": {
+      "first_test_edit_event": 22,
+      "first_production_edit_event": 25,
+      "test_edit_before_source": true
+    },
+    "m1-assignments-1-improved": {
+      "first_test_edit_event": 15,
+      "first_production_edit_event": 18,
+      "test_edit_before_source": true
+    },
+    "m1-assignments-1-plain": {
+      "first_test_edit_event": 13,
+      "first_production_edit_event": 13,
+      "test_edit_before_source": false
+    },
+    "m1-assignments-2-current": {
+      "first_test_edit_event": 19,
+      "first_production_edit_event": 22,
+      "test_edit_before_source": true
+    },
+    "m1-assignments-2-improved": {
+      "first_test_edit_event": 18,
+      "first_production_edit_event": 21,
+      "test_edit_before_source": true
+    },
+    "m1-assignments-2-plain": {
+      "first_test_edit_event": 15,
+      "first_production_edit_event": 15,
+      "test_edit_before_source": false
+    },
+    "m1-settings-1-current": {
+      "first_test_edit_event": 17,
+      "first_production_edit_event": 22,
+      "test_edit_before_source": true
+    },
+    "m1-settings-1-improved": {
+      "first_test_edit_event": 15,
+      "first_production_edit_event": 18,
+      "test_edit_before_source": true
+    },
+    "m1-settings-1-plain": {
+      "first_test_edit_event": 13,
+      "first_production_edit_event": 13,
+      "test_edit_before_source": false
+    },
+    "m1-settings-2-current": {
+      "first_test_edit_event": 17,
+      "first_production_edit_event": 20,
+      "test_edit_before_source": true
+    },
+    "m1-settings-2-improved": {
+      "first_test_edit_event": 17,
+      "first_production_edit_event": 20,
+      "test_edit_before_source": true
+    },
+    "m1-settings-2-plain": {
+      "first_test_edit_event": 13,
+      "first_production_edit_event": 13,
+      "test_edit_before_source": false
+    },
+    "m1-shipment-1-current": {
+      "first_test_edit_event": 15,
+      "first_production_edit_event": 18,
+      "test_edit_before_source": true
+    },
+    "m1-shipment-1-improved": {
+      "first_test_edit_event": 17,
+      "first_production_edit_event": 20,
+      "test_edit_before_source": true
+    },
+    "m1-shipment-1-plain": {
+      "first_test_edit_event": 12,
+      "first_production_edit_event": 12,
+      "test_edit_before_source": false
+    },
+    "m1-shipment-2-current": {
+      "first_test_edit_event": 15,
+      "first_production_edit_event": 18,
+      "test_edit_before_source": true
+    },
+    "m1-shipment-2-improved": {
+      "first_test_edit_event": 15,
+      "first_production_edit_event": 18,
+      "test_edit_before_source": true
+    },
+    "m1-shipment-2-plain": {
+      "first_test_edit_event": 15,
+      "first_production_edit_event": 15,
+      "test_edit_before_source": false
+    },
+    "m1-window-1-current": {
+      "first_test_edit_event": 19,
+      "first_production_edit_event": 21,
+      "test_edit_before_source": true
+    },
+    "m1-window-1-improved": {
+      "first_test_edit_event": 15,
+      "first_production_edit_event": 18,
+      "test_edit_before_source": true
+    },
+    "m1-window-1-plain": {
+      "first_test_edit_event": 13,
+      "first_production_edit_event": 13,
+      "test_edit_before_source": false
+    },
+    "m1-window-2-current": {
+      "first_test_edit_event": 19,
+      "first_production_edit_event": 21,
+      "test_edit_before_source": true
+    },
+    "m1-window-2-improved": {
+      "first_test_edit_event": 17,
+      "first_production_edit_event": 20,
+      "test_edit_before_source": true
+    },
+    "m1-window-2-plain": {
+      "first_test_edit_event": 13,
+      "first_production_edit_event": 13,
+      "test_edit_before_source": false
+    }
+  },
+  "observed_failed_test_outputs": [],
+  "limit": "Recorded file-change events do not cover arbitrary shell edits. An edit before source without a failing test run is not demonstrated TDD."
+}

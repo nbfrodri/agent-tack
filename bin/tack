@@ -26,6 +26,9 @@ Commands:
                       (or user-wide with --global); config NAME --unset removes it
                       --get prints a raw value; --json adds source and sharing metadata
                       reply-style: brief (default), visual or detailed
+  config --shared --apply FILE [--dry-run]
+                      Merge selected tack.json preferences and mode in one write;
+                      --dry-run previews values and local overrides without changes
   enable [--shared] [--scaffold]
                       Enable this clone, or use a shareable .tack marker;
                       --scaffold adds four evidence-based guidance files (never overwrites)

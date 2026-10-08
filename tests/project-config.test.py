@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import subprocess
 import unittest
+from unittest.mock import patch
 
 REPO = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location('verification_fixture', REPO / 'tests/verification.test.py')
@@ -22,6 +23,102 @@ class ProjectConfigTests(unittest.TestCase):
         result = self.fixture.command(FIXTURE.BASH, str(REPO / 'bin/tack'), *args)
         self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
         return result.stdout.strip()
+
+    def selection(self, **config):
+        self.fixture.write('selected.json', json.dumps({'version': 1, 'mode': 'auto', 'config': config}))
+
+    def test_batch_preview_apply_and_noop_preserve_unselected_values(self):
+        self.tack('config', 'reply-style', 'visual', '--shared')
+        self.selection(**{'conventional-commits': True, 'plans-path': 'work/plans'})
+        profile = self.fixture.root / 'tack.json'
+        before = profile.read_bytes()
+        preview = self.tack('config', '--shared', '--apply', 'selected.json', '--dry-run')
+        self.assertIn('conventional-commits: added', preview)
+        self.assertEqual(profile.read_bytes(), before)
+        self.tack('config', '--shared', '--apply', 'selected.json')
+        self.assertEqual(self.tack('config', 'reply-style'), 'visual (shared)')
+        self.assertEqual(self.tack('config', 'conventional-commits'), 'true (shared)')
+        self.assertEqual(self.tack('mode'), 'auto (shared)')
+        before, modified = profile.read_bytes(), profile.stat().st_mtime_ns
+        self.assertIn('unchanged', self.tack('config', '--shared', '--apply', 'selected.json'))
+        self.assertEqual((profile.read_bytes(), profile.stat().st_mtime_ns), (before, modified))
+        self.assertEqual(self.tack('trusted', expected=1), 'untrusted')
+        self.assertFalse((self.fixture.root / '.tack').exists())
+        self.assertFalse((self.fixture.root / 'AGENTS.md').exists())
+
+    def test_batch_shared_default_beats_teammate_personal_default(self):
+        self.selection(**{'conventional-commits': True})
+        self.tack('config', '--shared', '--apply', 'selected.json')
+        self.fixture.commit()
+        clone = self.fixture.directory / 'batch-clone'
+        self.fixture.git('clone', '-q', str(self.fixture.root), str(clone))
+        self.fixture.root = clone
+        self.tack('config', 'conventional-commits', 'false', '--global')
+        self.assertEqual(self.tack('config', 'conventional-commits'), 'true (shared)')
+        self.assertEqual(self.tack('trusted', expected=1), 'untrusted')
+        self.tack('config', 'conventional-commits', 'false')
+        self.tack('mode', 'strict')
+        report = self.tack('config', '--shared', '--apply', 'selected.json')
+        self.assertIn('effective false (local)', report)
+        self.assertIn('effective strict (local)', report)
+        self.assertEqual(self.tack('config', 'conventional-commits'), 'false (local)')
+
+    def test_batch_invalid_selection_is_atomic(self):
+        self.tack('config', 'reply-style', 'brief', '--shared')
+        profile = self.fixture.root / 'tack.json'
+        original = profile.read_bytes()
+        invalid = [
+            '{"version":1,"config":{"reply-style":"visual","setup-review":"done"}}',
+            '{"version":1,"config":{"conventional-commits":"true"}}',
+            '{"version":1,"config":{"plans-path":"../outside"}}',
+            '{"version":1,"config":{"plans-path":"work","handoffs-path":"work"}}',
+            '{"version":1,"version":1}', '{"version":2}',
+            '{"version":1,"mode":"unleash"}', ' ' * 65537,
+        ]
+        for raw in invalid:
+            with self.subTest(raw=raw[:90]):
+                self.fixture.write('selected.json', raw)
+                self.tack('config', '--shared', '--apply', 'selected.json', expected=2)
+                self.assertEqual(profile.read_bytes(), original)
+
+    def test_batch_flags_require_shared_selection_without_other_mutations(self):
+        self.selection(**{'reply-style': 'brief'})
+        for args in [('--apply', 'selected.json'), ('--shared', '--dry-run'),
+                     ('--shared', '--apply', 'selected.json', '--unset'),
+                     ('--shared', '--apply', 'selected.json', '--json'),
+                     ('reply-style', 'visual', '--shared', '--apply', 'selected.json')]:
+            self.tack('config', *args, expected=2)
+        self.assertFalse((self.fixture.root / 'tack.json').exists())
+
+    def test_batch_rejects_symlink_input_and_context_parent(self):
+        outside = self.fixture.directory / 'outside'
+        outside.mkdir()
+        (outside / 'profile.json').write_text('{"version":1,"mode":"auto"}', encoding='utf-8')
+        try:
+            (self.fixture.root / 'linked').symlink_to(outside, target_is_directory=True)
+        except OSError:
+            self.skipTest('Creating symlinks requires local permission')
+        self.tack('config', '--shared', '--apply', 'linked/profile.json', expected=2)
+        self.selection(**{'architecture-path': 'linked/system.md'})
+        self.tack('config', '--shared', '--apply', 'selected.json', expected=2)
+        self.assertFalse((self.fixture.root / 'tack.json').exists())
+
+    def test_profile_write_refuses_a_concurrent_edit(self):
+        spec = importlib.util.spec_from_file_location('project_config', REPO / 'lib/project_config.py')
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        profile = self.fixture.root / 'tack.json'
+        profile.write_text('{"version":1}', encoding='utf-8')
+        original = profile.read_bytes()
+        actual_fsync = module.os.fsync
+        def concurrent_change(descriptor):
+            actual_fsync(descriptor)
+            profile.write_text('{"version":1,"mode":"lite"}', encoding='utf-8')
+        with patch.object(module.os, 'fsync', side_effect=concurrent_change):
+            with self.assertRaisesRegex(ValueError, 'changed during'):
+                module.write_profile(self.fixture.root, {'version': 1, 'mode': 'strict'}, original)
+        self.assertEqual(json.loads(profile.read_text(encoding='utf-8'))['mode'], 'lite')
+        self.assertFalse(list(self.fixture.root.glob('.tack-config-*')))
 
     def test_shared_preferences_survive_clone_but_trust_does_not(self):
         self.tack('config', 'reply-style', 'visual', '--shared')
