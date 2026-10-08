@@ -73,6 +73,16 @@ class VerificationTests(unittest.TestCase):
     def trust(self):
         self.git('config', 'tack.trusted', 'true')
 
+    def test_shared_contract_selects_both_areas_but_web_change_stays_focused(self):
+        self.define([self.check('api', ['apps/api/*', 'packages/contracts/*'], 'npm run test:api'),
+                     self.check('web', ['apps/web/*', 'packages/contracts/*'], 'npm run test:web')])
+        self.write('apps/web/page.js', 'const page = 1;\n')
+        report = self.verify('--plan')
+        self.assertEqual([check['id'] for check in report['checks']], ['web'])
+        self.write('packages/contracts/order.json', '{}\n')
+        report = self.verify('--plan')
+        self.assertEqual({check['id'] for check in report['checks']}, {'api', 'web'})
+
     def test_read_only_selection_and_committed_branch_changes(self):
         self.define([self.check(command='touch .results'), self.check('web', ['web/*'])])
         self.write('src/api.py', 'value = 2\n')

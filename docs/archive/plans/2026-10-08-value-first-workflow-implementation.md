@@ -1,8 +1,20 @@
 # Plan: prove tack's value and simplify its workflow
 
-Status: approved; implementation in progress on `feat/value-first-workflow`. Prepared on 2026-10-08 against `ff53cef1fe2d38f1ba29b495f4ca16e627137a94`.
+Status: implemented; the larger conditional experiment was stopped at its evidence gate. Prepared on 2026-10-08 against `ff53cef1fe2d38f1ba29b495f4ca16e627137a94`. The delivery record distinguishes shipped changes from the original proposals below.
 
 ## Outcome
+
+### Delivery record
+
+- Implemented cost observations and a bounded four-condition preflight; [results](../../benchmarks/2026-10-08-value-first.md) show missed speed/token targets and stronger project-only output on settings. Eight implementation and two blind-review sessions completed. The larger conditional screen is deferred by the planned evidence gate, not reported as completed.
+- Simplified the workflow entrypoint and risk selection; retained TDD, project requirements and existing safety checks. Strict no longer unconditionally requires logs or an extra reviewer. Fixed orchestration's preference read to respect shared configuration.
+- Added optional private-note setup with preservation checks, worktree scope/lifecycle guidance and linked-worktree regression coverage.
+- Added read-only paginated PR-review collection and a procedure for evidence, in-scope fixes, deduplicated follow-ups and authorized resolution. Live read smoke-tested on PR #135; no review comments/issues were published by the helper.
+- Added package-area discovery and a multi-team example using root preferences, scoped instructions, existing ownership and contract checks. Tested shared-contract routing and a clean merge with a real consumer failure/recovery.
+- Evaluated Aislop locally; offer advisory project-selected scans, not score gates or per-edit hooks. Documented selected Ponytail/Superpowers adoption and alternatives. No default bundle, new service or additional mandatory Git hook was justified. [Tool decisions](../../audits/2026-10-08-external-checks.md).
+- Updated human guides, product positioning and GitHub description/topics; no release tags were changed. Local lint, validation and the full suite run were followed by passing affected-suite reruns after corrections. Publication and CI results are recorded on the delivery PR.
+
+The sections below preserve the approved design. Proposed files/scenarios for the larger conditional experiment were not all created: the implemented gate runner is intentionally smaller.
 
 Help individuals and teams agree on how their AI tools work, find the relevant project context, and verify changes with less coordination effort. Each additional instruction, hook, skill or command must solve an observed problem. More workflow activity is not itself a better outcome.
 
@@ -12,11 +24,11 @@ The user confirmed that the proposed sources are `scanaislop/aislop` and `Dietri
 
 ## What the evidence currently supports
 
-The [quality comparison](../benchmarks/2026-10-08-quality-efficiency.md) contains 93 sessions, including independent blind code reviews. The tested candidate used approximately 2.31 times the plain condition's input tokens with Luna and 2.18 times with Sol. Coding time was 1.86 and 1.40 times plain, respectively. Cached input is a subset of input; subscription token counts are not dollar prices.
+The [quality comparison](../../benchmarks/2026-10-08-quality-efficiency.md) contains 93 sessions, including independent blind code reviews. The tested candidate used approximately 2.31 times the plain condition's input tokens with Luna and 2.18 times with Sol. Coding time was 1.86 and 1.40 times plain, respectively. Cached input is a subset of input; subscription token counts are not dollar prices.
 
 Candidate acceptance was 16/16, against 15/16 for current and plain. The sample is too small to establish a general improvement. Independent review did not establish better overall code quality; identical-code scores varied by as much as 0.8/10. The useful-test gain was concentrated in the weaker model. Setup time also increased, missing the previous provisional targets.
 
-The separate [teamwork pilot](../benchmarks/2026-10-08-teamwork.md) passed 7/7 checks in both conditions and took 5.5% longer with the candidate. It exposed an unrelated-handoff completion reminder, subsequently fixed. Its four sessions did not demonstrate a productivity or code-quality gain. These experiments predate the current main revision; their figures must not be relabeled as measurements of this plan or today's complete product.
+The separate [teamwork pilot](../../benchmarks/2026-10-08-teamwork.md) passed 7/7 checks in both conditions and took 5.5% longer with the candidate. It exposed an unrelated-handoff completion reminder, subsequently fixed. Its four sessions did not demonstrate a productivity or code-quality gain. These experiments predate the current main revision; their figures must not be relabeled as measurements of this plan or today's complete product.
 
 Extra cost could be worthwhile if it prevents consequential defects, reduces review/rework, makes later changes easier, or amortizes setup across contributors and tasks. Those are hypotheses to test. Workflow compliance, more files, more tests, or a higher scanner score do not justify twice the tokens on their own.
 

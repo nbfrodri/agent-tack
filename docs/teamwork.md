@@ -67,3 +67,21 @@ For automatic minimum review information, optionally copy:
 The **PR policy / metadata** job checks Conventional Commit titles and filled **Summary** and **Validation** sections. It detects common placeholders, ignores template comments and defers drafts until ready. It runs on PR creation, edits, code updates and readiness changes with read-only permissions, no secrets and no model costs.
 
 Adapt existing headings or title conventions; an issue reference can be required where useful. [Checker options and limits](../skills/github-issues/references/pr-checks.md). Passing metadata does not prove checks ran. Keep real CI tests, lint and contract checks alongside it. A maintainer must select the check in repository rules to make it required; the workflow alone does not enforce merging policy, and changes to the checker/workflow need review.
+
+## Several teams in one repository
+
+Keep one root `tack.json` for shared defaults. Link area instructions from the root `AGENTS.md`: for example API conventions in `apps/api/AGENTS.md` and UI conventions in `apps/web/AGENTS.md`. Tack does not read nested tack.json profiles. `tack setup` reports detected package areas and suggests scoped guidance when several exist; it does not assign teams or change collaboration settings automatically.
+
+Use existing CODEOWNERS for review ownership and issues for assignments/dependencies. Keep a shared contract in versioned files. Changes to that contract should select producer, consumer and integration checks through `checks-map.json`. An area change should load the guidance it needs. [Complete multi-team example](../skills/new-project/assets/examples/multi-team.md).
+
+## Work in separate worktrees
+
+Use a worktree when parallel tasks need independent working directories or unrelated edits must be left alone. Inspect existing worktrees first. A serial small change needs no new checkout. Each writer receives a branch, directory and clear scope. [Procedure and cleanup](../skills/dev-workflow/references/worktrees.md).
+
+Git shares local repository settings across linked worktrees by default, including tack's local preferences and execution trust. Use conversational task modes for concurrent work. Worktrees do not isolate databases or ports and do not prevent semantic conflicts. Preserve ignored/private notes and unmerged work before removing one. [Private notes](private-notes.md).
+
+## Address PR feedback
+
+Ask the assistant to read reviews and comments, verify findings against the current head, fix in-scope defects and identify genuine follow-ups. The optional `skills/github-issues/assets/read-pr-reviews.py OWNER/REPO NUMBER` script collects inline threads, review summaries and conversation comments through `gh`, including pagination. It makes no GitHub writes and fails explicitly on incomplete reads or a changed head/base.
+
+The [review-resolution procedure](../skills/github-issues/references/review-resolution.md) keeps evidence with each finding, reuses existing issues/replies and respects publication permissions. Creating an issue does not resolve a blocking defect. Resolve a thread only when addressed under the project's review policy; reread findings and CI before merging. Metadata checks continue to cover PR information separately from code and approval.

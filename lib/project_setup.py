@@ -75,6 +75,12 @@ def analyze(root):
                     and (p.endswith('/SKILL.md') or '/agents/' in p and p.endswith(('.md', '.toml')))][:30]
     templates = [p for p in files if 'pull_request_template' in p.lower()][:15]
     candidates = []
+    areas = []
+    for directory in sorted({str(Path(p).parent).replace('\\', '/') for p in manifests if '/' in p}):
+        instruction = directory + '/AGENTS.md'
+        areas.append({'path': directory, 'instructions': instruction if instruction in files else None})
+    if len(areas) > 1:
+        candidates.append({'item': 'area guidance', 'reason': 'Several packages detected; review team responsibilities, scoped instructions and shared-contract checks. Keep one root tack.json.'})
     if 'test' not in commands:
         candidates.append({'item': 'tests', 'reason': 'No root test command detected; inspect existing tests and workspace packages first.'})
     if not any(p.startswith(('.github/workflows/', '.gitlab-ci')) or p in ('Jenkinsfile', 'azure-pipelines.yml') for p in files):
@@ -118,7 +124,7 @@ def analyze(root):
     return dict(manifests=[{'path': p, 'stack': MANIFESTS[Path(p).name]} for p in manifests],
                 commands=commands, directories=directories, capabilities=capabilities,
                 pr_templates=templates, candidates=candidates, issues=issues,
-                docs_map_rules=rules, truncated=truncated, paths=project_paths(root))
+                docs_map_rules=rules, truncated=truncated, paths=project_paths(root), areas=areas)
 
 
 def scaffold(root):
@@ -209,6 +215,8 @@ def main():
                     print(f'{label}: {value}')
             for item in report['candidates']:
                 print(f"Propose: {item['item']}: {item['reason']}")
+            for area in report['areas']:
+                print(f"Area: {area['path']} (instructions: {area['instructions'] or 'not detected'}; ownership unverified)")
             print(f"Docs-map: {report['docs_map_rules']} active rule(s)")
             if report['truncated']:
                 print('Inventory limited to 3000 paths; inspect omitted packages before proposing additions.')

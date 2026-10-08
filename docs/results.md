@@ -2,6 +2,10 @@
 
 What tack changes in practice, measured on real sessions: matched tasks with and without tack, or between versions.
 
+## Value-first preflight (2026-10-08)
+
+A shorter workflow completed eight implementation sessions and two independent blind reviews. It was **59.0% slower and used 41.5% more input tokens** than current tack on these two tasks. A conventional project-only AGENTS.md produced the best settings implementation; shipment quality tied across all four conditions. Review found real settings defects that the original passing checks missed. The larger proposed screen was stopped at its evidence gate; no general productivity gain is claimed. [Full results, supplemental probes and decisions](benchmarks/2026-10-08-value-first.md).
+
 ## Backend/frontend integration pilot (2026-10-08)
 
 Four fresh Codex sessions compared a backend/consumer pair on the previous and team-coordination versions. **Both passed 7/7 cross-language integration checks; the candidate took 5.5% longer.** Both wrote useful tests and understood the branch dependency. The pilot exposed an unrelated-handoff completion reminder, now covered by a regression and corrected for team projects. [Protocol, all attempts, code review and limits](benchmarks/2026-10-08-teamwork.md). This small two-version comparison does not establish a productivity or quality gain and is not pooled with earlier batches.

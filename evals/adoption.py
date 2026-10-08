@@ -119,7 +119,7 @@ def invoke(repo, stage, out, env, args, model):
 
 def snapshot(repo, out, env, base):
     shutil.copytree(repo, out / 'repo', symlinks=True,
-                    ignore=shutil.ignore_patterns('.git', 'node_modules', '.cache'))
+                    ignore=shutil.ignore_patterns('.git', 'node_modules', '.cache', '.private'))
     for name, arguments in [('status', ['status', '--porcelain']),
                             ('history', ['log', '--format=full', base + '..HEAD']),
                             ('diff', ['diff', '--binary', base]), ('head', ['rev-parse', 'HEAD'])]:

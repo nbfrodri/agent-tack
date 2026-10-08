@@ -170,3 +170,13 @@ The verifier and legacy fast/Stop checks use `check_execution.execute`. Its time
 - Keep project activation in one CLI and preserve always-on safety checks when the full workflow is disabled.
 - Preserve independent user settings and local hook integration rather than replacing a repository's workflow wholesale.
 - Keep executable scripts compatible with Bash 3.2, and provide Python and jq settings-merge implementations for portability.
+
+## Optional coordination helpers
+
+Project discovery now reports nested manifest areas and existing area AGENTS.md paths. It only suggests scoped guidance; root tack.json remains the sole shared preference file. Ownership and dependencies stay in the project's existing CODEOWNERS, issue tracker, contracts and checks-map.json.
+
+`skills/project-docs/assets/setup-private.py` is an explicitly selected setup action. It creates .private/tack and adds a local or shared ignore rule, rejecting tracked private files and linked destinations. It does not load notes, grant trust, clean up files or run at activation. Git local preferences/trust remain shared between linked worktrees.
+
+`skills/github-issues/assets/read-pr-reviews.py` uses the installed gh CLI for read-only REST/GraphQL collection. It paginates review threads and their comments, includes review summaries/general comments, and rejects changed head/base or incomplete data. Publishing and thread resolution remain separate authorized workflow actions. No bot or privileged PR execution is installed.
+
+The value-first preflight in evals/value.py reuses the isolated quality-session runner with four conditions. The optional project_guide job field supplies ordinary project instructions only to the project-only baseline. Old quality jobs retain their inputs. Private folders are excluded from captured repositories; prior archived evidence is unchanged.

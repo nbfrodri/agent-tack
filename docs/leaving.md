@@ -54,3 +54,5 @@ From your tack checkout:
 ```
 
 This restores recorded unchanged machine integrations and preserves independently changed files. It does not delete project files, activation settings or local trust. See the [installation reference](installation.md) for restoration limits, and review project choices separately.
+
+Private working notes are preserved too. Review [`.private/tack/`](private-notes.md) manually, including ignored files before removing a worktree. Uninstalling tack does not make these notes safe to delete.

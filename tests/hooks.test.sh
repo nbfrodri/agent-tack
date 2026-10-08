@@ -460,7 +460,7 @@ git -C "$WORK/repo" config tack.mode lite
 check "fixed mode: names the level to apply" "session '$WORK/repo' | grep -q 'mode: lite.*Apply the lite mode rules below'"
 check "fixed mode: injects that mode's rules" "session '$WORK/repo' | grep -q 'Review: read your own diff before committing.'"
 git -C "$WORK/repo" config --unset tack.mode
-check "auto mode: lists the modes to choose from" "session '$WORK/repo' | grep -q 'strict: several modules'"
+check "auto mode: lists the modes to choose from" "session '$WORK/repo' | grep -q 'strict:'"
 check "auto mode: picks by risk, so untrusted input is never lite" "session '$WORK/repo' | grep -q 'Pick by risk, not size: code that handles untrusted input'"
 check "token toggles: defaults add nothing" "! session '$WORK/repo' | grep -q 'Token settings'"
 check "reply style: defaults to brief" "session '$WORK/repo' | grep -q 'Reply style: brief'"

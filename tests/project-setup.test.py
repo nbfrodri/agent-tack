@@ -122,6 +122,16 @@ class ProjectSetup(unittest.TestCase):
         self.assertIn('Project setup review pending', self.tack('context'))
         self.tack('setup', '--unknown', status=2)
 
+    def test_multiple_packages_suggest_scoped_guidance_without_changing_preferences(self):
+        self.write('apps/api/package.json', '{}')
+        self.write('apps/web/package.json', '{}')
+        self.write('apps/api/AGENTS.md', '# API conventions\n')
+        report = json.loads(self.tack('setup', '--json'))
+        self.assertEqual(report['areas'], [{'path': 'apps/api', 'instructions': 'apps/api/AGENTS.md'},
+                                         {'path': 'apps/web', 'instructions': None}])
+        self.assertIn('area guidance', [item['item'] for item in report['candidates']])
+        self.assertFalse((self.project / 'tack.json').exists())
+
     def test_shared_marker_preserves_content_and_refuses_symlinks(self):
         self.write('.tack', '# Team activation notes\n')
         self.tack('enable', '--shared')

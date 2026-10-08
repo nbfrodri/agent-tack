@@ -55,6 +55,8 @@ docs/
 Templates for every document are in this skill's `assets/` (`assets/README.md`, `assets/AGENTS.md`, `assets/docs/...`). Copy them, fill them in, and delete any section that doesn't apply.
 
 ## Working documents (plans, audits, handoffs)
+For optional personal scratch context, use `references/private-notes.md` and the preservation-aware `assets/setup-private.py`. Keep information teammates need versioned.
+
 When backend/frontend or other components have different consumers, use `references/integration.md` to keep contract links, availability and consumer actions in the implementation PR. Create a handoff only when it adds information beyond the canonical contract.
 
 These are committed so the reasons behind the work stay in history and anyone can pick the work up from another machine.

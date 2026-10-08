@@ -83,3 +83,11 @@ Trace reports `linked` when a tracked test file mentions an ID and `MISSING` oth
 Set `check-fast` to an existing short command when feedback after edits is useful. It runs only in a trusted project, with a 60-second timeout. The unmapped Stop fallback has a 120-second timeout. Both use Bash pipeline failure detection and bounded failure output, including on systems without the `timeout` utility. Supported hook integrations are listed in [tool support](editors.md).
 
 The Stop hook also reports uncommitted work, stale handoffs, documentation reminders and source changes without test-file changes. Existing tests may already cover a change: review their behavior rather than adding a test just to change a filename. The hook asks once; a second stop is permitted. Separate invocations can repeat checks; tack does not cache a passing result.
+
+## Optional external checks
+
+Reuse installed project tools before adding a checker. [Aislop](https://github.com/scanaislop/aislop) can be selected for supported languages when it finds useful issues your existing checks miss. Review and pin the chosen version in the project's normal dependency file; do not download latest during verification. A small local trial of 0.18.1 found a swallowed exception, but also warned about a deliberately retained public wrapper. Its score is not a code-quality verdict.
+
+Start with the installed command `aislop scan --json`, inspect diagnostics and skipped engines, and keep rules advisory while assessing noise. For blocking CI, use the tool's documented CI command and project-calibrated rules through an existing script. Route that script with checks-map.json when useful. A missing dependency or skipped analysis is not evidence of complete verification. No extra model, repair loop, per-edit hook or network service is required.
+
+Tack adds no new mandatory Git hook for this integration. Preserve the project's hook manager and local-hook chaining. Fast staged checks belong at commit time; expensive integration suites usually belong in CI. Select a hook for a demonstrated failure, test partially staged files and false positives, and measure latency. Repository protections, not local hooks alone, enforce shared merge policy.

@@ -23,6 +23,8 @@
 
 It works around your existing coding agent. It does not provide a model or replace your test framework.
 
+Use tack when portable preferences and project coordination solve a real problem. If a short `AGENTS.md` and your existing CI already do the job, that simpler setup may be enough. Our [benchmarks](docs/results.md) include cases where tack costs more without better code.
+
 ## What you get
 
 | Agree once | Carry context forward | Make verification visible |

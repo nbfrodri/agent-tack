@@ -12,6 +12,7 @@ New to tack? Read [setup](setup.md), then [daily use](usage.md). You do not need
 | Work alone, share a project or maintain a fork | [Sharing](sharing.md) |
 | Coordinate backend/frontend branches and PRs | [Team workflow](teamwork.md) |
 | Save defaults and choose document locations | [Configuration](configuration.md) |
+| Keep personal task notes out of Git | [Private notes](private-notes.md) |
 | Select checks and understand their results | [Verification](verification.md) |
 | Add selected third-party skills | [External skills](external-skills.md) |
 | Disable tack or tidy old project records | [Leaving a project](leaving.md) |
@@ -34,7 +35,7 @@ New to tack? Read [setup](setup.md), then [daily use](usage.md). You do not need
 
 ## Decisions and history
 
-The [value-first workflow plan](plans/2026-10-08-value-first-workflow-implementation.md) proposes reducing workflow cost, evaluating optional tools and improving team coordination. It is planned work, not shipped behavior.
+The [archived value-first plan](archive/plans/2026-10-08-value-first-workflow-implementation.md) records workflow simplification, optional tools and team coordination. Its delivery record distinguishes implemented changes from experiments stopped at the evidence gate.
 
 The [backend/frontend pilot](benchmarks/2026-10-08-teamwork.md) reports a separate four-session comparison, its null acceptance gain and the completion-reminder defect it exposed.
 

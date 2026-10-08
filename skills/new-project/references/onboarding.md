@@ -35,6 +35,8 @@ Examples to consider only when evidence supports them:
 | Docker or deployment docs | Local services or a specified deployment target make them useful. |
 | Release automation or dependency updates | Distribution and maintenance requirements justify them. |
 | Selected external skills | A demonstrated gap remains after checking existing capabilities; propose individual skills from sources such as Addy Osmani or Matt Pocock using `lessons/references/external-skills.md`. Download only selected additions. |
+| `.private/tack/` | Personal scratch notes should stay local; use `project-docs/references/private-notes.md` and its setup script. Keep shared contracts and durable decisions versioned. |
+| Area instructions and ownership | Several teams/packages have different conventions or consumers; adapt `assets/examples/multi-team.md`, reuse existing CODEOWNERS and checks, and keep one root tack.json. |
 | A local skill or agent definition | Repeated project-specific procedure or a distinct bounded role is useful; reuse current capabilities first. |
 | ADRs, runbooks or domain glossary | Concrete decisions, operational procedures or terminology need recording. |
 

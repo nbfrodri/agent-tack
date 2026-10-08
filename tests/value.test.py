@@ -1,12 +1,17 @@
 """Preflight isolation, parity and finite execution without a model call."""
 import copy
+import json
 from pathlib import Path
 import sys
+import tempfile
 import unittest
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'evals'))
 import value  # noqa: E402
 from value_fixture import request  # noqa: E402
+import quality_worker  # noqa: E402
+import adoption  # noqa: E402
 
 
 class ValueTests(unittest.TestCase):
@@ -31,6 +36,27 @@ class ValueTests(unittest.TestCase):
             manifest[key] = val
             with self.assertRaises(ValueError):
                 value.matrix(manifest)
+
+    def test_capture_keeps_private_notes_out_of_evidence(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            work, out = root / 'work', root / 'out'
+            (work / '.private/tack').mkdir(parents=True)
+            out.mkdir()
+            (work / '.private/tack/note.md').write_text('personal context', encoding='utf-8')
+            (work / 'app.py').write_text('value = 1\n', encoding='utf-8')
+            (out / 'base.json').write_text(json.dumps({'head': 'base'}), encoding='utf-8')
+            with patch.object(quality_worker, 'WORK', work), patch.object(quality_worker, 'OUT', out), \
+                    patch.object(quality_worker, 'call', return_value={'exit_code': 0}):
+                quality_worker.capture({'test_command': ['true']}, {})
+            self.assertTrue((out / 'repo/app.py').is_file())
+            self.assertFalse((out / 'repo/.private').exists())
+            adoption_out = root / 'adoption-out'
+            adoption_out.mkdir()
+            with patch.object(adoption, 'command', return_value={'stdout': '', 'exit_code': 0}):
+                adoption.snapshot(work, adoption_out, {}, 'base')
+            self.assertTrue((adoption_out / 'repo/app.py').is_file())
+            self.assertFalse((adoption_out / 'repo/.private').exists())
 
 
 if __name__ == '__main__':
