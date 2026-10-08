@@ -189,15 +189,53 @@ def project_paths(root):
     return resolved_paths(root, features, profile, git_values('local', root), git_values('global', root))
 
 
-def apply_profile(root, features, profile, original, local, global_values, selection, preview):
-    if root is None:
-        raise ValueError('not inside a git repository')
+def read_selection(selection, features):
     path = Path(selection).absolute()
     if any(part.is_symlink() for part in (path, *path.parents)):
         raise ValueError('selected profile: symlink paths are not supported')
     selected, _ = read_profile(path, features)
     if 'mode' not in selected and not selected.get('config'):
         raise ValueError('selected profile needs a mode or at least one shared preference')
+    return selected
+
+
+def check_selection(source, root, features, profile, local, global_values, selection, as_json):
+    if root is None:
+        raise ValueError('not inside a git repository')
+    selected = read_selection(selection, features)
+    records = []
+    for name, value in selected.get('config', {}).items():
+        expected = validate_value(features[name], value, typed=True)
+        actual, origin = effective(features[name], profile, local, global_values)
+        shared = profile.get('config', {}).get(name)
+        records.append(dict(name=name, expected=expected, shared=shared, effective=actual, source=origin,
+                            matched=shared == value and actual == expected))
+    if 'mode' in selected:
+        # Ask the canonical CLI so aliases, invalid legacy values and custom modes retain their semantics.
+        result = subprocess.run([os.environ.get('TACK_CONFIG_BASH', 'bash'), str(source / 'bin/tack'), 'mode'],
+                                cwd=root, capture_output=True, text=True, encoding='utf-8', timeout=15)
+        if result.returncode:
+            raise ValueError('cannot resolve the effective mode: ' + result.stderr.strip())
+        actual, _, origin = result.stdout.strip().partition(' ')
+        records.insert(0, dict(name='mode', expected=selected['mode'], shared=profile.get('mode'),
+                              effective=actual, source=origin.strip('()'),
+                              matched=profile.get('mode') == selected['mode'] and actual == selected['mode']))
+    differences = [r for r in records if not r['matched']]
+    report = dict(version=1, matched=not differences, choices=records, differences=differences)
+    if as_json:
+        print(json.dumps(report, ensure_ascii=True))
+    else:
+        print('Project choices: ' + ('match' if report['matched'] else 'differ from the agreed selection'))
+        for record in records:
+            print(f"- {record['name']}: expected {record['expected']}; shared {record['shared']!r}; "
+                  f"effective {record['effective']} ({record['source']}); " + ('match' if record['matched'] else 'MISMATCH'))
+    return int(bool(differences))
+
+
+def apply_profile(root, features, profile, original, local, global_values, selection, preview):
+    if root is None:
+        raise ValueError('not inside a git repository')
+    selected = read_selection(selection, features)
     merged = {**profile, 'version': 1}
     if 'mode' in selected:
         merged['mode'] = selected['mode']
@@ -237,12 +275,21 @@ def configure(source, args):
     scope.add_argument('--shared', action='store_true')
     parser.add_argument('--unset', action='store_true')
     parser.add_argument('--apply', metavar='FILE', help='merge selected version-1 profile values; requires --shared')
+    parser.add_argument('--check', metavar='FILE', help='compare agreed shared choices and effective values without writes')
     parser.add_argument('--dry-run', action='store_true', help='preview --apply without writes')
     output = parser.add_mutually_exclusive_group()
     output.add_argument('--get', action='store_true')
     output.add_argument('--json', action='store_true')
     options = parser.parse_args(args)
     features = registry(source)
+    if options.check is not None:
+        if any((options.name, options.value, options.unset, options.get, options.apply,
+                options.dry_run, options.shared, options.global_scope)):
+            raise ValueError('--check only accepts an optional --json; it never changes configuration')
+        root = project_root()
+        profile, _ = load_profile(root, features)
+        return check_selection(source, root, features, profile, git_values('local') if root else {},
+                               git_values('global'), options.check, options.json)
     if options.apply is not None:
         if not options.shared or any((options.name, options.value, options.unset, options.get, options.json)):
             raise ValueError('--apply requires --shared and cannot combine with names, values, --unset, --get or --json')

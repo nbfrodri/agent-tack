@@ -19,7 +19,8 @@ setup-review tack.setupReview pending pending|done|deferred any instruction no P
 conventional-commits tack.conventionalCommits true bool any hook yes Enforce Conventional Commits in enabled projects
 delegation tack.delegation auto auto|off any instruction yes Delegate separable strict-level work to subagents automatically
 mods tack.mods true bool global installer no Install tack's Claude Code mods (usage band, activity pane)
-skill-groups tack.skillGroups all list:all|core|process|stack global installer no Skill groups to install for every tool (skill-groups.txt): all, or core plus process and/or stack
+skill-groups tack.skillGroups core list:all|core|process|stack global installer no Install the small core by default; optionally add process and/or stack skills, or all
+agent-roles tack.agentRoles false bool global installer no Install optional specialist agent definitions for supported tools; re-run install.sh after changing
 vscode-agents-md tack.vscodeAgentsMd true bool global installer no Turn on VS Code's chat.useAgentsMdFile so Copilot Chat loads each project's AGENTS.md
 ci-watch tack.ciWatch true bool any instruction yes After a push or a new pull request, wait for CI in the background, report it and fix failures (standard, strict, unleash)
 activity-log tack.activityLog false bool any hook no Record session starts, guard decisions and Stop findings for Claude Code and Codex; read them with tack log

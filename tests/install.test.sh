@@ -48,8 +48,7 @@ print(json.dumps(d))' "$1" "$2"
   fi
 }
 
-skill_count="$(find "$REPO/skills" -mindepth 2 -maxdepth 2 -name SKILL.md | wc -l | tr -d ' ')"
-agent_count="$(find "$REPO/agents" -maxdepth 1 -name '*.md' | wc -l | tr -d ' ')"
+skill_count="$(grep -cE '^[a-z-]+[[:space:]]+core$' "$REPO/skill-groups.txt")"
 
 echo "Fresh machine"
 H="$WORK/fresh"
@@ -60,7 +59,7 @@ check "Codex AGENTS.md links to global/AGENTS.md" "[ \"\$(readlink '$H/.codex/AG
 for dir in .agents/skills .claude/skills .codex/skills; do
   check "all $skill_count skills linked in ~/$dir" "[ \"\$(find '$H/$dir' -maxdepth 1 -type l | wc -l | tr -d ' ')\" = '$skill_count' ]"
 done
-check "all $agent_count agents linked" "[ \"\$(find '$H/.claude/agents' -maxdepth 1 -type l | wc -l | tr -d ' ')\" = '$agent_count' ]"
+check "specialist agents are not installed by default" "[ ! -e '$H/.claude/agents/code-reviewer.md' ] && [ ! -e '$H/.codex/agents/code-reviewer.toml' ]"
 check "canonical ~/.agents/tack link to the repo" "[ \"\$(readlink '$H/.agents/tack')\" = '$REPO' ]"
 check "tack command linked into ~/.local/bin" "[ \"\$(readlink '$H/.local/bin/tack')\" = '$REPO/bin/tack' ]"
 check "no links under the former harness name" "[ ! -e '$H/.agents/harness' ] && [ ! -L '$H/.local/bin/harness' ]"
@@ -85,12 +84,12 @@ check "second run changes nothing" "! grep -qE 'backed up|merged|created|removed
 
 echo "Existing files are backed up, never overwritten"
 H="$WORK/existing"
-mkdir -p "$H/.claude/skills/testing"
+mkdir -p "$H/.claude/skills/dev-workflow"
 echo "my notes" >"$H/.claude/CLAUDE.md"
-echo "mine" >"$H/.claude/skills/testing/SKILL.md"
+echo "mine" >"$H/.claude/skills/dev-workflow/SKILL.md"
 check "exits 0" "run_install '$H'"
 check "old CLAUDE.md kept as backup" "grep -q 'my notes' '$H'/.claude/CLAUDE.md.bak-*"
-check "old skill folder kept as backup" "grep -q mine '$H'/.claude/skills/testing.bak-*/SKILL.md"
+check "old skill folder kept as backup" "grep -q mine '$H'/.claude/skills/dev-workflow.bak-*/SKILL.md"
 check "CLAUDE.md is now the link" "[ -L '$H/.claude/CLAUDE.md' ]"
 
 echo "Settings are merged, not replaced"
@@ -376,7 +375,7 @@ check "no hook summary when registering the hooks failed" "! grep -q 'Hooks inst
 echo "Skill groups (tack config skill-groups)"
 H="$WORK/groups"
 run_install "$H"
-check "by default every skill group is installed" "[ -L '$H/.agents/skills/frontend' ] && [ -L '$H/.agents/skills/improve' ] && [ -L '$H/.agents/skills/dev-workflow' ]"
+check "default core omits advanced skills" "[ ! -e '$H/.agents/skills/frontend' ] && [ ! -e '$H/.agents/skills/improve' ] && [ -L '$H/.agents/skills/dev-workflow' ]"
 git_global "$H" tack.skillGroups process
 run_install "$H"
 check "a deselected group's skills are removed" "[ ! -e '$H/.agents/skills/frontend' ] && [ ! -e '$H/.claude/skills/frontend' ]"
@@ -386,6 +385,7 @@ check "the installer says which groups it installed" "grep -q 'skill groups: cor
 H2="$WORK/groups-own"
 mkdir -p "$H2/.agents/skills/frontend"
 printf 'my own frontend notes\n' > "$H2/.agents/skills/frontend/SKILL.md"
+git_global "$H2" tack.skillGroups all
 run_install "$H2"
 check "a skill of the user's is backed up when tack's takes its name" "[ -L '$H2/.agents/skills/frontend' ]"
 git_global "$H2" tack.skillGroups core
@@ -395,10 +395,22 @@ run_install "$H2"
 check "the link that replaced the user's skill stays until uninstall" "[ -L '$H2/.agents/skills/frontend' ] && grep -q 'kept $H2/.agents/skills/frontend' '$H2.log'"
 check "links that took nothing's place are removed" "[ ! -e '$H2/.claude/skills/frontend' ]"
 check "uninstall gives the user's own skill back" "HOME='$H2' XDG_CONFIG_HOME='$H2/.config' GIT_CONFIG_NOSYSTEM=1 '$REPO/uninstall.sh' >'$H2.uninstall.log' 2>&1 && grep -q 'my own frontend notes' '$H2/.agents/skills/frontend/SKILL.md'"
-git_global "$H" --unset tack.skillGroups
+git_global "$H" tack.skillGroups all
 run_install "$H"
 check "selecting a group again installs it again" "[ -L '$H/.agents/skills/frontend' ]"
 check "uninstall still restores after groups changed" "HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 '$REPO/uninstall.sh' >'$H.uninstall.log' 2>&1 && [ ! -e '$H/.agents/skills/dev-workflow' ]"
+
+echo "Optional Claude roles preserve displaced user definitions"
+H="$WORK/optional-roles"
+mkdir -p "$H/.claude/agents"
+echo 'my planner' > "$H/.claude/agents/planner.md"
+git_global "$H" tack.agentRoles true
+run_install "$H"
+git_global "$H" tack.agentRoles false
+run_install "$H"
+check "deselection removes an owned role link" "[ ! -e '$H/.claude/agents/code-reviewer.md' ]"
+check "deselection retains restoration of a displaced role" "[ -L '$H/.claude/agents/planner.md' ] && grep -q 'it replaced your file' '$H.log'"
+check "uninstall restores the displaced role after deselection" "HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 '$REPO/uninstall.sh' >'$H.uninstall.log' 2>&1 && grep -q 'my planner' '$H/.claude/agents/planner.md'"
 
 echo "Windows (Git Bash) without symlink permission"
 H="$WORK/windows"

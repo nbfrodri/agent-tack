@@ -46,6 +46,29 @@ class ProjectConfigTests(unittest.TestCase):
         self.assertFalse((self.fixture.root / '.tack').exists())
         self.assertFalse((self.fixture.root / 'AGENTS.md').exists())
 
+    def test_check_selection_requires_explicit_shared_values_and_detects_overrides(self):
+        self.selection(**{'collaboration': 'team', 'reply-style': 'brief'})
+        report = json.loads(self.tack('config', '--check', 'selected.json', '--json', expected=1))
+        self.assertFalse(report['matched'])
+        self.assertEqual({r['name'] for r in report['differences']}, {'mode', 'collaboration', 'reply-style'})
+        self.tack('config', '--shared', '--apply', 'selected.json')
+        self.assertTrue(json.loads(self.tack('config', '--check', 'selected.json', '--json'))['matched'])
+        self.tack('config', 'collaboration', 'solo')
+        self.tack('mode', 'strict')
+        before = self.fixture.git('status', '--porcelain')
+        contents = (self.fixture.root / 'tack.json').read_bytes()
+        report = json.loads(self.tack('config', '--check', 'selected.json', '--json', expected=1))
+        self.assertEqual({r['name'] for r in report['differences']}, {'mode', 'collaboration'})
+        self.assertEqual(self.fixture.git('status', '--porcelain'), before)
+        self.assertEqual((self.fixture.root / 'tack.json').read_bytes(), contents)
+        self.assertEqual(self.tack('trusted', expected=1), 'untrusted')
+
+    def test_check_selection_rejects_ambiguous_mutation_options(self):
+        self.selection(**{'collaboration': 'team'})
+        for extra in (['--shared'], ['--apply', 'selected.json'], ['--dry-run'], ['--unset'], ['--get'], ['reply-style']):
+            self.tack('config', '--check', 'selected.json', *extra, expected=2)
+        self.assertFalse((self.fixture.root / 'tack.json').exists())
+
     def test_fresh_clone_reuses_recorded_choices_without_inheriting_local_review_or_trust(self):
         self.tack('enable', '--shared')
         self.fixture.write('AGENTS.md', '# Project\n\n## Setup choices\nUse existing tests. No extra agents.\n')
@@ -71,6 +94,7 @@ class ProjectConfigTests(unittest.TestCase):
         self.tack('config', 'conventional-commits', 'false', '--global')
         self.assertEqual(self.tack('config', 'conventional-commits'), 'true (shared)')
         self.assertEqual(self.tack('trusted', expected=1), 'untrusted')
+        self.assertTrue(json.loads(self.tack('config', '--check', 'selected.json', '--json'))['matched'])
         self.tack('config', 'conventional-commits', 'false')
         self.tack('mode', 'strict')
         report = self.tack('config', '--shared', '--apply', 'selected.json')

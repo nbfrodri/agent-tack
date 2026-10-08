@@ -10,9 +10,9 @@ import time
 BASH = os.environ.get('TACK_VERIFY_BASH') or shutil.which('bash') or 'bash'
 
 
-def execute(check, root, timeout):
+def execute(check, root, timeout, environment=None):
     started = time.monotonic()
-    environment = os.environ.copy()
+    environment = dict(os.environ if environment is None else environment)
     environment.pop('BASH_ENV', None)
     environment.pop('ENV', None)
     options = {'start_new_session': True} if os.name != 'nt' else {'creationflags': subprocess.CREATE_NEW_PROCESS_GROUP}

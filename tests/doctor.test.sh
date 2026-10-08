@@ -57,10 +57,10 @@ run_doctor
 check 'plain file cannot masquerade as a managed link' [ "$RC" -eq 1 ]
 rm "$HOME/.codex/AGENTS.md"
 ln -s "$REPO/global/AGENTS.md" "$HOME/.codex/AGENTS.md"
-rm "$HOME/.claude/skills/testing"
+rm "$HOME/.claude/skills/dev-workflow"
 run_doctor
 check 'missing required skill is an error' [ "$RC" -eq 1 ]
-ln -s "$REPO/skills/testing" "$HOME/.claude/skills/testing"
+ln -s "$REPO/skills/dev-workflow" "$HOME/.claude/skills/dev-workflow"
 ln -s "$REPO/skills/removed-skill" "$HOME/.agents/skills/removed-skill"
 run_doctor
 check 'stale managed skill links are errors' [ "$RC" -eq 1 ]

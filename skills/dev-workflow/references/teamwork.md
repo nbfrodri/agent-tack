@@ -18,7 +18,7 @@ tack team --base origin/main --against origin/feat/frontend
 
 Use the real integration/parallel refs; the example does not imply those branches exist. The diagnostic never fetches. Its successful exit means inspection finished; read each `merge.status` (`clean`, `conflict`, `unknown`) and the uncommitted-change notice. Overlapping files need review even when Git merges cleanly. An unknown probe needs a supported Git version, missing history or manual inspection; never describe it as conflict-free.
 
-Run relevant project checks, including actual contract/integration tests when a producer changes a consumer's assumptions. `tack verify --plan --base REF` helps select existing checks; review gaps. Metadata checks and a clean Git merge are not compatibility tests.
+Run relevant project checks, including actual contract/integration tests when a producer changes a consumer's assumptions. For two committed branches, preview `tack team --plan --against REF`, then use `tack team --verify --against REF` after local trust. This runs declared checks in a temporary prospective merge, without modifying the source branch or index. It requires a clean source worktree; ignored files and installed dependencies are not copied or installed. Missing checks or dependencies remain gaps/failures. Inspect tested commit IDs and results. For working-tree changes, `tack verify --plan --base REF` selects checks. Metadata checks and a clean Git merge are not compatibility tests.
 
 Use the project's CI and existing protection or merge queue. Recheck after base/head changes; do not merge using results for an old candidate. Enabling team coordination does not configure GitHub repository rules, publish messages or authorize history rewrites.
 

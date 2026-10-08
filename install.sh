@@ -81,6 +81,8 @@ source "$REPO/lib/keys.sh"
 source "$REPO/lib/mods.sh"
 # shellcheck source=lib/skill-groups.sh
 source "$REPO/lib/skill-groups.sh"
+# shellcheck source=lib/agent-selection.sh
+source "$REPO/lib/agent-selection.sh"
 # shellcheck source=lib/vscode.sh
 source "$REPO/lib/vscode.sh"
 # shellcheck source=lib/codex.sh
@@ -260,7 +262,8 @@ EOF
   local agent
   for agent in "$REPO"/agents/*.md; do
     [ -e "$agent" ] || continue
-    link "$agent" "$HOME/.claude/agents/$(basename "$agent")"
+    if roles_enabled; then link "$agent" "$HOME/.claude/agents/$(basename "$agent")"
+    else deselect_agent link "$agent" "$HOME/.claude/agents/$(basename "$agent")"; fi
   done
 }
 

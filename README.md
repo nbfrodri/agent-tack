@@ -41,7 +41,7 @@ flowchart LR
 
 Ask for the change: **"Fix the checkout bug"** or **"Add CSV export."** Tack guides the assistant through work sized to the risk, meaningful tests, maintainable design and a reviewable Git history. TDD, pragmatic SOLID and documentation upkeep remain part of that guidance; executable checks provide narrower guarantees. [Engineering practices](docs/engineering-practices.md).
 
-Skills and specialist roles are available when a task needs them, including guided selection of external skills. Start small and add procedures that solve a real problem. [Why this direction](docs/why.md).
+The default catalog is just workflow and onboarding; specialist skills and roles are opt-in. Add procedures when they solve a real problem. [Installation choices](docs/installation.md) | [Why this direction](docs/why.md).
 
 ## Quick start
 
@@ -83,7 +83,7 @@ Leave `auto` as the usual mode: a small fix and a risky migration need different
 
 Your project stays portable: the shared setup is ordinary files in Git, and you can [disable tack or tidy old records](docs/leaving.md) without deleting useful project knowledge.
 
-Working on backend and frontend in parallel? Share canonical contracts and focused handoffs, inspect branch conflicts with `tack team`, and add optional PR checks. New collaborators can use a pinned setup command. [Team workflow](docs/teamwork.md).
+Working on backend and frontend in parallel? Share canonical contracts and run declared checks against a prospective merge with `tack team --verify --against REF`, before changing your branch. New collaborators can use a pinned setup command. [Team workflow and limits](docs/teamwork.md).
 
 ## Tools and checks
 

@@ -47,6 +47,21 @@ Replace those example refs with your real branches. The command works in solo pr
 
 Git 2.38+ is needed for the merge probe. Dirty files are listed but excluded from it. JSON includes commit IDs, both path lists and conflicting paths where Git supplies them. Exit 0 means the diagnostic completed, even if it reports conflicts; exit 2 means inspection or arguments failed. This is a review aid, not a merge authorization or compatibility gate.
 
+## Test a prospective merge
+
+Two branches can pass their own tests and merge cleanly, yet break a consumer when combined. From a clean checkout with committed changes:
+
+```bash
+tack team --plan --against origin/feat/frontend
+tack team --verify --against origin/feat/frontend
+```
+
+The preview builds the prospective merged tree in a temporary local checkout and selects declared checks for changes on both branches since their common ancestor. Execution requires `tack trust` in your source clone. It uses the [same check map and budgets](verification.md) as `tack verify`, and reports the exact head, other commit and merged tree. It does not merge into your branch, stage files, fetch refs or install dependencies.
+
+Keep a real consumer/integration command in `checks-map.json`: a unit-only map cannot detect every compatibility problem. Tracked files come from the merged tree. Ignored files, installed dependencies and local tack settings are not copied; declare reproducible commands that work in that checkout. The checkout isolates Git operations, not arbitrary trusted commands. Commands retain normal access to the machine. Custom merge drivers are excluded.
+
+Execution exits 0 only when selected checks pass without reported gaps; 1 for a merge conflict or a failed check; 2 for invalid input, dirty source or missing trust; 3 for unknown refs, missing checks or incomplete verification. `--plan` can exit 0 with a planned but incomplete set: inspect its warnings. Use `--budget-seconds N` (1–600, default 120) for the total check budget. If source revisions change during verification the result is stale. Recheck the current candidate before merging. For unfinished working-tree changes use `tack verify` instead.
+
 ## Resolve conflicts without losing intent
 
 The assistant reads both changes and their base, follows your merge/rebase policy and preserves both intended behaviors. If those behaviors disagree, the team resolves that decision before calling the work done. Avoid blanket “take ours” or “take theirs.” Published shared branches are not rewritten without authorization.

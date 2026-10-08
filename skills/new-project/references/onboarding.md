@@ -18,7 +18,7 @@ For team setup, reuse or agree on coding/testing/Git conventions, context entryp
 
 Ask about collaboration only when it is not already known. Save `collaboration: "team"` for selected parallel team work, or `"solo"` for individual use; this is separate from task mode. Shared activation or multiple historical authors do not automatically select team coordination. For multiple components, locate canonical contracts and propose integration context only when consumers need it (`project-docs/references/integration.md`).
 
-For several selected settings, use a temporary version-1 profile with `mode` and `config`, then `tack config --shared --apply FILE --dry-run` and `tack config --shared --apply FILE`. This merges only selected values and reports effective origins; remove the temporary input afterwards. For one choice, `tack config NAME VALUE --shared` or `tack mode auto --shared` remains sufficient. Do not export ambient personal settings as team policy. Configure context paths before scaffolding, then confirm selected values have shared origins or explain intentional local overrides. Group unresolved choices and reuse recorded answers.
+For several selected settings, use a temporary version-1 profile with `mode` and `config`, then `tack config --shared --apply FILE --dry-run` and `tack config --shared --apply FILE`. Check `tack config --check FILE` against that same approved selection before removing the temporary input: every selected value must be saved explicitly and effective locally. Explain intentional local overrides instead of hiding them. This checks saved choices, not whether the assistant translated the user's intent correctly. For one choice, `tack config NAME VALUE --shared` or `tack mode auto --shared` remains sufficient. Do not export ambient personal settings as team policy. Configure context paths before scaffolding. Group unresolved choices and reuse recorded answers.
 
 Examples to consider only when evidence supports them:
 
@@ -40,7 +40,7 @@ Examples to consider only when evidence supports them:
 | A local skill or agent definition | Repeated project-specific procedure or a distinct bounded role is useful; reuse current capabilities first. |
 | ADRs, runbooks or domain glossary | Concrete decisions, operational procedures or terminology need recording. |
 
-Do not present this table as a mandatory checklist. Do not create a license, release workflow, Docker setup, issue forms or broad docs tree by default. Plans, handoffs and AI logs are created when actual work and the selected workflow require them, not as empty onboarding templates. Selecting a PR template alone does not select issue forms.
+Do not present this table as a mandatory checklist. References to optional skills apply only when installed; their absence does not require installing them. Reuse the project's own templates and procedures. For an external download, inspect the selected source, revision, dependencies and license, preserve existing files and record local adaptations. Do not create a license, release workflow, Docker setup, issue forms or broad docs tree by default. Plans, handoffs and AI logs are created when actual work and the selected workflow require them, not as empty onboarding templates. Selecting a PR template alone does not select issue forms.
 
 ## Implement and remember
 

@@ -2,6 +2,7 @@
 """Select project checks from changes and report execution evidence, never inferred correctness."""
 import argparse
 import fnmatch
+from functools import partial
 import hashlib
 import json
 import os
@@ -20,8 +21,8 @@ CONFIG = {'package.json', 'pyproject.toml', 'pytest.ini', 'setup.cfg', 'tox.ini'
           'package-lock.json', 'pnpm-lock.yaml', 'yarn.lock', 'bun.lock', 'bun.lockb'}
 
 
-def git(root, *args, optional=False):
-    result = subprocess.run(['git', '-C', str(root), *args], capture_output=True, timeout=15)
+def git(root, *args, optional=False, environment=None):
+    result = subprocess.run(['git', '-C', str(root), *args], env=environment, capture_output=True, timeout=15)
     if result.returncode and not optional:
         raise ValueError(result.stderr.decode('utf-8', errors='replace').strip() or 'Git inspection failed')
     return result.stdout if result.returncode == 0 else b''
@@ -31,32 +32,33 @@ def paths(data):
     return {os.fsdecode(part) for part in data.split(b'\0') if part}
 
 
-def changes(root, base):
-    head = git(root, 'rev-parse', '--verify', 'HEAD', optional=True).strip().decode()
+def changes(root, base, environment=None):
+    inspect = partial(git, environment=environment)
+    head = inspect(root, 'rev-parse', '--verify', 'HEAD', optional=True).strip().decode()
     if base:
-        ref = git(root, 'rev-parse', '--verify', '--end-of-options', base + '^{commit}').strip().decode()
-        base = git(root, 'merge-base', head, ref).strip().decode() if head else ref
+        ref = inspect(root, 'rev-parse', '--verify', '--end-of-options', base + '^{commit}').strip().decode()
+        base = inspect(root, 'merge-base', head, ref).strip().decode() if head else ref
     elif head:
-        branch = git(root, 'branch', '--show-current').strip().decode()
+        branch = inspect(root, 'branch', '--show-current').strip().decode()
         base = head
         if branch not in ('main', 'master', 'develop'):
             for name in ('main', 'master', 'develop'):
-                ancestor = git(root, 'merge-base', head, name, optional=True).strip().decode()
+                ancestor = inspect(root, 'merge-base', head, name, optional=True).strip().decode()
                 if ancestor:
                     base = ancestor
                     break
-    changed = paths(git(root, 'ls-files', '--others', '--exclude-standard', '-z'))
+    changed = paths(inspect(root, 'ls-files', '--others', '--exclude-standard', '-z'))
     if base:
-        changed |= paths(git(root, 'diff', '--no-ext-diff', '--no-textconv', '--no-renames', '--name-only', '-z', base, '--'))
-        changed |= paths(git(root, 'diff', '--cached', '--no-ext-diff', '--no-textconv', '--no-renames', '--name-only', '-z', base, '--'))
+        changed |= paths(inspect(root, 'diff', '--no-ext-diff', '--no-textconv', '--no-renames', '--name-only', '-z', base, '--'))
+        changed |= paths(inspect(root, 'diff', '--cached', '--no-ext-diff', '--no-textconv', '--no-renames', '--name-only', '-z', base, '--'))
     else:
-        changed |= paths(git(root, 'ls-files', '--cached', '-z'))
+        changed |= paths(inspect(root, 'ls-files', '--cached', '-z'))
     if len(changed) > 20000:
         raise ValueError('More than 20000 changed paths; narrow the task before verification')
     return sorted(changed), base or None
 
 
-def definitions(root, source):
+def definitions(root, source, environment=None):
     path = root / MAP
     if path.is_symlink():
         raise ValueError(f'{MAP} must be a regular project file, not a symlink')
@@ -88,7 +90,7 @@ def definitions(root, source):
             entry.update(source=MAP, timeout_seconds=timeout)
         return checks, True
     detected = subprocess.run([BASH, str(source / 'lib/test-command.sh'), str(source), str(root)],
-                              cwd=root, capture_output=True, text=True, encoding='utf-8', timeout=15)
+                              cwd=root, env=environment, capture_output=True, text=True, encoding='utf-8', timeout=15)
     if detected.returncode:
         raise ValueError('Canonical test-command detection failed')
     command, separator, origin = detected.stdout.strip().partition('\t')
@@ -102,9 +104,9 @@ def matches(path, pattern):
     return fnmatch.fnmatchcase(path, pattern) or ('**/' in pattern and fnmatch.fnmatchcase(path, pattern.replace('**/', '')))
 
 
-def plan(root, source, base=None, all_checks=False):
-    changed, base = changes(root, base)
-    checks, mapped = definitions(root, source)
+def plan(root, source, base=None, all_checks=False, environment=None):
+    changed, base = changes(root, base, environment)
+    checks, mapped = definitions(root, source, environment)
     selected, covered = [], set()
     for check in checks:
         matched = [p for p in changed if (p == MAP or any(matches(p, pattern) for pattern in check['paths']))] if mapped else [
@@ -124,19 +126,20 @@ def plan(root, source, base=None, all_checks=False):
                 note='Selected checks are declared verification, not proof of complete semantic coverage.')
 
 
-def snapshot(root):
+def snapshot(root, environment=None):
+    inspect = partial(git, environment=environment)
     digest = hashlib.sha256()
-    head = git(root, 'rev-parse', '--verify', 'HEAD', optional=True).strip()
+    head = inspect(root, 'rev-parse', '--verify', 'HEAD', optional=True).strip()
     digest.update(head)
     if head:
-        digest.update(git(root, 'diff', '--no-ext-diff', '--no-textconv', '--binary', head.decode(), '--'))
-        digest.update(git(root, 'diff', '--cached', '--no-ext-diff', '--no-textconv', '--binary', head.decode(), '--'))
+        digest.update(inspect(root, 'diff', '--no-ext-diff', '--no-textconv', '--binary', head.decode(), '--'))
+        digest.update(inspect(root, 'diff', '--cached', '--no-ext-diff', '--no-textconv', '--binary', head.decode(), '--'))
     else:
-        digest.update(git(root, 'diff', '--cached', '--no-ext-diff', '--no-textconv', '--binary', '--'))
+        digest.update(inspect(root, 'diff', '--cached', '--no-ext-diff', '--no-textconv', '--binary', '--'))
     # Include untracked inputs, but never follow their symlinks outside the repository.
-    names = paths(git(root, 'ls-files', '--others', '--exclude-standard', '-z'))
+    names = paths(inspect(root, 'ls-files', '--others', '--exclude-standard', '-z'))
     if not head:
-        names |= paths(git(root, 'ls-files', '--cached', '-z'))
+        names |= paths(inspect(root, 'ls-files', '--cached', '-z'))
     for name in sorted(names):
         path = root / name
         digest.update(os.fsencode(name) + b'\0')
@@ -149,7 +152,7 @@ def snapshot(root):
     return digest.hexdigest()
 
 
-def run(report, root, trusted, budget):
+def run(report, root, trusted, budget, environment=None):
     if report['checks'] and not trusted:
         for check in report['checks']:
             check['status'] = 'untrusted'
@@ -159,15 +162,15 @@ def run(report, root, trusted, budget):
         unverified = report['changed_paths'] or report.get('selection') == 'all'
         report['status'] = 'unverified' if unverified else 'no_changes'
         return 3 if unverified else 0
-    before = snapshot(root)
+    before = snapshot(root, environment)
     deadline = time.monotonic() + budget
     for check in report['checks']:
         remaining = deadline - time.monotonic()
         if remaining <= 0:
             check['status'] = 'budget_exhausted'
         else:
-            execute(check, root, min(remaining, check['timeout_seconds']))
-    report['inputs_changed'] = before != snapshot(root)
+            execute(check, root, min(remaining, check['timeout_seconds']), environment=environment)
+    report['inputs_changed'] = before != snapshot(root, environment)
     if any(c['status'] in ('failed', 'timed_out') for c in report['checks']):
         report['status'] = 'failed'
         return 1

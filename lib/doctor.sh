@@ -107,6 +107,7 @@ check_tools_and_links() {
   [ -z "$missing" ] || ok "AI tools not installed:$missing"
   check_stale_links "$HOME/.claude/agents"
   for source in "$REPO"/agents/*.md; do
+    roles_enabled || break
     [ -f "$source" ] || continue
     check_link "$source" "$HOME/.claude/agents/${source##*/}"
   done
@@ -148,7 +149,7 @@ check_tool_capabilities() {
     fi
   fi
   if [ "$skills_dir" != - ] && [ -d "$(expand_home "$skills_dir")" ]; then check_skills "$(expand_home "$skills_dir")"; fi
-  if [ "$agents_dir" != - ] && [ -d "$(expand_home "$agents_dir")" ]; then
+  if roles_enabled && [ "$agents_dir" != - ] && [ -d "$(expand_home "$agents_dir")" ]; then
     check_stale_links "$(expand_home "$agents_dir")"
     # Claude uses symlinks; the other adapters generate native files.
     for source in "$REPO"/agents/*.md; do

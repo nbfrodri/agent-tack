@@ -25,6 +25,7 @@ agent_count="$(find "$REPO/agents" -maxdepth 1 -name '*.md' | wc -l | tr -d ' ')
 echo "Codex agents"
 H="$WORK/home"
 mkdir -p "$H/.codex/agents"
+run bin/tack config agent-roles true --global
 printf 'name = "planner"\ndescription = "my own planner"\ndeveloper_instructions = "mine"\n' > "$H/.codex/agents/planner.toml"
 check "dry run succeeds" "run install.sh --skip-plugins --dry-run"
 check "dry run writes no agents" "[ \"\$(find '$H/.codex/agents' -name '*.toml' | wc -l | tr -d ' ')\" = 1 ]"
@@ -42,6 +43,13 @@ check "reinstall leaves unchanged agents identical" "cmp -s '$WORK/docs-writer.b
 printf '\n# my tweak\n' >> "$H/.codex/agents/test-writer.toml"
 check "reinstall after a user edit succeeds" "run install.sh --skip-plugins"
 check "a user-edited agent is preserved on reinstall" "grep -q 'my tweak' '$H/.codex/agents/test-writer.toml'"
+
+run bin/tack config agent-roles false --global
+check "disabling roles previews removals without changing files" "run install.sh --skip-plugins --dry-run && [ -e '$H/.codex/agents/code-reviewer.toml' ]"
+check "disabling roles removes unchanged generated files" "run install.sh --skip-plugins && [ ! -e '$H/.codex/agents/code-reviewer.toml' ]"
+check "disabling roles preserves user and edited definitions" "grep -q 'my tweak' '$H/.codex/agents/test-writer.toml' && grep -q 'my own planner' '$H/.codex/agents/planner.toml'"
+run bin/tack config agent-roles true --global
+check "re-enabling roles restores missing managed definitions" "run install.sh --skip-plugins && [ -e '$H/.codex/agents/code-reviewer.toml' ]"
 echo "Shared user memory at Codex session start"
 mkdir -p "$H/.config/agent-tack"
 printf -- '- 2026-10-05: Runs the checks with make check.\n' > "$H/.config/agent-tack/memory.md"

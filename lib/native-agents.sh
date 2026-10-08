@@ -19,10 +19,13 @@ install_native_agents() {
       continue
     fi
     section "$tool agents"
-    [ "$DRY_RUN" -eq 1 ] || mkdir -p "$dir" || { fail "cannot create $dir"; continue; }
+    if roles_enabled; then
+      [ "$DRY_RUN" -eq 1 ] || mkdir -p "$dir" || { fail "cannot create $dir"; continue; }
+    fi
     for agent in "$REPO"/agents/*.md; do
       name="$(basename "$agent" .md)"
       target="$dir/$name$extension"
+      if ! roles_enabled; then deselect_agent generated "$agent" "$target"; continue; fi
       rendered="$WORKDIR/$tool-agent-$name$extension"
       python3 "$REPO/lib/native_agents.py" "$tool" "$agent" > "$rendered" || { fail "cannot render $agent for $tool"; continue; }
       ownership_find generated "$target"
