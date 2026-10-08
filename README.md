@@ -90,7 +90,7 @@ Pick a catalog when you want breadth and choose workflows yourself; pick agent-t
 
 ## Results
 
-Measured on real Claude Code sessions, plain assistant versus tack, with hidden acceptance tests the assistant never sees. Other models and tools can give different numbers ([method, limits and every table](docs/results.md)):
+Measured on real Claude Code and Codex sessions, plain assistant versus tack, with hidden acceptance tests the assistant never sees. Results depend on the model and tool ([method, limits and every table](docs/results.md)). Historical Claude comparisons:
 
 | | Plain assistant | tack (`auto`) |
 | --- | --- | --- |
@@ -101,7 +101,9 @@ Measured on real Claude Code sessions, plain assistant versus tack, with hidden 
 | Work on a branch with Conventional Commits | no run | every Opus run; most Haiku runs |
 | Cost | 1× | 1.1–1.9× |
 
-tack changed the outcome in one of two hidden-risk scenarios: the smaller model handled path traversal once tack had it pick the level by risk, while in a SQL search both conditions missed the same `LIKE` wildcard trap. On plain tasks it changes the process (branch, commits, tests) at a modest cost.
+tack changed the outcome in one of two historical hidden-risk scenarios: the smaller model handled path traversal once tack had it pick the level by risk, while in a SQL search both conditions missed the same `LIKE` wildcard trap.
+
+The [24-run Codex comparison](docs/benchmarks/2026-10-08-codex.md), with GPT-6 Luna and GPT-6.1 Sol at medium effort, found acceptance parity: 12/12 baseline and 12/12 auto runs pass. Auto adds useful regression tests with Luna and branch/commit discipline, but takes 2.27x/2.38x session time and 4.54x/3.49x input tokens for Luna/Sol. Most input is cached; subscription charges are unknown. A supplementary review found Unicode search failures in both Luna auto runs. These results do not establish a general code-quality gain or justify mandatory process on every task.
 
 ## Learn more
 

@@ -2,6 +2,12 @@
 
 What tack changes in practice, measured on real sessions: the same tasks with and without it.
 
+## Codex subscription comparison (2026-10-08)
+
+GPT-6 Luna and GPT-6.1 Sol, medium effort, Codex CLI 0.160.1: **24/24 runs pass the hidden acceptance tests**, with two runs per model/condition on bug-fix, attachments and search. There is no acceptance gain in this sample. tack adds regression tests to Luna's outputs and branch/commit discipline to both models; Sol already writes useful tests without it. A separate review/probe found Unicode search failures in both Luna auto runs that the original ASCII-focused hidden tests miss.
+
+For the fixed three-task mix, auto uses 4.54x input tokens and 2.27x session time with Luna; 3.49x input and 2.38x time with Sol. Most input is cached. These are subscription token/time observations, not dollar charges. [Full tables, all-run facts, code-quality review and qualification limitations](benchmarks/2026-10-08-codex.md). The small samples, post-hoc review and incomplete first-pilot archive are explicit; results are not pooled with historical Claude runs.
+
 ## Context reduction and new measurement support (2026-10-07)
 
 The 19 shipped skill descriptions were shortened from 4,879 to 3,038 characters (37.7%). Purposes and activation boundaries remain; installed groups, safety controls and the 23 configuration options keep their existing behavior. This measures description characters, not tokens or monetary savings. The [component decision record](audits/2026-10-07-capability-simplification.md) explains why no component was removed without usage evidence.
