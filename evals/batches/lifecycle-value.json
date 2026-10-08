@@ -1,0 +1,15 @@
+{
+  "conditions": ["plain", "project", "tack"],
+  "scenarios": ["stock", "orders"],
+  "models": ["gpt-6-luna", "gpt-6.1-sol"],
+  "reviewer": "gpt-6-astra",
+  "effort": "medium",
+  "repetitions": 2,
+  "max_sessions": 140,
+  "concurrency": 2,
+  "timeout_seconds": 300,
+  "review_timeout": 180,
+  "seed": 20261008,
+  "revision": "145f3b1b8d8d163b2713b78e3abc021028030525",
+  "image": "sha256:b3595972953b86399133c40386256f2b00facc6170d9be05a70891f24615963e"
+}
