@@ -21,7 +21,7 @@ Follow `dev-workflow` → `references/conventions.md` and the stack's file in `r
 Keep the initial capability catalog empty unless concrete project work justifies a procedure or role. When it does, define its trigger, bounded instructions and validation in the project; index local definitions in AGENTS.md for later sessions. Creating a role does not itself authorize delegation.
 
 - `git init -b main`, plus a `.gitignore` for the language, editor and OS. Ignore `.env`.
-- Enable and create the common base: `tack enable --shared --scaffold` (creates a `.tack` marker to commit with the repo). For local activation use `tack enable --scaffold`. Review the four generated files against the project; commands are detected, not executed.
+- Enable locally with `tack enable`, or share activation with `tack enable --shared`. Add `--scaffold` only when the four guidance files are useful and selected. Review generated files against the project; commands are detected, not executed. Existing guidance can be sufficient.
 - `.editorconfig` copied from this skill's `assets/editorconfig`.
 - Folder structure:
   - with a real domain: `domain/`, `application/`, `infrastructure/`, `interfaces/` (see `dev-workflow` → `references/design.md`);

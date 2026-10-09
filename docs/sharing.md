@@ -84,17 +84,15 @@ Maya reviews the generated changes and commits `.tack`, `tack.json` and the agre
 Leo pulls the change and runs:
 
 ```bash
-tack mode                       # auto (shared)
-tack config reply-style         # brief (shared)
-tack context
+tack setup                      # shared mode/preferences, local differences and trust
 tack verify --all --plan         # preview declared checks even in a clean clone
 tack trust                      # after reviewing the commands in his clone
 tack verify --all               # establish a checked starting point
 ```
 
-He starts a new AI session. Shared defaults work without importing Maya's Git config. If Leo has an old local override, `tack config` shows it; `tack config reply-style --unset` removes it.
+He starts a new AI session. Shared defaults work without importing Maya's Git config. If Leo has an old local override, setup highlights the difference and the command to remove it. An intentional personal override can stay. Setup does not change either choice.
 
-Startup points the assistant to recorded setup choices. Leo checks that the effective collaboration setting and context paths match the agreement, then resolves only local gaps. A shared file transferring correctly does not prove that the original choices were correct. Keep the existing architecture guide instead of creating a second one at a default path.
+Setup and startup point the assistant to recorded choices. Leo reviews the displayed collaboration setting and context paths, then resolves only local gaps. A shared file transferring correctly does not prove that the original choices were correct; `tack config --check FILE` against an independently approved selection remains useful for that comparison. Keep the existing architecture guide instead of creating a second one at a default path.
 
 ### 3. Work on real tasks
 

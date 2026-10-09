@@ -35,9 +35,9 @@ Commands:
   enable [--shared] [--scaffold]
                       Enable this clone, or use a shareable .tack marker;
                       --scaffold adds four evidence-based guidance files (never overwrites)
-  setup [--check|--json]
+  setup [--check] [--json]
                       Inspect project foundations without running project code;
-                      --check exits 1 for incomplete or broken base guidance
+                      Show clone preferences and overrides; --check exits 1 for broken guidance
   team [--base REF] [--against REF ...] [--json]
                       Inspect known branch overlap and committed merge conflicts; no fetch
   team --plan|--verify --against REF [--json] [--budget-seconds N]
@@ -377,9 +377,14 @@ case "$cmd" in
     exit 1
     ;;
   setup)
-    case "$#:${1:-}" in 0: | 1:--check | 1:--json) ;; *) echo 'tack: usage: tack setup [--check|--json]' >&2; exit 2 ;; esac
+    for arg in "$@"; do
+      case "$arg" in --check | --json) ;; *) echo 'tack: usage: tack setup [--check] [--json]' >&2; exit 2 ;; esac
+    done
     require_repo
     command -v python3 >/dev/null 2>&1 || fail 'setup needs python3'
+    TACK_SETUP_BASH="$BASH"
+    if command -v cygpath >/dev/null 2>&1; then TACK_SETUP_BASH="$(cygpath -m "$BASH")"; fi
+    export TACK_SETUP_BASH
     python3 "$TACK_ROOT/lib/project_setup.py" "$root" "$@"
     exit
     ;;

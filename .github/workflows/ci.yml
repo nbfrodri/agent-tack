@@ -96,6 +96,8 @@ jobs:
         run: tests/verification.test.sh
       - name: Check shared project preferences with native Python and Git Bash
         run: tests/project-config.test.sh
+      - name: Check project setup and clone summaries with native Python and Git Bash
+        run: python3 tests/project-setup.test.py
       - name: Check optional collaborator bootstrap
         run: tests/bootstrap.test.sh
       - name: Check team diagnostics and PR metadata

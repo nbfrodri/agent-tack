@@ -2,14 +2,15 @@
 """Bounded project discovery, minimal scaffolding and read-only readiness checks."""
 import argparse
 import json
+import os
 from pathlib import Path
 import re
 import subprocess
 
-from project_config import project_paths
+from project_config import effective, git_values, load_profile, project_paths, registry, resolved_paths, validate_value
 
-def base_files(root):
-    return ('AGENTS.md', 'CLAUDE.md', project_paths(root)['architecture-path'], 'docs-map.txt')
+def base_files(root, paths=None):
+    return ('AGENTS.md', 'CLAUDE.md', (paths or project_paths(root))['architecture-path'], 'docs-map.txt')
 
 MANIFESTS = {'package.json': 'JavaScript/TypeScript', 'pyproject.toml': 'Python',
              'requirements.txt': 'Python', 'Cargo.toml': 'Rust', 'go.mod': 'Go',
@@ -44,7 +45,39 @@ def inventory(root):
     return paths[:3000], len(paths) > 3000
 
 
+def preferences(root):
+    source = Path(__file__).resolve().parent.parent
+    features = registry(source)
+    profile, _ = load_profile(root, features)
+    local, personal = git_values('local', root), git_values('global', root)
+    records = []
+    for feature in features.values():
+        value, origin = effective(feature, profile, local, personal)
+        shared = profile.get('config', {}).get(feature['name'])
+        records.append(dict(name=feature['name'], value=value, source=origin,
+                            shared_value=validate_value(feature, shared, typed=True) if shared is not None else None))
+    return records, resolved_paths(root, features, profile, local, personal), profile.get('mode')
+
+
+def workflow(root, shared_mode):
+    """Ask the CLI; keep activation, trust and legacy/custom mode semantics there."""
+    cli = Path(__file__).resolve().parent.parent / 'bin/tack'
+
+    def query(*args, allowed=(0,)):
+        result = subprocess.run([os.environ.get('TACK_SETUP_BASH', 'bash'), str(cli), *args],
+                                cwd=root, capture_output=True, text=True, encoding='utf-8', timeout=15)
+        if result.returncode not in allowed:
+            raise ValueError(f"cannot read {' '.join(args)}: {result.stderr.strip()}")
+        return result
+
+    mode, _, origin = query('mode').stdout.strip().partition(' ')
+    return dict(enabled=query('status', '--quiet', allowed=(0, 1)).returncode == 0,
+                trusted=query('trusted', '--quiet', allowed=(0, 1)).returncode == 0,
+                mode=dict(value=mode, source=origin.strip('()'), shared_value=shared_mode))
+
+
 def analyze(root):
+    settings, paths, shared_mode = preferences(root)
     files, truncated = inventory(root)
     manifests = [p for p in files if Path(p).name in MANIFESTS and safe(root, p) and (root / p).is_file()][:40]
     commands = {}
@@ -89,13 +122,22 @@ def analyze(root):
         candidates.append({'item': 'PR template', 'reason': 'No repository PR template; check organization defaults and whether this project uses pull requests.'})
     if not any(p.lower() == 'readme.md' for p in files):
         candidates.append({'item': 'README', 'reason': 'No root README.md; a short setup and usage guide may help.'})
-    issues = []
-    for relative in base_files(root):
+    issues, missing_optional = [], []
+    architecture = next(item for item in settings if item['name'] == 'architecture-path')
+    for relative in base_files(root, paths):
+        path = root / relative
         if not safe(root, relative):
             issues.append(f'{relative}: symlink or unsafe path; inspect manually')
-        elif not (root / relative).is_file():
-            issues.append(f'{relative}: missing base file')
-    for relative in ('AGENTS.md', base_files(root)[2]):
+        elif not path.exists():
+            if relative == paths['architecture-path'] and architecture['source'] != 'default':
+                issues.append(f'{relative}: explicitly configured architecture file is missing')
+            else:
+                missing_optional.append(relative)
+        elif not path.is_file():
+            issues.append(f'{relative}: not a regular file')
+        elif path.stat().st_size > 131072:
+            issues.append(f'{relative}: exceeds the 128 KiB inspection limit; inspect manually')
+    for relative in ('AGENTS.md', paths['architecture-path']):
         content = read(root, relative)
         if PENDING in content or re.search(r'`(?:…|\.\.\.|TODO)`', content):
             issues.append(f'{relative}: guidance still needs review against the project')
@@ -106,6 +148,10 @@ def analyze(root):
             resolved = (root / relative).parent / target
             if not resolved.resolve().is_relative_to(root) or not resolved.exists():
                 issues.append(f'{relative}: missing or external local link {target}')
+    # Validate only tack's exact bridge. Existing tool-specific imports, Markdown
+    # examples and external context need the tool's parser, not a second one here.
+    if read(root, 'CLAUDE.md').strip() == '@AGENTS.md' and not read(root, 'AGENTS.md'):
+        issues.append('CLAUDE.md: @AGENTS.md bridge needs readable, nonempty AGENTS.md')
     rules = 0
     for line in read(root, 'docs-map.txt').splitlines():
         if not line.strip() or line.lstrip().startswith('#'):
@@ -124,7 +170,27 @@ def analyze(root):
     return dict(manifests=[{'path': p, 'stack': MANIFESTS[Path(p).name]} for p in manifests],
                 commands=commands, directories=directories, capabilities=capabilities,
                 pr_templates=templates, candidates=candidates, issues=issues,
-                docs_map_rules=rules, truncated=truncated, paths=project_paths(root), areas=areas)
+                docs_map_rules=rules, truncated=truncated, paths=paths, areas=areas,
+                preferences=settings, shared_mode=shared_mode, missing_optional=missing_optional,
+                recorded_choices=bool(re.search(r'^##\s+Setup choices\s*$', read(root, 'AGENTS.md'), re.M | re.I)))
+
+
+def render_settings(report):
+    state = report['workflow']
+    print('Workflow: ' + ('enabled' if state['enabled'] else 'disabled') +
+          '; local execution: ' + ('trusted' if state['trusted'] else 'untrusted'))
+    mode = state['mode']
+    print(f"Mode: {mode['value']} ({mode['source']})")
+    highlighted = {'collaboration', 'reply-style', 'architecture-path', 'plans-path', 'handoffs-path', 'setup-review'}
+    for item in report['preferences']:
+        if item['name'] in highlighted or item['source'] != 'default':
+            print(f"Preference: {item['name']}: {item['value']} ({item['source']})")
+    for item in report['differences']:
+        unset = 'tack mode --unset' if item['name'] == 'mode' else f"tack config {item['name']} --unset"
+        print(f"Local difference: {item['name']}: shared {item['shared_value']}; "
+              f"effective {item['value']}. Keep if intentional; to use the shared choice: {unset}")
+    if report['recorded_choices']:
+        print('Reuse recorded Setup choices in AGENTS.md; resolve only local gaps.')
 
 
 def scaffold(root):
@@ -202,10 +268,15 @@ def main():
             scaffold(root)
             return 0
         report = analyze(root)
+        report['workflow'] = workflow(root, report.pop('shared_mode'))
+        compared = [dict(name='mode', **report['workflow']['mode']), *report['preferences']]
+        report['differences'] = [item for item in compared if item['shared_value'] is not None
+                                 and item['value'] != item['shared_value']]
         if args.json:
             print(json.dumps(report, indent=2))
         else:
             print('Project setup (read-only; declared commands are not verified)')
+            render_settings(report)
             for item in report['manifests']:
                 print(f"Stack: {item['stack']} ({item['path']})")
             for name, (command, source) in report['commands'].items():
@@ -218,11 +289,14 @@ def main():
             for area in report['areas']:
                 print(f"Area: {area['path']} (instructions: {area['instructions'] or 'not detected'}; ownership unverified)")
             print(f"Docs-map: {report['docs_map_rules']} active rule(s)")
+            if report['missing_optional']:
+                print('Optional files not present: ' + ', '.join(report['missing_optional']) + '. Create only if useful.')
             if report['truncated']:
                 print('Inventory limited to 3000 paths; inspect omitted packages before proposing additions.')
-            print('Next: read tack config --json for values and origins; select only unresolved preferences and optional additions.')
-            print('Save selected shared values, including defaults, with tack config --shared --apply FILE (preview with --dry-run). Local overrides remain local.')
-            print('Record choices in AGENTS.md; finish with tack setup --check and tack config setup-review done, or deferred to postpone.')
+            print('Structure: ' + ('needs review' if report['issues'] else 'no problems found') + '; not test results or a factual review of the guidance.')
+            print('Next: review findings and only unresolved choices. Preview checks with tack verify --all --plan for a new clone, or tack verify --plan for a task.')
+            if not report['workflow']['trusted']:
+                print('Execution remains untrusted; review commands before choosing tack trust. Setup never grants trust.')
         return 1 if args.check and report['issues'] else 0
     except (OSError, ValueError, subprocess.SubprocessError) as error:
         parser.exit(1, f'tack setup: {error}\n')

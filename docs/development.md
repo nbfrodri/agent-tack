@@ -5,6 +5,21 @@ How to change this repo safely: commands, adding skills or agents, and measuring
 The [engineering practices](engineering-practices.md) connect conventions to concrete failure cases, compatibility, recovery and measured outcomes. Keep one responsibility per component, reuse project commands across local checks and CI, and include tests that would fail for the defect being fixed. A new configuration format needs explicit version/validation behavior; a persistent-state change needs a recovery strategy and relevant tests.
 
 ## Commands
+
+This repository uses its own `checks-map.json`. Run `bin/tack verify --plan` to see
+the selection, review the commands and grant `bin/tack trust` locally before
+`bin/tack verify --budget-seconds 600`. Use `--all` for a clean-clone baseline.
+No global installation or workflow activation is required for these manual checks.
+
+Documentation-only changes select content validation. Runtime, installer, hook and
+test changes conservatively select the full parallel suite; shell/Python changes
+also select lint. The full suite includes content validation, so mixed changes can
+repeat that short check. We accept this small duplication instead of maintaining
+a second test runner. Keep Node, cached/downloadable esbuild and the pinned linters
+available as described below. The 600-second budget is explicit because the
+default 120 seconds may not fit the full suite. CI still checks platform behavior;
+a mapped path does not mean every semantic risk is covered. Review docs manually.
+
 ```bash
 tests/lint.sh            # ShellCheck on every script and ruff on the Python (ruff through uvx at the pinned version when uv is installed)
 tests/run-all.sh         # every suite below, in parallel (-j N), with a one-line summary each
