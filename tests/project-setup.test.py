@@ -4,12 +4,14 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+BASH = shutil.which('bash')
 sys.path.insert(0, str(ROOT / 'lib'))
 spec = importlib.util.spec_from_file_location('project_setup', ROOT / 'lib/project_setup.py')
 setup = importlib.util.module_from_spec(spec)
@@ -24,30 +26,110 @@ class ProjectSetup(unittest.TestCase):
         self.home.mkdir()
         self.project = Path(self.temp.name) / 'repo'
         self.project.mkdir()
-        self.env = dict(os.environ, HOME=str(self.home), XDG_CONFIG_HOME=str(self.home / '.config'),
+        self.env = dict(os.environ, HOME=str(self.home), USERPROFILE=str(self.home), XDG_CONFIG_HOME=str(self.home / '.config'),
                         XDG_STATE_HOME=str(self.home / '.local/state'), GIT_CONFIG_NOSYSTEM='1',
                         GIT_CONFIG_GLOBAL=str(self.home / '.gitconfig'))
         for key in list(self.env):
-            if key in ('GIT_DIR', 'GIT_WORK_TREE', 'GIT_CONFIG_COUNT') or key.startswith(('GIT_CONFIG_KEY_', 'GIT_CONFIG_VALUE_')):
+            if key in ('GIT_DIR', 'GIT_WORK_TREE', 'GIT_CONFIG_COUNT', 'BASH_ENV', 'ENV') or key.startswith(('GIT_CONFIG_KEY_', 'GIT_CONFIG_VALUE_')):
                 self.env.pop(key)
         self.run_command('git', 'init', '-q')
 
     def run_command(self, *args, status=0):
-        result = subprocess.run(args, cwd=self.project, env=self.env, text=True, capture_output=True, timeout=30)
+        result = subprocess.run(args, cwd=self.project, env=self.env, text=True, encoding='utf-8', capture_output=True, timeout=30)
         self.assertEqual(result.returncode, status, result.stdout + result.stderr)
         return result.stdout
 
     def tack(self, *args, status=0):
-        return self.run_command('bash', str(ROOT / 'bin/tack'), *args, status=status)
+        return self.run_command(BASH, str(ROOT / 'bin/tack'), *args, status=status)
 
     def write(self, relative, text):
         path = self.project / relative
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text, encoding='utf-8')
 
+    def symlink(self, path, target, directory=False):
+        try:
+            path.symlink_to(target, target_is_directory=directory)
+        except OSError as error:
+            if getattr(error, 'winerror', None) == 1314:
+                self.skipTest('Windows symlink privilege is unavailable')
+            raise
+
+    def test_minimal_adoption_does_not_require_optional_templates(self):
+        self.write('AGENTS.md', '# Project\nUse existing tests.\n')
+        self.tack('enable')
+        before = self.run_command('git', 'status', '--porcelain')
+        report = json.loads(self.tack('setup', '--check', '--json'))
+        self.assertEqual(report['issues'], [])
+        self.assertEqual(set(report['missing_optional']), {'CLAUDE.md', 'docs/architecture.md', 'docs-map.txt'})
+        self.assertEqual(self.run_command('git', 'status', '--porcelain'), before)
+        self.assertFalse((self.project / 'docs').exists())
+        self.assertIn('not test results', self.tack('setup', '--check'))
+
+    def test_explicit_architecture_is_checked_but_unused_default_is_optional(self):
+        self.tack('setup', '--check')
+        self.tack('config', 'architecture-path', 'guide/system.md', '--shared')
+        self.assertIn('guide/system.md', self.tack('setup', '--check', status=1))
+        self.write('guide/system.md', '# System\n')
+        self.tack('setup', '--check')
+        self.write('CLAUDE.md', '@AGENTS.md\n')
+        self.assertIn('AGENTS.md', self.tack('setup', '--check', status=1))
+        self.write('AGENTS.md', '# Instructions\n')
+        self.tack('setup', '--check')
+
+    def test_clone_summary_reuses_preferences_and_exposes_local_differences(self):
+        self.write('AGENTS.md', '# Instructions\n\n## Setup choices\nUse existing tests; no scaffold.\n')
+        self.tack('enable', '--shared')
+        self.tack('mode', 'auto', '--shared')
+        self.tack('config', 'collaboration', 'team', '--shared')
+        self.tack('config', 'reply-style', 'brief', '--shared')
+        self.tack('config', 'setup-review', 'done')
+        self.tack('trust')
+        self.run_command('git', 'add', '.')
+        self.run_command('git', '-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '-qm', 'test: setup')
+        clone = Path(self.temp.name) / 'clone'
+        self.run_command('git', 'clone', '-q', str(self.project), str(clone))
+        self.project = clone
+        self.tack('config', 'collaboration', 'solo', '--global')
+        self.tack('config', 'reply-style', 'visual')
+        self.tack('mode', 'strict')
+        before = (clone / '.git/config').read_bytes()
+        report = json.loads(self.tack('setup', '--check', '--json'))
+        self.assertTrue(report['workflow']['enabled'])
+        self.assertFalse(report['workflow']['trusted'])
+        self.assertEqual(report['workflow']['mode'], {'value': 'strict', 'source': 'local', 'shared_value': 'auto'})
+        values = {item['name']: item for item in report['preferences']}
+        self.assertEqual((values['collaboration']['value'], values['collaboration']['source']), ('team', 'shared'))
+        self.assertEqual(values['reply-style']['shared_value'], 'brief')
+        self.assertEqual({item['name'] for item in report['differences']}, {'mode', 'reply-style'})
+        self.assertEqual(values['setup-review']['value'], 'pending')
+        self.assertTrue(report['recorded_choices'])
+        self.assertIn('Reuse', self.tack('setup'))
+        self.assertEqual((clone / '.git/config').read_bytes(), before)
+        self.assertEqual(self.run_command('git', 'status', '--porcelain'), '')
+
+    def test_setup_rejects_invalid_profile_and_does_not_run_shared_commands(self):
+        self.tack('config', 'check-fast', 'touch SHOULD_NOT_RUN', '--shared')
+        self.tack('setup', '--check')
+        self.assertFalse((self.project / 'SHOULD_NOT_RUN').exists())
+        self.write('tack.json', '{"version":9}')
+        self.tack('setup', '--check', status=1)
+
+    def test_non_file_guidance_remains_an_error(self):
+        (self.project / 'AGENTS.md').mkdir()
+        self.assertIn('not a regular file', self.tack('setup', '--check', status=1))
+
+    def test_existing_claude_guidance_is_not_reinterpreted_as_the_scaffold_bridge(self):
+        self.write('docs/system.md', '# System\n')
+        self.write('CLAUDE.md', '# Instructions\n[System](docs/system.md "Overview")\n'
+                   '```text\n@nonexistent-example.md\n```\n@~/notes.md\n')
+        self.tack('setup', '--check')
+        self.write('CLAUDE.md', '@AGENTS.md\n')
+        self.tack('setup', '--check', status=1)
+
     def test_empty_project_minimal_base_is_neutral_idempotent_and_needs_review(self):
         self.tack('enable', '--scaffold')
-        files = {str(p.relative_to(self.project)) for p in self.project.rglob('*') if p.is_file() and '.git' not in p.parts}
+        files = {p.relative_to(self.project).as_posix() for p in self.project.rglob('*') if p.is_file() and '.git' not in p.parts}
         self.assertEqual(files, {'AGENTS.md', 'CLAUDE.md', 'docs/architecture.md', 'docs-map.txt'})
         self.assertFalse((self.project / '.tack').exists())
         report = json.loads(self.tack('setup', '--json'))
@@ -105,7 +187,7 @@ class ProjectSetup(unittest.TestCase):
     def test_symlink_parent_rejected_before_any_base_file_is_created(self):
         outside = self.home / 'outside'
         outside.mkdir()
-        (self.project / 'docs').symlink_to(outside, target_is_directory=True)
+        self.symlink(self.project / 'docs', outside, directory=True)
         self.tack('enable', '--scaffold', status=1)
         self.assertFalse((self.project / 'AGENTS.md').exists())
         self.assertEqual(list(outside.iterdir()), [])
@@ -139,7 +221,7 @@ class ProjectSetup(unittest.TestCase):
         (self.project / '.tack').unlink()
         target = self.home / 'keep'
         target.write_text('Keep me', encoding='utf-8')
-        (self.project / '.tack').symlink_to(target)
+        self.symlink(self.project / '.tack', target)
         self.tack('enable', '--shared', '--scaffold', status=1)
         self.assertEqual(target.read_text(encoding='utf-8'), 'Keep me')
         self.assertFalse((self.project / 'AGENTS.md').exists())

@@ -50,18 +50,18 @@ Requires Git, Bash 3.2+ and Python 3.9+. Linux, macOS and Windows options are de
 ```bash
 # Keep this checkout: installed files link to it.
 git clone https://github.com/nbfrodri/agent-tack.git ~/Projects/agent-tack
-~/Projects/agent-tack/install.sh
+~/Projects/agent-tack/install.sh --skip-plugins
 
 cd ~/Projects/my-app
 tack enable       # local to this clone; adds no project files
-tack setup        # inspect existing tools and guidance; runs no project code
+tack setup        # see clone settings, local differences and existing guidance
 ```
 
 Start a new AI session and ask:
 
 > Configure tack for this project. Reuse the existing conventions and docs. Propose useful additions and let me choose what to create.
 
-Use `tack enable --scaffold` if you want the missing base guidance files. Review commands with `tack verify --plan`, then grant local execution trust with `tack trust` when you are ready to run them. [Full setup guide](docs/setup.md).
+Existing guidance is enough to start; scaffold files are optional. `tack setup --check` checks the guidance you use without requiring extra templates. Review commands with `tack verify --plan`, then grant local execution trust with `tack trust` when you are ready to run them. [Full setup guide](docs/setup.md).
 
 ## Use it your way
 

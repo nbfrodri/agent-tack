@@ -1,6 +1,15 @@
 # Results
 
-What tack changes in practice, measured on real sessions: matched tasks with and without tack, or between versions.
+Evidence from model comparisons, deterministic checks and real repository work.
+
+## Adoption readiness on tack itself (2026-10-09)
+
+Combined clone inspection now takes one CLI call instead of four; a local eight-repeat
+measurement saved a median **110.8 ms** and returned the same effective preferences.
+Optional scaffold files no longer block structural readiness. Independent review
+found two implementation defects, both corrected before delivery. These are narrow
+adoption fixes, not demonstrated model-token, human-onboarding or code-quality gains
+over a short guide plus CI. [Measurements, review and limitations](benchmarks/2026-10-09-adoption-readiness.md).
 
 ## Smaller default and executable agreements (2026-10-09)
 

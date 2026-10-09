@@ -1,0 +1,213 @@
+{
+  "project_revision": "693445fb95ff4a89ad6bda89c7a0fc5e9424ed45",
+  "repeats": 8,
+  "commands": {
+    "baseline": [
+      [
+        "setup",
+        "--json"
+      ],
+      [
+        "config",
+        "--json"
+      ],
+      [
+        "mode"
+      ],
+      [
+        "status"
+      ]
+    ],
+    "candidate": [
+      [
+        "setup",
+        "--json"
+      ]
+    ]
+  },
+  "seconds": {
+    "baseline": [
+      0.20683897899994008,
+      0.19793555900014326,
+      0.19900948200006496,
+      0.1840595899998334,
+      0.19052352799985783,
+      0.19473387499988348,
+      0.18976739999993697,
+      0.18852784099999553
+    ],
+    "candidate": [
+      0.09047992599994359,
+      0.08742491499992866,
+      0.08132959900012793,
+      0.08243220700001075,
+      0.08059066199984954,
+      0.08226474899993264,
+      0.07894174600005499,
+      0.08047672699990471
+    ]
+  },
+  "median_seconds": {
+    "baseline": 0.19262870149987066,
+    "candidate": 0.08179717400003028
+  },
+  "stdout_bytes": {
+    "baseline": 7443,
+    "candidate": 4889
+  },
+  "source_sha256": {
+    "baseline": {
+      "bin/tack": "331b7b33f4473fca889db3945ebc1370ab745def57b274f9634fb0a3c64d0c31",
+      "lib/project_setup.py": "f9b54b65843ec5f1157d6e33663a00b4668c528ee32499c56ac011ef409dc8ac",
+      "lib/project_config.py": "6c2b93afb55335032386fa6b66f376b0e87b258f98f4e3724140f6c47a6ef140",
+      "features.txt": "afb3f709bd0dc2bdfe100b65a30380c855b85e1e164515013dcbee15be766e80"
+    },
+    "candidate": {
+      "bin/tack": "e7d74dc80020910c9445f1491c0a7762fbe67a2833012219476499c099f7a367",
+      "lib/project_setup.py": "d23aac9a2efbe8a1de7c3be862a33909c3f28397534f224a9f9a493952d9e63e",
+      "lib/project_config.py": "6c2b93afb55335032386fa6b66f376b0e87b258f98f4e3724140f6c47a6ef140",
+      "features.txt": "afb3f709bd0dc2bdfe100b65a30380c855b85e1e164515013dcbee15be766e80"
+    }
+  },
+  "checks": [
+    "effective values and origins agree",
+    "local differences exposed",
+    "trust not inherited",
+    "Git status and local config unchanged"
+  ],
+  "limitations": "Local CLI measurement; no model tokens, human time or causal code-quality comparison.",
+  "repository_verification": {
+    "version": 1,
+    "base": "b46271087cdfe62ad58669b811825fc2ce04d958",
+    "selection": "changed",
+    "changed_paths": [
+      ".github/workflows/ci.yml",
+      "AGENTS.md",
+      "README.md",
+      "bin/tack",
+      "checks-map.json",
+      "docs/architecture.md",
+      "docs/development.md",
+      "docs/plans/2026-10-09-adoption-readiness-implementation.md",
+      "docs/setup.md",
+      "docs/sharing.md",
+      "lib/project_setup.py",
+      "skills/new-project/SKILL.md",
+      "skills/new-project/references/onboarding.md",
+      "tests/project-setup.test.py",
+      "tests/verification.test.py"
+    ],
+    "checks": [
+      {
+        "id": "content",
+        "paths": [
+          "*.md",
+          "docs/*",
+          "skills/*",
+          "agents/*",
+          "global/*",
+          "*.txt"
+        ],
+        "command": "tests/validate.sh",
+        "timeout_seconds": 60,
+        "source": "checks-map.json",
+        "ids": [
+          "content"
+        ],
+        "matched_paths": [
+          "AGENTS.md",
+          "README.md",
+          "checks-map.json",
+          "docs/architecture.md",
+          "docs/development.md",
+          "docs/plans/2026-10-09-adoption-readiness-implementation.md",
+          "docs/setup.md",
+          "docs/sharing.md",
+          "skills/new-project/SKILL.md",
+          "skills/new-project/references/onboarding.md"
+        ],
+        "status": "passed",
+        "exit_code": 0,
+        "duration_s": 1.268
+      },
+      {
+        "id": "lint",
+        "paths": [
+          "*.sh",
+          "*.py",
+          "bin/tack",
+          "git-hooks/*",
+          "pyproject.toml",
+          ".github/workflows/ci.yml"
+        ],
+        "command": "tests/lint.sh",
+        "timeout_seconds": 120,
+        "source": "checks-map.json",
+        "ids": [
+          "lint"
+        ],
+        "matched_paths": [
+          ".github/workflows/ci.yml",
+          "bin/tack",
+          "checks-map.json",
+          "lib/project_setup.py",
+          "tests/project-setup.test.py",
+          "tests/verification.test.py"
+        ],
+        "status": "passed",
+        "exit_code": 0,
+        "duration_s": 8.643
+      },
+      {
+        "id": "regressions",
+        "paths": [
+          "*.py",
+          "*.sh",
+          "bin/*",
+          "lib/*",
+          "hooks/*",
+          "git-hooks/*",
+          "tests/*",
+          "plugins/*",
+          "claude/*",
+          "codex/*",
+          "gemini/*",
+          "copilot/*",
+          "cursor/*",
+          "opencode/*",
+          "crush/*",
+          "modes/*",
+          "targets.txt",
+          "features.txt",
+          "skill-groups.txt",
+          "model-tiers.txt",
+          "plugins.txt",
+          "reply-styles.txt",
+          ".github/workflows/ci.yml"
+        ],
+        "command": "tests/run-all.sh -j 4",
+        "timeout_seconds": 600,
+        "source": "checks-map.json",
+        "ids": [
+          "regressions"
+        ],
+        "matched_paths": [
+          ".github/workflows/ci.yml",
+          "bin/tack",
+          "checks-map.json",
+          "lib/project_setup.py",
+          "tests/project-setup.test.py",
+          "tests/verification.test.py"
+        ],
+        "status": "passed",
+        "exit_code": 0,
+        "duration_s": 227.132
+      }
+    ],
+    "unmapped_paths": [],
+    "mapped": true,
+    "status": "passed",
+    "note": "Selected checks are declared verification, not proof of complete semantic coverage.",
+    "inputs_changed": false
+  }
+}

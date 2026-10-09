@@ -73,6 +73,26 @@ class VerificationTests(unittest.TestCase):
     def trust(self):
         self.git('config', 'tack.trusted', 'true')
 
+    def test_repository_map_keeps_prose_checks_focused_and_gaps_visible(self):
+        self.define(json.loads((REPO / 'checks-map.json').read_text(encoding='utf-8'))['checks'])
+        self.write('docs/setup.md', '# Updated setup\n')
+        self.write('diagram.drawio', 'Diagram requiring manual review\n')
+        report = self.verify('--plan')
+        self.assertEqual([check['id'] for check in report['checks']], ['content'])
+        self.assertEqual(report['unmapped_paths'], ['diagram.drawio'])
+
+    def test_repository_map_runs_regressions_for_runtime_assets(self):
+        self.define(json.loads((REPO / 'checks-map.json').read_text(encoding='utf-8'))['checks'])
+        for path in ('lib/project_setup.py', 'skills/new-project/assets/setup-tack.py',
+                     'skills/project-docs/assets/setup-private.py', 'skills/github-issues/assets/check-pr.py',
+                     'bin/tack', 'hooks/claude/session-context.sh'):
+            with self.subTest(path=path):
+                self.write(path, '# Runtime change\n')
+                report = self.verify('--plan')
+                self.assertIn('regressions', {check['id'] for check in report['checks']})
+                self.assertEqual(report['unmapped_paths'], [])
+                (self.root / path).unlink()
+
     def test_shared_contract_selects_both_areas_but_web_change_stays_focused(self):
         self.define([self.check('api', ['apps/api/*', 'packages/contracts/*'], 'npm run test:api'),
                      self.check('web', ['apps/web/*', 'packages/contracts/*'], 'npm run test:web')])
