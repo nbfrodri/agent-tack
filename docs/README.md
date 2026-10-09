@@ -35,6 +35,12 @@ New to tack? Read [setup](setup.md), then [daily use](usage.md). You do not need
 
 ## Decisions and history
 
+The [adoption readiness report](benchmarks/2026-10-09-adoption-readiness.md) records
+the next bounded step: optional templates, one clone-summary command, tack's own
+check map and independent review. Its timing result concerns local CLI calls only;
+the [archived plan](archive/plans/2026-10-09-adoption-readiness-implementation.md)
+records the delivered scope and remaining evidence gaps.
+
 The [small-core comparison](benchmarks/2026-10-09-lean-core.md) measures the reduced default against previous tack and a short guide. Its [archived plan](archive/plans/2026-10-09-lean-project-checks-implementation.md) separates delivered configuration/integration checks from broader gains that remain unproven.
 
 The [complete-journey comparison](benchmarks/2026-10-08-lifecycle-value.md) measures defects, code quality, later changes and contributor setup. Its [archived plan](archive/plans/2026-10-08-lifecycle-value-implementation.md) records the functional improvements and completed evaluation; the broader efficiency goals remain unmet.

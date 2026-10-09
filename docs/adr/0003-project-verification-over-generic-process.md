@@ -48,6 +48,11 @@ A future comparison must fix its acceptance criteria and experiment thresholds b
 
 ## Follow-up implementation
 
+The [adoption readiness increment](../benchmarks/2026-10-09-adoption-readiness.md)
+removes mandatory scaffold prerequisites and combines clone inspection in one
+read-only command. Tack now routes its own existing checks with a project map.
+This demonstrates narrower setup behavior, not a reversal of the model results.
+
 The [small-core follow-up](../benchmarks/2026-10-09-lean-core.md) reduces the installed catalog and adds read-only approved-choice checking plus verification of prospective merged trees. Its 24 coding sessions and eight blind reviews do not establish general quality or productivity gains; the extra cost against a short guide remains unjustified in that sample. Keep the executable checks for their demonstrated narrow benefits. Projects with sufficient existing guidance can use the CLI without installing global workflow instructions. Do not add more generic process or repeat benchmarks merely to obtain favorable numbers.
 
 Shared project preferences, configurable context locations and reduced mandatory process were delivered after the initial verifier. See [configuration](../configuration.md) and the [direction audit](../audits/2026-10-08-product-direction.md). These updates do not change the historical benchmark results or establish a measured quality improvement.

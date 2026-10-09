@@ -44,7 +44,7 @@ tack setup
 
 Setup shows activation, mode, local trust, effective preferences and their origins. It highlights differences from shared choices and how to remove a local override if you want the shared value. Overrides are allowed; setup never removes them. It also lists detected stacks, declared commands, existing guidance and optional additions. Discovery is bounded, so a large monorepo still needs inspection of the relevant packages.
 
-Setup does not write files, run project commands, install dependencies or grant trust. Use `--json` for the same information as data. Check the guidance with:
+Setup does not write files, run project commands, install dependencies or grant trust. Use `--json` for the same information as data; `tack config --json` adds feature descriptions and sharing/enforcement metadata when needed. Check the guidance with:
 
 ```bash
 tack setup --check  # or --check --json for scripts

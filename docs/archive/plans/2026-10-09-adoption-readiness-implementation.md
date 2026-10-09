@@ -1,6 +1,6 @@
 # Adoption readiness implementation
 
-Status: in progress
+Status: implemented and evaluated; broader outcome claims remain unproven
 
 ## Starting point and scope
 
@@ -63,3 +63,22 @@ onboarding or model token savings. Compare the resulting code for complexity and
 maintenance, not only test counts. Stop expanding this change if convenience
 requires a parallel resolver, mandatory templates or a new orchestration layer.
 Broader defect/rework/onboarding claims require later real usage evidence.
+
+## Delivery record
+
+- Commit `693445f` implements the bounded setup changes, repository check map,
+  documentation and regressions. Optional files are advisory; existing broken
+  guidance and selected missing context remain findings.
+- Independent review found missing executable-asset routing and overly broad
+  CLAUDE.md parsing. Both were corrected and independently rechecked. No new
+  resolver, dependency, configuration format or agent catalog was introduced.
+- All 27 local Linux suites passed before the review fixes; affected suites and
+  lint/validation passed again afterward. Native Windows setup passed 12 cases
+  with two explicitly unavailable symlink cases; Windows CI now covers setup.
+- The [adoption report](../../benchmarks/2026-10-09-adoption-readiness.md) publishes
+  eight alternating measurements on a clone of tack itself, source hashes,
+  independent review and final verification. Four CLI calls become one for the
+  same effective values/origins and clone state; median savings are 110.8 ms,
+  not evidence of human or model task savings.
+- Further generic workflow expansion and another repeated synthetic coding
+  benchmark were deferred. Broader value requires actual adoption evidence.
