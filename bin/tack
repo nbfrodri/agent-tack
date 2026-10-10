@@ -438,6 +438,10 @@ case "$cmd" in
         fi
         ;;
     esac
+    # The names of the sets, so the assistant can activate one for this project when a task needs it.
+    if command -v python3 >/dev/null 2>&1 && [ "$(bash "$TACK_ROOT/lib/config.sh" "$TACK_ROOT" set-index --get)" != false ]; then
+      python3 "$TACK_ROOT/lib/sets.py" --root "$TACK_ROOT" index 2>/dev/null || true
+    fi
     bash "$source_root/lib/project-context.sh" "$root" "$(context_level)"
     if [ -e "$root/checks-map.json" ] || [ -L "$root/checks-map.json" ]; then
       echo 'Project verification: tack verify selects checks from checks-map.json for changed paths. Use --plan for read-only selection; report failures and unmapped paths. Execution needs local trust.'

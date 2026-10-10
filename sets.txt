@@ -186,7 +186,6 @@ devops skill cloudflare:skills/workers-best-practices
 devops skill cloudflare:skills/wrangler
 devops skill wshobson:plugins/kubernetes-operations/skills/k8s-manifest-generator
 devops skill wshobson:plugins/cicd-automation/skills/github-actions-templates
-devops skill vercel:skills/deploy-to-vercel
 
 addy about Addy Osmani's whole engineering lifecycle, from spec to ship
 addy skill addy:skills/using-agent-skills

@@ -257,6 +257,18 @@ check "auto context indexes the active handoff" contains '- Active handoff: docs
 check "auto context shows the handoff's next step" contains 'Next: implement feature'
 check "auto context omits the handoff body" eval '! contains "# Handoff"'
 check "context excludes completed handoffs" excludes_completed
+"$CLI" context > "$WORK/output" 2>&1
+check "context indexes the sets the assistant may activate" contains 'Sets available'
+check "the set index names sets without their contents" eval 'contains " design," && ! contains "emil-design-eng"'
+check "the set index says how to activate one for this project" contains 'tack set use NAME'
+git config --local tack.sets testing
+"$CLI" context > "$WORK/output" 2>&1
+check "the set index names the sets already active here" contains 'Active here: testing'
+git config --local --unset tack.sets
+git config --local tack.setIndex false
+"$CLI" context > "$WORK/output" 2>&1
+check "set-index false leaves the index out" eval '! contains "Sets available"'
+git config --local --unset tack.setIndex
 git config --local tack.mode standard
 check "standard context succeeds" expect_exit 0 "$CLI" context
 check "standard context is an index too" contains '- docs/architecture.md (1 lines)'

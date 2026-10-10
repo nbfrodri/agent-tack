@@ -101,6 +101,17 @@ class SetsTests(unittest.TestCase):
         self.assertRegex(out, r'\*\s+design\s+Interfaces and polish')
         self.assertRegex(out, r'\+\s+motion\s+Animation')
 
+    def test_index_is_one_line_of_names_and_the_sets_active_here(self):
+        out = self.tool('index')
+        self.assertEqual(len(out.strip().splitlines()), 1)
+        self.assertIn('design, motion', out)
+        self.assertNotIn('Active here', out)
+        self.assertNotIn('polish', out)
+        self.tool('use', 'motion')
+        self.assertIn('Active here: motion', self.tool('index'))
+        self.tool('use', 'design', '--global')
+        self.assertIn('Active everywhere: design', self.tool('index'))
+
     def test_show_lists_the_items_of_a_set(self):
         out = self.tool('show', 'design')
         for expected in ('frontend', 'up:skills/polish', 'ui-reviewer', 'frontend-design@claude-plugins-official'):

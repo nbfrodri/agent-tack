@@ -317,6 +317,21 @@ def command_list(args, root, sources, sets):
         print(f'{mark} {name:<14} {entry["about"]}  ({counts})')
 
 
+def command_index(args, root, sources, sets):
+    """One line for startup context: the names an assistant may activate and what is already on."""
+    code, top, _ = git('rev-parse', '--show-toplevel')
+    here = active('local', sets) if code == 0 and top else []
+    everywhere = active('global', sets)
+    line = 'Sets available (skills, agents and plugins that load only once activated): ' + ', '.join(sets) + '.'
+    if everywhere:
+        line += ' Active everywhere: ' + ', '.join(everywhere) + '.'
+    if here:
+        line += ' Active here: ' + ', '.join(here) + '.'
+    print(line + ' When a task clearly needs one that is not active, run tack set use NAME (this project only) and say'
+          ' so in one line; tack set show NAME lists its contents. If its skills are not listed afterwards, read them'
+          ' from .agents/skills/. Leave --global, drop and update to the user, and activate nothing for a read-only request.')
+
+
 def command_show(args, root, sources, sets):
     known(args.name, sets)
     print(f'{args.name}: {sets[args.name]["about"]}')
@@ -444,6 +459,7 @@ def main():
     update = commands.add_parser('update', help='move sources to their upstream head and report what changed')
     update.add_argument('sources', nargs='*')
     update.set_defaults(run=command_update)
+    commands.add_parser('index').set_defaults(run=command_index)
     plan = commands.add_parser('plan')
     plan.add_argument('--no-fetch', action='store_true')
     plan.set_defaults(run=command_plan)

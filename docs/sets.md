@@ -25,6 +25,14 @@ With `--global` the choice is saved in your global Git config and `./install.sh`
 | Agents | Claude Code | Every tool with an agents folder in `targets.txt` |
 | Plugins | Claude Code | Claude Code |
 
+## Let the assistant choose
+
+In an enabled project, the startup context includes one line with the names of every set and which are already active. The contents of a set are not loaded until it is activated, so the index costs a few hundred characters instead of every skill's description.
+
+When a task clearly needs a set that is not active, the assistant runs `tack set use NAME` for that project and says so. It leaves `--global`, `drop` and `update` to you, and activates nothing for a read-only request; in a mode such as `unleash` the command guard refuses those three. A newly linked skill may only appear in the tool's own list in the next session; until then the assistant can read it from `.agents/skills/`.
+
+Turn the index off with `tack config set-index false` (add `--global` for every project). Tools without a startup hook get the same line from `tack context`.
+
 ## On another machine
 
 ```bash
@@ -67,6 +75,8 @@ It reads the upstream head, reports which of the skills you use changed (with a 
 ## What is and is not checked
 
 Skills run with the assistant's permissions. Pinning means a skill changes only when you move its commit; it is not a review of what the skill says or runs. Read a skill before relying on it, and prefer few focused sets. tack refuses a skill path that leaves its checkout, runs Git without hooks or prompts while fetching, and links nothing when a source or skill is missing.
+
+The [audit of 2026-10-11](audits/2026-10-11-external-skills.md) records what a scan of every used skill found at the current pins, including one skill that downloads and runs a native binary. Repeat it after moving a pin.
 
 Checkouts live in `~/.local/share/agent-tack/sources/<name>/<commit>` (or under `XDG_DATA_HOME`). Nothing from a collection is copied into this repository, and each one keeps its own license in its checkout. Old checkouts are not deleted automatically; remove a commit's folder once nothing links to it.
 
