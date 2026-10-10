@@ -107,6 +107,7 @@ The earlier [full lifecycle study](docs/benchmarks/2026-10-08-lifecycle-value.md
 | Work with it every day | [Usage](docs/usage.md) |
 | Share it or customize a fork | [Sharing](docs/sharing.md) |
 | Change settings and context locations | [Configuration](docs/configuration.md) |
+| Activate sets of skills, agents and plugins | [Sets](docs/sets.md) |
 | Add selected external skills | [External skills](docs/external-skills.md) |
 | Understand the implementation | [Architecture](docs/architecture.md) |
 

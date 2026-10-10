@@ -1,0 +1,266 @@
+# Sets: named bundles of skills, agents and Claude Code plugins for one kind of work.
+# Lines:  set  about   one-line description
+#         set  skill   NAME                 a skill of this repository (skills/NAME)
+#         set  skill   SOURCE:PATH          a skill folder in a collection pinned in sources.txt
+#         set  agent   NAME                 a role of this repository (agents/NAME.md)
+#         set  plugin  PLUGIN@MARKETPLACE   Claude Code only; its marketplace is in plugins.txt
+# Activate one in a project with `tack set use NAME` (linked for every tool, ignored by git) or
+# everywhere with `tack set use NAME --global` and ./install.sh. Every active skill adds its
+# description to each session, so keep sets focused and activate them where the work happens.
+# Two different skills may not share a name; the same skill may appear in several sets.
+
+# --- Interfaces -----------------------------------------------------------------------------
+design about Web interfaces: visual direction, polish and review
+design skill frontend
+design skill impeccable:.agents/skills/impeccable
+design skill emil:skills/emil-design-eng
+design skill taste:skills/taste-skill
+design skill anthropics:skills/frontend-design
+design skill vercel:skills/web-design-guidelines
+design skill emil:skills/break-ui
+design agent ui-reviewer
+
+design-styles about Alternative aesthetics, redesigns and prototypes to choose between
+design-styles skill taste:skills/redesign-skill
+design-styles skill taste:skills/minimalist-skill
+design-styles skill taste:skills/brutalist-skill
+design-styles skill taste:skills/soft-skill
+design-styles skill taste:skills/image-to-code-skill
+design-styles skill emil:skills/prototype
+design-styles skill emil:skills/pick-ui-library
+design-styles skill anthropics:skills/theme-factory
+
+motion about Animation and motion: build, name, review and audit
+motion skill emil:skills/animate
+motion skill emil:skills/review-animations
+motion skill emil:skills/improve-animations
+motion skill emil:skills/find-animation-opportunities
+motion skill emil:skills/animation-vocabulary
+motion skill emil:skills/apple-design
+motion skill vercel:skills/react-view-transitions
+
+accessibility about WCAG audits, screen readers and accessible components
+accessibility skill wshobson:plugins/accessibility-compliance/skills/wcag-audit-patterns
+accessibility skill wshobson:plugins/accessibility-compliance/skills/screen-reader-testing
+accessibility skill wshobson:plugins/ui-design/skills/accessibility-compliance
+accessibility skill knowledge-work:design/skills/accessibility-review
+
+# --- Stacks ---------------------------------------------------------------------------------
+react about React and Next.js applications in TypeScript
+react skill frontend
+react skill vercel:skills/react-best-practices
+react skill vercel:skills/composition-patterns
+react skill wshobson:plugins/javascript-typescript/skills/typescript-advanced-types
+react skill emil:skills/ask-sonner
+react plugin typescript-lsp@claude-plugins-official
+
+vue about Vue, Nuxt and the Vite toolchain
+vue skill antfu:skills/vue
+vue skill antfu:skills/nuxt
+vue skill antfu:skills/pinia
+vue skill antfu:skills/vite
+vue skill antfu:skills/vitest
+vue skill antfu:skills/unocss
+
+mobile about React Native and Expo apps, and web apps that feel native on a phone
+mobile skill expo:plugins/expo/skills/expo-router
+mobile skill expo:plugins/expo/skills/expo-ui
+mobile skill expo:plugins/expo/skills/expo-native-ui
+mobile skill expo:plugins/expo/skills/expo-upgrade
+mobile skill expo:plugins/expo/skills/eas-update
+mobile skill callstack:skills/react-native-best-practices
+mobile skill vercel:skills/react-native-skills
+mobile skill emil:skills/animate-expo
+mobile skill emil:skills/mobile-native
+
+backend about APIs, data models, queries and authentication
+backend skill api-design
+backend skill database
+backend skill auth
+backend skill observability
+backend skill supabase:skills/supabase-postgres-best-practices
+backend skill wshobson:plugins/database-design/skills/postgresql-table-design
+backend skill wshobson:plugins/developer-essentials/skills/sql-optimization-patterns
+backend skill wshobson:plugins/javascript-typescript/skills/nodejs-backend-patterns
+
+python about Modern Python: tooling, typing, async and tests
+python skill trailofbits:plugins/modern-python/skills/modern-python
+python skill wshobson:plugins/python-development/skills/python-testing-patterns
+python skill wshobson:plugins/python-development/skills/python-type-safety
+python skill wshobson:plugins/python-development/skills/async-python-patterns
+python skill wshobson:plugins/python-development/skills/uv-package-manager
+python plugin pyright-lsp@claude-plugins-official
+
+shell about Portable, defensive shell scripts and their tests
+shell skill wshobson:plugins/shell-scripting/skills/bash-defensive-patterns
+shell skill wshobson:plugins/shell-scripting/skills/bats-testing-patterns
+shell skill wshobson:plugins/shell-scripting/skills/shellcheck-configuration
+
+saas about Payments and a hosted backend: Stripe, Supabase and authentication
+saas skill auth
+saas skill stripe:skills/stripe-best-practices
+saas skill stripe:skills/upgrade-stripe
+saas skill supabase:skills/supabase
+saas skill supabase:skills/supabase-postgres-best-practices
+
+video about Programmatic video with Remotion
+video skill remotion:skills/remotion-best-practices
+video skill remotion:skills/remotion-create
+video skill remotion:skills/remotion-captions
+video skill remotion:skills/remotion-render
+
+# --- Quality --------------------------------------------------------------------------------
+testing about Tests first, browser tests, debugging and stronger test techniques
+testing skill testing
+testing skill e2e-testing
+testing skill debugging
+testing skill mattpocock:skills/engineering/tdd
+testing skill anthropics:skills/webapp-testing
+testing skill playwright:skills/playwright-cli
+testing skill trailofbits:plugins/property-based-testing/skills/property-based-testing
+testing skill trailofbits:plugins/mutation-testing/skills/mutation-testing
+testing agent test-writer
+
+review about Code review, simplification and pull request feedback
+review skill improve
+review skill addy:skills/code-review-and-quality
+review skill addy:skills/code-simplification
+review skill sentry:skills/find-bugs
+review skill sentry:skills/iterate-pr
+review skill openai:skills/.curated/gh-address-comments
+review agent code-reviewer
+review agent architecture-reviewer
+review agent evaluator
+review plugin pr-review-toolkit@claude-plugins-official
+
+security about Static analysis, risky changes, dependencies and threat models
+security skill auth
+security skill trailofbits:plugins/static-analysis/skills/semgrep
+security skill trailofbits:plugins/static-analysis/skills/codeql
+security skill trailofbits:plugins/differential-review/skills/differential-review
+security skill trailofbits:plugins/sharp-edges/skills/sharp-edges
+security skill trailofbits:plugins/supply-chain-risk-auditor/skills/supply-chain-risk-auditor
+security skill sentry:skills/gha-security-review
+security skill openai:skills/.curated/security-threat-model
+security agent security-auditor
+
+performance about Measure first: web vitals, queries, bundles and hot paths
+performance skill addy:skills/performance-optimization
+performance skill cloudflare:skills/web-perf
+performance skill wshobson:plugins/python-development/skills/python-performance-optimization
+performance agent performance-analyzer
+
+# --- Process --------------------------------------------------------------------------------
+planning about From a vague idea to a spec, a plan and tickets
+planning skill project-docs
+planning skill mattpocock:skills/productivity/grill-me
+planning skill mattpocock:skills/engineering/to-spec
+planning skill mattpocock:skills/engineering/to-tickets
+planning skill superpowers:skills/brainstorming
+planning skill superpowers:skills/writing-plans
+planning agent planner
+
+delivery about Git history, issues, pull requests, CI and releases
+delivery skill git-history
+delivery skill github-issues
+delivery skill release
+delivery skill openai:skills/.curated/gh-fix-ci
+delivery skill sentry:skills/pr-writer
+delivery skill wshobson:plugins/cicd-automation/skills/github-actions-templates
+
+orchestration about Long or parallel work: subagents, worktrees and autonomous rounds
+orchestration skill orchestrate
+orchestration skill auto-improve
+orchestration skill superpowers:skills/dispatching-parallel-agents
+orchestration skill superpowers:skills/subagent-driven-development
+orchestration skill superpowers:skills/using-git-worktrees
+orchestration skill superpowers:skills/verification-before-completion
+orchestration agent implementer
+
+devops about Containers, pipelines, infrastructure as code and edge deployment
+devops skill deployment
+devops skill observability
+devops skill hashicorp:plugins/terraform/skills/terraform-style-guide
+devops skill hashicorp:plugins/terraform/skills/terraform-test
+devops skill cloudflare:skills/workers-best-practices
+devops skill cloudflare:skills/wrangler
+devops skill wshobson:plugins/kubernetes-operations/skills/k8s-manifest-generator
+devops skill wshobson:plugins/cicd-automation/skills/github-actions-templates
+devops skill vercel:skills/deploy-to-vercel
+
+addy about Addy Osmani's whole engineering lifecycle, from spec to ship
+addy skill addy:skills/using-agent-skills
+addy skill addy:skills/idea-refine
+addy skill addy:skills/interview-me
+addy skill addy:skills/spec-driven-development
+addy skill addy:skills/planning-and-task-breakdown
+addy skill addy:skills/incremental-implementation
+addy skill addy:skills/test-driven-development
+addy skill addy:skills/context-engineering
+addy skill addy:skills/source-driven-development
+addy skill addy:skills/constraint-driven-development
+addy skill addy:skills/doubt-driven-development
+addy skill addy:skills/frontend-ui-engineering
+addy skill addy:skills/api-and-interface-design
+addy skill addy:skills/browser-testing-with-devtools
+addy skill addy:skills/debugging-and-error-recovery
+addy skill addy:skills/code-review-and-quality
+addy skill addy:skills/code-simplification
+addy skill addy:skills/security-and-hardening
+addy skill addy:skills/performance-optimization
+addy skill addy:skills/git-workflow-and-versioning
+addy skill addy:skills/ci-cd-and-automation
+addy skill addy:skills/deprecation-and-migration
+addy skill addy:skills/documentation-and-adrs
+addy skill addy:skills/observability-and-instrumentation
+addy skill addy:skills/shipping-and-launch
+
+# --- Beyond application code ------------------------------------------------------------------
+ai about Building with language models: prompts, retrieval, evaluation and MCP servers
+ai skill anthropics:skills/mcp-builder
+ai skill wshobson:plugins/llm-application-dev/skills/prompt-engineering-patterns
+ai skill wshobson:plugins/llm-application-dev/skills/rag-implementation
+ai skill wshobson:plugins/llm-application-dev/skills/llm-evaluation
+ai skill huggingface:skills/hf-cli
+ai skill huggingface:skills/huggingface-datasets
+ai plugin agent-sdk-dev@claude-plugins-official
+ai plugin mcp-server-dev@claude-plugins-official
+
+agent-tooling about Writing and auditing skills, plugins, hooks and agent instructions
+agent-tooling skill lessons
+agent-tooling skill anthropics:skills/skill-creator
+agent-tooling skill mattpocock:skills/productivity/writing-for-agents
+agent-tooling skill superpowers:skills/writing-skills
+agent-tooling skill vercel-skills:skills/find-skills
+agent-tooling skill sentry:skills/skill-scanner
+agent-tooling skill sentry:skills/agents-md
+agent-tooling skill sentry:skills/claude-settings-audit
+agent-tooling plugin plugin-dev@claude-plugins-official
+agent-tooling plugin hookify@claude-plugins-official
+agent-tooling plugin claude-md-management@claude-plugins-official
+
+data about Exploring data: SQL, statistics, validation, charts and notebooks
+data skill knowledge-work:data/skills/explore-data
+data skill knowledge-work:data/skills/sql-queries
+data skill knowledge-work:data/skills/statistical-analysis
+data skill knowledge-work:data/skills/validate-data
+data skill knowledge-work:data/skills/data-visualization
+data skill openai:skills/.curated/jupyter-notebook
+
+writing about Documentation and prose that reads as written by a person
+writing skill project-docs
+writing skill anthropics:skills/doc-coauthoring
+writing skill vercel:skills/writing-guidelines
+writing skill wshobson:plugins/avoid-ai-writing/skills/avoid-ai-writing
+writing skill addy:skills/documentation-and-adrs
+writing skill callstack:skills/writing-user-docs
+writing agent docs-writer
+
+product about Product work: research, specs, roadmaps and interface copy
+product skill mattpocock:skills/productivity/grill-me
+product skill knowledge-work:product-management/skills/write-spec
+product skill knowledge-work:product-management/skills/roadmap-update
+product skill knowledge-work:product-management/skills/metrics-review
+product skill knowledge-work:product-management/skills/synthesize-research
+product skill knowledge-work:design/skills/user-research
+product skill knowledge-work:design/skills/ux-copy

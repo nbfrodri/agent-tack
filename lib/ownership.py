@@ -21,6 +21,9 @@ MOD_NAME = re.compile(r"[a-z0-9][a-z0-9._-]*")
 MOD_ID = re.compile(r"[a-z0-9][a-z0-9._-]*@[a-z0-9][a-z0-9._-]*")
 GENERATED_NAME = re.compile(r"[a-z0-9][a-z0-9-]*(?:\.agent)?\.(?:toml|md)")
 SHA256 = re.compile(r"[0-9a-f]{64}")
+SOURCE_NAME = re.compile(r"[a-z0-9][a-z0-9-]*")
+SOURCE_COMMIT = re.compile(r"[0-9a-f]{40}")
+SOURCE_PART = re.compile(r"[A-Za-z0-9._-]+")
 
 
 def read(path):
@@ -46,6 +49,17 @@ def settings_paths(home, declaration):
     return {canonical(path) for path in paths}
 
 
+def set_skill(target, name):
+    """A skill a set takes from sources.txt: a folder of that name in a pinned checkout (lib/sets.py)."""
+    parts = target.replace("\\", "/").split("/")
+    if ".." in parts or "." in parts or parts[-1] != name or "sources" not in parts:
+        return False
+    at = len(parts) - 1 - parts[::-1].index("sources")
+    return (at >= 1 and parts[at - 1] == "agent-tack" and len(parts) > at + 3
+            and SOURCE_NAME.fullmatch(parts[at + 1]) and SOURCE_COMMIT.fullmatch(parts[at + 2])
+            and all(SOURCE_PART.fullmatch(part) for part in parts[at + 3:]))
+
+
 def expected_link(path, target, home, repo, declaration):
     fixed = {home + "/.agents/harness": repo, home + "/.agents/tack": repo,
              home + "/.local/bin/tack": repo + "/bin/tack",
@@ -68,7 +82,7 @@ def expected_link(path, target, home, repo, declaration):
         return target == fixed[path]
     parent, name = os.path.split(path)
     if parent in skill_dirs and name not in ("", ".", ".."):
-        return target == canonical(repo + "/skills/" + name)
+        return target == canonical(repo + "/skills/" + name) or set_skill(target, name)
     if parent == home + "/.claude/agents" and name.endswith(".md"):
         return target == canonical(repo + "/agents/" + name)
     return False

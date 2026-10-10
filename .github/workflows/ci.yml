@@ -74,6 +74,7 @@ jobs:
           tests/project-config.test.sh
           tests/bootstrap.test.sh
           tests/team.test.sh
+          tests/sets.test.sh
           tests/pr-policy.test.sh
           tests/ownership-platform.test.sh
           tests/smoke.test.sh

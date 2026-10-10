@@ -234,6 +234,14 @@ while read -r kind id source _; do
   esac
 done <"$REPO/plugins.txt"
 
+echo "sets.txt and sources.txt"
+python3 "$REPO/lib/sets.py" --root "$REPO" check >/dev/null || err 'sets.txt or sources.txt is invalid (tack set check)'
+while read -r set kind item _; do
+  [ "$kind" = plugin ] || continue
+  grep -qE "^marketplace[[:space:]]+${item#*@}[[:space:]]" "$REPO/plugins.txt" \
+    || err "sets.txt: set '$set' uses $item, whose marketplace is not in plugins.txt"
+done <"$REPO/sets.txt"
+
 echo "git-hooks/"
 for hook in "$REPO"/git-hooks/*; do
   # Windows checkouts without symlink support turn a symlink into a text file git cannot run

@@ -14,6 +14,7 @@ New to tack? Read [setup](setup.md), then [daily use](usage.md). You do not need
 | Save defaults and choose document locations | [Configuration](configuration.md) |
 | Keep personal task notes out of Git | [Private notes](private-notes.md) |
 | Select checks and understand their results | [Verification](verification.md) |
+| Group skills, agents and plugins by kind of work | [Sets](sets.md) |
 | Add selected third-party skills | [External skills](external-skills.md) |
 | Disable tack or tidy old project records | [Leaving a project](leaving.md) |
 | Use a particular tool or platform | [Editors and AI tools](editors.md) |

@@ -6,6 +6,7 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ### Added
 
+- Sets: named bundles of skills, agents and Claude Code plugins in `sets.txt`, with external skill collections pinned to a full commit in `sources.txt`. `tack set use NAME` links a set into one project for every tool; `--global` applies it everywhere through `./install.sh`; `tack set update` moves a pin and reports which used skills changed. 26 sets over 24 collections are declared.
 - Optional `tack bootstrap` generates a pinned, consent-based collaborator setup script while preserving existing installations, project activation and local trust.
 - Shared `collaboration` choice (`solo` or `team`), isolated `tack team` branch diagnostics and focused producer/consumer guidance for monorepos.
 - Optional, configurable PR metadata checks and a read-only GitHub Actions asset, also used by tack's own PRs.

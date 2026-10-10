@@ -2,8 +2,11 @@
 # Lines:  marketplace <name> <source>   (source: GitHub owner/repo, git URL or path)
 #         plugin <plugin>@<marketplace>
 # Plugins are always updated to the latest version from the marketplace.
+# Plugins listed here are installed for every project. A plugin that belongs to one kind of work
+# goes in a set instead (sets.txt), and its marketplace is declared here.
 
 marketplace claude-plugins-official anthropics/claude-plugins-official
 
 plugin context7@claude-plugins-official
-plugin frontend-design@claude-plugins-official
+plugin claude-code-setup@claude-plugins-official
+plugin security-guidance@claude-plugins-official
