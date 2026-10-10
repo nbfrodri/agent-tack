@@ -19,6 +19,8 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ### Changed
 
+- tack is now positioned as a personal configuration rather than a general product ([ADR 0004](docs/adr/0004-personal-configuration-with-sets.md)). The README describes what the repository holds and how to install it on another machine.
+- `plugins.txt` installs `claude-code-setup` and `security-guidance` for every project; `frontend-design` moved to the `design` set as a skill, so tools other than Claude Code receive it.
 - Startup indexes parallel handoffs and selects a full excerpt only for a single active handoff or a unique current-branch match.
 - Onboarding saves agreed shared defaults explicitly; testing and setup guidance avoid redundant checks while preserving relevant verification and manual-review gaps.
 - README explains the everyday value for individuals and teams; a project departure guide separates disabling tack, archiving old work and uninstalling machine integrations.
@@ -37,6 +39,7 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ### Removed
 
+- The evaluation harness (`evals/`), benchmark reports, product audits, archived plans and their offline test suites. They remain in the Git history; no runtime capability was removed.
 - Runtime reads of the former `harness.*` settings and `.harness` markers, the `harness` command and its managed links. Upgrade through v0.1.0 and follow its per-clone migration steps before installing this change ([#122](https://github.com/nbfrodri/agent-tack/pull/122)).
 
 ## [0.1.0] - 2026-10-06

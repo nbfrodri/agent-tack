@@ -29,7 +29,7 @@ List the named candidates with `npx skills add DietrichGebert/ponytail --list` o
 | [Worktrunk](https://github.com/max-sixty/worktrunk) | Optional worktree convenience; native Git remains sufficient. |
 | [Spec Kit](https://github.com/github/spec-kit) | Compare as an alternative workflow, not another mandatory layer. |
 
-The [evaluation plan](archive/plans/2026-10-08-value-first-workflow-implementation.md#6-evaluate-external-tools-and-hooks-selectively) records source/license observations and adoption criteria. The existing [skills CLI](https://github.com/vercel-labs/skills) remains the installation route; tack has no separate package manager or updater.
+Check each tool's license and maintenance before adopting it. The existing [skills CLI](https://github.com/vercel-labs/skills) remains the installation route; tack has no separate package manager or updater.
 
 ## Ask tack to help choose
 

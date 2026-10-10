@@ -1,9 +1,9 @@
 # 0003: Shared project configuration and evidence-based verification
 
-- Status: accepted (2026-10-08); first verification increment implemented. Real-model outcome measurement remains pending.
-- Evidence: [Codex comparison](../benchmarks/2026-10-08-codex.md), [code-quality review](../benchmarks/2026-10-08-codex-quality.md), [audit round 8](../audits/2026-10-08-evidence-review.md).
-- Delivery: [implementation plan](../archive/plans/2026-10-08-project-verification-implementation.md).
-- External ideas: [upstream research and adoption decisions](../audits/2026-10-08-upstream-design-research.md).
+- Status: superseded in part by [0004](0004-personal-configuration-with-sets.md) (2026-10-11): tack is now a personal configuration, and the benchmarks, audits and plans named below were removed from the tree and remain in the Git history. The preference for the project's own executable checks stands.
+- Evidence: Codex comparison, code-quality review, audit round 8.
+- Delivery: implementation plan.
+- External ideas: upstream research and adoption decisions.
 
 ## Context
 
@@ -48,13 +48,13 @@ A future comparison must fix its acceptance criteria and experiment thresholds b
 
 ## Follow-up implementation
 
-The [adoption readiness increment](../benchmarks/2026-10-09-adoption-readiness.md)
+The adoption readiness increment
 removes mandatory scaffold prerequisites and combines clone inspection in one
 read-only command. Tack now routes its own existing checks with a project map.
 This demonstrates narrower setup behavior, not a reversal of the model results.
 
-The [small-core follow-up](../benchmarks/2026-10-09-lean-core.md) reduces the installed catalog and adds read-only approved-choice checking plus verification of prospective merged trees. Its 24 coding sessions and eight blind reviews do not establish general quality or productivity gains; the extra cost against a short guide remains unjustified in that sample. Keep the executable checks for their demonstrated narrow benefits. Projects with sufficient existing guidance can use the CLI without installing global workflow instructions. Do not add more generic process or repeat benchmarks merely to obtain favorable numbers.
+The small-core follow-up reduces the installed catalog and adds read-only approved-choice checking plus verification of prospective merged trees. Its 24 coding sessions and eight blind reviews do not establish general quality or productivity gains; the extra cost against a short guide remains unjustified in that sample. Keep the executable checks for their demonstrated narrow benefits. Projects with sufficient existing guidance can use the CLI without installing global workflow instructions. Do not add more generic process or repeat benchmarks merely to obtain favorable numbers.
 
-Shared project preferences, configurable context locations and reduced mandatory process were delivered after the initial verifier. See [configuration](../configuration.md) and the [direction audit](../audits/2026-10-08-product-direction.md). These updates do not change the historical benchmark results or establish a measured quality improvement.
+Shared project preferences, configurable context locations and reduced mandatory process were delivered after the initial verifier. See [configuration](../configuration.md) and the direction audit. These updates do not change the historical benchmark results or establish a measured quality improvement.
 
-The subsequent [adoption comparison](../benchmarks/2026-10-08-adoption.md) measured the delivered version against useful native project guidance: configuration transfer worked, correctness tied and session time increased. It supports keeping engineering practices while improving setup precision and reducing unnecessary work; it does not establish a general quality gain.
+The subsequent adoption comparison measured the delivered version against useful native project guidance: configuration transfer worked, correctness tied and session time increased. It supports keeping engineering practices while improving setup precision and reducing unnecessary work; it does not establish a general quality gain.

@@ -101,7 +101,7 @@ sets.txt              # sets of skills, agents and plugins
 sources.txt           # external skill collections pinned to a commit
 plugins/<name>/       # mods shipped with tack (local marketplace)
 install.sh            # installer (lib/: settings merge in Python and jq)
-tests/  evals/        # automated tests and behaviour evals
+tests/                # automated tests
 docs/                 # this documentation, audits and AI log
 ```
 

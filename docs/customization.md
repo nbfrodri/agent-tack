@@ -4,7 +4,7 @@ Start with project `AGENTS.md` and [shared or local settings](configuration.md).
 
 ## Make it yours
 
-Clone it into any directory you choose and install from that checkout, as shown in the [README](../README.md#quick-start). Use a fork or your own copy if you want to keep personal changes in a separate remote repository; a local clone is enough for changes on one machine.
+Clone it into any directory you choose and install from that checkout, as shown in the [README](../README.md#install-on-a-machine). Use a fork or your own copy if you want to keep personal changes in a separate remote repository; a local clone is enough for changes on one machine.
 
 | What you want to change | Where to edit |
 | --- | --- |
