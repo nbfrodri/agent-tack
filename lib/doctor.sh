@@ -335,7 +335,7 @@ check_ownership() {
         fi
         path="$(< "$entry/path")"; target="$(< "$entry/target")"
         case "$path" in "$HOME"/*) ;; *) fail 'installation ownership destination is outside this home'; continue ;; esac
-        case "$target" in "$REPO"|"$REPO"/*) ;; *) fail 'installation ownership source is outside this checkout'; continue ;; esac
+        case "$target" in "$REPO"|"$REPO"/*|"$(sets_store)"/*) ;; *) fail 'installation ownership source is outside this checkout'; continue ;; esac
         check_link "$target" "$path"
         ;;
       settings|git|mod|modmarket|vscode|generated) ;;

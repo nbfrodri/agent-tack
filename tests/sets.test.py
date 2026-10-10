@@ -256,6 +256,9 @@ class SetsTests(unittest.TestCase):
         self.assertTrue((self.home / '.claude/agents/ui-reviewer.md').is_symlink())
         self.assertTrue((self.home / '.codex/agents/ui-reviewer.toml').is_file())
         self.assertFalse((self.home / '.claude/agents/planner.md').exists())
+        doctor = subprocess.run([BASH, str(self.checkout / 'bin/tack'), 'doctor'], cwd=self.checkout, env=self.env,
+                                capture_output=True, text=True, timeout=120)
+        self.assertNotIn('outside this checkout', doctor.stdout)
         self.tool('drop', 'design', '--global')
         self.tool('use', 'motion', '--global')
         self.install()

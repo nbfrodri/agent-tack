@@ -308,8 +308,8 @@ def command_list(args, root, sources, sets):
     print('Sets in sets.txt (* active everywhere, + active in this project):')
     for name, entry in sets.items():
         mark = '*' if name in everywhere else '+' if name in here else ' '
-        counts = [f'{sum(item["kind"] == kind for item in entry["items"])} {kind}s' for kind in ('skill', 'agent', 'plugin')]
-        counts = ', '.join(count for count in counts if not count.startswith('0 '))
+        totals = [(sum(item['kind'] == kind for item in entry['items']), kind) for kind in ('skill', 'agent', 'plugin')]
+        counts = ', '.join(f'{total} {kind}{"" if total == 1 else "s"}' for total, kind in totals if total)
         print(f'{mark} {name:<14} {entry["about"]}  ({counts})')
 
 
