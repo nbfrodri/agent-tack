@@ -235,7 +235,7 @@ while read -r kind id source _; do
 done <"$REPO/plugins.txt"
 
 echo "sets.txt and sources.txt"
-python3 "$REPO/lib/sets.py" --root "$REPO" check >/dev/null || err 'sets.txt or sources.txt is invalid (tack set check)'
+python3 "$REPO/lib/sets.py" "$REPO" check >/dev/null || err 'sets.txt or sources.txt is invalid (tack set check)'
 while read -r set kind item _; do
   [ "$kind" = plugin ] || continue
   grep -qE "^marketplace[[:space:]]+${item#*@}[[:space:]]" "$REPO/plugins.txt" \

@@ -87,7 +87,7 @@ class SetsTests(unittest.TestCase):
 
     def tool(self, *args, cwd=None, expected=0):
         return self.run_in(cwd or self.project, sys.executable, str(ROOT / 'lib/sets.py'),
-                           '--root', str(self.tack), *args, expected=expected)
+                           str(self.tack), *args, expected=expected)
 
     def store(self, commit=None):
         return self.home / '.local/share/agent-tack/sources/up' / (commit or self.first)
@@ -199,6 +199,35 @@ class SetsTests(unittest.TestCase):
         self.tool('sync')
         self.assertTrue((self.project / '.claude/skills/motion/SKILL.md').is_file())
 
+    def test_options_are_not_abbreviated_and_the_checkout_cannot_be_redirected(self):
+        # The command guard matches --global literally, so a prefix must not mean the same thing.
+        self.tool('use', 'design', '--glo', expected=2)
+        self.tool('drop', 'design', '--g', expected=2)
+        self.assertEqual(self.run_in(self.project, 'git', 'config', '--global', '--get', 'tack.sets', expected=1), '')
+        other = self.work / 'other'
+        other.mkdir()
+        (other / 'sets.txt').write_text('evil about Another checkout\n', encoding='utf-8')
+        out = self.tool('--root', str(other), 'list', expected=2)
+        self.assertNotIn('Another checkout', out)
+
+    def test_a_project_folder_that_is_a_symlink_is_left_alone(self):
+        outside = self.work / 'outside-home'
+        (outside / 'skills').mkdir(parents=True)
+        os.symlink(self.store() / 'skills/stale', outside / 'skills/stale')
+        os.symlink(outside, self.project / '.claude')
+        out = self.tool('use', 'design')
+        self.assertIn('symlink', out)
+        self.assertEqual(sorted(path.name for path in (outside / 'skills').iterdir()), ['stale'])
+        self.assertFalse((outside / 'agents').exists())
+        # The other folder is a real directory and still gets its links.
+        self.assertTrue((self.project / '.agents/skills/polish').is_symlink())
+        nested = self.project / '.agents/skills'
+        shutil.rmtree(self.project / '.agents')
+        (self.project / '.agents').mkdir()
+        os.symlink(outside / 'skills', nested)
+        self.tool('sync')
+        self.assertEqual(sorted(path.name for path in (outside / 'skills').iterdir()), ['stale'])
+
     def test_project_scope_needs_a_repository(self):
         self.assertIn('git repository', self.tool('use', 'design', cwd=self.work, expected=2))
 
@@ -306,7 +335,7 @@ class SetsTests(unittest.TestCase):
         self.assertTrue((self.home / '.claude/skills/polish/SKILL.md').is_file())
 
     def test_the_shipped_declarations_are_valid(self):
-        self.run_in(ROOT, sys.executable, str(ROOT / 'lib/sets.py'), '--root', str(ROOT), 'check')
+        self.run_in(ROOT, sys.executable, str(ROOT / 'lib/sets.py'), str(ROOT), 'check')
 
 
 if __name__ == '__main__':

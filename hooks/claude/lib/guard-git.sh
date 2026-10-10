@@ -202,18 +202,24 @@ check_git_push() {
 
 # Flags tack subcommands that change settings; reads (status, show, list, a lone name) pass.
 check_tack() {
-  local positional=0 a
+  local positional=0 a sub=''
   case "${1:-}" in
     trust | enable | disable | migrate) SETTINGS_WRITE="Changing tack's settings is the user's decision in this mode."; return ;;
     set)
       # A set in this project is the assistant's to activate; everywhere, and moving pins, is not.
-      case "${2:-}" in
-        update) SETTINGS_WRITE="Moving pinned skill sources is the user's decision in this mode." ;;
-        use | drop)
-          for a in "$@"; do
-            [ "$a" != --global ] || SETTINGS_WRITE="Changing the sets active everywhere is the user's decision in this mode."
-          done ;;
-      esac ;;
+      # The subcommand is the first word that is not an option. An option before it, or any
+      # spelling that starts like --global, is refused rather than interpreted: the CLI rejects
+      # both, and a guess here that differs from the CLI's reading would be a way around.
+      shift
+      for a in "$@"; do
+        case "$a" in
+          --g*) SETTINGS_WRITE="Changing the sets active everywhere is the user's decision in this mode." ;;
+          -*) [ -n "$sub" ] || SETTINGS_WRITE="Options before a tack set subcommand are the user's decision in this mode." ;;
+          *) [ -n "$sub" ] || sub="$a" ;;
+        esac
+      done
+      # shellcheck disable=SC2034 # Read by guard-bash.sh after the analysis.
+      [ "$sub" != update ] || SETTINGS_WRITE="Moving pinned skill sources is the user's decision in this mode." ;;
     mode)
       case "${2:-}" in '' | list | show | new) return ;; esac
       SETTINGS_WRITE="Changing the workflow mode is the user's decision in this mode." ;;

@@ -237,6 +237,18 @@ def ours(link, root):
     return any(target.startswith(f'{base}{os.sep}') for base in (store(), root / 'skills', root / 'agents'))
 
 
+def in_project(repo, path):
+    """False when a folder between the project root and PATH is a symlink. A repository can
+    commit `.claude` or `.agents/skills` as a link to anywhere; following it would create and
+    remove entries outside the project."""
+    current = path.parent
+    while current != repo and current != current.parent:
+        if current.is_symlink():
+            return False
+        current = current.parent
+    return current == repo
+
+
 def claude_plugin(action, plugin, repo):
     if not shutil.which('claude'):
         print(f'  plugin {plugin}: claude not found; run claude plugin {action} {plugin} --scope local')
@@ -263,11 +275,15 @@ def apply_project(root, repo, sources, sets, wanted, dropped_plugins=()):
         elif item['kind'] == 'agent':
             links[repo / PROJECT_AGENTS / f'{item["name"]}.md'] = item['target']
     for folder in (*PROJECT_SKILLS, PROJECT_AGENTS):
-        if (repo / folder).is_dir():
+        if (repo / folder).is_dir() and in_project(repo, repo / folder / 'entry'):
             for entry in sorted((repo / folder).iterdir()):
                 if entry.is_symlink() and ours(entry, root) and entry not in links:
                     entry.unlink()
                     print(f'  removed {entry.relative_to(repo)}')
+    skipped = [dest for dest in links if not in_project(repo, dest)]
+    for dest in skipped:
+        del links[dest]
+        print(f'  kept {dest.relative_to(repo)}: a folder above it is a symlink, so it may lead outside the project')
     for dest, target in links.items():
         if dest.is_symlink() and ours(dest, root):
             if os.readlink(dest) == str(target):
@@ -442,30 +458,33 @@ def command_update(args, root, sources, sets):
 
 
 def main():
-    parser = argparse.ArgumentParser(prog='tack set', description='Named sets of skills, agents and plugins.')
-    parser.add_argument('--root', required=True, type=Path, help=argparse.SUPPRESS)
+    # The command guard decides from the literal words of a command, so nothing here may accept
+    # another spelling: no abbreviated options, and the checkout comes from the caller (bin/tack,
+    # install.sh) as the first argument, never from an option a later argument could repeat.
+    parser = argparse.ArgumentParser(prog='tack set', allow_abbrev=False,
+                                     description='Named sets of skills, agents and plugins.')
+    parser.add_argument('root', type=Path, help=argparse.SUPPRESS)
     commands = parser.add_subparsers(dest='command')
-    commands.add_parser('list', help='every set and where it is active (default)').set_defaults(run=command_list)
-    show = commands.add_parser('show', help='what a set contains')
-    show.add_argument('name')
-    show.set_defaults(run=command_show)
+
+    def command(name, run, **options):
+        sub = commands.add_parser(name, allow_abbrev=False, **options)
+        sub.set_defaults(run=run)
+        return sub
+
+    command('list', command_list, help='every set and where it is active (default)')
+    command('show', command_show, help='what a set contains').add_argument('name')
     for name, run, text in (('use', command_use, 'activate a set in this project, or everywhere with --global'),
                             ('drop', command_drop, 'deactivate a set')):
-        sub = commands.add_parser(name, help=text)
+        sub = command(name, run, help=text)
         sub.add_argument('name')
         sub.add_argument('--global', dest='everywhere', action='store_true', help='every project, through install.sh')
-        sub.set_defaults(run=run)
-    commands.add_parser('sync', help='recreate this project\'s links').set_defaults(run=command_sync)
-    update = commands.add_parser('update', help='move sources to their upstream head and report what changed')
-    update.add_argument('sources', nargs='*')
-    update.set_defaults(run=command_update)
-    commands.add_parser('index').set_defaults(run=command_index)
-    plan = commands.add_parser('plan')
-    plan.add_argument('--no-fetch', action='store_true')
-    plan.set_defaults(run=command_plan)
-    check = commands.add_parser('check', help='validate sets.txt and sources.txt')
+    command('sync', command_sync, help='recreate this project\'s links')
+    command('update', command_update,
+            help='move sources to their upstream head and report what changed').add_argument('sources', nargs='*')
+    command('index', command_index)
+    command('plan', command_plan).add_argument('--no-fetch', action='store_true')
+    check = command('check', command_check, help='validate sets.txt and sources.txt')
     check.add_argument('--fetch', action='store_true', help='also fetch every source and find every skill')
-    check.set_defaults(run=command_check)
     args = parser.parse_args()
     root = args.root.resolve()
     try:

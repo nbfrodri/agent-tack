@@ -53,7 +53,7 @@ install_set_skills() {
       return
     fi
     [ "$DRY_RUN" -eq 0 ] || fetch=--no-fetch
-    if ! python3 "$REPO/lib/sets.py" --root "$REPO" plan $fetch > "$plan" 2> "$WORKDIR/set-errors"; then
+    if ! python3 "$REPO/lib/sets.py" "$REPO" plan $fetch > "$plan" 2> "$WORKDIR/set-errors"; then
       fail "sets: $(head -n 3 "$WORKDIR/set-errors" | tr '\n' ' ')"
       return
     fi
