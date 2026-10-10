@@ -257,6 +257,18 @@ check "auto context indexes the active handoff" contains '- Active handoff: docs
 check "auto context shows the handoff's next step" contains 'Next: implement feature'
 check "auto context omits the handoff body" eval '! contains "# Handoff"'
 check "context excludes completed handoffs" excludes_completed
+"$CLI" context > "$WORK/output" 2>&1
+check "context indexes the sets the assistant may activate" contains 'Sets available'
+check "the set index names sets without their contents" eval 'contains " design," && ! contains "emil-design-eng"'
+check "the set index says how to activate one for this project" contains 'tack set use NAME'
+git config --local tack.sets testing
+"$CLI" context > "$WORK/output" 2>&1
+check "the set index names the sets already active here" contains 'Active here: testing'
+git config --local --unset tack.sets
+git config --local tack.setIndex false
+"$CLI" context > "$WORK/output" 2>&1
+check "set-index false leaves the index out" eval '! contains "Sets available"'
+git config --local --unset tack.setIndex
 git config --local tack.mode standard
 check "standard context succeeds" expect_exit 0 "$CLI" context
 check "standard context is an index too" contains '- docs/architecture.md (1 lines)'
@@ -489,11 +501,14 @@ check "the refused note is not stored" eval "! grep -q ghp_ '$MEMORY'"
 check "a password assignment is refused" expect_exit 1 "$CLI" memory add "db password=hunter2hunter2"
 "$CLI" memory add 'Paths look like C:\new\tmp on Windows.' >/dev/null
 check "backslashes in a note are stored as typed" eval "grep -qF 'C:\\new\\tmp on Windows.' '$MEMORY'"
-for ordinary in "Uses disk-encryption-everywhere-on-laptops." "Prefers task-management-tooling-with-kanban." "GitHub token: stored in 1Password."; do
+for ordinary in "Uses disk-encryption-everywhere-on-laptops." "Prefers task-management-tooling-with-kanban." "GitHub token: stored in 1Password." "Sets EDITOR=nvim-qt in every shell." "Database passwords live in the team vault."; do
   check "an ordinary note is accepted: $ordinary" expect_exit 0 "$CLI" memory add "$ordinary"
 done
 fake_google="AI""zaSyA0123456789abcdefghijklmnopqrstuv"
-for secret in "password is hunter2hunter2" "key $fake_google" "gitlab gl""pat-0123456789abcdefghij"; do
+# Environment-style assignments name the credential in the variable, not in a separate word.
+fake_env="DB_PA""SS=s3cretvalue"
+fake_cloud="AWS_SECRET_ACCESS_K""EY=abcdEFGH1234ijklMNOP"
+for secret in "password is hunter2hunter2" "key $fake_google" "gitlab gl""pat-0123456789abcdefghij" "export $fake_env" "$fake_cloud" "api_token = abc123def456"; do
   check "a secret is refused: ${secret%% *}" expect_exit 1 "$CLI" memory add "$secret"
 done
 real_memory="$WORK/dotfiles-memory.md"

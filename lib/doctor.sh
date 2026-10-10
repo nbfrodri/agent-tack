@@ -19,6 +19,8 @@ source "$REPO/lib/keys.sh"
 source "$REPO/lib/mods.sh"
 # shellcheck source=lib/skill-groups.sh
 source "$REPO/lib/skill-groups.sh"
+# shellcheck source=lib/sets.sh
+source "$REPO/lib/sets.sh"
 # shellcheck source=lib/vscode.sh
 source "$REPO/lib/vscode.sh"
 expand_home() {
@@ -85,6 +87,7 @@ check_tools_and_links() {
   check_link "$REPO/bin/tack" "$HOME/.local/bin/tack"
   [ -x "$REPO/bin/tack" ] || fail 'tack CLI is not executable'
   ok "skill groups: $(skill_groups_selected)"
+  ok "sets active everywhere: $(sets_global | sed 's/^$/none/')"
   check_skills "$HOME/.agents/skills"
   while read -r tool when commands instructions skills_dir _ <&3; do
     case "$tool" in ''|'#'*) continue ;; esac
@@ -107,8 +110,8 @@ check_tools_and_links() {
   [ -z "$missing" ] || ok "AI tools not installed:$missing"
   check_stale_links "$HOME/.claude/agents"
   for source in "$REPO"/agents/*.md; do
-    roles_enabled || break
     [ -f "$source" ] || continue
+    agent_selected "$(basename "$source" .md)" || continue
     check_link "$source" "$HOME/.claude/agents/${source##*/}"
   done
 }
@@ -149,12 +152,13 @@ check_tool_capabilities() {
     fi
   fi
   if [ "$skills_dir" != - ] && [ -d "$(expand_home "$skills_dir")" ]; then check_skills "$(expand_home "$skills_dir")"; fi
-  if roles_enabled && [ "$agents_dir" != - ] && [ -d "$(expand_home "$agents_dir")" ]; then
+  if [ "$agents_dir" != - ] && [ -d "$(expand_home "$agents_dir")" ]; then
     check_stale_links "$(expand_home "$agents_dir")"
     # Claude uses symlinks; the other adapters generate native files.
     for source in "$REPO"/agents/*.md; do
       [ -f "$source" ] || continue
       name="${source##*/}"
+      agent_selected "${name%.md}" || continue
       [ -f "$(expand_home "$agents_dir")/${name%.md}.toml" ] && continue
       if [ "$tool" != claude ] && { [ -f "$(expand_home "$agents_dir")/$name" ] || [ -f "$(expand_home "$agents_dir")/${name%.md}.agent.md" ]; }; then continue; fi
       check_link "$source" "$(expand_home "$agents_dir")/$name"
@@ -331,7 +335,7 @@ check_ownership() {
         fi
         path="$(< "$entry/path")"; target="$(< "$entry/target")"
         case "$path" in "$HOME"/*) ;; *) fail 'installation ownership destination is outside this home'; continue ;; esac
-        case "$target" in "$REPO"|"$REPO"/*) ;; *) fail 'installation ownership source is outside this checkout'; continue ;; esac
+        case "$target" in "$REPO"|"$REPO"/*|"$(sets_store)"/*) ;; *) fail 'installation ownership source is outside this checkout'; continue ;; esac
         check_link "$target" "$path"
         ;;
       settings|git|mod|modmarket|vscode|generated) ;;

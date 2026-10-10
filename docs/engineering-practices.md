@@ -14,7 +14,7 @@ tack helps an individual or team make its engineering practices explicit, reusab
 | Tests and automation hang or pollute developer machines | Bounded commands and isolated fixtures | Verification timeouts; tack's own tests use temporary homes and repositories |
 | Rules diverge between editors | Central policy with thin tool adapters | Shared instructions and verification CLI; executable integration varies by tool |
 | Documentation drifts from the code | Keep affected guidance alongside the change | `docs-map.txt`, PR evidence and architecture updates when structure changes |
-| More process costs time without improving delivery | Retain steps that solve a demonstrated problem | Task modes, on-demand capabilities and published positive, null and adverse benchmark results |
+| More process costs time without improving delivery | Retain steps that solve a demonstrated problem | Task modes, on-demand capabilities and sets activated where the work happens |
 
 Guidance still depends on the assistant following it. Runtime checks cover only their declared behavior, and a human review remains useful for design and semantic gaps. See [tool coverage](editors.md) and [verification limits](verification.md).
 
@@ -54,7 +54,6 @@ Use an ADR for a consequential design choice with alternatives; a handoff for wo
 - Fresh clones reuse recorded setup choices without inheriting completed local review or execution trust. Confirm the actual choices match the project; file propagation alone does not establish correct onboarding.
 - Installer ownership/restoration tests protect independent user settings. Trust stays local; project adoption cannot grant it.
 - CI checks shell/Python lint, Bash compatibility and native Windows behavior. A passing Linux test does not substitute for a claimed Windows capability.
-- Public benchmarks retain failed and adverse outcomes. The [adoption comparison](benchmarks/2026-10-08-adoption.md) found useful configuration transfer, tied correctness and higher time cost; it does not establish reduced defect rates or improved productivity.
 
 The [development guide](development.md) gives the commands contributors use. The [team example](sharing.md#example-a-team-building-with-ai) shows adoption and daily use. Shared project preferences now live in optional `tack.json`; local overrides and personal defaults remain separate. See [configuration](configuration.md).
 

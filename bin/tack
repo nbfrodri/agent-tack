@@ -38,6 +38,10 @@ Commands:
   setup [--check] [--json]
                       Inspect project foundations without running project code;
                       Show clone preferences and overrides; --check exits 1 for broken guidance
+  set [list | show NAME | use NAME [--global] | drop NAME [--global] | sync | update [SOURCE...] | check [--fetch]]
+                      Named sets of skills, agents and plugins from sets.txt: use links one
+                      into this project for every tool, or everywhere through install.sh
+                      with --global; update moves the pinned commits in sources.txt
   team [--base REF] [--against REF ...] [--json]
                       Inspect known branch overlap and committed merge conflicts; no fetch
   team --plan|--verify --against REF [--json] [--budget-seconds N]
@@ -394,6 +398,11 @@ case "$cmd" in
     python3 "$TACK_ROOT/lib/project_bootstrap.py" "$root" "$@"
     exit
     ;;
+  set)
+    command -v python3 >/dev/null 2>&1 || fail 'set needs python3'
+    python3 "$TACK_ROOT/lib/sets.py" --root "$TACK_ROOT" "$@"
+    exit
+    ;;
   team)
     require_repo
     command -v python3 >/dev/null 2>&1 || fail 'team needs python3'
@@ -429,6 +438,10 @@ case "$cmd" in
         fi
         ;;
     esac
+    # The names of the sets, so the assistant can activate one for this project when a task needs it.
+    if command -v python3 >/dev/null 2>&1 && [ "$(bash "$TACK_ROOT/lib/config.sh" "$TACK_ROOT" set-index --get)" != false ]; then
+      python3 "$TACK_ROOT/lib/sets.py" --root "$TACK_ROOT" index 2>/dev/null || true
+    fi
     bash "$source_root/lib/project-context.sh" "$root" "$(context_level)"
     if [ -e "$root/checks-map.json" ] || [ -L "$root/checks-map.json" ]; then
       echo 'Project verification: tack verify selects checks from checks-map.json for changed paths. Use --plan for read-only selection; report failures and unmapped paths. Execution needs local trust.'

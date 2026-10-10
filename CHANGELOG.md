@@ -6,6 +6,9 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ### Added
 
+- Sets: named bundles of skills, agents and Claude Code plugins in `sets.txt`, with external skill collections pinned to a full commit in `sources.txt`. `tack set use NAME` links a set into one project for every tool; `--global` applies it everywhere through `./install.sh`; `tack set update` moves a pin and reports which used skills changed. 33 sets are declared, over 24 skill collections and two subagent marketplaces.
+- A set index in the startup context of enabled projects: one line naming every set and the active ones, so the assistant can activate a set in the project when a task needs it. `tack config set-index false` turns it off; in a mode such as `unleash` the guard refuses `tack set use|drop --global` and `tack set update`.
+- An audit of the external skills and subagent plugins used by sets (`docs/audits/2026-10-11-external-skills.md`).
 - Optional `tack bootstrap` generates a pinned, consent-based collaborator setup script while preserving existing installations, project activation and local trust.
 - Shared `collaboration` choice (`solo` or `team`), isolated `tack team` branch diagnostics and focused producer/consumer guidance for monorepos.
 - Optional, configurable PR metadata checks and a read-only GitHub Actions asset, also used by tack's own PRs.
@@ -18,6 +21,8 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ### Changed
 
+- tack is now positioned as a personal configuration rather than a general product ([ADR 0004](docs/adr/0004-personal-configuration-with-sets.md)). The README describes what the repository holds and how to install it on another machine.
+- `plugins.txt` installs `claude-code-setup` and `security-guidance` for every project; `frontend-design` moved to the `design` set as a skill, so tools other than Claude Code receive it.
 - Startup indexes parallel handoffs and selects a full excerpt only for a single active handoff or a unique current-branch match.
 - Onboarding saves agreed shared defaults explicitly; testing and setup guidance avoid redundant checks while preserving relevant verification and manual-review gaps.
 - README explains the everyday value for individuals and teams; a project departure guide separates disabling tack, archiving old work and uninstalling machine integrations.
@@ -28,6 +33,9 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ### Fixed
 
+- `tack memory add` refuses environment-style assignments whose variable names a credential, such as `DB_PASS=...` or `AWS_SECRET_ACCESS_KEY=...`.
+- Skill descriptions holding `": "` are quoted and agent descriptions reworded, so strict YAML readers no longer skip `api-design`, `auth`, `e2e-testing`, `frontend` and `git-history`; the validator rejects a new unquoted one.
+- The installer removes a link under the former `harness` name when the link it replaced pointed into a checkout that no longer exists, instead of keeping a broken link.
 - Windows collaborator setup selects Git Bash explicitly instead of the System32 WSL launcher.
 - Collaborator setup isolates inherited Git directory/index overrides and rejects junctions on older supported Python versions.
 - Team completion checks no longer ask to refresh another branch's handoff merely because its branch differs.
@@ -36,6 +44,7 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ### Removed
 
+- The evaluation harness (`evals/`), benchmark reports, product audits, archived plans and their offline test suites. They remain in the Git history; no runtime capability was removed.
 - Runtime reads of the former `harness.*` settings and `.harness` markers, the `harness` command and its managed links. Upgrade through v0.1.0 and follow its per-clone migration steps before installing this change ([#122](https://github.com/nbfrodri/agent-tack/pull/122)).
 
 ## [0.1.0] - 2026-10-06

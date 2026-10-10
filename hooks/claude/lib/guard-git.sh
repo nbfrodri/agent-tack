@@ -205,6 +205,15 @@ check_tack() {
   local positional=0 a
   case "${1:-}" in
     trust | enable | disable | migrate) SETTINGS_WRITE="Changing tack's settings is the user's decision in this mode."; return ;;
+    set)
+      # A set in this project is the assistant's to activate; everywhere, and moving pins, is not.
+      case "${2:-}" in
+        update) SETTINGS_WRITE="Moving pinned skill sources is the user's decision in this mode." ;;
+        use | drop)
+          for a in "$@"; do
+            [ "$a" != --global ] || SETTINGS_WRITE="Changing the sets active everywhere is the user's decision in this mode."
+          done ;;
+      esac ;;
     mode)
       case "${2:-}" in '' | list | show | new) return ;; esac
       SETTINGS_WRITE="Changing the workflow mode is the user's decision in this mode." ;;

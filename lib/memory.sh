@@ -20,6 +20,8 @@ setting() { local value; value="$("$root/bin/tack" config "$1" --get 2>/dev/null
 # "token: stored in 1Password" passes while "password is hunter2" does not.
 looks_secret() {
   printf '%s' "$1" | grep -qE -- '-----BEGIN [A-Z ]*PRIVATE KEY|(^|[^A-Za-z0-9])(AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{30,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|glpat-[A-Za-z0-9_-]{20,}|sk-[A-Za-z0-9_-]{20,}|sk_(live|test)_[A-Za-z0-9]{10,}|xox[abprs]-[A-Za-z0-9-]{10,}|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,})' && return 0
+  # An assignment whose variable names a credential (DB_PASS=..., AWS_SECRET_ACCESS_KEY=...).
+  printf '%s' "$1" | grep -qiE -- '(^|[^A-Za-z0-9_])[A-Za-z0-9_]*(pass|pwd|secret|token|key|credential)[A-Za-z0-9_]*[[:space:]]*=[[:space:]]*[^[:space:]]{6,}' && return 0
   printf '%s' "$1" | grep -qiE -- '(password|passwd|passphrase|secret|token|api[_-]?key)[[:space:]]*(=|:|is)[[:space:]]*[^[:space:]]*[0-9!@#$%^&*+/=_-][^[:space:]]*' || return 1
   # The value must be long enough to be a credential.
   printf '%s' "$1" | grep -qiE -- '(password|passwd|passphrase|secret|token|api[_-]?key)[[:space:]]*(=|:|is)[[:space:]]*[^[:space:]]{6,}'

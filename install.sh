@@ -81,6 +81,8 @@ source "$REPO/lib/keys.sh"
 source "$REPO/lib/mods.sh"
 # shellcheck source=lib/skill-groups.sh
 source "$REPO/lib/skill-groups.sh"
+# shellcheck source=lib/sets.sh
+source "$REPO/lib/sets.sh"
 # shellcheck source=lib/agent-selection.sh
 source "$REPO/lib/agent-selection.sh"
 # shellcheck source=lib/vscode.sh
@@ -225,6 +227,7 @@ EOF
 $skill_dirs
 EOF
   done
+  install_set_skills "$skill_dirs"
 
   section "Old names (agent-config, harness)"
   # Links left by versions of this repo named agent-config
@@ -241,7 +244,7 @@ EOF
     [ -L "$old" ] || continue
     case "$(readlink "$old")" in "$REPO" | "$REPO/bin/harness") ;; *) continue ;; esac
     if [ "$DRY_RUN" -eq 1 ]; then ok "would remove old link $old"
-    elif ownership_release_link "$old"; then rm -f "$old" && ok "removed old link $old"
+    elif ownership_release_link "$old" || ownership_release_dangling "$old"; then rm -f "$old" && ok "removed old link $old"
     else warn "kept $old: it replaced a file of yours, which ./uninstall.sh restores"; fi
   done
 
@@ -262,7 +265,7 @@ EOF
   local agent
   for agent in "$REPO"/agents/*.md; do
     [ -e "$agent" ] || continue
-    if roles_enabled; then link "$agent" "$HOME/.claude/agents/$(basename "$agent")"
+    if agent_selected "$(basename "$agent" .md)"; then link "$agent" "$HOME/.claude/agents/$(basename "$agent")"
     else deselect_agent link "$agent" "$HOME/.claude/agents/$(basename "$agent")"; fi
   done
 }
@@ -505,6 +508,36 @@ sys.exit(0 if any(m.get("name") == sys.argv[1] for m in json.load(sys.stdin)) el
   fi
 }
 
+# Installs a plugin that is missing, updates one that is present and enables a disabled one.
+ensure_plugin() {
+  local name="$1" state
+  state="$(plugin_state "$name")"
+  case "$state" in
+    missing|unknown)
+      if claude plugin install "$name" </dev/null >/dev/null 2>&1; then
+        ok "$name installed"
+      else
+        fail "could not install $name (try: claude plugin install $name)"
+        return
+      fi
+      ;;
+    *)
+      if claude plugin update "$name" </dev/null >/dev/null 2>&1; then
+        ok "$name up to date"
+      else
+        warn "could not update $name; keeping the installed version"
+      fi
+      ;;
+  esac
+  if [ "$(plugin_state "$name")" = "disabled" ]; then
+    if claude plugin enable "$name" </dev/null >/dev/null 2>&1; then
+      ok "$name enabled"
+    else
+      fail "could not enable $name"
+    fi
+  fi
+}
+
 install_plugins() {
   section "Claude Code plugins"
   if [ "$SKIP_PLUGINS" -eq 1 ]; then
@@ -518,6 +551,11 @@ install_plugins() {
         plugin) ok "would ensure plugin $name is installed, updated and enabled" ;;
       esac
     done < "$REPO/plugins.txt"
+    while IFS= read -r name; do
+      [ -z "$name" ] || ok "would ensure plugin $name is installed, updated and enabled (active set)"
+    done <<EOF
+$(set_items plugin)
+EOF
     return
   fi
   if ! has claude; then
@@ -529,7 +567,7 @@ install_plugins() {
     return
   fi
 
-  local kind name source state rc
+  local kind name source rc
   # fd 3 so that commands inside the loop can't consume the file's lines
   while read -r kind name source _ <&3; do
     case "$kind" in
@@ -554,38 +592,18 @@ install_plugins() {
           warn "could not refresh marketplace $name; using its cached catalog"
         fi
         ;;
-      plugin)
-        state="$(plugin_state "$name")"
-        case "$state" in
-          missing|unknown)
-            if claude plugin install "$name" </dev/null >/dev/null 2>&1; then
-              ok "$name installed"
-            else
-              fail "could not install $name (try: claude plugin install $name)"
-              continue
-            fi
-            ;;
-          *)
-            if claude plugin update "$name" </dev/null >/dev/null 2>&1; then
-              ok "$name up to date"
-            else
-              warn "could not update $name; keeping the installed version"
-            fi
-            ;;
-        esac
-        if [ "$(plugin_state "$name")" = "disabled" ]; then
-          if claude plugin enable "$name" </dev/null >/dev/null 2>&1; then
-            ok "$name enabled"
-          else
-            fail "could not enable $name"
-          fi
-        fi
-        ;;
+      plugin) ensure_plugin "$name" ;;
       *)
         warn "plugins.txt: unknown line type '$kind'"
         ;;
     esac
   done 3< "$REPO/plugins.txt"
+  # Plugins of the sets active everywhere; their marketplaces are declared in plugins.txt.
+  while IFS= read -r name <&3; do
+    [ -z "$name" ] || ensure_plugin "$name"
+  done 3<<EOF
+$(set_items plugin)
+EOF
 }
 
 # Git Bash on Windows copies files for `ln -s` unless asked for real symlinks, which Windows

@@ -1,6 +1,6 @@
 ---
 name: auth
-description: Implement authentication and authorization: sessions, OAuth, tokens, MFA and tenant permissions. Use for login, signup, access control or protected routes.
+description: "Implement authentication and authorization: sessions, OAuth, tokens, MFA and tenant permissions. Use for login, signup, access control or protected routes."
 ---
 
 # Authentication and authorisation

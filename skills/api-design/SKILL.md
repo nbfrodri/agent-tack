@@ -1,6 +1,6 @@
 ---
 name: api-design
-description: Design backend APIs: contracts, validation, errors, pagination and tests. Use for endpoints, routes, controllers, schemas or webhooks in Python, Laravel or Node.
+description: "Design backend APIs: contracts, validation, errors, pagination and tests. Use for endpoints, routes, controllers, schemas or webhooks in Python, Laravel or Node."
 ---
 
 # API design and backend structure

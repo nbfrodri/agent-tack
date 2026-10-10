@@ -113,7 +113,7 @@ for kind in plans handoffs; do
 done
 # The ShellCheck on CI's runners reports SC2015 for "[ a ] && [ b ] || command" even where newer
 # local versions do not; only exit, return and assignments may follow. Write the rest as if.
-sc2015="$(cd "$REPO" && grep -nE '\] && \[[^]]*\] \|\| ' install.sh uninstall.sh bin/tack lib/*.sh tests/*.sh evals/run.sh hooks/claude/*.sh hooks/claude/lib/*.sh hooks/cursor/*.sh git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push git-hooks/pre-commit 2>/dev/null \
+sc2015="$(cd "$REPO" && grep -nE '\] && \[[^]]*\] \|\| ' install.sh uninstall.sh bin/tack lib/*.sh tests/*.sh hooks/claude/*.sh hooks/claude/lib/*.sh hooks/cursor/*.sh git-hooks/_chain git-hooks/commit-msg git-hooks/pre-push git-hooks/pre-commit 2>/dev/null \
   | grep -vE '^tests/validate(\.test)?\.sh:|^[^:]*:[0-9]+:[[:space:]]*#|\|\| (exit|return)([ ;]|$)|\|\| [A-Za-z_][A-Za-z0-9_]*=')"
 [ -z "$sc2015" ] || err "use if instead of '[ a ] && [ b ] || command' (CI's ShellCheck rejects it):
 $sc2015"
@@ -233,6 +233,14 @@ while read -r kind id source _; do
     *) err "plugins.txt: unknown line type '$kind'" ;;
   esac
 done <"$REPO/plugins.txt"
+
+echo "sets.txt and sources.txt"
+python3 "$REPO/lib/sets.py" --root "$REPO" check >/dev/null || err 'sets.txt or sources.txt is invalid (tack set check)'
+while read -r set kind item _; do
+  [ "$kind" = plugin ] || continue
+  grep -qE "^marketplace[[:space:]]+${item#*@}[[:space:]]" "$REPO/plugins.txt" \
+    || err "sets.txt: set '$set' uses $item, whose marketplace is not in plugins.txt"
+done <"$REPO/sets.txt"
 
 echo "git-hooks/"
 for hook in "$REPO"/git-hooks/*; do

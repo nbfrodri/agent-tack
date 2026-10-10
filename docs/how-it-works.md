@@ -34,6 +34,7 @@ One line per tool; `-` means tack does not manage that integration, not that the
 | Step | Details |
 | --- | --- |
 | Instructions and skills | Links `global/AGENTS.md` and every skill of the selected groups (`skill-groups.txt`, `tack config skill-groups`) into each tool's paths (above) and into `~/.agents/skills`; removes its own links to skills of deselected groups. |
+| Sets | Links the skills that the sets active everywhere (`tack set use NAME --global`) take from `sources.txt`, after checking each collection out at its pinned commit under `~/.local/share/agent-tack/sources`; removes its own links to skills no active set lists. A set also selects tack skills, agents and plugins. [Sets](sets.md). |
 | Agents | With `agent-roles true --global`, links Claude definitions and generates native Codex, Gemini, Copilot, OpenCode and Cursor definitions for selected tools. Off by default; deselection preserves edited and foreign files. |
 | Settings | Deep-merges each declared tool template; your keys and hooks are kept, hooks tagged `#tack` are replaced. `--no-hooks` removes managed registrations while preserving your own. |
 | Git hooks | Points the global `core.hooksPath` at `git-hooks/`, unless you use a different one. |
@@ -96,9 +97,11 @@ hooks/claude/         # Claude hooks (guard-bash.sh dispatches to lib/guard-*.sh
 git-hooks/            # global git hooks
 bin/tack           # per-project switch
 plugins.txt           # Claude Code plugins
+sets.txt              # sets of skills, agents and plugins
+sources.txt           # external skill collections pinned to a commit
 plugins/<name>/       # mods shipped with tack (local marketplace)
 install.sh            # installer (lib/: settings merge in Python and jq)
-tests/  evals/        # automated tests and behaviour evals
+tests/                # automated tests
 docs/                 # this documentation, audits and AI log
 ```
 
