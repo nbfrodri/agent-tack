@@ -244,7 +244,7 @@ EOF
     [ -L "$old" ] || continue
     case "$(readlink "$old")" in "$REPO" | "$REPO/bin/harness") ;; *) continue ;; esac
     if [ "$DRY_RUN" -eq 1 ]; then ok "would remove old link $old"
-    elif ownership_release_link "$old"; then rm -f "$old" && ok "removed old link $old"
+    elif ownership_release_link "$old" || ownership_release_dangling "$old"; then rm -f "$old" && ok "removed old link $old"
     else warn "kept $old: it replaced a file of yours, which ./uninstall.sh restores"; fi
   done
 

@@ -72,6 +72,10 @@ Checkouts live in `~/.local/share/agent-tack/sources/<name>/<commit>` (or under 
 
 Do not install the same collection both as a Claude Code plugin and through a set: the tool would list each skill twice.
 
+## Subagent teams
+
+The `agents-*` sets install plugins from two subagent collections, [VoltAgent](https://github.com/VoltAgent/awesome-claude-code-subagents) and [wshobson](https://github.com/wshobson/agents), whose marketplaces are declared in `plugins.txt`. They reach Claude Code only. Each plugin brings several specialists and every one adds its description to the session, so use them per project (`tack set use agents-quality`). Unlike skills from `sources.txt`, marketplace plugins follow their latest version and are not pinned. In a project, a plugin can be installed only after `./install.sh` has added its marketplace once.
+
 ## Collections in sources.txt
 
 | Source | Repository | Used for |

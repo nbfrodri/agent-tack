@@ -1,6 +1,6 @@
 ---
 name: frontend
-description: Build React and Next.js interfaces: components, data loading, forms, state, accessibility and component tests. Use for UI implementation and changes.
+description: "Build React and Next.js interfaces: components, data loading, forms, state, accessibility and component tests. Use for UI implementation and changes."
 ---
 
 # Frontend (React / Next.js)

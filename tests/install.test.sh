@@ -69,6 +69,29 @@ ln -s "$REPO/bin/harness" "$H_FORMER/.local/bin/harness" && ln -s "$REPO" "$H_FO
 check "links an earlier install made under the former name are removed" "run_install '$H_FORMER' && [ ! -L '$H_FORMER/.local/bin/harness' ] && [ ! -L '$H_FORMER/.agents/harness' ]"
 ln -s /somewhere/else "$H_FORMER/.local/bin/harness"
 check "a harness link that is not this checkout's is left alone" "run_install '$H_FORMER' && [ \"\$(readlink '$H_FORMER/.local/bin/harness')\" = /somewhere/else ]"
+# A former-name link recorded as having replaced a link into a checkout that no longer exists:
+# the record is copied from the tack command's, which shares its folder.
+H_GONE="$WORK/former-gone"
+run_install "$H_GONE"
+gone_entries="$H_GONE/.local/state/agent-tack/ownership/entries"
+gone_entry="$(grep -lx "$H_GONE/.local/bin/tack" "$gone_entries"/*/path | head -n 1)"
+cp -Rp "$(dirname "$gone_entry")" "$gone_entries/9000"
+printf '%s\n' "$H_GONE/.local/bin/harness" > "$gone_entries/9000/path"
+printf '%s\n' "$REPO/bin/harness" > "$gone_entries/9000/target"
+printf 'symlink\n' > "$gone_entries/9000/before_kind"
+printf '%s\n' "$WORK/vanished-checkout/bin/harness" > "$gone_entries/9000/before_target"
+chmod -R go-rwx "$gone_entries/9000"
+ln -s "$REPO/bin/harness" "$H_GONE/.local/bin/harness"
+check "a former-name link that replaced a link to a vanished checkout is removed" "run_install '$H_GONE' && [ ! -L '$H_GONE/.local/bin/harness' ] && [ ! -e '$gone_entries/9000' ]"
+mkdir -p "$WORK/kept-checkout/bin" && touch "$WORK/kept-checkout/bin/harness"
+cp -Rp "$(dirname "$gone_entry")" "$gone_entries/9001"
+printf '%s\n' "$H_GONE/.local/bin/harness" > "$gone_entries/9001/path"
+printf '%s\n' "$REPO/bin/harness" > "$gone_entries/9001/target"
+printf 'symlink\n' > "$gone_entries/9001/before_kind"
+printf '%s\n' "$WORK/kept-checkout/bin/harness" > "$gone_entries/9001/before_target"
+chmod -R go-rwx "$gone_entries/9001"
+ln -s "$REPO/bin/harness" "$H_GONE/.local/bin/harness"
+check "one that replaced a link which still resolves is kept for uninstall" "run_install '$H_GONE' && [ -L '$H_GONE/.local/bin/harness' ] && [ -d '$gone_entries/9001' ]"
 check "settings.json disables AI attribution" "[ \"\$(json_get '$H/.claude/settings.json' attribution.commit)\" = '\"\"' ]"
 
 check "fresh install creates no backups" "! find '$H' -name '*.bak-*' | grep -q ."
@@ -280,7 +303,7 @@ check "re-enables a disabled plugin" "called '$H' 'plugin enable context7@claude
 check "installs a missing plugin" "called '$H' 'plugin install claude-code-setup@claude-plugins-official'"
 check "every plugin in plugins.txt is processed" "[ \"\$(grep -c '^plugin \\(install\\|update\\)' '$H.calls')\" = \"\$(grep -c '^plugin ' '$REPO/plugins.txt')\" ]"
 H="$WORK/plugins-known-marketplace"
-run_plugins "$H" FAKE_MARKETPLACES='[{"name":"claude-plugins-official"}]' FAKE_PLUGINS='[]'
+run_plugins "$H" FAKE_MARKETPLACES='[{"name":"claude-plugins-official"},{"name":"voltagent-subagents"},{"name":"claude-code-workflows"}]' FAKE_PLUGINS='[]'
 check "doesn't re-add a known marketplace" "! grep -q '^plugin marketplace add' '$H.calls'"
 H="$WORK/plugins-fail"
 check "a failed install makes the run fail" "! run_plugins '$H' FAKE_MARKETPLACES='[]' FAKE_PLUGINS='[]' FAKE_FAIL_INSTALL=1"

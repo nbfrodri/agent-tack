@@ -215,6 +215,37 @@ addy skill addy:skills/documentation-and-adrs
 addy skill addy:skills/observability-and-instrumentation
 addy skill addy:skills/shipping-and-launch
 
+# --- Subagent teams (Claude Code only) --------------------------------------------------------
+# Plugins from the VoltAgent and wshobson marketplaces. Each brings several specialist subagents,
+# and every one adds its description to the session: activate these per project. Marketplace
+# plugins follow their latest version; only skills from sources.txt are pinned to a commit.
+agents-dev about Specialist subagents for everyday backend, frontend, fullstack and mobile work
+agents-dev plugin voltagent-core-dev@voltagent-subagents
+
+agents-languages about Subagents with deep knowledge of one language or framework
+agents-languages plugin voltagent-lang@voltagent-subagents
+
+agents-quality about Subagents for review, QA, penetration testing and security scanning
+agents-quality plugin voltagent-qa-sec@voltagent-subagents
+agents-quality plugin comprehensive-review@claude-code-workflows
+agents-quality plugin security-scanning@claude-code-workflows
+
+agents-infra about Subagents for cloud, Kubernetes, Terraform, SRE and incident response
+agents-infra plugin voltagent-infra@voltagent-subagents
+agents-infra plugin incident-response@claude-code-workflows
+
+agents-data-ai about Subagents for data pipelines, machine learning and LLM architecture
+agents-data-ai plugin voltagent-data-ai@voltagent-subagents
+
+agents-orchestration about Subagents that coordinate other agents and end-to-end features
+agents-orchestration plugin voltagent-meta@voltagent-subagents
+agents-orchestration plugin agent-teams@claude-code-workflows
+agents-orchestration plugin full-stack-orchestration@claude-code-workflows
+
+agents-product about Subagents for product strategy, research and business analysis
+agents-product plugin voltagent-biz@voltagent-subagents
+agents-product plugin voltagent-research@voltagent-subagents
+
 # --- Beyond application code ------------------------------------------------------------------
 ai about Building with language models: prompts, retrieval, evaluation and MCP servers
 ai skill anthropics:skills/mcp-builder

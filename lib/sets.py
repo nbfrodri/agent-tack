@@ -244,7 +244,11 @@ def claude_plugin(action, plugin, repo):
     result = subprocess.run(['claude', 'plugin', action, plugin, '--scope', 'local'], cwd=repo,
                             stdin=subprocess.DEVNULL, capture_output=True, text=True)
     done = 'installed' if action == 'install' else 'removed'
-    print(f'  plugin {plugin}: {done if result.returncode == 0 else "could not " + action} (Claude Code only)')
+    if result.returncode == 0:
+        print(f'  plugin {plugin}: {done} (Claude Code only)')
+    else:
+        # A marketplace from plugins.txt is added by the installer, not here.
+        print(f'  plugin {plugin}: could not {action}; run install.sh once so its marketplace is known, then tack set sync')
 
 
 def apply_project(root, repo, sources, sets, wanted, dropped_plugins=()):

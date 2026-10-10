@@ -6,7 +6,7 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ### Added
 
-- Sets: named bundles of skills, agents and Claude Code plugins in `sets.txt`, with external skill collections pinned to a full commit in `sources.txt`. `tack set use NAME` links a set into one project for every tool; `--global` applies it everywhere through `./install.sh`; `tack set update` moves a pin and reports which used skills changed. 26 sets over 24 collections are declared.
+- Sets: named bundles of skills, agents and Claude Code plugins in `sets.txt`, with external skill collections pinned to a full commit in `sources.txt`. `tack set use NAME` links a set into one project for every tool; `--global` applies it everywhere through `./install.sh`; `tack set update` moves a pin and reports which used skills changed. 33 sets are declared, over 24 skill collections and two subagent marketplaces.
 - Optional `tack bootstrap` generates a pinned, consent-based collaborator setup script while preserving existing installations, project activation and local trust.
 - Shared `collaboration` choice (`solo` or `team`), isolated `tack team` branch diagnostics and focused producer/consumer guidance for monorepos.
 - Optional, configurable PR metadata checks and a read-only GitHub Actions asset, also used by tack's own PRs.
@@ -31,6 +31,9 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ### Fixed
 
+- `tack memory add` refuses environment-style assignments whose variable names a credential, such as `DB_PASS=...` or `AWS_SECRET_ACCESS_KEY=...`.
+- Skill descriptions holding `": "` are quoted and agent descriptions reworded, so strict YAML readers no longer skip `api-design`, `auth`, `e2e-testing`, `frontend` and `git-history`; the validator rejects a new unquoted one.
+- The installer removes a link under the former `harness` name when the link it replaced pointed into a checkout that no longer exists, instead of keeping a broken link.
 - Windows collaborator setup selects Git Bash explicitly instead of the System32 WSL launcher.
 - Collaborator setup isolates inherited Git directory/index overrides and rejects junctions on older supported Python versions.
 - Team completion checks no longer ask to refresh another branch's handoff merely because its branch differs.

@@ -6,6 +6,9 @@
 # goes in a set instead (sets.txt), and its marketplace is declared here.
 
 marketplace claude-plugins-official anthropics/claude-plugins-official
+# Subagent collections used only by the agents-* sets; nothing from them is installed by default.
+marketplace voltagent-subagents VoltAgent/awesome-claude-code-subagents
+marketplace claude-code-workflows wshobson/agents
 
 plugin context7@claude-plugins-official
 plugin claude-code-setup@claude-plugins-official
