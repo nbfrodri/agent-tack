@@ -27,9 +27,9 @@ With `--global` the choice is saved in your global Git config and `./install.sh`
 
 ## Let the assistant choose
 
-In an enabled project, the startup context includes one line with the names of every set and which are already active. The contents of a set are not loaded until it is activated, so the index costs a few hundred characters instead of every skill's description.
+In an enabled project, the startup context includes one line with the names of every set, grouped by category, and which are already active. The contents of a set are not loaded until it is activated, so the index costs a few hundred characters instead of every skill's description.
 
-When a task clearly needs a set that is not active, the assistant runs `tack set use NAME` for that project and says so. It leaves `--global`, `drop` and `update` to you, and activates nothing for a read-only request; in a mode such as `unleash` the command guard refuses those three. A newly linked skill may only appear in the tool's own list in the next session; until then the assistant can read it from `.agents/skills/`.
+The assistant keeps the project's sets matched to the work: it runs `tack set use NAME` when a task clearly needs a set that is not active, and `tack set drop NAME` for one the work no longer needs, and says so. It leaves `--global` and `update` to you and changes nothing for a read-only request. In a mode such as `unleash` the command guard enforces this: it lets through only `list`, `show`, `sync`, `check` and a plain `use` or `drop` of one set. A newly linked skill may only appear in the tool's own list in the next session; until then the assistant can read it from `.agents/skills/`.
 
 Turn the index off with `tack config set-index false` (add `--global` for every project). Tools without a startup hook get the same line from `tack context`.
 
@@ -48,7 +48,8 @@ Which sets are active is local configuration; what each set contains travels wit
 `sets.txt` has one line per item:
 
 ```
-design about   Web interfaces: visual direction, polish and review
+design about     Web interfaces: visual direction, polish and review
+design category  interfaces                     # groups the list and the startup index
 design skill   frontend                       # skills/frontend in this repository
 design skill   emil:skills/emil-design-eng    # a folder in a collection from sources.txt
 design agent   ui-reviewer                    # agents/ui-reviewer.md
@@ -61,7 +62,7 @@ design plugin  typescript-lsp@claude-plugins-official
 emil  https://github.com/emilkowalski/skills  e8a175de22ae1e49370fc144c1f3bb9aeedf988d
 ```
 
-A source is an `https` URL or an absolute path to a local repository. Two different skills may not share a name, and a plugin's marketplace must be declared in `plugins.txt`. `tack set check` validates both files; `tack set check --fetch` also downloads every source and confirms each skill exists at its pin.
+Names are lowercase letters, digits and hyphens; choose one that tells an assistant when the set applies. A source is an `https` URL or an absolute path to a local repository. Two different skills may not share a name, and a plugin's marketplace must be declared in `plugins.txt`. `tack set check` validates both files; `tack set check --fetch` also downloads every source and confirms each skill exists at its pin.
 
 ## Update a collection
 
@@ -90,7 +91,7 @@ The `agents-*` sets install plugins from two subagent collections, [VoltAgent](h
 
 | Source | Repository | Used for |
 | --- | --- | --- |
-| `impeccable` | pbakaus/impeccable | Interface design language and audits |
+| `impeccable` | pbakaus/impeccable | Interface design language and audits; its own set, because it runs a downloaded binary |
 | `emil` | emilkowalski/skills | Interface polish and motion |
 | `taste` | Leonxlnx/taste-skill | Visual taste and alternative aesthetics |
 | `addy` | addyosmani/agent-skills | Engineering lifecycle from spec to ship |

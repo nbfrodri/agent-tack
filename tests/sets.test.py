@@ -112,6 +112,20 @@ class SetsTests(unittest.TestCase):
         self.tool('use', 'design', '--global')
         self.assertIn('Active everywhere: design', self.tool('index'))
 
+    def test_categories_group_the_list_and_the_index(self):
+        self.sets('design about Interfaces and polish\ndesign category interfaces\ndesign skill frontend\n'
+                  'motion about Animation\nmotion category interfaces\nmotion skill up:skills/motion\n'
+                  'shell about Scripts\nshell category stacks\nshell skill frontend\n'
+                  'misc about Loose ends\nmisc skill frontend\n')
+        index = self.tool('index')
+        self.assertEqual(len(index.strip().splitlines()), 1)
+        self.assertIn('interfaces: design, motion; stacks: shell; other: misc.', index)
+        self.assertIn('tack set drop NAME', index)
+        listed = self.tool('list').splitlines()
+        self.assertLess(listed.index('interfaces'), listed.index('stacks'))
+        self.sets('design category Not_A_Name\n')
+        self.assertIn('category', self.tool('check', expected=1))
+
     def test_show_lists_the_items_of_a_set(self):
         out = self.tool('show', 'design')
         for expected in ('frontend', 'up:skills/polish', 'ui-reviewer', 'frontend-design@claude-plugins-official'):

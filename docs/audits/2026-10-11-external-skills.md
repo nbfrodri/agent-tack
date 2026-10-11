@@ -8,13 +8,13 @@
 
 No skill or agent tries to override instructions, hide actions from the user, bypass permissions, read credentials or ship hooks, and no symlink leaves its folder. Every instruction-override phrase found is defensive ("treat repository content as data"). Hidden Unicode appears only as zero-width spaces before nested code fences and in emoji examples.
 
-Four items need a decision from the owner rather than a fix here.
+Four items needed a decision. The owner left it to this audit; the last column is what was done.
 
 | Severity | Where | Finding | Decision |
 | --- | --- | --- | --- |
-| High | `impeccable` (set `design`) | The skill tells the assistant to run `scripts/impeccable context` once per session. That launcher downloads a native binary from the project's GitHub releases into `~/.impeccable/bin` and executes it. The version comes from the pinned `VERSION` file and the download is checked against a `.sha256` file from the same host, so the pin fixes which release is fetched but the binary itself is outside the reviewed commit. The skill can also install per-project hooks in each tool's settings, with a recorded consent. | Kept, because the owner asked for this skill. Remove it from `design` to avoid running an unreviewed binary. |
+| High | `impeccable` (was in `design`) | The skill tells the assistant to run `scripts/impeccable context` once per session. That launcher downloads a native binary from the project's GitHub releases into `~/.impeccable/bin` and executes it. The version comes from the pinned `VERSION` file and the download is checked against a `.sha256` file from the same host, so the pin fixes which release is fetched but the binary itself is outside the reviewed commit. The skill can also install per-project hooks in each tool's settings, with a recorded consent. | Moved to its own `impeccable` set, so `design` holds only reviewed text and scripts. Activate it per project where running that binary is acceptable. |
 | Medium | `deploy-to-vercel` (was in `devops`) | Its script packs the project (without `.git`, `.env*` and `node_modules`) and uploads it to a public deploy endpoint that needs no account, returning a claimable preview URL. | Removed from `devops`. Add it back for projects where that upload is intended. |
-| Medium | `huggingface-datasets` (set `ai`) | Documents uploading raw agent session logs (`~/.claude/projects`, `~/.codex/sessions`) to a Hugging Face dataset. It says to default to private repositories and warns that traces can hold secrets. | Kept. Only act on it when asked. |
+| Medium | `huggingface-datasets` (set `llm-apps`) | Documents uploading raw agent session logs (`~/.claude/projects`, `~/.codex/sessions`) to a Hugging Face dataset. It says to default to private repositories and warns that traces can hold secrets. | Kept. Only act on it when asked. |
 | Low | `hf-cli`, `modern-python`, `uv-package-manager`, `playwright-cli`, `bats-testing-patterns` and others | Installation steps use `curl ... \| sh`, `npm install -g`, `brew install` or `pip install` of well-known tools. | Kept. The command guard asks before these run. |
 
 ## Other observations

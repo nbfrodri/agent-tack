@@ -202,24 +202,22 @@ check_git_push() {
 
 # Flags tack subcommands that change settings; reads (status, show, list, a lone name) pass.
 check_tack() {
-  local positional=0 a sub=''
+  local positional=0 a
   case "${1:-}" in
     trust | enable | disable | migrate) SETTINGS_WRITE="Changing tack's settings is the user's decision in this mode."; return ;;
     set)
-      # A set in this project is the assistant's to activate; everywhere, and moving pins, is not.
-      # The subcommand is the first word that is not an option. An option before it, or any
-      # spelling that starts like --global, is refused rather than interpreted: the CLI rejects
-      # both, and a guess here that differs from the CLI's reading would be a way around.
+      # In this mode the assistant may read sets and activate or drop one in this project. The
+      # rule names the exact commands it lets through and refuses every other shape, so nothing
+      # the CLI might read differently (an abbreviated or repeated option, an option before the
+      # subcommand, a later subcommand) passes by not being recognised here.
       shift
-      for a in "$@"; do
-        case "$a" in
-          --g*) SETTINGS_WRITE="Changing the sets active everywhere is the user's decision in this mode." ;;
-          -*) [ -n "$sub" ] || SETTINGS_WRITE="Options before a tack set subcommand are the user's decision in this mode." ;;
-          *) [ -n "$sub" ] || sub="$a" ;;
-        esac
-      done
+      case "$#:${1:-}" in
+        0: | 1:list | 1:sync | 1:check) return ;;
+        2:show | 2:use | 2:drop)
+          case "$2" in '' | -* | *[!a-z0-9-]*) ;; *) return ;; esac ;;
+      esac
       # shellcheck disable=SC2034 # Read by guard-bash.sh after the analysis.
-      [ "$sub" != update ] || SETTINGS_WRITE="Moving pinned skill sources is the user's decision in this mode." ;;
+      SETTINGS_WRITE="Beyond reading sets and using or dropping one in this project, tack set is the user's decision in this mode." ;;
     mode)
       case "${2:-}" in '' | list | show | new) return ;; esac
       SETTINGS_WRITE="Changing the workflow mode is the user's decision in this mode." ;;

@@ -77,9 +77,15 @@ def read_sets(root, sources, errors):
         if not NAME.match(name):
             errors.append(f'{where}: set name {name!r} must be lowercase letters, digits and hyphens')
             continue
-        entry = sets.setdefault(name, {'about': '', 'items': []})
+        entry = sets.setdefault(name, {'about': '', 'category': '', 'items': []})
         if kind == 'about':
             entry['about'] = ' '.join(fields[2:])
+            continue
+        if kind == 'category':
+            if len(fields) != 3 or not NAME.match(ref):
+                errors.append(f'{where}: category must be one name of lowercase letters, digits and hyphens')
+            else:
+                entry['category'] = ref
             continue
         if len(fields) != 3:
             errors.append(f'{where}: unexpected text after {ref!r}')
@@ -112,7 +118,7 @@ def read_sets(root, sources, errors):
                 errors.append(f'{where}: {ref!r} should be plugin@marketplace')
                 continue
         else:
-            errors.append(f'{where}: unknown kind {kind!r} (about, skill, agent or plugin)')
+            errors.append(f'{where}: unknown kind {kind!r} (about, category, skill, agent or plugin)')
             continue
         owner = owners.setdefault((kind, item['name']), ref)
         if owner != ref:
@@ -321,16 +327,32 @@ def plugins_of(names, sets):
     return {item['name'] for name in names for item in sets[name]['items'] if item['kind'] == 'plugin'}
 
 
+def by_category(sets):
+    """Set names grouped by category in file order; sets without one come last as "other"."""
+    groups = {}
+    for name, entry in sets.items():
+        groups.setdefault(entry['category'], []).append(name)
+    loose = groups.pop('', [])
+    if loose:
+        groups['other' if groups else ''] = loose
+    return groups
+
+
 def command_list(args, root, sources, sets):
     code, top, _ = git('rev-parse', '--show-toplevel')
     here = active('local', sets) if code == 0 and top else []
     everywhere = active('global', sets)
+    width = max((len(name) for name in sets), default=0)
     print('Sets in sets.txt (* active everywhere, + active in this project):')
-    for name, entry in sets.items():
-        mark = '*' if name in everywhere else '+' if name in here else ' '
-        totals = [(sum(item['kind'] == kind for item in entry['items']), kind) for kind in ('skill', 'agent', 'plugin')]
-        counts = ', '.join(f'{total} {kind}{"" if total == 1 else "s"}' for total, kind in totals if total)
-        print(f'{mark} {name:<14} {entry["about"]}  ({counts})')
+    for category, names in by_category(sets).items():
+        if category:
+            print(category)
+        for name in names:
+            entry = sets[name]
+            mark = '*' if name in everywhere else '+' if name in here else ' '
+            totals = [(sum(item['kind'] == kind for item in entry['items']), kind) for kind in ('skill', 'agent', 'plugin')]
+            counts = ', '.join(f'{total} {kind}{"" if total == 1 else "s"}' for total, kind in totals if total)
+            print(f'{mark} {name:<{width}} {entry["about"]}  ({counts})')
 
 
 def command_index(args, root, sources, sets):
@@ -338,14 +360,17 @@ def command_index(args, root, sources, sets):
     code, top, _ = git('rev-parse', '--show-toplevel')
     here = active('local', sets) if code == 0 and top else []
     everywhere = active('global', sets)
-    line = 'Sets available (skills, agents and plugins that load only once activated): ' + ', '.join(sets) + '.'
+    groups = by_category(sets)
+    names = '; '.join(f'{category}: {", ".join(found)}' if category else ', '.join(found) for category, found in groups.items())
+    line = f'Sets available (skills, agents and plugins that load only once activated): {names}.'
     if everywhere:
         line += ' Active everywhere: ' + ', '.join(everywhere) + '.'
     if here:
         line += ' Active here: ' + ', '.join(here) + '.'
-    print(line + ' When a task clearly needs one that is not active, run tack set use NAME (this project only) and say'
-          ' so in one line; tack set show NAME lists its contents. If its skills are not listed afterwards, read them'
-          ' from .agents/skills/. Leave --global, drop and update to the user, and activate nothing for a read-only request.')
+    print(line + ' Keep this project\'s sets matched to the work: run tack set use NAME when a task clearly needs one that'
+          ' is not active, and tack set drop NAME for one active here that the work no longer needs; say so in one line.'
+          ' tack set show NAME lists a set\'s contents. If its skills are not listed afterwards, read them from'
+          ' .agents/skills/. Leave --global and update to the user, and change nothing for a read-only request.')
 
 
 def command_show(args, root, sources, sets):

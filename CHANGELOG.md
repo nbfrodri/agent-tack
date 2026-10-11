@@ -6,8 +6,8 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ### Added
 
-- Sets: named bundles of skills, agents and Claude Code plugins in `sets.txt`, with external skill collections pinned to a full commit in `sources.txt`. `tack set use NAME` links a set into one project for every tool; `--global` applies it everywhere through `./install.sh`; `tack set update` moves a pin and reports which used skills changed. 33 sets are declared, over 24 skill collections and two subagent marketplaces.
-- A set index in the startup context of enabled projects: one line naming every set and the active ones, so the assistant can activate a set in the project when a task needs it. `tack config set-index false` turns it off; in a mode such as `unleash` the guard refuses `tack set use|drop --global` and `tack set update`.
+- Sets: named bundles of skills, agents and Claude Code plugins in `sets.txt`, with external skill collections pinned to a full commit in `sources.txt`. `tack set use NAME` links a set into one project for every tool; `--global` applies it everywhere through `./install.sh`; `tack set update` moves a pin and reports which used skills changed. 48 sets in eight categories are declared: 41 over 24 skill collections and seven `agents-*` sets of subagent plugins from the VoltAgent and wshobson marketplaces.
+- A set index in the startup context of enabled projects: one line naming every set by category and the active ones, so the assistant can activate a set in the project when a task needs it and drop one the work no longer needs. `tack config set-index false` turns it off; in a mode such as `unleash` the guard lets through only reads and a plain `use` or `drop` of one set.
 - An audit of the external skills and subagent plugins used by sets (`docs/audits/2026-10-11-external-skills.md`).
 - Optional `tack bootstrap` generates a pinned, consent-based collaborator setup script while preserving existing installations, project activation and local trust.
 - Shared `collaboration` choice (`solo` or `team`), isolated `tack team` branch diagnostics and focused producer/consumer guidance for monorepos.
@@ -33,6 +33,7 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ### Fixed
 
+- The PR metadata check accepts a pull request from an automated author such as Dependabot on its title alone, instead of failing it for lacking the template's sections.
 - `tack memory add` refuses environment-style assignments whose variable names a credential, such as `DB_PASS=...` or `AWS_SECRET_ACCESS_KEY=...`.
 - Skill descriptions holding `": "` are quoted and agent descriptions reworded, so strict YAML readers no longer skip `api-design`, `auth`, `e2e-testing`, `frontend` and `git-history`; the validator rejects a new unquoted one.
 - The installer removes a link under the former `harness` name when the link it replaced pointed into a checkout that no longer exists, instead of keeping a broken link.

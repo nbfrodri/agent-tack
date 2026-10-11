@@ -1,9 +1,10 @@
 # Sets: named bundles of skills, agents and Claude Code plugins for one kind of work.
-# Lines:  set  about   one-line description
-#         set  skill   NAME                 a skill of this repository (skills/NAME)
-#         set  skill   SOURCE:PATH          a skill folder in a collection pinned in sources.txt
-#         set  agent   NAME                 a role of this repository (agents/NAME.md)
-#         set  plugin  PLUGIN@MARKETPLACE   Claude Code only; its marketplace is in plugins.txt
+# Lines:  set  about     one-line description
+#         set  category  NAME                 groups sets in `tack set list` and the startup index
+#         set  skill     NAME                 a skill of this repository (skills/NAME)
+#         set  skill     SOURCE:PATH          a skill folder in a collection pinned in sources.txt
+#         set  agent     NAME                 a role of this repository (agents/NAME.md)
+#         set  plugin    PLUGIN@MARKETPLACE   Claude Code only; its marketplace is in plugins.txt
 # Activate one in a project with `tack set use NAME` (linked for every tool, ignored by git) or
 # everywhere with `tack set use NAME --global` and ./install.sh. Every active skill adds its
 # description to each session, so keep sets focused and activate them where the work happens.
@@ -11,8 +12,8 @@
 
 # --- Interfaces -----------------------------------------------------------------------------
 design about Web interfaces: visual direction, polish and review
+design category interfaces
 design skill frontend
-design skill impeccable:.agents/skills/impeccable
 design skill emil:skills/emil-design-eng
 design skill taste:skills/taste-skill
 design skill anthropics:skills/frontend-design
@@ -20,7 +21,14 @@ design skill vercel:skills/web-design-guidelines
 design skill emil:skills/break-ui
 design agent ui-reviewer
 
+# Kept apart from design: its launcher downloads and runs a native binary every session
+# (docs/audits/2026-10-11-external-skills.md). Activate it only where you accept that.
+impeccable about Impeccable design language and audits; runs a downloaded native binary
+impeccable category interfaces
+impeccable skill impeccable:.agents/skills/impeccable
+
 design-styles about Alternative aesthetics, redesigns and prototypes to choose between
+design-styles category interfaces
 design-styles skill taste:skills/redesign-skill
 design-styles skill taste:skills/minimalist-skill
 design-styles skill taste:skills/brutalist-skill
@@ -31,6 +39,7 @@ design-styles skill emil:skills/pick-ui-library
 design-styles skill anthropics:skills/theme-factory
 
 motion about Animation and motion: build, name, review and audit
+motion category interfaces
 motion skill emil:skills/animate
 motion skill emil:skills/review-animations
 motion skill emil:skills/improve-animations
@@ -40,13 +49,23 @@ motion skill emil:skills/apple-design
 motion skill vercel:skills/react-view-transitions
 
 accessibility about WCAG audits, screen readers and accessible components
+accessibility category interfaces
 accessibility skill wshobson:plugins/accessibility-compliance/skills/wcag-audit-patterns
 accessibility skill wshobson:plugins/accessibility-compliance/skills/screen-reader-testing
 accessibility skill wshobson:plugins/ui-design/skills/accessibility-compliance
 accessibility skill knowledge-work:design/skills/accessibility-review
 
+figma about Figma designs to code and back; needs the Figma MCP server
+figma category interfaces
+figma skill openai:skills/.curated/figma
+figma skill openai:skills/.curated/figma-use
+figma skill openai:skills/.curated/figma-implement-design
+figma skill openai:skills/.curated/figma-generate-design
+figma skill openai:skills/.curated/figma-create-design-system-rules
+
 # --- Stacks ---------------------------------------------------------------------------------
-react about React and Next.js applications in TypeScript
+react about React and Next.js applications
+react category stacks
 react skill frontend
 react skill vercel:skills/react-best-practices
 react skill vercel:skills/composition-patterns
@@ -54,7 +73,16 @@ react skill wshobson:plugins/javascript-typescript/skills/typescript-advanced-ty
 react skill emil:skills/ask-sonner
 react plugin typescript-lsp@claude-plugins-official
 
+typescript about TypeScript and Node.js: language patterns, backend services and tests
+typescript category stacks
+typescript skill wshobson:plugins/javascript-typescript/skills/typescript-advanced-types
+typescript skill wshobson:plugins/javascript-typescript/skills/modern-javascript-patterns
+typescript skill wshobson:plugins/javascript-typescript/skills/nodejs-backend-patterns
+typescript skill wshobson:plugins/javascript-typescript/skills/javascript-testing-patterns
+typescript plugin typescript-lsp@claude-plugins-official
+
 vue about Vue, Nuxt and the Vite toolchain
+vue category stacks
 vue skill antfu:skills/vue
 vue skill antfu:skills/nuxt
 vue skill antfu:skills/pinia
@@ -63,6 +91,7 @@ vue skill antfu:skills/vitest
 vue skill antfu:skills/unocss
 
 mobile about React Native and Expo apps, and web apps that feel native on a phone
+mobile category stacks
 mobile skill expo:plugins/expo/skills/expo-router
 mobile skill expo:plugins/expo/skills/expo-ui
 mobile skill expo:plugins/expo/skills/expo-native-ui
@@ -74,6 +103,7 @@ mobile skill emil:skills/animate-expo
 mobile skill emil:skills/mobile-native
 
 backend about APIs, data models, queries and authentication
+backend category stacks
 backend skill api-design
 backend skill database
 backend skill auth
@@ -84,6 +114,7 @@ backend skill wshobson:plugins/developer-essentials/skills/sql-optimization-patt
 backend skill wshobson:plugins/javascript-typescript/skills/nodejs-backend-patterns
 
 python about Modern Python: tooling, typing, async and tests
+python category stacks
 python skill trailofbits:plugins/modern-python/skills/modern-python
 python skill wshobson:plugins/python-development/skills/python-testing-patterns
 python skill wshobson:plugins/python-development/skills/python-type-safety
@@ -91,12 +122,37 @@ python skill wshobson:plugins/python-development/skills/async-python-patterns
 python skill wshobson:plugins/python-development/skills/uv-package-manager
 python plugin pyright-lsp@claude-plugins-official
 
+go-rust about Go and Rust: concurrency, async, memory safety and review
+go-rust category stacks
+go-rust skill wshobson:plugins/systems-programming/skills/go-concurrency-patterns
+go-rust skill wshobson:plugins/systems-programming/skills/rust-async-patterns
+go-rust skill wshobson:plugins/systems-programming/skills/memory-safety-patterns
+go-rust skill trailofbits:plugins/rust-review/skills/rust-review
+go-rust plugin gopls-lsp@claude-plugins-official
+go-rust plugin rust-analyzer-lsp@claude-plugins-official
+
+dotnet about C# and ASP.NET Core backends
+dotnet category stacks
+dotnet skill wshobson:plugins/dotnet-contribution/skills/dotnet-backend-patterns
+dotnet skill openai:skills/.curated/aspnet-core
+dotnet plugin csharp-lsp@claude-plugins-official
+
+php-laravel about PHP and Laravel applications
+php-laravel category stacks
+php-laravel skill api-design
+php-laravel skill database
+php-laravel skill testing
+php-laravel plugin laravel-boost@claude-plugins-official
+php-laravel plugin php-lsp@claude-plugins-official
+
 shell about Portable, defensive shell scripts and their tests
+shell category stacks
 shell skill wshobson:plugins/shell-scripting/skills/bash-defensive-patterns
 shell skill wshobson:plugins/shell-scripting/skills/bats-testing-patterns
 shell skill wshobson:plugins/shell-scripting/skills/shellcheck-configuration
 
 saas about Payments and a hosted backend: Stripe, Supabase and authentication
+saas category stacks
 saas skill auth
 saas skill stripe:skills/stripe-best-practices
 saas skill stripe:skills/upgrade-stripe
@@ -104,6 +160,7 @@ saas skill supabase:skills/supabase
 saas skill supabase:skills/supabase-postgres-best-practices
 
 video about Programmatic video with Remotion
+video category stacks
 video skill remotion:skills/remotion-best-practices
 video skill remotion:skills/remotion-create
 video skill remotion:skills/remotion-captions
@@ -111,6 +168,7 @@ video skill remotion:skills/remotion-render
 
 # --- Quality --------------------------------------------------------------------------------
 testing about Tests first, browser tests, debugging and stronger test techniques
+testing category quality
 testing skill testing
 testing skill e2e-testing
 testing skill debugging
@@ -122,6 +180,7 @@ testing skill trailofbits:plugins/mutation-testing/skills/mutation-testing
 testing agent test-writer
 
 review about Code review, simplification and pull request feedback
+review category quality
 review skill improve
 review skill addy:skills/code-review-and-quality
 review skill addy:skills/code-simplification
@@ -134,6 +193,7 @@ review agent evaluator
 review plugin pr-review-toolkit@claude-plugins-official
 
 security about Static analysis, risky changes, dependencies and threat models
+security category quality
 security skill auth
 security skill trailofbits:plugins/static-analysis/skills/semgrep
 security skill trailofbits:plugins/static-analysis/skills/codeql
@@ -145,13 +205,26 @@ security skill openai:skills/.curated/security-threat-model
 security agent security-auditor
 
 performance about Measure first: web vitals, queries, bundles and hot paths
+performance category quality
 performance skill addy:skills/performance-optimization
 performance skill cloudflare:skills/web-perf
 performance skill wshobson:plugins/python-development/skills/python-performance-optimization
 performance agent performance-analyzer
 
+architecture about System and codebase design: boundaries, domain models and service patterns
+architecture category quality
+architecture skill wshobson:plugins/backend-development/skills/architecture-patterns
+architecture skill wshobson:plugins/backend-development/skills/microservices-patterns
+architecture skill wshobson:plugins/backend-development/skills/api-design-principles
+architecture skill mattpocock:skills/engineering/improve-codebase-architecture
+architecture skill mattpocock:skills/engineering/codebase-design
+architecture skill mattpocock:skills/engineering/domain-modeling
+architecture skill knowledge-work:engineering/skills/system-design
+architecture agent architecture-reviewer
+
 # --- Process --------------------------------------------------------------------------------
 planning about From a vague idea to a spec, a plan and tickets
+planning category process
 planning skill project-docs
 planning skill mattpocock:skills/productivity/grill-me
 planning skill mattpocock:skills/engineering/to-spec
@@ -160,15 +233,17 @@ planning skill superpowers:skills/brainstorming
 planning skill superpowers:skills/writing-plans
 planning agent planner
 
-delivery about Git history, issues, pull requests, CI and releases
-delivery skill git-history
-delivery skill github-issues
-delivery skill release
-delivery skill openai:skills/.curated/gh-fix-ci
-delivery skill sentry:skills/pr-writer
-delivery skill wshobson:plugins/cicd-automation/skills/github-actions-templates
+git-release about Git history, issues, pull requests, CI fixes and releases
+git-release category process
+git-release skill git-history
+git-release skill github-issues
+git-release skill release
+git-release skill openai:skills/.curated/gh-fix-ci
+git-release skill sentry:skills/pr-writer
+git-release skill wshobson:plugins/cicd-automation/skills/github-actions-templates
 
 orchestration about Long or parallel work: subagents, worktrees and autonomous rounds
+orchestration category process
 orchestration skill orchestrate
 orchestration skill auto-improve
 orchestration skill superpowers:skills/dispatching-parallel-agents
@@ -177,86 +252,44 @@ orchestration skill superpowers:skills/using-git-worktrees
 orchestration skill superpowers:skills/verification-before-completion
 orchestration agent implementer
 
-devops about Containers, pipelines, infrastructure as code and edge deployment
-devops skill deployment
-devops skill observability
-devops skill hashicorp:plugins/terraform/skills/terraform-style-guide
-devops skill hashicorp:plugins/terraform/skills/terraform-test
-devops skill cloudflare:skills/workers-best-practices
-devops skill cloudflare:skills/wrangler
-devops skill wshobson:plugins/kubernetes-operations/skills/k8s-manifest-generator
-devops skill wshobson:plugins/cicd-automation/skills/github-actions-templates
+modernization about Upgrades and migrations: dependencies, frameworks, schemas and deprecations
+modernization category process
+modernization skill wshobson:plugins/framework-migration/skills/dependency-upgrade
+modernization skill wshobson:plugins/framework-migration/skills/database-migration
+modernization skill wshobson:plugins/framework-migration/skills/react-modernization
+modernization skill addy:skills/deprecation-and-migration
+modernization plugin code-modernization@claude-plugins-official
 
-addy about Addy Osmani's whole engineering lifecycle, from spec to ship
-addy skill addy:skills/using-agent-skills
-addy skill addy:skills/idea-refine
-addy skill addy:skills/interview-me
-addy skill addy:skills/spec-driven-development
-addy skill addy:skills/planning-and-task-breakdown
-addy skill addy:skills/incremental-implementation
-addy skill addy:skills/test-driven-development
-addy skill addy:skills/context-engineering
-addy skill addy:skills/source-driven-development
-addy skill addy:skills/constraint-driven-development
-addy skill addy:skills/doubt-driven-development
-addy skill addy:skills/frontend-ui-engineering
-addy skill addy:skills/api-and-interface-design
-addy skill addy:skills/browser-testing-with-devtools
-addy skill addy:skills/debugging-and-error-recovery
-addy skill addy:skills/code-review-and-quality
-addy skill addy:skills/code-simplification
-addy skill addy:skills/security-and-hardening
-addy skill addy:skills/performance-optimization
-addy skill addy:skills/git-workflow-and-versioning
-addy skill addy:skills/ci-cd-and-automation
-addy skill addy:skills/deprecation-and-migration
-addy skill addy:skills/documentation-and-adrs
-addy skill addy:skills/observability-and-instrumentation
-addy skill addy:skills/shipping-and-launch
-
-# --- Subagent teams (Claude Code only) --------------------------------------------------------
-# Plugins from the VoltAgent and wshobson marketplaces. Each brings several specialist subagents,
-# and every one adds its description to the session: activate these per project. Marketplace
-# plugins follow their latest version; only skills from sources.txt are pinned to a commit.
-agents-dev about Specialist subagents for everyday backend, frontend, fullstack and mobile work
-agents-dev plugin voltagent-core-dev@voltagent-subagents
-
-agents-languages about Subagents with deep knowledge of one language or framework
-agents-languages plugin voltagent-lang@voltagent-subagents
-
-agents-quality about Subagents for review, QA, penetration testing and security scanning
-agents-quality plugin voltagent-qa-sec@voltagent-subagents
-agents-quality plugin comprehensive-review@claude-code-workflows
-agents-quality plugin security-scanning@claude-code-workflows
-
-agents-infra about Subagents for cloud, Kubernetes, Terraform, SRE and incident response
-agents-infra plugin voltagent-infra@voltagent-subagents
-agents-infra plugin incident-response@claude-code-workflows
-
-agents-data-ai about Subagents for data pipelines, machine learning and LLM architecture
-agents-data-ai plugin voltagent-data-ai@voltagent-subagents
-
-agents-orchestration about Subagents that coordinate other agents and end-to-end features
-agents-orchestration plugin voltagent-meta@voltagent-subagents
-agents-orchestration plugin agent-teams@claude-code-workflows
-agents-orchestration plugin full-stack-orchestration@claude-code-workflows
-
-agents-product about Subagents for product strategy, research and business analysis
-agents-product plugin voltagent-biz@voltagent-subagents
-agents-product plugin voltagent-research@voltagent-subagents
-
-# --- Beyond application code ------------------------------------------------------------------
-ai about Building with language models: prompts, retrieval, evaluation and MCP servers
-ai skill anthropics:skills/mcp-builder
-ai skill wshobson:plugins/llm-application-dev/skills/prompt-engineering-patterns
-ai skill wshobson:plugins/llm-application-dev/skills/rag-implementation
-ai skill wshobson:plugins/llm-application-dev/skills/llm-evaluation
-ai skill huggingface:skills/hf-cli
-ai skill huggingface:skills/huggingface-datasets
-ai plugin agent-sdk-dev@claude-plugins-official
-ai plugin mcp-server-dev@claude-plugins-official
+engineering-lifecycle about Addy Osmani's whole engineering lifecycle, from spec to ship (25 skills)
+engineering-lifecycle category process
+engineering-lifecycle skill addy:skills/using-agent-skills
+engineering-lifecycle skill addy:skills/idea-refine
+engineering-lifecycle skill addy:skills/interview-me
+engineering-lifecycle skill addy:skills/spec-driven-development
+engineering-lifecycle skill addy:skills/planning-and-task-breakdown
+engineering-lifecycle skill addy:skills/incremental-implementation
+engineering-lifecycle skill addy:skills/test-driven-development
+engineering-lifecycle skill addy:skills/context-engineering
+engineering-lifecycle skill addy:skills/source-driven-development
+engineering-lifecycle skill addy:skills/constraint-driven-development
+engineering-lifecycle skill addy:skills/doubt-driven-development
+engineering-lifecycle skill addy:skills/frontend-ui-engineering
+engineering-lifecycle skill addy:skills/api-and-interface-design
+engineering-lifecycle skill addy:skills/browser-testing-with-devtools
+engineering-lifecycle skill addy:skills/debugging-and-error-recovery
+engineering-lifecycle skill addy:skills/code-review-and-quality
+engineering-lifecycle skill addy:skills/code-simplification
+engineering-lifecycle skill addy:skills/security-and-hardening
+engineering-lifecycle skill addy:skills/performance-optimization
+engineering-lifecycle skill addy:skills/git-workflow-and-versioning
+engineering-lifecycle skill addy:skills/ci-cd-and-automation
+engineering-lifecycle skill addy:skills/deprecation-and-migration
+engineering-lifecycle skill addy:skills/documentation-and-adrs
+engineering-lifecycle skill addy:skills/observability-and-instrumentation
+engineering-lifecycle skill addy:skills/shipping-and-launch
 
 agent-tooling about Writing and auditing skills, plugins, hooks and agent instructions
+agent-tooling category process
 agent-tooling skill lessons
 agent-tooling skill anthropics:skills/skill-creator
 agent-tooling skill mattpocock:skills/productivity/writing-for-agents
@@ -269,15 +302,93 @@ agent-tooling plugin plugin-dev@claude-plugins-official
 agent-tooling plugin hookify@claude-plugins-official
 agent-tooling plugin claude-md-management@claude-plugins-official
 
-data about Exploring data: SQL, statistics, validation, charts and notebooks
-data skill knowledge-work:data/skills/explore-data
-data skill knowledge-work:data/skills/sql-queries
-data skill knowledge-work:data/skills/statistical-analysis
-data skill knowledge-work:data/skills/validate-data
-data skill knowledge-work:data/skills/data-visualization
-data skill openai:skills/.curated/jupyter-notebook
+# --- Operations -----------------------------------------------------------------------------
+devops about Containers, pipelines, infrastructure as code and deployment
+devops category operations
+devops skill deployment
+devops skill observability
+devops skill hashicorp:plugins/terraform/skills/terraform-style-guide
+devops skill hashicorp:plugins/terraform/skills/terraform-test
+devops skill cloudflare:skills/workers-best-practices
+devops skill cloudflare:skills/wrangler
+devops skill wshobson:plugins/kubernetes-operations/skills/k8s-manifest-generator
+devops skill wshobson:plugins/cicd-automation/skills/github-actions-templates
 
+kubernetes about Kubernetes manifests, Helm charts, security policies and GitOps
+kubernetes category operations
+kubernetes skill wshobson:plugins/kubernetes-operations/skills/k8s-manifest-generator
+kubernetes skill wshobson:plugins/kubernetes-operations/skills/helm-chart-scaffolding
+kubernetes skill wshobson:plugins/kubernetes-operations/skills/k8s-security-policies
+kubernetes skill wshobson:plugins/kubernetes-operations/skills/gitops-workflow
+
+cloud about Cloud architecture on AWS, Azure or GCP: Terraform modules and cost
+cloud category operations
+cloud skill deployment
+cloud skill wshobson:plugins/cloud-infrastructure/skills/multi-cloud-architecture
+cloud skill wshobson:plugins/cloud-infrastructure/skills/cost-optimization
+cloud skill wshobson:plugins/cloud-infrastructure/skills/terraform-module-library
+cloud skill hashicorp:plugins/terraform/skills/terraform-stacks
+cloud skill hashicorp:plugins/terraform/skills/refactor-module
+
+cloudflare about Cloudflare Workers, Durable Objects, the Agents SDK and Wrangler
+cloudflare category operations
+cloudflare skill cloudflare:skills/cloudflare
+cloudflare skill cloudflare:skills/workers-best-practices
+cloudflare skill cloudflare:skills/durable-objects
+cloudflare skill cloudflare:skills/agents-sdk
+cloudflare skill cloudflare:skills/wrangler
+
+monitoring about Metrics, dashboards, tracing, SLOs and instrumentation
+monitoring category operations
+monitoring skill observability
+monitoring skill addy:skills/observability-and-instrumentation
+monitoring skill wshobson:plugins/observability-monitoring/skills/prometheus-configuration
+monitoring skill wshobson:plugins/observability-monitoring/skills/grafana-dashboards
+monitoring skill wshobson:plugins/observability-monitoring/skills/distributed-tracing
+monitoring skill wshobson:plugins/observability-monitoring/skills/slo-implementation
+
+# --- Data and AI ----------------------------------------------------------------------------
+llm-apps about Building with language models: prompts, retrieval, evaluation and MCP servers
+llm-apps category data-ai
+llm-apps skill anthropics:skills/mcp-builder
+llm-apps skill wshobson:plugins/llm-application-dev/skills/prompt-engineering-patterns
+llm-apps skill wshobson:plugins/llm-application-dev/skills/rag-implementation
+llm-apps skill wshobson:plugins/llm-application-dev/skills/llm-evaluation
+llm-apps skill huggingface:skills/hf-cli
+llm-apps skill huggingface:skills/huggingface-datasets
+llm-apps plugin agent-sdk-dev@claude-plugins-official
+llm-apps plugin mcp-server-dev@claude-plugins-official
+
+ml-training about Training and fine-tuning models: method choice, LoRA, evaluation and tracking
+ml-training category data-ai
+ml-training skill huggingface:skills/huggingface-llm-trainer
+ml-training skill huggingface:skills/huggingface-vision-trainer
+ml-training skill huggingface:skills/huggingface-trackio
+ml-training skill huggingface:skills/huggingface-local-models
+ml-training skill wshobson:plugins/llm-finetuning/skills/finetuning-method-selection
+ml-training skill wshobson:plugins/llm-finetuning/skills/eval-harness-first
+ml-training skill wshobson:plugins/llm-finetuning/skills/lora-qlora-recipes
+ml-training skill wshobson:plugins/llm-finetuning/skills/dataset-curation
+
+data-analysis about Exploring data: SQL, statistics, validation, charts and notebooks
+data-analysis category data-ai
+data-analysis skill knowledge-work:data/skills/explore-data
+data-analysis skill knowledge-work:data/skills/sql-queries
+data-analysis skill knowledge-work:data/skills/statistical-analysis
+data-analysis skill knowledge-work:data/skills/validate-data
+data-analysis skill knowledge-work:data/skills/data-visualization
+data-analysis skill openai:skills/.curated/jupyter-notebook
+
+data-engineering about Data pipelines: Airflow, dbt, Spark and data quality
+data-engineering category data-ai
+data-engineering skill wshobson:plugins/data-engineering/skills/airflow-dag-patterns
+data-engineering skill wshobson:plugins/data-engineering/skills/dbt-transformation-patterns
+data-engineering skill wshobson:plugins/data-engineering/skills/spark-optimization
+data-engineering skill wshobson:plugins/data-engineering/skills/data-quality-frameworks
+
+# --- Beyond code ----------------------------------------------------------------------------
 writing about Documentation and prose that reads as written by a person
+writing category beyond-code
 writing skill project-docs
 writing skill anthropics:skills/doc-coauthoring
 writing skill vercel:skills/writing-guidelines
@@ -287,6 +398,7 @@ writing skill callstack:skills/writing-user-docs
 writing agent docs-writer
 
 product about Product work: research, specs, roadmaps and interface copy
+product category beyond-code
 product skill mattpocock:skills/productivity/grill-me
 product skill knowledge-work:product-management/skills/write-spec
 product skill knowledge-work:product-management/skills/roadmap-update
@@ -294,3 +406,50 @@ product skill knowledge-work:product-management/skills/metrics-review
 product skill knowledge-work:product-management/skills/synthesize-research
 product skill knowledge-work:design/skills/user-research
 product skill knowledge-work:design/skills/ux-copy
+
+marketing about Marketing and SEO: audits, campaigns, content and email sequences
+marketing category beyond-code
+marketing skill knowledge-work:marketing/skills/seo-audit
+marketing skill knowledge-work:marketing/skills/content-creation
+marketing skill knowledge-work:marketing/skills/campaign-plan
+marketing skill knowledge-work:marketing/skills/email-sequence
+marketing skill knowledge-work:marketing/skills/brand-review
+marketing skill knowledge-work:marketing/skills/competitive-brief
+
+# --- Subagent teams (Claude Code only) --------------------------------------------------------
+# Plugins from the VoltAgent and wshobson marketplaces. Each brings several specialist subagents,
+# and every one adds its description to the session: activate these per project. Marketplace
+# plugins follow their latest version; only skills from sources.txt are pinned to a commit.
+agents-dev about Specialist subagents for everyday backend, frontend, fullstack and mobile work
+agents-dev category subagents
+agents-dev plugin voltagent-core-dev@voltagent-subagents
+
+agents-languages about Subagents with deep knowledge of one language or framework
+agents-languages category subagents
+agents-languages plugin voltagent-lang@voltagent-subagents
+
+agents-quality about Subagents for review, QA, penetration testing and security scanning
+agents-quality category subagents
+agents-quality plugin voltagent-qa-sec@voltagent-subagents
+agents-quality plugin comprehensive-review@claude-code-workflows
+agents-quality plugin security-scanning@claude-code-workflows
+
+agents-infra about Subagents for cloud, Kubernetes, Terraform, SRE and incident response
+agents-infra category subagents
+agents-infra plugin voltagent-infra@voltagent-subagents
+agents-infra plugin incident-response@claude-code-workflows
+
+agents-data-ai about Subagents for data pipelines, machine learning and LLM architecture
+agents-data-ai category subagents
+agents-data-ai plugin voltagent-data-ai@voltagent-subagents
+
+agents-orchestration about Subagents that coordinate other agents and end-to-end features
+agents-orchestration category subagents
+agents-orchestration plugin voltagent-meta@voltagent-subagents
+agents-orchestration plugin agent-teams@claude-code-workflows
+agents-orchestration plugin full-stack-orchestration@claude-code-workflows
+
+agents-product about Subagents for product strategy, research and business analysis
+agents-product category subagents
+agents-product plugin voltagent-biz@voltagent-subagents
+agents-product plugin voltagent-research@voltagent-subagents
