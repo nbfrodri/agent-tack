@@ -38,11 +38,11 @@ class PRPolicyTests(unittest.TestCase):
                                 extra=('--summary-heading', 'Change', '--validation-heading', 'Checks'))
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
-    def run_event(self, pull_request):
+    def run_event(self, pull_request, extra=()):
         with tempfile.TemporaryDirectory(prefix='tack-pr-') as directory:
             path = Path(directory) / 'event.json'
             path.write_text(json.dumps({'pull_request': pull_request}), encoding='utf-8')
-            return subprocess.run([sys.executable, str(CHECKER), '--event', str(path)],
+            return subprocess.run([sys.executable, str(CHECKER), '--event', str(path), *extra],
                                   capture_output=True, text=True, encoding='utf-8', timeout=10)
 
     def test_an_automated_author_needs_a_title_but_not_the_template_sections(self):
@@ -52,6 +52,7 @@ class PRPolicyTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('automated', result.stdout)
         self.assertEqual(self.run_event(dict(bot, title='Bump stuff')).returncode, 1)
+        self.assertEqual(self.run_event(bot, extra=('--require-issue',)).returncode, 0)
         # A person is still asked for both sections, whatever the login looks like.
         self.assertEqual(self.run_event(dict(bot, user={'login': 'dependabot[bot]', 'type': 'User'})).returncode, 1)
 

@@ -61,7 +61,7 @@ def check(pr, summary, validation, title_policy, require_issue):
         elif any(PLACEHOLDER.fullmatch(line) for line in content):
             findings.append('Replace template placeholders in ' + heading + '.')
     # Only prose outside comments/code fences counts, so the template's example cannot satisfy this.
-    if require_issue and not ISSUE.search('\n'.join(line for lines in parsed.values() for line in lines)):
+    if require_issue and not automated and not ISSUE.search('\n'.join(line for lines in parsed.values() for line in lines)):
         findings.append('Add a real closing or partial issue reference (for example, Refs #123). Syntax only is checked.')
     return findings, 'automated' if automated else False
 

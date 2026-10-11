@@ -206,18 +206,17 @@ check_tack() {
   case "${1:-}" in
     trust | enable | disable | migrate) SETTINGS_WRITE="Changing tack's settings is the user's decision in this mode."; return ;;
     set)
-      # In this mode the assistant may read sets and activate or drop one in this project. The
-      # rule names the exact commands it lets through and refuses every other shape, so nothing
-      # the CLI might read differently (an abbreviated or repeated option, an option before the
-      # subcommand, a later subcommand) passes by not being recognised here.
+      # Reading only. A set can bring plugins, agents and skills that run their own programs, so
+      # activating, dropping or relinking one would let the assistant change what it can do while
+      # nobody confirms. The rule names the exact reads it lets through and refuses every other
+      # shape, so nothing the CLI might read differently passes by not being recognised here.
       shift
       case "$#:${1:-}" in
-        0: | 1:list | 1:sync | 1:check) return ;;
-        2:show | 2:use | 2:drop)
-          case "$2" in '' | -* | *[!a-z0-9-]*) ;; *) return ;; esac ;;
+        0: | 1:list | 1:check) return ;;
+        2:show) case "$2" in '' | -* | *[!a-z0-9-]*) ;; *) return ;; esac ;;
       esac
       # shellcheck disable=SC2034 # Read by guard-bash.sh after the analysis.
-      SETTINGS_WRITE="Beyond reading sets and using or dropping one in this project, tack set is the user's decision in this mode." ;;
+      SETTINGS_WRITE="Changing which sets are active is the user's decision in this mode." ;;
     mode)
       case "${2:-}" in '' | list | show | new) return ;; esac
       SETTINGS_WRITE="Changing the workflow mode is the user's decision in this mode." ;;
