@@ -46,6 +46,8 @@ expect_failure "a checker exception fails validation" "cross-reference checker f
 # Expected messages quote paths literally, as written in the docs
 # shellcheck disable=SC2088
 {
+expect_failure "an unquoted description that strict YAML readers reject" "quote the description" \
+  "sed 's/^description: .*/description: Write tests: unit and integration. Use for coverage./' skills/testing/SKILL.md > x && mv x skills/testing/SKILL.md"
 expect_failure "a name that doesn't match its folder" "should be 'testing'" \
   "sed 's/^name: testing\$/name: tests/' skills/testing/SKILL.md > x && mv x skills/testing/SKILL.md"
 expect_failure "an unclosed frontmatter" "not closed" \

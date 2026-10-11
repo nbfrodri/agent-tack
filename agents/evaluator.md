@@ -1,6 +1,6 @@
 ---
 name: evaluator
-description: Read-only scorer for requested assessments: rates applicable dimensions with a stated rubric and evidence, explains changes from earlier results, and identifies concrete issues. Scores are not proof of correctness.
+description: Read-only scorer for requested assessments that rates applicable dimensions with a stated rubric and evidence, explains changes from earlier results, and identifies concrete issues. Scores are not proof of correctness.
 tools: Read, Grep, Glob, Bash
 model: inherit
 ---

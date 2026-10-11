@@ -205,6 +205,18 @@ check_tack() {
   local positional=0 a
   case "${1:-}" in
     trust | enable | disable | migrate) SETTINGS_WRITE="Changing tack's settings is the user's decision in this mode."; return ;;
+    set)
+      # Reading only. A set can bring plugins, agents and skills that run their own programs, so
+      # activating, dropping or relinking one would let the assistant change what it can do while
+      # nobody confirms. The rule names the exact reads it lets through and refuses every other
+      # shape, so nothing the CLI might read differently passes by not being recognised here.
+      shift
+      case "$#:${1:-}" in
+        0: | 1:list | 1:check) return ;;
+        2:show) case "$2" in '' | -* | *[!a-z0-9-]*) ;; *) return ;; esac ;;
+      esac
+      # shellcheck disable=SC2034 # Read by guard-bash.sh after the analysis.
+      SETTINGS_WRITE="Changing which sets are active is the user's decision in this mode." ;;
     mode)
       case "${2:-}" in '' | list | show | new) return ;; esac
       SETTINGS_WRITE="Changing the workflow mode is the user's decision in this mode." ;;

@@ -49,7 +49,10 @@ def check(pr, summary, validation, title_policy, require_issue):
     if not pr['title'].strip() or (title_policy == 'conventional' and not TITLE.fullmatch(pr['title'])):
         findings.append('Use a descriptive PR title' + (' in Conventional Commit format.' if title_policy == 'conventional' else '.'))
     parsed = sections(body)
-    for heading in (summary, validation):
+    # A bot such as Dependabot writes its own body and cannot fill the project's template; its
+    # title is still checked. GitHub sets user.type, so a person cannot claim to be one.
+    automated = isinstance(pr.get('user'), dict) and pr['user'].get('type') == 'Bot'
+    for heading in () if automated else (summary, validation):
         lines = parsed.get(heading.casefold(), [])
         content = [re.sub(r'^\s*[-*]?\s*(?:\[[ xX]\]\s*)?', '', line).strip() for line in lines]
         content = [line for line in content if line]
@@ -58,9 +61,9 @@ def check(pr, summary, validation, title_policy, require_issue):
         elif any(PLACEHOLDER.fullmatch(line) for line in content):
             findings.append('Replace template placeholders in ' + heading + '.')
     # Only prose outside comments/code fences counts, so the template's example cannot satisfy this.
-    if require_issue and not ISSUE.search('\n'.join(line for lines in parsed.values() for line in lines)):
+    if require_issue and not automated and not ISSUE.search('\n'.join(line for lines in parsed.values() for line in lines)):
         findings.append('Add a real closing or partial issue reference (for example, Refs #123). Syntax only is checked.')
-    return findings, False
+    return findings, 'automated' if automated else False
 
 
 def main():
@@ -79,13 +82,15 @@ def main():
     payload = json.loads(event.read_text(encoding='utf-8'))
     if not isinstance(payload, dict):
         raise ValueError('Event must be a JSON object')
-    findings, draft = check(payload.get('pull_request'), args.summary_heading,
+    findings, status = check(payload.get('pull_request'), args.summary_heading,
                             args.validation_heading, args.title_policy, args.require_issue)
-    if draft:
+    if status is True:
         print('PR metadata: deferred for draft; checked when ready for review.')
     elif findings:
         for finding in findings:
             print('PR metadata: ' + finding)
+    elif status == 'automated':
+        print('PR metadata: passed for an automated author; only the title is checked.')
     else:
         print('PR metadata: passed. This checks presentation, not code quality or test execution.')
     return 1 if findings else 0

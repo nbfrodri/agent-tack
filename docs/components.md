@@ -49,7 +49,10 @@ Portable role definitions, linked for Claude and rendered into native Codex, Gem
 | Plugin | Purpose |
 | --- | --- |
 | `context7` | Up-to-date library documentation |
-| `frontend-design` | Polished UI design |
+| `claude-code-setup` | Recommends hooks, skills, MCP servers and subagents for a codebase |
+| `security-guidance` | Warns about risky patterns on edits and reviews the diff for security before stopping |
+
+Plugins for one kind of work, and skills from other collections, come with a [set](sets.md).
 
 ## Mods
 Claude Code mods shipped in `plugins/` and installed by `./install.sh` (opt out with `--skip-mods`).

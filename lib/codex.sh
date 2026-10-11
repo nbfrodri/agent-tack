@@ -11,13 +11,11 @@ install_codex_agents() {
     warn "python3 not found: Codex agents not generated"
     return
   fi
-  if roles_enabled; then
-    [ "$DRY_RUN" -eq 1 ] || mkdir -p "$dir" || { fail "cannot create $dir"; return; }
-  fi
   for agent in "$REPO"/agents/*.md; do
     name="$(basename "$agent" .md)"
     target="$dir/$name.toml"
-    if ! roles_enabled; then deselect_agent generated "$agent" "$target"; continue; fi
+    if ! agent_selected "$name"; then deselect_agent generated "$agent" "$target"; continue; fi
+    [ "$DRY_RUN" -eq 1 ] || mkdir -p "$dir" || { fail "cannot create $dir"; return; }
     rendered="$WORKDIR/codex-agent-$name.toml"
     python3 "$REPO/lib/codex_agents.py" "$agent" > "$rendered" 2>/dev/null || { fail "cannot render $agent"; continue; }
     ownership_find generated "$target"

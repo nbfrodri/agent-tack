@@ -23,3 +23,6 @@ lib/trace.sh | docs/verification.md
 model-tiers.txt | docs/advanced.md
 hooks/claude/* | docs/how-it-works.md, docs/verification.md
 git-hooks/* | docs/how-it-works.md
+sets.txt | docs/sets.md
+sources.txt | docs/sets.md
+lib/sets* | docs/sets.md

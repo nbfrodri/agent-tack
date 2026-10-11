@@ -15,7 +15,7 @@
     },
     {
       "id": "regressions",
-      "paths": ["*.py", "*.sh", "bin/*", "lib/*", "hooks/*", "git-hooks/*", "tests/*", "plugins/*", "claude/*", "codex/*", "gemini/*", "copilot/*", "cursor/*", "opencode/*", "crush/*", "modes/*", "targets.txt", "features.txt", "skill-groups.txt", "model-tiers.txt", "plugins.txt", "reply-styles.txt", ".github/workflows/ci.yml"],
+      "paths": ["*.py", "*.sh", "bin/*", "lib/*", "hooks/*", "git-hooks/*", "tests/*", "plugins/*", "claude/*", "codex/*", "gemini/*", "copilot/*", "cursor/*", "opencode/*", "crush/*", "modes/*", "targets.txt", "features.txt", "skill-groups.txt", "sets.txt", "sources.txt", "model-tiers.txt", "plugins.txt", "reply-styles.txt", ".github/workflows/ci.yml"],
       "command": "tests/run-all.sh -j 4",
       "timeout_seconds": 600
     }

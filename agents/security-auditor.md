@@ -1,6 +1,6 @@
 ---
 name: security-auditor
-description: Read-only security audit of code, config and infrastructure: OWASP Top 10, auth, injection, secrets, dependencies, CI. Use before releases, after auth/payment/upload changes, or on request.
+description: Read-only security audit of code, config and infrastructure, covering OWASP Top 10, auth, injection, secrets, dependencies, CI. Use before releases, after auth/payment/upload changes, or on request.
 tools: Read, Grep, Glob, Bash, WebFetch, WebSearch
 model: inherit
 ---

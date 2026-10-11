@@ -1,0 +1,32 @@
+# External skill collections that sets.txt takes skills from, each pinned to a full commit.
+# Lines:  name  url  commit      (url: https, or an absolute path to a local repository)
+# Skills run with the assistant's permissions, so a pin only moves on purpose: `tack set update`
+# fetches the upstream head, reports which used skills changed and rewrites the commit here.
+# Checkouts live in ~/.local/share/agent-tack/sources/<name>/<commit>, outside this repository;
+# each collection keeps its own license (see docs/sets.md).
+#
+# name          url                                                    commit
+impeccable      https://github.com/pbakaus/impeccable                  d631a8827f99414d2b6daba4ef08b7f8701751d7
+emil            https://github.com/emilkowalski/skills                 e8a175de22ae1e49370fc144c1f3bb9aeedf988d
+taste           https://github.com/Leonxlnx/taste-skill                717446e07a78d4e6d7918b1fde1a263378eebac9
+addy            https://github.com/addyosmani/agent-skills             1be8e34187e34647bb83adc3a1323b26ae6f6abe
+anthropics      https://github.com/anthropics/skills                   dbd4588f9e1033efb41dad4bef2f7947c8993d44
+vercel          https://github.com/vercel-labs/agent-skills            063bee94c3f4df8453406c830b0a7df0f2860278
+vercel-skills   https://github.com/vercel-labs/skills                  13e4063a1cf913f5606d57d42ab83a86f5001e04
+mattpocock      https://github.com/mattpocock/skills                   49dd158d1076134a641b33efb035946536778336
+superpowers     https://github.com/obra/superpowers                    bb92a77741419a4ab5f06e711a283343f1ada0c3
+trailofbits     https://github.com/trailofbits/skills                  442fc9d6c89b1e937e6f7a477e7071ea75fcbea4
+supabase        https://github.com/supabase/agent-skills               c9be0e931b7930f7d02126d04774d904c381e7d7
+wshobson        https://github.com/wshobson/agents                     46891e7e60da0e52baf1050b7b6391b64e84c6d9
+openai          https://github.com/openai/skills                       49f948faa9258a0c61caceaf225e179651397431
+cloudflare      https://github.com/cloudflare/skills                   c430dd965cea3a8faf0ef035e3b3d73b38518081
+sentry          https://github.com/getsentry/skills                    d18b7aa8ba878354e5c348310230e652f7690f9c
+hashicorp       https://github.com/hashicorp/agent-skills              f706481af9b8fedb66de909f6243ad29601afa0c
+expo            https://github.com/expo/skills                         d4f484024fec15196bfd3c272e953e3f983972cf
+remotion        https://github.com/remotion-dev/skills                 32b241b97f4e0e4ab61fe9a41b05e6e64503f8c5
+playwright      https://github.com/microsoft/playwright-cli            b85c7a736bb473bf55b584e54a09ffa698d6d871
+callstack       https://github.com/callstackincubator/agent-skills     59e9d17446a248b21d86f078fcd0bd2d36db1ca4
+antfu           https://github.com/antfu/skills                        feb0f3aba6566426f12230e7fc7a10d97c1293bb
+huggingface     https://github.com/huggingface/skills                  c3ff942be3e07116b475253f0a8fc4f54682c1a8
+knowledge-work  https://github.com/anthropics/knowledge-work-plugins   95bdacc803aa5cfdb10f35e5b9fb2d4b11100133
+stripe          https://github.com/stripe/ai                           e9deec62821ca59aa6ca18b4d243c9ced389cd54

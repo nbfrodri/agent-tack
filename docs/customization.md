@@ -4,7 +4,7 @@ Start with project `AGENTS.md` and [shared or local settings](configuration.md).
 
 ## Make it yours
 
-Clone it into any directory you choose and install from that checkout, as shown in the [README](../README.md#quick-start). Use a fork or your own copy if you want to keep personal changes in a separate remote repository; a local clone is enough for changes on one machine.
+Clone it into any directory you choose and install from that checkout, as shown in the [README](../README.md#install-on-a-machine). Use a fork or your own copy if you want to keep personal changes in a separate remote repository; a local clone is enough for changes on one machine.
 
 | What you want to change | Where to edit |
 | --- | --- |
@@ -25,6 +25,7 @@ Clone it into any directory you choose and install from that checkout, as shown 
 | Supported tools and installation paths | `targets.txt`; a tool whose hooks column names a file gets the template at `<tool>/<that file name>` merged by the installer (for example `cursor/hooks.json`), with a thin adapter in `hooks/<tool>/` when its hook format differs from the shared scripts |
 | Claude Code settings and registered hooks | `claude/settings.json` |
 | Installed marketplaces and plugins | `plugins.txt` |
+| Bundles of skills, agents and plugins for one kind of work, and the external collections they use | `sets.txt` and `sources.txt` ([sets](sets.md)) |
 | Mods shipped by tack | `plugins/<name>/` (turn them off with `./install.sh --skip-mods` or `git config --global tack.mods false`) |
 | Git checks and command or formatting policies | `git-hooks/` and `hooks/claude/` |
 | Commands the guard asks about or refuses | `hooks/claude/guard-policy.txt` (shared rules) or, for your machine only, `~/.config/agent-tack/guard-policy.txt` with the same `scope \| decision \| pattern \| reason` format; personal rules can only add ask or deny decisions. When you tell the assistant "never run X", the `lessons` skill proposes such a line and adds it once you agree |

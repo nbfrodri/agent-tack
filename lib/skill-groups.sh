@@ -33,5 +33,6 @@ skill_selected() {
   # Read the setting once per run: this is called for every skill in every tool's folder.
   [ -n "${SKILL_GROUPS_CACHE:-}" ] || SKILL_GROUPS_CACHE="$(skill_groups_selected)"
   case ", $SKILL_GROUPS_CACHE," in *", $group,"*) return 0 ;; esac
-  return 1
+  # A set active everywhere brings its skills whatever their group (lib/sets.sh).
+  set_selected skill "$1"
 }

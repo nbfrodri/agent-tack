@@ -1,6 +1,6 @@
 # Editors and AI tools
 
-How to use tack with each AI tool, in the terminal and in editors. Install once with `./install.sh` from your checkout ([README](../README.md#quick-start)); the installer configures every supported tool it finds and skips the rest. Then, in each project where you want the workflow:
+How to use tack with each AI tool, in the terminal and in editors. Install once with `./install.sh` from your checkout ([README](../README.md#install-on-a-machine)); the installer configures every supported tool it finds and skips the rest. Then, in each project where you want the workflow:
 
 ```bash
 tack enable            # this clone (or --shared to commit a .tack marker)

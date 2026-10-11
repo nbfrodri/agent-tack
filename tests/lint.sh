@@ -13,7 +13,7 @@ if ! command -v shellcheck >/dev/null 2>&1; then
   echo "lint: shellcheck is missing (CI pins the version in .github/workflows/ci.yml)" >&2
   exit 2
 fi
-shellcheck -x install.sh uninstall.sh bin/tack lib/*.sh tests/*.sh evals/run.sh \
+shellcheck -x install.sh uninstall.sh bin/tack lib/*.sh tests/*.sh \
   git-hooks/* \
   hooks/claude/*.sh hooks/claude/lib/*.sh hooks/cursor/*.sh || status=1
 

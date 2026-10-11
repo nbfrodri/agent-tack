@@ -1,6 +1,8 @@
 # Add selected external skills
 
-tack can guide you through choosing skills from other repositories during setup. Installation is optional and uses an existing skill installer. The base tack installer does not download these collections.
+tack can guide you through choosing skills from other repositories during setup. Installation is optional and uses an existing skill installer.
+
+For your own configuration, [sets](sets.md) are the built-in route: `sources.txt` pins a collection to a commit and `sets.txt` selects its skills for every tool. The installer downloads only the collections that an active set uses. The procedure below remains for copying a reviewed skill into one application repository.
 
 Start with a real need: a recurring task or a missing procedure. Compare the candidate with the project's existing skills and tack's own guidance. Installing two workflows for the same job can create conflicting instructions.
 
@@ -27,7 +29,7 @@ List the named candidates with `npx skills add DietrichGebert/ponytail --list` o
 | [Worktrunk](https://github.com/max-sixty/worktrunk) | Optional worktree convenience; native Git remains sufficient. |
 | [Spec Kit](https://github.com/github/spec-kit) | Compare as an alternative workflow, not another mandatory layer. |
 
-The [evaluation plan](archive/plans/2026-10-08-value-first-workflow-implementation.md#6-evaluate-external-tools-and-hooks-selectively) records source/license observations and adoption criteria. The existing [skills CLI](https://github.com/vercel-labs/skills) remains the installation route; tack has no separate package manager or updater.
+Check each tool's license and maintenance before adopting it. The existing [skills CLI](https://github.com/vercel-labs/skills) remains the installation route; tack has no separate package manager or updater.
 
 ## Ask tack to help choose
 
@@ -76,4 +78,4 @@ tack's [project capability validator](customization.md#project-capabilities) can
 
 Share the selected project files and their origin record. Keep execution trust and credentials local. Review upstream updates explicitly; preserve local edits and rerun the relevant procedure/checks after an update. For removal, inspect the destination and remove only the selected skill's files, links and index entry. Keep a backup or Git history for local adaptations.
 
-tack currently guides this process through onboarding instructions. It does not run a background updater, bundle either collection or provide its own external-skill package manager. This keeps the initial integration small while allowing individual and team use.
+tack guides this process through onboarding instructions. It runs no background updater and bundles no collection; `tack set update` moves a pin only when you ask.

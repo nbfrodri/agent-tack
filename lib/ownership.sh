@@ -119,6 +119,24 @@ ownership_release_link() {
   done
 }
 
+# ownership_release_dangling PATH: drops the record of a link that replaced a symlink whose own
+# target no longer exists, such as one into a checkout that was since moved or deleted: putting
+# it back would only restore a broken link.
+ownership_release_dangling() {
+  local before index=0
+  ownership_find link "$1"
+  [ -n "$OWN_ENTRY" ] || return 1
+  [ "$(cat "$OWN_ENTRY/before_kind" 2>/dev/null)" = symlink ] || return 1
+  before="$(cat "$OWN_ENTRY/before_target" 2>/dev/null)"
+  case "$before" in /*) ;; *) return 1 ;; esac
+  [ ! -e "$before" ] || return 1
+  rm -rf "$OWN_ENTRY" || return 1
+  while [ "$index" -lt "$OWN_COUNT" ]; do
+    if [ "${OWN_ENTRIES[$index]}" = "$OWN_ENTRY" ]; then OWN_PATHS[index]='' OWN_KINDS[index]=''; fi
+    index=$((index + 1))
+  done
+}
+
 # ownership_link_replaced PATH: succeeds when tack's link at PATH took the place of something of
 # the user's (a file, folder or other link), which only uninstall may restore.
 ownership_link_replaced() {

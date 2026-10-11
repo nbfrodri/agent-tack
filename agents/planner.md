@@ -1,6 +1,6 @@
 ---
 name: planner
-description: Read-only architect that turns a request into an implementation plan: acceptance criteria, design, tests first, commit breakdown, docs, issue breakdown. Use for non-trivial features, refactors or new projects.
+description: Read-only architect that turns a request into an implementation plan with acceptance criteria, design, tests first, commit breakdown, docs, issue breakdown. Use for non-trivial features, refactors or new projects.
 tools: Read, Grep, Glob, Bash, WebFetch, WebSearch
 model: inherit
 ---

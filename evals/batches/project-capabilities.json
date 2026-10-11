@@ -1,9 +1,0 @@
-{
-  "batch_id": "project-capabilities-pilot",
-  "seed": 20261007,
-  "repetitions": 3,
-  "scenarios": ["event-routing", "project-capabilities", "capability-existing", "capability-trivial", "capability-review", "capability-role", "capability-nodelegation", "capability-sequential"],
-  "conditions": ["baseline", "auto"],
-  "runtimes": [{"provider": "claude", "model": "<select-explicit-model>"}],
-  "limits": {"max_runs": 48, "timeout_seconds": 600, "concurrency": 1}
-}

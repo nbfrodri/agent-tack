@@ -1,6 +1,6 @@
 ---
 name: e2e-testing
-description: Write and debug end-to-end browser tests with Playwright: critical flows, locators, authentication state and test data. Use for E2E coverage or flaky browser tests.
+description: "Write and debug end-to-end browser tests with Playwright: critical flows, locators, authentication state and test data. Use for E2E coverage or flaky browser tests."
 ---
 
 # End-to-end testing (Playwright)

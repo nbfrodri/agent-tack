@@ -35,6 +35,9 @@ def definition(path, expected, limit):
         errors.append(f'{path}: missing description')
     elif description.startswith(('>', '|')):
         errors.append(f'{path}: description must be on a single line')
+    elif ': ' in description and not (description[0] == description[-1] == '"'):
+        # Strict YAML readers reject a plain value holding ": " and skip the whole definition.
+        errors.append(f'{path}: quote the description, or drop its ": " (strict YAML readers reject it)')
     if len(description) > limit:
         errors.append(f'{path}: description is {len(description)} chars (max {limit})')
     if not body.strip():
