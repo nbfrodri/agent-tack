@@ -508,7 +508,7 @@ fake_google="AI""zaSyA0123456789abcdefghijklmnopqrstuv"
 # Environment-style assignments name the credential in the variable, not in a separate word.
 fake_env="DB_PA""SS=s3cretvalue"
 fake_cloud="AWS_SECRET_ACCESS_K""EY=abcdEFGH1234ijklMNOP"
-for secret in "password is hunter2hunter2" "key $fake_google" "gitlab gl""pat-0123456789abcdefghij" "export $fake_env" "$fake_cloud" "api_token = abc123def456" "SECRET""KEY=abcd1234efgh"; do
+for secret in "password is hunter2hunter2" "key $fake_google" "gitlab gl""pat-0123456789abcdefghij" "export $fake_env" "$fake_cloud" "api_token = abc123def456" "SECRET""KEY=abcd1234efgh" "PGPASS""WORD=abcd1234efgh" "authTo""ken=abcd1234efgh" "dbpa""ss=abcd1234efgh"; do
   check "a secret is refused: ${secret%% *}" expect_exit 1 "$CLI" memory add "$secret"
 done
 real_memory="$WORK/dotfiles-memory.md"
