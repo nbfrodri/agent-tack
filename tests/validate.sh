@@ -132,17 +132,19 @@ for agent in "$REPO"/agents/*.md; do
     || grep -qE "^claude[[:space:]]+[a-z]+[[:space:]]+$agent_model$" "$REPO/model-tiers.txt" \
     || err "agents/$(basename "$agent"): model '$agent_model' is not a Claude Code tier model (model-tiers.txt)"
 done
-# Every skill belongs to a group the installer knows; the core workflow can never be left out.
+# Sets are the only way a skill or an agent role gets installed, so each one is in some set, and
+# the workflow is in the set that is always active.
 for skill_dir in "$REPO"/skills/*/; do
   skill_name="$(basename "$skill_dir")"
-  skill_group="$(sed -n "s/^${skill_name}[[:space:]][[:space:]]*\([a-z]*\).*/\1/p" "$REPO/skill-groups.txt")"
-  case "$skill_group" in
-    core | process | stack) ;;
-    '') err "skill-groups.txt: skill '$skill_name' has no group" ;;
-    *) err "skill-groups.txt: '$skill_name' is in unknown group '$skill_group'" ;;
-  esac
+  grep -qE "^[a-z0-9-]+[[:space:]]+skill[[:space:]]+${skill_name}([[:space:]]|\$)" "$REPO/sets.txt" \
+    || err "sets.txt: skill '$skill_name' is in no set"
 done
-grep -qE '^dev-workflow[[:space:]]+core$' "$REPO/skill-groups.txt" || err "skill-groups.txt: dev-workflow must be core"
+for agent in "$REPO"/agents/*.md; do
+  agent_name="$(basename "$agent" .md)"
+  grep -qE "^[a-z0-9-]+[[:space:]]+agent[[:space:]]+${agent_name}([[:space:]]|\$)" "$REPO/sets.txt" \
+    || err "sets.txt: agent '$agent_name' is in no set"
+done
+grep -qE '^core[[:space:]]+skill[[:space:]]+dev-workflow([[:space:]]|$)' "$REPO/sets.txt" || err "sets.txt: dev-workflow must be in the core set"
 # Tests never touch the real HOME: one that moves HOME must also move or unset XDG_STATE_HOME,
 # which many desktops set and which the hooks and tack write to.
 for test_file in "$REPO"/tests/*.test.sh; do
@@ -164,17 +166,11 @@ economical_model="$(sed -n 's/^claude[[:space:]][[:space:]]*economical[[:space:]
 # shellcheck disable=SC2016 # The backticks are Markdown code spans, not command substitution.
 for named in $(grep -oE '`[a-z0-9-]+`' "$REPO/global/AGENTS.md" | tr -d '`' | sort -u); do
   [ -d "$REPO/skills/$named" ] || continue
-  grep -qE "^${named}[[:space:]]+core$" "$REPO/skill-groups.txt" \
-    || err "global/AGENTS.md names '$named', which is not in the core group (skill-groups.txt) and may not be installed"
+  grep -qE "^core[[:space:]]+skill[[:space:]]+${named}([[:space:]]|\$)" "$REPO/sets.txt" \
+    || err "global/AGENTS.md names '$named', which is not in the core set (sets.txt) and may not be installed"
 done
-# Every group line names a skill that exists.
-while read -r grouped _; do
-  case "$grouped" in '' | '#'*) continue ;; esac
-  [ -d "$REPO/skills/$grouped" ] || err "skill-groups.txt: '$grouped' has no folder in skills/"
-done < "$REPO/skill-groups.txt"
-
 echo "Cross-references and components list"
-# Paths like ~/.agents/skills/<skill>/... and ~/.agents/tack/... (or the former ~/.agents/harness/...) are what agents and skills
+# Paths like ~/.agents/tack/skills/<skill>/... (or the former ~/.agents/harness/...) are what agents and skills
 # read at runtime; references/x.md belongs to the skill it's written in unless another skill is
 # named next to it ("`dev-workflow` → `references/x.md`" or "dev-workflow/references/x.md").
 if problems="$(python3 - "$REPO" <<'PY'
@@ -191,10 +187,14 @@ for doc in docs:
     rel = doc.relative_to(repo)
     own = doc.parts[len(repo.parts) + 1] if rel.parts[0] == "skills" else None
     for n, line in enumerate(doc.read_text(encoding="utf-8").splitlines(), 1):
+        # ~/.agents/skills/<skill> exists only while a set active everywhere lists that skill, so
+        # a file that must be readable whatever sets are active is reached through the checkout.
         for m in re.finditer(r"~/\.agents/skills/([a-z0-9-]+)(/[A-Za-z0-9_./-]*)?", line):
-            target = repo / "skills" / m.group(1) / (m.group(2) or "").lstrip("/")
-            if not target.exists():
+            if m.group(1) not in skills:
                 print(f"{rel}:{n}: {m.group(0)} does not exist")
+            else:
+                print(f"{rel}:{n}: use ~/.agents/tack/skills/{m.group(1)} instead of {m.group(0)}: "
+                      "the installed path exists only while a set active everywhere lists the skill")
         for m in re.finditer(r"~/\.agents/(?:tack|harness)(/[A-Za-z0-9_./-]*)?", line):
             if not (repo / (m.group(1) or "").lstrip("/")).exists():
                 print(f"{rel}:{n}: {m.group(0)} does not exist")

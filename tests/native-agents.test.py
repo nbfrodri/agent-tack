@@ -95,7 +95,7 @@ class Installation(unittest.TestCase):
                                         capture_output=True, text=True, timeout=120)
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
                 return result.stdout
-            run('bin/tack', 'config', 'agent-roles', 'true', '--global')
+            run('bin/tack', 'set', 'use', 'tack-agents', '--global')
             run('install.sh', '--skip-plugins', '--dry-run')
             self.assertFalse((home / '.gemini/agents').exists())
             run('install.sh', '--skip-plugins')
@@ -123,7 +123,7 @@ class Installation(unittest.TestCase):
             self.assertIn('echo user-hook', gemini_settings.read_text(encoding='utf-8'))
             copilot_hooks = home / '.copilot/hooks/tack.json'
             self.assertTrue(not copilot_hooks.exists() or '#tack' not in copilot_hooks.read_text(encoding='utf-8'))
-            run('bin/tack', 'config', 'agent-roles', 'false', '--global')
+            run('bin/tack', 'set', 'drop', 'tack-agents', '--global')
             run('install.sh', '--skip-plugins')
             for path in (paths[0], paths[2], paths[3]):
                 self.assertFalse(path.exists(), path)

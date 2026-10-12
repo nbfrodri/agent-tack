@@ -119,17 +119,23 @@ ownership_release_link() {
   done
 }
 
-# ownership_release_dangling PATH: drops the record of a link that replaced a symlink whose own
-# target no longer exists, such as one into a checkout that was since moved or deleted: putting
-# it back would only restore a broken link.
-ownership_release_dangling() {
-  local before index=0
+# ownership_original_gone PATH: succeeds when tack's link at PATH replaced a symlink whose own
+# target no longer exists, such as one into a checkout that was since moved or deleted. Putting
+# it back would only restore a broken link, so there is nothing of the user's to keep it for.
+ownership_original_gone() {
+  local before
   ownership_find link "$1"
   [ -n "$OWN_ENTRY" ] || return 1
   [ "$(cat "$OWN_ENTRY/before_kind" 2>/dev/null)" = symlink ] || return 1
   before="$(cat "$OWN_ENTRY/before_target" 2>/dev/null)"
   case "$before" in /*) ;; *) return 1 ;; esac
-  [ ! -e "$before" ] || return 1
+  [ ! -e "$before" ]
+}
+
+# ownership_release_dangling PATH: drops the record of such a link once it is removed on purpose.
+ownership_release_dangling() {
+  local index=0
+  ownership_original_gone "$1" || return 1
   rm -rf "$OWN_ENTRY" || return 1
   while [ "$index" -lt "$OWN_COUNT" ]; do
     if [ "${OWN_ENTRIES[$index]}" = "$OWN_ENTRY" ]; then OWN_PATHS[index]='' OWN_KINDS[index]=''; fi
@@ -143,6 +149,17 @@ ownership_link_replaced() {
   ownership_find link "$1"
   [ -n "$OWN_ENTRY" ] || return 1
   [ "$(cat "$OWN_ENTRY/before_kind" 2>/dev/null)" != absent ]
+}
+
+# ownership_same_identity RECORDED CURRENT: both name the same folder. Some filesystems (btrfs
+# subvolumes, overlays, network mounts) report another device number after a reboot, so the
+# inode decides; native Windows identities are stable and compared whole.
+ownership_same_identity() {
+  [ "$1" != "$2" ] || return 0
+  [ "${OWN_NATIVE:-0}" -ne 1 ] || return 1
+  case "$1:$2" in *:*:*:*) ;; *) return 1 ;; esac
+  case "${1##*:}" in '' | *[!0-9]*) return 1 ;; esac
+  [ "${1##*:}" = "${2##*:}" ]
 }
 
 ownership_parent_identity() {

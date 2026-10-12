@@ -79,8 +79,6 @@ source "$REPO/lib/ownership.sh"
 source "$REPO/lib/keys.sh"
 # shellcheck source=lib/mods.sh
 source "$REPO/lib/mods.sh"
-# shellcheck source=lib/skill-groups.sh
-source "$REPO/lib/skill-groups.sh"
 # shellcheck source=lib/sets.sh
 source "$REPO/lib/sets.sh"
 # shellcheck source=lib/agent-selection.sh
@@ -204,7 +202,8 @@ $(expand_home "$skills_dir")"
   done <<EOF
 $skill_dirs
 EOF
-  ok "skill groups: $(skill_groups_selected) (tack config skill-groups --global)"
+  ok "sets active everywhere: $(sets_global) (tack set list)"
+  sets_legacy_notice
   for skill in "$REPO"/skills/*/; do
     [ -f "$skill/SKILL.md" ] || { warn "skipping $skill (no SKILL.md)"; continue; }
     name="$(basename "$skill")"
@@ -212,15 +211,15 @@ EOF
       if skill_selected "$name"; then
         link "${skill%/}" "$dir/$name"
       elif [ -L "$dir/$name" ] && [ "$(readlink "$dir/$name")" = "${skill%/}" ]; then
-        # Only tack's own link to a skill of a deselected group is removed, and only where it
+        # Only tack's own link to a skill no active set lists is removed, and only where it
         # took nothing's place; one that replaced the user's skill waits for uninstall.
-        if ownership_link_replaced "$dir/$name"; then
+        if ownership_link_replaced "$dir/$name" && ! ownership_original_gone "$dir/$name"; then
           if [ "$DRY_RUN" -eq 1 ]; then ok "would keep $dir/$name: it replaced a skill of yours, which ./uninstall.sh restores"
           else warn "kept $dir/$name: it replaced a skill of yours, which ./uninstall.sh restores"; fi
         elif [ "$DRY_RUN" -eq 1 ]; then
-          ok "would remove $dir/$name (group not selected)"
-        elif ownership_release_link "$dir/$name"; then
-          rm -f "$dir/$name" && ok "removed $dir/$name (group not selected)"
+          ok "would remove $dir/$name (no active set lists it)"
+        elif ownership_release_link "$dir/$name" || ownership_release_dangling "$dir/$name"; then
+          rm -f "$dir/$name" && ok "removed $dir/$name (no active set lists it)"
         fi
       fi
     done <<EOF

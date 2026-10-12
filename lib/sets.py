@@ -24,6 +24,11 @@ URL = re.compile(r'^https://[A-Za-z0-9._~/@:-]+$')
 # Where a project's tools look for skills: the open standard folder and Claude Code's own.
 PROJECT_SKILLS = ('.agents/skills', '.claude/skills')
 PROJECT_AGENTS = '.claude/agents'
+# The set every session relies on: active everywhere whatever is configured, and never dropped.
+ALWAYS = 'core'
+# Sets kept for a former full-catalog choice: listed, but not offered to an assistant, because
+# they group by origin and say nothing about the work at hand.
+COMPAT = 'compat'
 
 
 class Fail(Exception):
@@ -217,10 +222,12 @@ def active(scope, sets, cwd=None):
     for name in names:
         if name not in sets:
             print(f'tack: the {scope} set {name!r} is not in sets.txt; ignored', file=sys.stderr)
-    return [name for name in names if name in sets]
+    names = [name for name in names if name in sets and name != ALWAYS]
+    return ([ALWAYS] if scope == 'global' and ALWAYS in sets else []) + names
 
 
 def remember(scope, names, cwd=None):
+    names = [name for name in names if name != ALWAYS]
     if names:
         code, _, err = git('config', f'--{scope}', 'tack.sets', ','.join(names), cwd=cwd)
     else:
@@ -360,7 +367,9 @@ def command_index(args, root, sources, sets):
     code, top, _ = git('rev-parse', '--show-toplevel')
     here = active('local', sets) if code == 0 and top else []
     everywhere = active('global', sets)
-    groups = by_category(sets)
+    groups = by_category({name: entry for name, entry in sets.items()
+                          if name != ALWAYS and entry['category'] != COMPAT})
+    everywhere = [name for name in everywhere if name != ALWAYS]
     names = '; '.join(f'{category}: {", ".join(found)}' if category else ', '.join(found) for category, found in groups.items())
     line = f'Sets available (skills, agents and plugins that load only once activated): {names}.'
     if everywhere:
@@ -385,8 +394,14 @@ def known(name, sets):
         raise Fail(f'unknown set {name!r} (see tack set list)')
 
 
+def changeable(name, sets):
+    known(name, sets)
+    if name == ALWAYS:
+        raise Fail(f'{ALWAYS} is always active; it cannot be used or dropped')
+
+
 def command_use(args, root, sources, sets):
-    known(args.name, sets)
+    changeable(args.name, sets)
     scope = 'global' if args.everywhere else 'local'
     repo = None if args.everywhere else project_root()
     names = active(scope, sets, repo)
@@ -402,7 +417,7 @@ def command_use(args, root, sources, sets):
 
 
 def command_drop(args, root, sources, sets):
-    known(args.name, sets)
+    changeable(args.name, sets)
     scope = 'global' if args.everywhere else 'local'
     repo = None if args.everywhere else project_root()
     before = active(scope, sets, repo)

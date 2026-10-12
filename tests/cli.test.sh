@@ -517,6 +517,21 @@ mv "$MEMORY" "$real_memory" && ln -s "$real_memory" "$MEMORY"
 check "a symlinked memory file stays a symlink" eval "[ -L '$MEMORY' ] && grep -q 'Through a symlink' '$real_memory'"
 rm -f "$MEMORY" && mv "$real_memory" "$MEMORY"
 check "an empty note is a usage error" expect_exit 2 "$CLI" memory add ""
+
+# Skill groups and the agent-roles switch became sets; migrate carries a former choice over.
+git config --global tack.skillGroups "core, process"
+git config --global tack.agentRoles true
+git config --global tack.sets design
+check "migrate succeeds with former group and role settings" expect_exit 0 "$CLI" migrate
+check "migrate turns them into the matching sets and keeps the others" test "$(git config --global --get tack.sets)" = design,tack-skills,tack-agents
+check "migrate removes the former settings" eval '! git config --global --get tack.skillGroups && ! git config --global --get tack.agentRoles'
+git config --global tack.skillGroups core
+git config --global tack.agentRoles false
+"$CLI" migrate >/dev/null 2>&1
+check "a former choice that selected nothing extra adds no set" test "$(git config --global --get tack.sets)" = design,tack-skills,tack-agents
+check "and is removed too" eval '! git config --global --get tack.skillGroups && ! git config --global --get tack.agentRoles'
+git config --global --unset tack.sets
+check "the former settings are no longer configurable" expect_exit 2 "$CLI" config skill-groups all --global
 check "an unknown memory command is a usage error" expect_exit 2 "$CLI" memory frobnicate
 
 # tack lesson: candidate lessons counted across sessions (docs/adr/0001-candidate-lessons.md).

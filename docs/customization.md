@@ -14,8 +14,8 @@ Clone it into any directory you choose and install from that checkout, as shown 
 | Which docs must change with which code (checked before the assistant stops) | `docs-map.txt` in each project's root: `code glob \| doc, doc` |
 | Which existing checks run for changed paths | Optional project `checks-map.json`; inspect with `tack verify --plan` before granting local trust |
 | Your own workflow modes, without touching the repository | `tack mode new <name> --from <mode>`, then edit `~/.config/agent-tack/modes/<name>.md` |
-| Task-specific guidance or reusable templates | `skills/<name>/SKILL.md`, `references/` and `assets/`; a new skill also needs a line in `skill-groups.txt` (`core`, `process` or `stack`) |
-| Which skills are installed | `tack config skill-groups --global` (`all`, or `core` plus `process` and/or `stack`), then `./install.sh` |
+| Task-specific guidance or reusable templates | `skills/<name>/SKILL.md`, `references/` and `assets/`; a new skill or agent also needs a line in at least one set in `sets.txt` |
+| Which skills and agents are installed | `tack set use NAME` in a project, or `tack set use NAME --global` then `./install.sh` ([sets](sets.md)) |
 | Automatic delegation, complexity routing and model fallbacks | `skills/orchestrate/` (per-project opt-out: `tack config delegation off`) |
 | Feature toggles shown by `tack config` | `features.txt`: one line per toggle (name of at most 23 characters, git key, default, allowed values such as `bool`, `number`, `text`, `auto|off` or `list:a|b` for a comma-separated list, scope, enforcement, shared yes/no, description). Runtime consumers read `tack config NAME --get` or `--json` so shared preferences apply; keep safety checks out of the registry |
 | Agent responsibilities and defaults | `agents/*.md` (`model:` is `inherit` or a Claude Code model from `model-tiers.txt`; `docs-writer` uses the `economical` tier when useful documentation work is delegated) |

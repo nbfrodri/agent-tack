@@ -80,8 +80,8 @@ expect_failure "a finished plan left among the open ones" "docs/plans/2026-01-01
   "mkdir -p docs/plans && printf '# Old\\n- **Status**: merged\\n' > docs/plans/2026-01-01-old.md"
 expect_failure "global instructions naming a skill that may not be installed" "global/AGENTS.md names 'release'" \
   "printf -- '- Releases: \`release\`.\n' >> global/AGENTS.md"
-expect_failure "a group line for a skill that no longer exists" "skill-groups.txt: 'gone-skill' has no folder" \
-  "printf 'gone-skill       stack\n' >> skill-groups.txt"
+expect_failure "a set line for a skill that no longer exists" "sets.txt or sources.txt is invalid" \
+  "printf 'core skill gone-skill\n' >> sets.txt"
 expect_failure "docs-writer off the economical tier" "docs-writer must use the economical tier" \
   "sed 's/^model: .*/model: opus/' agents/docs-writer.md > tmp && mv tmp agents/docs-writer.md"
 expect_failure "a test chain ending in a command that CI's ShellCheck rejects" "lib/keys.sh:" \
@@ -90,12 +90,14 @@ expect_failure "a tool with agents but a tier left out" "model-tiers.txt: claude
   "grep -v '^claude *balanced' model-tiers.txt > tmp && mv tmp model-tiers.txt"
 expect_failure "an agent naming a model outside the tiers" "agents/planner.md: model 'gpt-9' is not a Claude Code tier model" \
   "sed 's/^model: .*/model: gpt-9/' agents/planner.md > tmp && mv tmp agents/planner.md"
-expect_failure "a skill without a group" "skill-groups.txt: skill 'testing' has no group" \
-  "grep -v '^testing ' skill-groups.txt > tmp && mv tmp skill-groups.txt"
-expect_failure "a skill in an unknown group" "skill-groups.txt: 'frontend' is in unknown group 'ui'" \
-  "sed 's/^frontend .*/frontend ui/' skill-groups.txt > tmp && mv tmp skill-groups.txt"
-expect_failure "the core workflow made optional" "skill-groups.txt: dev-workflow must be core" \
-  "sed 's/^dev-workflow .*/dev-workflow process/' skill-groups.txt > tmp && mv tmp skill-groups.txt"
+expect_failure "a reference that only resolves while a set is active everywhere" "use ~/.agents/tack/skills/testing" \
+  "printf '\nSee ~/.agents/skills/testing/SKILL.md for the cases.\n' >> agents/test-writer.md"
+expect_failure "a skill no set lists" "sets.txt: skill 'testing' is in no set" \
+  "grep -vE '[[:space:]]skill[[:space:]]+testing\$' sets.txt > tmp && mv tmp sets.txt"
+expect_failure "an agent no set lists" "sets.txt: agent 'planner' is in no set" \
+  "grep -vE '[[:space:]]agent[[:space:]]+planner\$' sets.txt > tmp && mv tmp sets.txt"
+expect_failure "the workflow left out of the always-active set" "sets.txt: dev-workflow must be in the core set" \
+  "grep -vE '^core[[:space:]]+skill[[:space:]]+dev-workflow\$' sets.txt > tmp && mv tmp sets.txt"
 expect_failure "a test that moves HOME but leaves the real state directory" "tests/leaky.test.sh: exports HOME" \
   "printf 'export HOME=/tmp/x\n' > tests/leaky.test.sh"
 expect_failure "a toggle name too long for the tack config table" "features.txt: name" \

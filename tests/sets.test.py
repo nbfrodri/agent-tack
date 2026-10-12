@@ -126,6 +126,33 @@ class SetsTests(unittest.TestCase):
         self.sets('design category Not_A_Name\n')
         self.assertIn('category', self.tool('check', expected=1))
 
+    def test_the_core_set_is_always_active_and_cannot_be_dropped(self):
+        self.sets('core about Always on\ncore skill frontend\ndesign about Interfaces\ndesign skill up:skills/polish\n')
+        self.assertRegex(self.tool('list'), r'\*\s+core\s+Always on')
+        self.assertIn('always active', self.tool('drop', 'core', '--global', expected=1))
+        self.assertIn('always active', self.tool('use', 'core', expected=1))
+        self.tool('use', 'design', '--global')
+        self.assertEqual(self.git(self.project, 'config', '--global', 'tack.sets'), 'design')
+        index = self.tool('index')
+        self.assertNotIn('core', index)
+        self.assertIn('Active everywhere: design', index)
+        # A project set does not link again what the always-active set already provides.
+        self.sets('core about Always on\ncore skill frontend\nweb about Web\nweb skill frontend\nweb skill up:skills/polish\n')
+        self.tool('use', 'web')
+        self.assertFalse((self.project / '.agents/skills/frontend').exists())
+        self.assertTrue((self.project / '.agents/skills/polish').is_symlink())
+
+    def test_a_compatibility_set_is_listed_but_not_offered_to_the_assistant(self):
+        self.sets('design about Interfaces\ndesign category interfaces\ndesign skill up:skills/polish\n'
+                  'everything about The former full catalog\neverything category compat\neverything skill frontend\n')
+        self.assertIn('everything', self.tool('list'))
+        index = self.tool('index')
+        self.assertIn('interfaces: design.', index)
+        self.assertNotIn('everything', index)
+        self.assertNotIn('compat', index)
+        self.tool('use', 'everything', '--global')
+        self.assertIn('Active everywhere: everything', self.tool('index'))
+
     def test_show_lists_the_items_of_a_set(self):
         out = self.tool('show', 'design')
         for expected in ('frontend', 'up:skills/polish', 'ui-reviewer', 'frontend-design@claude-plugins-official'):

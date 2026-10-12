@@ -48,7 +48,7 @@ print(json.dumps(d))' "$1" "$2"
   fi
 }
 
-skill_count="$(grep -cE '^[a-z-]+[[:space:]]+core$' "$REPO/skill-groups.txt")"
+skill_count="$(grep -cE '^core[[:space:]]+skill[[:space:]]' "$REPO/sets.txt")"
 
 echo "Fresh machine"
 H="$WORK/fresh"
@@ -75,6 +75,7 @@ H_GONE="$WORK/former-gone"
 run_install "$H_GONE"
 gone_entries="$H_GONE/.local/state/agent-tack/ownership/entries"
 gone_entry="$(grep -lx "$H_GONE/.local/bin/tack" "$gone_entries"/*/path | head -n 1)"
+case "$gone_entry" in "$gone_entries"/*/path) ;; *) fail "no ownership record for the tack command"; gone_entry="$gone_entries/missing/path" ;; esac
 cp -Rp "$(dirname "$gone_entry")" "$gone_entries/9000"
 printf '%s\n' "$H_GONE/.local/bin/harness" > "$gone_entries/9000/path"
 printf '%s\n' "$REPO/bin/harness" > "$gone_entries/9000/target"
@@ -395,41 +396,114 @@ echo '{broken' > "$H/.claude/settings.json"
 run_install "$H"
 check "no hook summary when registering the hooks failed" "! grep -q 'Hooks installed' '$H.log'"
 
-echo "Skill groups (tack config skill-groups)"
+echo "Sets select tack's own skills (tack set use NAME --global)"
 H="$WORK/groups"
 run_install "$H"
-check "default core omits advanced skills" "[ ! -e '$H/.agents/skills/frontend' ] && [ ! -e '$H/.agents/skills/improve' ] && [ -L '$H/.agents/skills/dev-workflow' ]"
-git_global "$H" tack.skillGroups process
+check "only the core set's skills are installed by default" "[ ! -e '$H/.agents/skills/frontend' ] && [ ! -e '$H/.agents/skills/improve' ] && [ -L '$H/.agents/skills/dev-workflow' ] && [ -L '$H/.agents/skills/new-project' ]"
+git_global "$H" tack.sets tack-agents
 run_install "$H"
-check "a deselected group's skills are removed" "[ ! -e '$H/.agents/skills/frontend' ] && [ ! -e '$H/.claude/skills/frontend' ]"
-check "selected groups stay" "[ -L '$H/.agents/skills/improve' ]"
-check "core skills including onboarding are always installed" "[ -L '$H/.agents/skills/dev-workflow' ] && [ -L '$H/.agents/skills/lessons' ] && [ -L '$H/.agents/skills/new-project' ]"
-check "the installer says which groups it installed" "grep -q 'skill groups: core, process' '$H.log'"
+check "a set of agents brings its roles and no skills" "[ -L '$H/.claude/agents/planner.md' ] && [ ! -e '$H/.agents/skills/frontend' ]"
+git_global "$H" tack.sets tack-skills
+run_install "$H"
+check "a set's skills are installed for every tool" "[ -L '$H/.agents/skills/frontend' ] && [ -L '$H/.claude/skills/improve' ] && [ -L '$H/.codex/skills/testing' ]"
+check "the agents of a dropped set are removed" "[ ! -e '$H/.claude/agents/planner.md' ]"
+check "the installer says which sets are active" "grep -q 'active everywhere: core,tack-skills' '$H.log'"
+git_global "$H" --unset tack.sets
+run_install "$H"
+check "a dropped set's skills are removed" "[ ! -e '$H/.agents/skills/frontend' ] && [ ! -e '$H/.claude/skills/frontend' ]"
+check "the core set's skills are always installed" "[ -L '$H/.agents/skills/dev-workflow' ] && [ -L '$H/.agents/skills/new-project' ]"
+git_global "$H" tack.skillGroups all
+git_global "$H" tack.agentRoles true
+run_install "$H"
+check "the former group and role settings no longer install anything" "[ ! -e '$H/.agents/skills/frontend' ] && [ ! -e '$H/.claude/agents/planner.md' ]"
+check "and the installer says how to carry them over" "grep -q 'tack migrate' '$H.log'"
+git_global "$H" --unset tack.skillGroups
+git_global "$H" --unset tack.agentRoles
 H2="$WORK/groups-own"
 mkdir -p "$H2/.agents/skills/frontend"
 printf 'my own frontend notes\n' > "$H2/.agents/skills/frontend/SKILL.md"
-git_global "$H2" tack.skillGroups all
+git_global "$H2" tack.sets tack-skills
 run_install "$H2"
 check "a skill of the user's is backed up when tack's takes its name" "[ -L '$H2/.agents/skills/frontend' ]"
-git_global "$H2" tack.skillGroups core
+git_global "$H2" --unset tack.sets
 run_install "$H2" --dry-run
 check "a dry run says the link that replaced the user's skill stays" "grep -q 'would keep $H2/.agents/skills/frontend' '$H2.log' && ! grep -q 'would remove $H2/.agents/skills/frontend' '$H2.log'"
 run_install "$H2"
 check "the link that replaced the user's skill stays until uninstall" "[ -L '$H2/.agents/skills/frontend' ] && grep -q 'kept $H2/.agents/skills/frontend' '$H2.log'"
 check "links that took nothing's place are removed" "[ ! -e '$H2/.claude/skills/frontend' ]"
 check "uninstall gives the user's own skill back" "HOME='$H2' XDG_CONFIG_HOME='$H2/.config' GIT_CONFIG_NOSYSTEM=1 '$REPO/uninstall.sh' >'$H2.uninstall.log' 2>&1 && grep -q 'my own frontend notes' '$H2/.agents/skills/frontend/SKILL.md'"
-git_global "$H" tack.skillGroups all
+git_global "$H" tack.sets tack-skills
 run_install "$H"
-check "selecting a group again installs it again" "[ -L '$H/.agents/skills/frontend' ]"
-check "uninstall still restores after groups changed" "HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 '$REPO/uninstall.sh' >'$H.uninstall.log' 2>&1 && [ ! -e '$H/.agents/skills/dev-workflow' ]"
+check "activating a set again installs it again" "[ -L '$H/.agents/skills/frontend' ]"
+check "uninstall still restores after the sets changed" "HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 '$REPO/uninstall.sh' >'$H.uninstall.log' 2>&1 && [ ! -e '$H/.agents/skills/dev-workflow' ]"
 
-echo "Optional Claude roles preserve displaced user definitions"
+echo "Links recorded as replacing a link into a vanished checkout"
+H="$WORK/moved-checkout"
+mkdir -p "$H"
+git_global "$H" tack.sets tack-skills,tack-agents
+run_install "$H"
+check "the set's skills and agents are installed first" "[ -L '$H/.agents/skills/frontend' ] && [ -L '$H/.claude/agents/planner.md' ]"
+moved_entries="$H/.local/state/agent-tack/ownership/entries"
+# What an install from a since-deleted checkout leaves: the record says each link replaced a link.
+for moved in "$H/.agents/skills/frontend" "$H/.claude/skills/frontend" "$H/.claude/agents/planner.md"; do
+  moved_path="$(grep -lx "$moved" "$moved_entries"/*/path 2>/dev/null | head -n 1)"
+  # Without a record there is nothing to rewrite, and dirname of nothing would be this directory.
+  case "$moved_path" in "$moved_entries"/*/path) ;; *) fail "no ownership record for $moved"; continue ;; esac
+  moved_entry="$(dirname "$moved_path")"
+  printf 'symlink\n' > "$moved_entry/before_kind"
+  printf '%s\n' "$WORK/vanished-checkout/${moved##*/}" > "$moved_entry/before_target"
+  chmod -R go-rwx "$moved_entry"
+done
+# A generated agent recorded by that deleted checkout, unchanged since.
+moved_path="$(grep -lx "$H/.codex/agents/planner.toml" "$moved_entries"/*/path 2>/dev/null | head -n 1)"
+case "$moved_path" in
+  "$moved_entries"/*/path) printf '%s\n' "$WORK/vanished-checkout" > "$(dirname "$moved_path")/repo" ;;
+  *) fail "no ownership record for the generated Codex agent" ;;
+esac
+# One recorded by another checkout that still exists is not this installation's to remove.
+mkdir -p "$WORK/other-checkout"
+moved_path="$(grep -lx "$H/.codex/agents/evaluator.toml" "$moved_entries"/*/path 2>/dev/null | head -n 1)"
+case "$moved_path" in
+  "$moved_entries"/*/path) printf '%s\n' "$WORK/other-checkout" > "$(dirname "$moved_path")/repo" ;;
+  *) fail "no ownership record for the second generated Codex agent" ;;
+esac
+# After a reboot some filesystems (btrfs subvolumes, overlays) report another device number for
+# the same folder; its inode stays. A different inode is a different folder.
+rewrite_identity() {
+  local record
+  record="$(grep -lx "$1" "$moved_entries"/*/path 2>/dev/null | head -n 1)"
+  case "$record" in "$moved_entries"/*/path) ;; *) fail "no ownership record for $1"; return ;; esac
+  sed "$2" "$(dirname "$record")/parent_identity" > "$WORK/identity.tmp" && cat "$WORK/identity.tmp" > "$(dirname "$record")/parent_identity"
+}
+rewrite_identity "$H/.codex/agents/code-reviewer.toml" 's/^[0-9]*:/424242:/'
+rewrite_identity "$H/.codex/agents/docs-writer.toml" 's/:[0-9]*$/:1/'
+git_global "$H" --unset tack.sets
+run_install "$H" --dry-run
+check "a dry run says such a skill link would be removed" "grep -q 'would remove $H/.agents/skills/frontend' '$H.log'"
+run_install "$H"
+check "a skill link whose replaced original is gone is removed" "[ ! -e '$H/.agents/skills/frontend' ] && [ ! -L '$H/.claude/skills/frontend' ]"
+check "an agent link whose replaced original is gone is removed" "[ ! -L '$H/.claude/agents/planner.md' ]"
+check "nothing is reported as kept for uninstall" "! grep -q 'kept $H/.agents/skills/frontend' '$H.log'"
+check "an unchanged generated agent from the deleted checkout is removed" "[ ! -e '$H/.codex/agents/planner.toml' ]"
+check "a generated agent is still removed when only the folder's device number changed" "[ ! -e '$H/.codex/agents/code-reviewer.toml' ]"
+check "one whose folder is a different one is kept" "[ -e '$H/.codex/agents/docs-writer.toml' ] && grep -q 'kept $H/.codex/agents/docs-writer.toml: ownership location changed' '$H.log'"
+check "one recorded by another existing checkout is kept" "[ -e '$H/.codex/agents/evaluator.toml' ] && grep -q 'kept $H/.codex/agents/evaluator.toml' '$H.log'"
+
+echo "Uninstall after the device number of the home folders changed"
+H="$WORK/rebooted"
+run_install "$H"
+for identity in "$H"/.local/state/agent-tack/ownership/entries/*/parent_identity; do
+  sed 's/^[0-9]*:/424242:/' "$identity" > "$WORK/identity.tmp" && cat "$WORK/identity.tmp" > "$identity"
+done
+check "uninstall still removes what the installer linked" "HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 '$REPO/uninstall.sh' >'$H.uninstall.log' 2>&1 && [ ! -L '$H/.claude/CLAUDE.md' ] && [ ! -e '$H/.agents/skills/dev-workflow' ]"
+
+echo "Agents of a set preserve displaced user definitions"
 H="$WORK/optional-roles"
 mkdir -p "$H/.claude/agents"
 echo 'my planner' > "$H/.claude/agents/planner.md"
-git_global "$H" tack.agentRoles true
+git_global "$H" tack.sets tack-agents
 run_install "$H"
-git_global "$H" tack.agentRoles false
+git_global "$H" --unset tack.sets
 run_install "$H"
 check "deselection removes an owned role link" "[ ! -e '$H/.claude/agents/code-reviewer.md' ]"
 check "deselection retains restoration of a displaced role" "[ -L '$H/.claude/agents/planner.md' ] && grep -q 'it replaced your file' '$H.log'"

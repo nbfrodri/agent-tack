@@ -15,6 +15,7 @@ Architecture and execution flows: `docs/architecture.md`; keep it current when c
 - Keep all repository content in English, including documentation, examples, skill trigger phrases and eval prompts, so it stays consistent for readers. Conversation language follows the global instructions.
 - Shell scripts must run on bash 3.2 (macOS): no associative arrays, `mapfile`, `${var,,}` or `sed -i`.
 - Tests never touch the real HOME or git config: use a temp HOME plus `XDG_CONFIG_HOME` and `GIT_CONFIG_NOSYSTEM=1`.
+- A skill or agent is installed only through a set: list each new one in at least one set in `sets.txt`.
 - A skill's `name` must match its folder. Descriptions say what it does and when to use it, within the budget `tests/validate.sh` enforces (they load in every session).
 - Keep `global/AGENTS.md` short (it loads in every session); put detail in skills.
 - Every change to the installer or hooks needs a test in `tests/`.

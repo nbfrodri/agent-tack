@@ -39,12 +39,12 @@ mkdir -p "$XDG_STATE_HOME/agent-tack/budget"
 : > "$XDG_STATE_HOME/agent-tack/budget/s2"
 run_doctor
 check 'the per-session state is reported with its file count' grep -q "OK   per-session state: 2 file(s)" "$WORK/report"
-git config --global tack.skillGroups process
+git config --global tack.sets tack-agents
 "$REPO/install.sh" --skip-plugins >"$WORK/install.log" 2>&1
 run_doctor
-check 'skills of a deselected group are not reported missing' [ "$RC" -eq 0 ]
-check 'the installed skill groups are reported' grep -q "OK   skill groups: core, process" "$WORK/report"
-git config --global --unset tack.skillGroups
+check 'skills outside the active sets are not reported missing' [ "$RC" -eq 0 ]
+check 'the active sets are reported' grep -q "OK   sets active everywhere: core,tack-agents" "$WORK/report"
+git config --global --unset tack.sets
 "$REPO/install.sh" --skip-plugins >"$WORK/install.log" 2>&1
 rm "$HOME/.agents/tack"
 ln -s "$WORK/missing" "$HOME/.agents/tack"

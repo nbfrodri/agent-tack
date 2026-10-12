@@ -54,7 +54,7 @@ Native Windows CI also checks ownership/restoration, the verifier, shared projec
 
 ## Adding a skill, agent or tool
 1. Create `skills/<name>/SKILL.md` or `agents/<name>.md` with `name` and `description` (what it does and when to use it, within the budget `validate.sh` enforces), or add a line to `targets.txt` for a new AI tool.
-2. List it in [components](components.md) (the validator requires it); mention it in the README only if it changes what a newcomer needs to know.
+2. List it in [components](components.md) and, for a skill or agent, in at least one set in `sets.txt` (the validator requires both); mention it in the README only if it changes what a newcomer needs to know.
 3. Run `tests/validate.sh` and `./install.sh`, then commit and push.
 
 ## Tools compatibility (weekly)
