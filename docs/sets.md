@@ -15,6 +15,8 @@ tack set use design            # this project only
 tack set drop design
 tack set use review --global   # every project, applied by the next ./install.sh
 tack set sync                  # recreate this project's links (new clone, or after an update)
+tack set suggest               # sets that fit this project's files; --apply activates, --skip declines
+tack set skip NAME             # stop suggesting one set in this project
 ```
 
 In a project, `use` links each skill into `.agents/skills/` and `.claude/skills/`, each agent into `.claude/agents/`, and installs each plugin for that clone (`claude plugin install --scope local`). The links are added to `.git/info/exclude`, so the project's history and `.gitignore` stay untouched. A skill or agent the project already has under the same name is kept. The choice is saved in the clone's Git config (`tack.sets`), which is why another clone needs `tack set use` or `tack set sync`.
@@ -27,13 +29,31 @@ With `--global` the choice is saved in your global Git config and `./install.sh`
 | Agents | Claude Code | Every tool with an agents folder in `targets.txt` |
 | Plugins | Claude Code | Claude Code |
 
-## Let the assistant choose
+## How a set reaches the work
 
-In an enabled project, the startup context includes one line with the names of every set, grouped by category, and which are already active. The contents of a set are not loaded until it is activated, so the index costs a few hundred characters instead of every skill's description.
+Three steps, measured on small real tasks with a small and a larger model (2026-10-12):
 
-The assistant keeps the project's sets matched to the work: it runs `tack set use NAME` when a task clearly needs a set that is not active, and `tack set drop NAME` for one the work no longer needs, and says so. It leaves `--global` and `update` to you and changes nothing for a read-only request. In a mode such as `unleash`, where nobody confirms each step, the command guard lets the assistant read sets but not change them: a set can bring plugins and skills that run their own programs. Activate what the work needs before starting. A newly linked skill may only appear in the tool's own list in the next session; until then the assistant can read it from `.agents/skills/`.
+1. **tack finds the sets that fit.** A set can declare the files that give a project away (`python match pyproject.toml`, `react match package.json:react`). `tack set suggest` lists the sets whose rules this project satisfies, with the evidence; `tack enable` prints the same list.
+   A set for a kind of task leaves no trace in the files, so it declares what a request for it says instead (`security ask threat+model* owasp modelo+de+amenazas`). A term is a word, `word*` for the words that start with it, or `word+word` for a phrase; a request is compared whole word by whole word, in lowercase and without accents, so `review` never matches "preview". The terms are English and Spanish, and deliberately narrow: a phrase such as `review+this+branch` rather than a word ordinary requests also use.
+2. **You say yes once.** With each message, tack tells the assistant which fitting sets are not active, and the assistant ends its reply with one line naming them. Answer yes and it runs `tack set suggest --apply`; `tack set suggest --skip` declines them for this project and ends the reminder. A set whose rules start to match later is offered again. A set the request asks for is named the same way, only with the messages that say one of its terms: `tack set use NAME` activates it and `tack set skip NAME` stops the suggestion in this project.
+3. **The assistant loads the matching skills.** With each message, tack names the skills of the project's active sets and asks the assistant to load the ones whose name matches the task before doing anything else.
 
-Turn the index off with `tack config set-index false` (add `--global` for every project). Tools without a startup hook get the same line from `tack context`.
+What the trials showed, and why the steps are split this way:
+
+| Left to the assistant | Result |
+| --- | --- |
+| Activating a set because the startup context lists it, or orders it | Never (0 of 18) |
+| Activating a set when the user asks | Yes (2 of 2) |
+| Using the skills of an active set, with no reminder | Small model never (0 of 10); larger one on a specialised task only (1 of 3) |
+| Using them with the reminder next to the message | Yes (6 of 6 with the small model) |
+| Telling the user which sets fit | Yes (3 of 3) |
+| Telling the user which set a request asks for, in English and Spanish | Yes (4 of 4), and nothing on requests that ask for none (2 of 2) |
+
+An assistant loads a skill readily but does not change the project's configuration on its own, so activation stays a choice it reports and you make. The samples are small: one run per case, simple tasks.
+
+Claude Code gets the reminder with every message, through a hook. Tools without such a hook get it once, in the startup context from `tack context`; a real Codex session read the matching skills first. Turn the reminder off with `tack config disabled-hooks skill-reminder`, and the startup index with `tack config set-index false`. In a mode such as `unleash`, where nobody confirms each step, the command guard lets the assistant read sets and suggestions but not change them.
+
+Sets for a kind of task rather than a stack (`review`, `planning`, `security`) have no files to detect: their `ask` terms name them when a request says one, and `tack set use NAME` activates one at any time. The terms are narrow on purpose, so a request worded another way names nothing; widen a set's `ask` line when that happens to you. Tools without a per-message hook get no request suggestions, because the startup context is written before any request.
 
 ## On another machine
 
@@ -55,6 +75,9 @@ design category  interfaces                     # groups the list and the startu
 design skill   frontend                       # skills/frontend in this repository
 design skill   emil:skills/emil-design-eng    # a folder in a collection from sources.txt
 design agent   ui-reviewer                    # agents/ui-reviewer.md
+python match   pyproject.toml                 # the set fits a project that has this file
+react  match   package.json:react             # ...or whose manifest names this dependency
+shell  match   *.sh 3                         # ...or that has at least three such files
 design plugin  typescript-lsp@claude-plugins-official
 ```
 

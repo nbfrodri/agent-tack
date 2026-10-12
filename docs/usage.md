@@ -70,6 +70,8 @@ An active handoff records work another session needs to resume. tack compares it
 | `tack set list` | Sets of skills, agents and plugins, and where each is active; [sets guide](sets.md) |
 | `tack set use NAME` | Activate a set in this project; add `--global` for every project, then run `./install.sh` |
 | `tack set drop NAME` | Deactivate a set |
+| `tack set suggest` | Sets that fit this project's files; `--apply` activates them, `--skip` declines them |
+| `tack set skip NAME` | Stop suggesting one set in this project |
 | `tack set update` | Move pinned skill collections to their upstream head and report what changed |
 | `tack mode [MODE]` | Show or set the workflow mode (`auto`, `lite`, `standard`, `strict`) |
 | `tack config` | Effective settings and their sources |

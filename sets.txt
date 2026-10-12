@@ -1,6 +1,14 @@
 # Sets: named bundles of skills, agents and Claude Code plugins for one kind of work.
 # Lines:  set  about     one-line description
 #         set  category  NAME                 groups sets in `tack set list` and the startup index
+#         set  match     PATTERN [MIN]        the set fits a project holding MIN files (default 1)
+#                                             that match the glob; FILE:NAME asks FILE to name a
+#                                             dependency or word (`tack set suggest`)
+#         set  ask       TERM...              the set matches a request that says a term: word,
+#                                             word* (words starting so) or word+word (a phrase).
+#                                             Requests are compared in lowercase without accents;
+#                                             give English and Spanish, and prefer a phrase to a
+#                                             word that ordinary requests also use
 #         set  skill     NAME                 a skill of this repository (skills/NAME)
 #         set  skill     SOURCE:PATH          a skill folder in a collection pinned in sources.txt
 #         set  agent     NAME                 a role of this repository (agents/NAME.md)
@@ -56,6 +64,7 @@ tack-agents agent ui-reviewer
 # --- Interfaces -----------------------------------------------------------------------------
 design about Web interfaces: visual direction, polish and review
 design category interfaces
+design ask landing+page ui+design visual+design diseno+visual diseno+de+interfaz interfaz+de+usuario
 design skill frontend
 design skill emil:skills/emil-design-eng
 design skill taste:skills/taste-skill
@@ -67,10 +76,12 @@ design agent ui-reviewer
 # (docs/audits/2026-10-11-external-skills.md). Activate it only where you accept that.
 impeccable about Impeccable design language and audits; runs a downloaded native binary
 impeccable category interfaces
+impeccable ask impeccable
 impeccable skill impeccable:.agents/skills/impeccable
 
 design-styles about Alternative aesthetics, redesigns and prototypes to choose between
 design-styles category interfaces
+design-styles ask redesign* redisen*
 design-styles skill taste:skills/redesign-skill
 design-styles skill taste:skills/minimalist-skill
 design-styles skill taste:skills/brutalist-skill
@@ -82,6 +93,7 @@ design-styles skill anthropics:skills/theme-factory
 
 motion about Animation and motion: build, name, review and audit
 motion category interfaces
+motion ask animation* animacion* animate animar framer+motion
 motion skill emil:skills/animate
 motion skill emil:skills/review-animations
 motion skill emil:skills/improve-animations
@@ -92,6 +104,7 @@ motion skill vercel:skills/react-view-transitions
 
 accessibility about WCAG audits, screen readers and accessible components
 accessibility category interfaces
+accessibility ask accessibility accesibilidad wcag a11y screen+reader* lector+de+pantalla
 accessibility skill wshobson:plugins/accessibility-compliance/skills/wcag-audit-patterns
 accessibility skill wshobson:plugins/accessibility-compliance/skills/screen-reader-testing
 accessibility skill wshobson:plugins/ui-design/skills/accessibility-compliance
@@ -99,6 +112,7 @@ accessibility skill knowledge-work:design/skills/accessibility-review
 
 figma about Figma designs to code and back; needs the Figma MCP server
 figma category interfaces
+figma ask figma
 figma skill openai:skills/.curated/figma
 figma skill openai:skills/.curated/figma-use
 figma skill openai:skills/.curated/figma-implement-design
@@ -108,6 +122,8 @@ figma skill openai:skills/.curated/figma-create-design-system-rules
 # --- Stacks ---------------------------------------------------------------------------------
 react about React and Next.js applications
 react category stacks
+react match package.json:react
+react match package.json:next
 react skill frontend
 react skill vercel:skills/react-best-practices
 react skill vercel:skills/composition-patterns
@@ -117,6 +133,8 @@ react plugin typescript-lsp@claude-plugins-official
 
 typescript about TypeScript and Node.js: language patterns, backend services and tests
 typescript category stacks
+typescript match tsconfig.json
+typescript match package.json:typescript
 typescript skill wshobson:plugins/javascript-typescript/skills/typescript-advanced-types
 typescript skill wshobson:plugins/javascript-typescript/skills/modern-javascript-patterns
 typescript skill wshobson:plugins/javascript-typescript/skills/nodejs-backend-patterns
@@ -125,6 +143,8 @@ typescript plugin typescript-lsp@claude-plugins-official
 
 vue about Vue, Nuxt and the Vite toolchain
 vue category stacks
+vue match package.json:vue
+vue match package.json:nuxt
 vue skill antfu:skills/vue
 vue skill antfu:skills/nuxt
 vue skill antfu:skills/pinia
@@ -134,6 +154,8 @@ vue skill antfu:skills/unocss
 
 mobile about React Native and Expo apps, and web apps that feel native on a phone
 mobile category stacks
+mobile match package.json:expo
+mobile match package.json:react-native
 mobile skill expo:plugins/expo/skills/expo-router
 mobile skill expo:plugins/expo/skills/expo-ui
 mobile skill expo:plugins/expo/skills/expo-native-ui
@@ -146,6 +168,14 @@ mobile skill emil:skills/mobile-native
 
 backend about APIs, data models, queries and authentication
 backend category stacks
+backend match package.json:express
+backend match package.json:fastify
+backend match package.json:@nestjs/core
+backend match pyproject.toml:fastapi
+backend match pyproject.toml:django
+backend match requirements.txt:fastapi
+backend match requirements.txt:django
+backend match manage.py
 backend skill api-design
 backend skill database
 backend skill auth
@@ -156,6 +186,9 @@ backend skill wshobson:plugins/javascript-typescript/skills/nodejs-backend-patte
 
 python about Modern Python: tooling, typing, async and tests
 python category stacks
+python match pyproject.toml
+python match requirements.txt
+python match *.py 3
 python skill trailofbits:plugins/modern-python/skills/modern-python
 python skill wshobson:plugins/python-development/skills/python-testing-patterns
 python skill wshobson:plugins/python-development/skills/python-type-safety
@@ -165,6 +198,8 @@ python plugin pyright-lsp@claude-plugins-official
 
 go-rust about Go and Rust: concurrency, async, memory safety and review
 go-rust category stacks
+go-rust match go.mod
+go-rust match Cargo.toml
 go-rust skill wshobson:plugins/systems-programming/skills/go-concurrency-patterns
 go-rust skill wshobson:plugins/systems-programming/skills/rust-async-patterns
 go-rust skill wshobson:plugins/systems-programming/skills/memory-safety-patterns
@@ -174,12 +209,16 @@ go-rust plugin rust-analyzer-lsp@claude-plugins-official
 
 dotnet about C# and ASP.NET Core backends
 dotnet category stacks
+dotnet match *.csproj
+dotnet match *.sln
 dotnet skill wshobson:plugins/dotnet-contribution/skills/dotnet-backend-patterns
 dotnet skill openai:skills/.curated/aspnet-core
 dotnet plugin csharp-lsp@claude-plugins-official
 
 php-laravel about PHP and Laravel applications
 php-laravel category stacks
+php-laravel match composer.json
+php-laravel match artisan
 php-laravel skill api-design
 php-laravel skill database
 php-laravel skill testing
@@ -188,12 +227,20 @@ php-laravel plugin php-lsp@claude-plugins-official
 
 shell about Portable, defensive shell scripts and their tests
 shell category stacks
+shell match *.sh 3
+shell match *.bats
 shell skill wshobson:plugins/shell-scripting/skills/bash-defensive-patterns
 shell skill wshobson:plugins/shell-scripting/skills/bats-testing-patterns
 shell skill wshobson:plugins/shell-scripting/skills/shellcheck-configuration
 
 saas about Payments and a hosted backend: Stripe, Supabase and authentication
 saas category stacks
+saas match package.json:stripe
+saas match package.json:@supabase/supabase-js
+saas match pyproject.toml:stripe
+saas match requirements.txt:stripe
+saas match composer.json:stripe/stripe-php
+saas ask stripe supabase payment+gateway pasarela+de+pago
 saas skill auth
 saas skill stripe:skills/stripe-best-practices
 saas skill stripe:skills/upgrade-stripe
@@ -202,6 +249,8 @@ saas skill supabase:skills/supabase-postgres-best-practices
 
 video about Programmatic video with Remotion
 video category stacks
+video match package.json:remotion
+video ask remotion
 video skill remotion:skills/remotion-best-practices
 video skill remotion:skills/remotion-create
 video skill remotion:skills/remotion-captions
@@ -210,6 +259,11 @@ video skill remotion:skills/remotion-render
 # --- Quality --------------------------------------------------------------------------------
 testing about Behavioral tests, browser tests, debugging and stronger test techniques
 testing category quality
+testing match playwright.config.ts
+testing match playwright.config.js
+testing match package.json:@playwright/test
+testing ask playwright e2e end+to+end unit+test* test+suite test+coverage tdd flaky property+based mutation+testing
+testing ask prueba+unitaria pruebas+unitarias cobertura+de+pruebas
 testing skill testing
 testing skill e2e-testing
 testing skill debugging
@@ -220,6 +274,10 @@ testing agent test-writer
 
 review about Code review, simplification and pull request feedback
 review category quality
+review ask code+review review+this+branch review+the+branch review+this+pr review+the+pr review+this+pull+request
+review ask review+my+code review+the+code review+this+code review+the+diff review+my+changes
+review ask revision+de+codigo revisa+el+codigo revisar+el+codigo revisa+la+rama revisa+esta+rama revisa+el+pr
+review ask revisa+la+pr revisa+los+cambios revisa+mis+cambios
 review skill improve
 review skill addy:skills/code-simplification
 review skill sentry:skills/find-bugs
@@ -231,6 +289,8 @@ review agent evaluator
 
 security about Static analysis, risky changes, dependencies and threat models
 security category quality
+security ask threat+model* security+audit security+review vulnerabilit* supply+chain owasp cve pentest*
+security ask modelo+de+amenazas auditoria+de+seguridad vulnerabilidad*
 security skill auth
 security skill trailofbits:plugins/static-analysis/skills/semgrep
 security skill trailofbits:plugins/static-analysis/skills/codeql
@@ -243,6 +303,8 @@ security agent security-auditor
 
 performance about Measure first: web vitals, queries, bundles and hot paths
 performance category quality
+performance ask performance+audit web+vitals lighthouse bundle+size profiling bottleneck* slow+query*
+performance ask rendimiento cuello+de+botella consulta+lenta
 performance skill addy:skills/performance-optimization
 performance skill cloudflare:skills/web-perf
 performance skill wshobson:plugins/python-development/skills/python-performance-optimization
@@ -250,6 +312,7 @@ performance agent performance-analyzer
 
 architecture about System and codebase design: boundaries, domain models and service patterns
 architecture category quality
+architecture ask architecture arquitectura domain+model* bounded+context* microservic*
 architecture skill wshobson:plugins/backend-development/skills/architecture-patterns
 architecture skill wshobson:plugins/backend-development/skills/microservices-patterns
 architecture skill wshobson:plugins/backend-development/skills/api-design-principles
@@ -262,6 +325,8 @@ architecture agent architecture-reviewer
 # --- Process --------------------------------------------------------------------------------
 planning about From a vague idea to a spec, a plan and tickets
 planning category process
+planning ask implementation+plan write+a+spec technical+spec brainstorm*
+planning ask plan+de+implementacion escribe+una+especificacion especificacion+tecnica lluvia+de+ideas
 planning skill project-docs
 planning skill mattpocock:skills/productivity/grill-me
 planning skill mattpocock:skills/engineering/to-spec
@@ -270,6 +335,7 @@ planning agent planner
 
 git-release about Git history, issues, pull requests, CI fixes and releases
 git-release category process
+git-release ask changelog release+notes semver cut+a+release rebase squash cherry+pick notas+de+version
 git-release skill git-history
 git-release skill github-issues
 git-release skill release
@@ -279,6 +345,7 @@ git-release skill wshobson:plugins/cicd-automation/skills/github-actions-templat
 
 orchestration about Long or parallel work: subagents, worktrees and autonomous rounds
 orchestration category process
+orchestration ask subagent* subagente* worktree*
 orchestration skill orchestrate
 orchestration skill auto-improve
 orchestration skill superpowers:skills/dispatching-parallel-agents
@@ -286,6 +353,8 @@ orchestration agent implementer
 
 modernization about Upgrades and migrations: dependencies, frameworks, schemas and deprecations
 modernization category process
+modernization ask migrate+to migrate+from migration+to upgrade+to deprecat* legacy+code
+modernization ask migrar+a actualizar+a codigo+legado
 modernization skill wshobson:plugins/framework-migration/skills/dependency-upgrade
 modernization skill wshobson:plugins/framework-migration/skills/database-migration
 modernization skill wshobson:plugins/framework-migration/skills/react-modernization
@@ -325,6 +394,7 @@ engineering-lifecycle skill addy:skills/shipping-and-launch
 
 agent-tooling about Writing and auditing skills, plugins, hooks and agent instructions
 agent-tooling category process
+agent-tooling ask write+a+skill create+a+skill agents+md claude+md escribe+una+skill crea+una+skill
 agent-tooling skill lessons
 agent-tooling skill anthropics:skills/skill-creator
 agent-tooling skill mattpocock:skills/productivity/writing-for-agents
@@ -339,6 +409,10 @@ agent-tooling plugin claude-md-management@claude-plugins-official
 # --- Operations -----------------------------------------------------------------------------
 devops about Containers, pipelines, infrastructure as code and deployment
 devops category operations
+devops match Dockerfile
+devops match compose.yaml
+devops match docker-compose.yml
+devops ask dockerfile docker github+actions ci+cd pipeline+de+ci
 devops skill deployment
 devops skill observability
 devops skill hashicorp:plugins/terraform/skills/terraform-style-guide
@@ -350,6 +424,11 @@ devops skill wshobson:plugins/cicd-automation/skills/github-actions-templates
 
 kubernetes about Kubernetes manifests, Helm charts, security policies and GitOps
 kubernetes category operations
+kubernetes match Chart.yaml
+kubernetes match kustomization.yaml
+kubernetes match k8s/*
+kubernetes match helm/*
+kubernetes ask kubernetes k8s helm kubectl
 kubernetes skill wshobson:plugins/kubernetes-operations/skills/k8s-manifest-generator
 kubernetes skill wshobson:plugins/kubernetes-operations/skills/helm-chart-scaffolding
 kubernetes skill wshobson:plugins/kubernetes-operations/skills/k8s-security-policies
@@ -357,6 +436,8 @@ kubernetes skill wshobson:plugins/kubernetes-operations/skills/gitops-workflow
 
 cloud about Cloud architecture on AWS, Azure or GCP: Terraform modules and cost
 cloud category operations
+cloud match *.tf
+cloud ask aws azure gcp terraform
 cloud skill deployment
 cloud skill wshobson:plugins/cloud-infrastructure/skills/multi-cloud-architecture
 cloud skill wshobson:plugins/cloud-infrastructure/skills/cost-optimization
@@ -366,6 +447,10 @@ cloud skill hashicorp:plugins/terraform/skills/refactor-module
 
 cloudflare about Cloudflare Workers, Durable Objects, the Agents SDK and Wrangler
 cloudflare category operations
+cloudflare match wrangler.toml
+cloudflare match wrangler.jsonc
+cloudflare match package.json:wrangler
+cloudflare ask cloudflare wrangler durable+object*
 cloudflare skill cloudflare:skills/cloudflare
 cloudflare skill cloudflare:skills/workers-best-practices
 cloudflare skill cloudflare:skills/durable-objects
@@ -374,6 +459,9 @@ cloudflare skill cloudflare:skills/wrangler
 
 monitoring about Metrics, dashboards, tracing, SLOs and instrumentation
 monitoring category operations
+monitoring match prometheus.yml
+monitoring match grafana/*
+monitoring ask prometheus grafana opentelemetry slo slos observability observabilidad
 monitoring skill observability
 monitoring skill wshobson:plugins/observability-monitoring/skills/prometheus-configuration
 monitoring skill wshobson:plugins/observability-monitoring/skills/grafana-dashboards
@@ -383,6 +471,15 @@ monitoring skill wshobson:plugins/observability-monitoring/skills/slo-implementa
 # --- Data and AI ----------------------------------------------------------------------------
 llm-apps about Building with language models: prompts, retrieval, evaluation and MCP servers
 llm-apps category data-ai
+llm-apps match package.json:@anthropic-ai/sdk
+llm-apps match package.json:openai
+llm-apps match package.json:langchain
+llm-apps match pyproject.toml:anthropic
+llm-apps match pyproject.toml:openai
+llm-apps match pyproject.toml:langchain
+llm-apps match requirements.txt:anthropic
+llm-apps match requirements.txt:openai
+llm-apps ask llm rag embeddings prompt+engineering mcp+server servidor+mcp
 llm-apps skill anthropics:skills/mcp-builder
 llm-apps skill wshobson:plugins/llm-application-dev/skills/prompt-engineering-patterns
 llm-apps skill wshobson:plugins/llm-application-dev/skills/rag-implementation
@@ -394,6 +491,11 @@ llm-apps plugin mcp-server-dev@claude-plugins-official
 
 ml-training about Training and fine-tuning models: method choice, LoRA, evaluation and tracking
 ml-training category data-ai
+ml-training match pyproject.toml:torch
+ml-training match pyproject.toml:transformers
+ml-training match requirements.txt:torch
+ml-training match requirements.txt:transformers
+ml-training ask fine+tun* finetun* lora
 ml-training skill huggingface:skills/huggingface-llm-trainer
 ml-training skill huggingface:skills/huggingface-vision-trainer
 ml-training skill huggingface:skills/huggingface-trackio
@@ -405,6 +507,8 @@ ml-training skill wshobson:plugins/llm-finetuning/skills/dataset-curation
 
 data-analysis about Exploring data: SQL, statistics, validation, charts and notebooks
 data-analysis category data-ai
+data-analysis match *.ipynb
+data-analysis ask jupyter notebook* pandas data+analysis analisis+de+datos
 data-analysis skill knowledge-work:data/skills/explore-data
 data-analysis skill knowledge-work:data/skills/sql-queries
 data-analysis skill knowledge-work:data/skills/statistical-analysis
@@ -414,6 +518,9 @@ data-analysis skill openai:skills/.curated/jupyter-notebook
 
 data-engineering about Data pipelines: Airflow, dbt, Spark and data quality
 data-engineering category data-ai
+data-engineering match dbt_project.yml
+data-engineering match dags/*
+data-engineering ask airflow dbt spark etl data+pipeline*
 data-engineering skill wshobson:plugins/data-engineering/skills/airflow-dag-patterns
 data-engineering skill wshobson:plugins/data-engineering/skills/dbt-transformation-patterns
 data-engineering skill wshobson:plugins/data-engineering/skills/spark-optimization
@@ -422,6 +529,7 @@ data-engineering skill wshobson:plugins/data-engineering/skills/data-quality-fra
 # --- Beyond code ----------------------------------------------------------------------------
 writing about Documentation and prose that reads as written by a person
 writing category beyond-code
+writing ask write+documentation write+the+docs technical+writing blog+post escribe+la+documentacion redacta*
 writing skill project-docs
 writing skill anthropics:skills/doc-coauthoring
 writing skill wshobson:plugins/avoid-ai-writing/skills/avoid-ai-writing
@@ -430,6 +538,7 @@ writing agent docs-writer
 
 product about Product work: research, specs, roadmaps and interface copy
 product category beyond-code
+product ask roadmap prd user+stor* user+research historia+de+usuario historias+de+usuario
 product skill mattpocock:skills/productivity/grill-me
 product skill knowledge-work:product-management/skills/write-spec
 product skill knowledge-work:product-management/skills/roadmap-update
@@ -440,6 +549,7 @@ product skill knowledge-work:design/skills/ux-copy
 
 marketing about Marketing and SEO: audits, campaigns, content and email sequences
 marketing category beyond-code
+marketing ask seo marketing email+sequence* landing+copy
 marketing skill knowledge-work:marketing/skills/seo-audit
 marketing skill knowledge-work:marketing/skills/content-creation
 marketing skill knowledge-work:marketing/skills/campaign-plan
