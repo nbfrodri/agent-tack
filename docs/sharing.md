@@ -1,6 +1,6 @@
-# Use tack alone, with a team or from a fork
+# Share a project's setup, or fork tack
 
-All three are supported. Start with project settings; use a fork when you want to change tack's own defaults or capabilities across several projects.
+Most use is one person on their own projects, and needs nothing from this page. Committing a project's setup is useful when the same project lives on several machines or other people work on it. A fork is how someone else makes this configuration their own.
 
 ## Work on your own
 
@@ -13,7 +13,7 @@ tack mode auto
 
 You need no team, shared profile or fork. You can still commit useful project instructions and checks so another clone or a future session can reuse them.
 
-## Example: a team building with AI
+## Example: two people on one project
 
 Maya and Leo maintain a Python service. Maya uses Codex; Leo uses Claude Code. The repository already has tests, CI and a PR template. They want both assistants to use the same conventions and check commands.
 
@@ -77,7 +77,7 @@ This is one example rule, not complete coverage for the service. They review unm
 
 ### 2. Review and share
 
-If some collaborators do not have tack, Maya can offer [optional pinned setup files](installation.md#optional-setup-for-collaborators) with `tack bootstrap`. Collaborators choose whether to install; existing personal installations are preserved.
+A collaborator who wants the same integrations installs tack from its repository, or a fork, as described in [installation](installation.md). Cloning the project alone shares its instructions and preferences, not the tooling.
 
 Maya reviews the generated changes and commits `.tack`, `tack.json` and the agreed guidance/maps through a PR. She keeps credentials, private memory and local trust out of Git.
 
@@ -106,7 +106,7 @@ For backend and frontend developers working on separate branches in one reposito
 
 ## Use a fork for deeper customization
 
-A fork is appropriate for a personal setup or a team that wants different cross-project rules, skills, agents, modes or integrations. It is optional for ordinary project configuration.
+This repository follows its owner's preferences and changes without notice, so a fork is the way to keep different rules, skills, agents, sets, modes or integrations. It is not needed to configure a single project.
 
 1. Fork the tack repository into your own GitHub account or organization.
 2. Make and review changes using the [customization map](customization.md).

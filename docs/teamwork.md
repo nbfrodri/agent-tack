@@ -1,6 +1,6 @@
-# Backend and frontend, with separate assistants
+# Parallel branches and separate assistants
 
-Use this guide when people work in different folders and branches of the same repository. Tack helps them share the right context and check integration risks. It cannot see unfetched work or prevent every merge conflict.
+Use this guide when work happens in different folders and branches of the same repository, whether by several people or by one person running assistants in parallel. Tack helps them share the right context and check integration risks. It cannot see unfetched work or prevent every merge conflict.
 
 ## Choose team coordination
 
@@ -13,7 +13,7 @@ tack mode auto --shared
 
 Commit `tack.json`. Team coordination adds guidance about contracts, parallel branches and conflict recovery. `auto` still chooses the effort for each task: a small fix need not become strict. The default collaboration setting is `solo`; it keeps individual work lightweight. A shared `.tack` marker alone does not select team coordination.
 
-New collaborators can use the [optional one-command setup](installation.md#optional-setup-for-collaborators). Cloning the application does not install tools or grant execution trust automatically.
+A new collaborator [installs tack](installation.md) from its repository or a fork. Cloning the application does not install tools or grant execution trust automatically.
 
 ## Example: add order creation
 
