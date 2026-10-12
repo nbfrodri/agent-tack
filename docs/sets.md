@@ -2,7 +2,7 @@
 
 A set is a named bundle of skills, agents and Claude Code plugins for one kind of work: `design`, `testing`, `security`, `backend` and so on. The repository stores the sets, so the same configuration follows you to another machine and to every supported AI tool.
 
-Sets are the only way a skill or an agent gets installed. One set, `core`, is always active: it holds the workflow and project setup skills that the global instructions name. Everything else, including this repository's own skills and agent roles, arrives with a set you activate. `tack-skills` and `tack-agents` bring every skill or every role of this repository at once, without the external collections or the subagent plugins. They are compatibility sets for a former full-catalog choice: they group by origin, not by the work at hand, so the startup index does not offer them to the assistant.
+Sets are the only way a skill or an agent gets installed. One set, `core`, is always active: it holds the workflow and project setup skills that the global instructions name. Everything else, including this repository's own skills and agent roles, arrives with a set you activate. `tack-skills` and `tack-agents` bring every skill or every role of this repository at once, without the external collections or the subagent plugins. They are compatibility sets for a former full-catalog choice: they group by origin, not by the work at hand, so the startup index does not offer them to the assistant. `engineering-lifecycle`, Addy Osmani's complete method, is kept there too: it is an alternative to this repository's workflow for a whole project, which is yours to choose.
 
 Every active skill adds its description to each session. Activate a set where the work happens instead of everywhere.
 
@@ -87,6 +87,8 @@ Do not install the same collection both as a Claude Code plugin and through a se
 
 Within a set, one voice per job. An external skill that prescribes how to work (its own TDD cycle, planning ritual, review procedure or completion check) competes with this repository's workflow, so the sets leave those out and keep external skills that add knowledge or a tool. Reference material that two collections cover is listed once, from the more complete one.
 
+A skill belongs in a set only if its instructions are in the pinned checkout. One that tells the assistant to download its rules when it runs follows whatever that address serves that day, so the pin no longer says what the skill does.
+
 ## Subagent teams
 
 The `agents-*` sets install plugins from two subagent collections, [VoltAgent](https://github.com/VoltAgent/awesome-claude-code-subagents) and [wshobson](https://github.com/wshobson/agents), whose marketplaces are declared in `plugins.txt`. They reach Claude Code only. Each plugin brings several specialists and every one adds its description to the session, so use them per project (`tack set use agents-quality`). Unlike skills from `sources.txt`, marketplace plugins follow their latest version and are not pinned. In a project, a plugin can be installed only after `./install.sh` has added its marketplace once.
@@ -100,7 +102,7 @@ The `agents-*` sets install plugins from two subagent collections, [VoltAgent](h
 | `taste` | Leonxlnx/taste-skill | Visual taste and alternative aesthetics |
 | `addy` | addyosmani/agent-skills | Engineering lifecycle from spec to ship |
 | `anthropics` | anthropics/skills | Frontend design, skill and MCP authoring |
-| `vercel`, `vercel-skills` | vercel-labs/agent-skills, vercel-labs/skills | React, web guidelines, deployment, skill discovery |
+| `vercel`, `vercel-skills` | vercel-labs/agent-skills, vercel-labs/skills | React rules and composition, React Native, view transitions, skill discovery |
 | `mattpocock` | mattpocock/skills | Grilling an idea, specs, tickets and writing for agents |
 | `superpowers` | obra/superpowers | Dispatching parallel agents |
 | `trailofbits` | trailofbits/skills | Static analysis, security review, stronger tests |

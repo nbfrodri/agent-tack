@@ -2,7 +2,7 @@
 
 - Date: 2026-10-11. Scope: every skill folder that `sets.txt` takes from `sources.txt` at the pinned commits (152 folders, 1,009 files, 75 scripts), and the plugins of the `agents-*` sets as cached that day (171 agent definitions).
 - Method: a pattern scan of every text file, followed by reading each hit in context. Patterns: pipe-to-shell installs, `sudo`, global installs, destructive commands, permission bypass, credential paths, secret variables, network sends, telemetry, instruction-override phrasing, writes to agent settings, dynamic execution, hidden Unicode, symlinks leaving the folder, shipped hook or MCP files.
-- Limits: a pattern scan finds known shapes, not intent. Minified scripts and the one native binary were not reviewed. Marketplace plugins are not pinned, so their result holds only for the versions cached on this date. Repeat after `tack set update`.
+- Limits: a pattern scan finds known shapes, not intent. The first pass looked for download commands and missed instructions, written as prose, to fetch rules at run time; a second pass on 2026-10-12 searched for those. Minified scripts and the one native binary were not reviewed. Marketplace plugins are not pinned, so their result holds only for the versions cached on this date. Repeat after `tack set update`.
 
 ## Result
 
@@ -16,6 +16,16 @@ Four items needed a decision. The owner left it to this audit; the last column i
 | Medium | `deploy-to-vercel` (was in `devops`) | Its script packs the project (without `.git`, `.env*` and `node_modules`) and uploads it to a public deploy endpoint that needs no account, returning a claimable preview URL. | Removed from `devops`. Add it back for projects where that upload is intended. |
 | Medium | `huggingface-datasets` (set `llm-apps`) | Documents uploading raw agent session logs (`~/.claude/projects`, `~/.codex/sessions`) to a Hugging Face dataset. It says to default to private repositories and warns that traces can hold secrets. | Kept. Only act on it when asked. |
 | Low | `hf-cli`, `modern-python`, `uv-package-manager`, `playwright-cli`, `bats-testing-patterns` and others | Installation steps use `curl ... \| sh`, `npm install -g`, `brew install` or `pip install` of well-known tools. | Kept. The command guard asks before these run. |
+
+## Instructions fetched at run time (2026-10-12)
+
+Two skills held no rules of their own: each told the assistant to download the latest guidelines from the `main` branch of another repository before every review, so the pinned commit did not determine what they instructed.
+
+| Severity | Where | Finding | Decision |
+| --- | --- | --- | --- |
+| High | `vercel:web-design-guidelines` (was in `design`), `vercel:writing-guidelines` (was in `writing`) | The whole skill is "fetch fresh guidelines before each review" from a `raw.githubusercontent.com` address on `main`. | Removed from both sets. |
+| Medium | `wshobson:dependency-upgrade`, `wshobson:react-modernization` (set `modernization`) | Examples run `npx jscodeshift -t` with a codemod script taken from the `master` branch of `reactjs/react-codemod`. | Kept: the command guard asks before these run. Download and read the script first. |
+| Low | `anthropics:mcp-builder` (set `llm-apps`), `remotion` skills (set `video`), `cloudflare` and `stripe` skills | They send the assistant to the vendor's own current documentation or component source for details the skill does not carry. | Kept: reference lookups from the vendor that wrote the skill, like any documentation search. |
 
 ## Other observations
 
