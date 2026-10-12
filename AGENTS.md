@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This repo is tack: configurable AI development for individuals and teams (project preferences, skills, agents, checks, hooks and installer). Human docs: `README.md` and `docs/README.md`.
+This repo is tack: one person's AI coding configuration, kept in Git so every machine and AI tool works the same way (instructions, skills, agents, sets, checks, hooks and installer). It is public to read or fork, not a product; see `docs/adr/0004-personal-configuration-with-sets.md`. Human docs: `README.md` and `docs/README.md`.
 Architecture and execution flows: `docs/architecture.md`; keep it current when components, dependencies or flows change.
 
 ## Commands

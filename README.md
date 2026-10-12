@@ -65,7 +65,7 @@ tack setup        # clone settings, local differences and existing guidance
 
 An enabled project gets the workflow mode (`auto` picks lite, standard or strict per task), startup context and completion checks. `tack verify --plan` shows which declared checks a change selects; `tack trust` allows running them. [Setup](docs/setup.md) | [Daily use](docs/usage.md) | [Verification](docs/verification.md).
 
-Preferences can also be committed for other clones or collaborators with `--shared`. [Sharing](docs/sharing.md) | [Team workflow](docs/teamwork.md).
+Preferences can also be committed for other clones or collaborators with `--shared`. [Sharing](docs/sharing.md) | [Parallel branches](docs/teamwork.md).
 
 ## Learn more
 

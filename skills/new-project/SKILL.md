@@ -5,7 +5,7 @@ description: "Bootstrap a project or add missing foundations: structure, tests, 
 
 # New project
 
-A new project should have clear instructions and reproducible checks appropriate to its purpose. For new repositories and existing projects adopting tack, first follow [references/onboarding.md](references/onboarding.md): inspect the project, select optional additions with the user, and remember the choices. The checklist below is a menu for the approved scope, not a set of mandatory files. References to other skills are optional shortcuts when those skills are installed; otherwise use the project's existing tooling and conventions. Do not install a catalog to complete a routine setup.
+A new project should have clear instructions and reproducible checks appropriate to its purpose. For new repositories and existing projects being set up with tack, first follow [references/onboarding.md](references/onboarding.md): inspect the project, select optional additions with the user, and remember the choices. The checklist below is a menu for the approved scope, not a set of mandatory files. References to other skills are optional shortcuts when those skills are installed; otherwise use the project's existing tooling and conventions. Do not install a catalog to complete a routine setup.
 
 ## 1. Clarify (one round of questions, with defaults)
 Infer established choices from the repository and conversation. Ask only about unresolved language/runtime, project type, services and deployment choices. When services or the deployment target justify Docker, offer:

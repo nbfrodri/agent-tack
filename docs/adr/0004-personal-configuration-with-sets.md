@@ -23,4 +23,4 @@ Treat this repository as one person's configuration, public to read or fork, wit
 - Cost remains real: every active skill adds its description to each session. Sets are activated per project by default, and only on purpose everywhere.
 - Skills run with the assistant's permissions. Pinning controls when a skill changes, not what it says; reviewing a collection before pinning it stays a manual step.
 - Skills reach every tool in `targets.txt`. Plugins, and agents at project scope, reach Claude Code only.
-- Capabilities that were built for other adopters (collaborator bootstrap, native Windows support, adapters for tools the owner does not use) stay until their use is known. Removing one is a separate decision.
+- The collaborator bootstrap (`tack bootstrap`) was removed on 2026-10-12: it only served teams adopting tack. Native Windows support, branch coordination (`tack team`), shared project preferences and the adapters for all seven tools stay; the owner has those tools installed and chose to keep the rest.

@@ -52,13 +52,13 @@ Use an ADR for a consequential design choice with alternatives; a handoff for wo
 - Regression tests exercise real commands and defects, including pipeline failures, timeouts, staged-only changes and a check that mutates the Git index. The latter cases were reproduced as failures before the fixes.
 - A clean checkout can still contain broken code. `tack verify --all` runs declared checks in that state, preserving local trust and explicit gaps. Its regression test starts with a committed defect, observes failure, then verifies the committed fix.
 - Fresh clones reuse recorded setup choices without inheriting completed local review or execution trust. Confirm the actual choices match the project; file propagation alone does not establish correct onboarding.
-- Installer ownership/restoration tests protect independent user settings. Trust stays local; project adoption cannot grant it.
+- Installer ownership/restoration tests protect independent user settings. Trust stays local; enabling a project cannot grant it.
 - CI checks shell/Python lint, Bash compatibility and native Windows behavior. A passing Linux test does not substitute for a claimed Windows capability.
 
-The [development guide](development.md) gives the commands contributors use. The [team example](sharing.md#example-a-team-building-with-ai) shows adoption and daily use. Shared project preferences now live in optional `tack.json`; local overrides and personal defaults remain separate. See [configuration](configuration.md).
+The [development guide](development.md) gives the commands contributors use. The [two-person example](sharing.md#example-two-people-on-one-project) shows a committed setup in daily use. Shared project preferences now live in optional `tack.json`; local overrides and personal defaults remain separate. See [configuration](configuration.md).
 
 ## Sources and adaptation
 
 Google's review guidance emphasizes useful tests, understandable design, appropriate complexity and documentation. Its small-change guidance favors coherent changes that reviewers can assess. tack uses those principles as review questions, without imposing a line-count quota or importing another organization's workflow. [Code review guidance](https://google.github.io/eng-practices/review/reviewer/looking-for.html), [small changes](https://google.github.io/eng-practices/review/developer/small-cls.html).
 
-DORA's testing guidance emphasizes fast, reliable feedback and maintaining test suites as products evolve. For tack, that means testing actual failure cases and measuring overhead, rather than increasing test counts or replaying an entire suite after every small edit. These sources do not establish tack's effectiveness. [Test automation](https://dora.dev/capabilities/test-automation/).
+DORA's testing guidance emphasizes fast, reliable feedback and maintaining test suites as products evolve. For tack, that means testing actual failure cases rather than increasing test counts or replaying an entire suite after every small edit. These sources describe the practices; they are not evidence that tack improves results. [Test automation](https://dora.dev/capabilities/test-automation/).

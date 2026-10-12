@@ -1,6 +1,6 @@
 # Documentation
 
-New to tack? Read [setup](setup.md), then [daily use](usage.md). You do not need the advanced pages to get started.
+tack is a personal configuration: the [README](../README.md) says what it holds and how to install it on a machine. Read [setup](setup.md) for a project, [sets](sets.md) for skills by kind of work, then [daily use](usage.md).
 
 ## Use tack
 
@@ -8,8 +8,8 @@ New to tack? Read [setup](setup.md), then [daily use](usage.md). You do not need
 | --- | --- |
 | Install and enable a new or existing project | [Setup](setup.md) |
 | Choose task modes and reply styles | [Daily use](usage.md) |
-| Work alone, share a project or maintain a fork | [Sharing](sharing.md) |
-| Coordinate backend/frontend branches and PRs | [Team workflow](teamwork.md) |
+| Commit a project's setup for other clones or collaborators, or fork tack | [Sharing](sharing.md) |
+| Coordinate parallel branches and check a merge before making it | [Parallel branches](teamwork.md) |
 | Save defaults and choose document locations | [Configuration](configuration.md) |
 | Keep personal task notes out of Git | [Private notes](private-notes.md) |
 | Select checks and understand their results | [Verification](verification.md) |

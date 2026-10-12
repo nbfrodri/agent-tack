@@ -1,8 +1,8 @@
 # Set up tack
 
-Install tack once, enable a project and reuse its existing guidance. The same setup works for personal projects and teams. Extra templates are optional.
+Install tack once on a machine, enable a project and reuse its existing guidance. Extra templates are optional.
 
-Joining a project that already uses tack? Run its documented installer (such as `python3 scripts/setup-tack.py`), then **`tack setup`**. It shows the shared choices, local differences and execution trust. Reuse the recorded decisions; you do not need to configure the project again. Cloning alone does not install tack.
+Opening a project that already has a committed setup, on another machine or as a collaborator? [Install tack](installation.md), then run **`tack setup`**. It shows the shared choices, local differences and execution trust. Reuse the recorded decisions; you do not need to configure the project again. Cloning alone does not install tack.
 
 If you only want to run project checks, you can [use the CLI directly](verification.md#use-the-checks-without-installing-ai-guidance) without installing AI guidance or enabling the workflow.
 

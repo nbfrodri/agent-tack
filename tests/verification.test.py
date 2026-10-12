@@ -83,7 +83,7 @@ class VerificationTests(unittest.TestCase):
 
     def test_repository_map_runs_regressions_for_runtime_assets(self):
         self.define(json.loads((REPO / 'checks-map.json').read_text(encoding='utf-8'))['checks'])
-        for path in ('lib/project_setup.py', 'skills/new-project/assets/setup-tack.py',
+        for path in ('lib/project_setup.py', 'lib/sets.py',
                      'skills/project-docs/assets/setup-private.py', 'skills/github-issues/assets/check-pr.py',
                      'bin/tack', 'hooks/claude/session-context.sh'):
             with self.subTest(path=path):

@@ -41,7 +41,6 @@ tests/guard.test.sh      # executable shell syntax, boundaries and long inputs
 tests/project-capabilities.test.sh # project definitions, references and discovery index
 tests/project-setup.test.sh # read-only discovery, minimal scaffold, readiness and remembered review state
 tests/project-config.test.sh # shared preferences, clone propagation, local trust, paths and hook consumers
-tests/bootstrap.test.sh  # optional pinned installation, consent, existing installs and cache failures
 tests/team.test.sh       # branch overlap, isolated merge conflicts and parallel handoff context
 tests/sets.test.sh       # set declarations, pinned sources, project links and the installer's set step
 tests/pr-policy.test.sh  # offline PR metadata, drafts, project conventions and inert event input
