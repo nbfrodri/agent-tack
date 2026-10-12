@@ -467,6 +467,16 @@ case "$moved_path" in
   "$moved_entries"/*/path) printf '%s\n' "$WORK/other-checkout" > "$(dirname "$moved_path")/repo" ;;
   *) fail "no ownership record for the second generated Codex agent" ;;
 esac
+# After a reboot some filesystems (btrfs subvolumes, overlays) report another device number for
+# the same folder; its inode stays. A different inode is a different folder.
+rewrite_identity() {
+  local record
+  record="$(grep -lx "$1" "$moved_entries"/*/path 2>/dev/null | head -n 1)"
+  case "$record" in "$moved_entries"/*/path) ;; *) fail "no ownership record for $1"; return ;; esac
+  sed "$2" "$(dirname "$record")/parent_identity" > "$WORK/identity.tmp" && cat "$WORK/identity.tmp" > "$(dirname "$record")/parent_identity"
+}
+rewrite_identity "$H/.codex/agents/code-reviewer.toml" 's/^[0-9]*:/424242:/'
+rewrite_identity "$H/.codex/agents/docs-writer.toml" 's/:[0-9]*$/:1/'
 git_global "$H" --unset tack.sets
 run_install "$H" --dry-run
 check "a dry run says such a skill link would be removed" "grep -q 'would remove $H/.agents/skills/frontend' '$H.log'"
@@ -475,7 +485,17 @@ check "a skill link whose replaced original is gone is removed" "[ ! -e '$H/.age
 check "an agent link whose replaced original is gone is removed" "[ ! -L '$H/.claude/agents/planner.md' ]"
 check "nothing is reported as kept for uninstall" "! grep -q 'kept $H/.agents/skills/frontend' '$H.log'"
 check "an unchanged generated agent from the deleted checkout is removed" "[ ! -e '$H/.codex/agents/planner.toml' ]"
+check "a generated agent is still removed when only the folder's device number changed" "[ ! -e '$H/.codex/agents/code-reviewer.toml' ]"
+check "one whose folder is a different one is kept" "[ -e '$H/.codex/agents/docs-writer.toml' ] && grep -q 'kept $H/.codex/agents/docs-writer.toml: ownership location changed' '$H.log'"
 check "one recorded by another existing checkout is kept" "[ -e '$H/.codex/agents/evaluator.toml' ] && grep -q 'kept $H/.codex/agents/evaluator.toml' '$H.log'"
+
+echo "Uninstall after the device number of the home folders changed"
+H="$WORK/rebooted"
+run_install "$H"
+for identity in "$H"/.local/state/agent-tack/ownership/entries/*/parent_identity; do
+  sed 's/^[0-9]*:/424242:/' "$identity" > "$WORK/identity.tmp" && cat "$WORK/identity.tmp" > "$identity"
+done
+check "uninstall still removes what the installer linked" "HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 '$REPO/uninstall.sh' >'$H.uninstall.log' 2>&1 && [ ! -L '$H/.claude/CLAUDE.md' ] && [ ! -e '$H/.agents/skills/dev-workflow' ]"
 
 echo "Agents of a set preserve displaced user definitions"
 H="$WORK/optional-roles"

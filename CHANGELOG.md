@@ -35,6 +35,7 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ### Fixed
 
+- Installed files are recognised again after a reboot on filesystems that change a folder's device number (btrfs subvolumes, overlays, network mounts): the folder's inode identifies it. Before, dropping a set kept generated agents as "ownership location changed" and uninstall skipped what it could restore.
 - Agents and skills read each other's files through the checkout (`~/.agents/tack/skills/...`) instead of the installed path, which exists only while a set active everywhere lists that skill; the validator rejects the old form.
 - The `performance-analyzer` description no longer carries Spanish trigger phrases.
 - The PR metadata check accepts a pull request from an automated author such as Dependabot on its title alone, instead of failing it for lacking the template's sections.

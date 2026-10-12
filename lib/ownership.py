@@ -13,7 +13,8 @@ import tempfile
 
 import vscode_settings
 from ownership_platform import (WINDOWS, canonical, copy_permissions, no_symlink_ancestors,
-                                parent_identity, plain_path, redirected, validate_private)
+                                parent_identity, plain_path, redirected, same_identity,
+                                validate_private)
 
 MISSING = object()
 VSCODE_PRODUCTS = ("Code", "Code - Insiders", "VSCodium")
@@ -324,7 +325,7 @@ def same_parent(entry, path):
         identity = result.stdout.strip()
     else:
         identity = parent_identity(path.parent)
-    return identity == read(entry / "parent_identity")
+    return same_identity(read(entry / "parent_identity"), identity)
 
 
 def write_json(path, value):

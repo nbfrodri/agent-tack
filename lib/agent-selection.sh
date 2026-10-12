@@ -26,7 +26,7 @@ deselect_agent() {
   # or deleted since; one from another checkout that is still there belongs to that installation.
   recorded_repo="$(cat "$OWN_ENTRY/repo" 2>/dev/null)"
   if { [ "$recorded_repo" != "$REPO" ] && [ -d "$recorded_repo" ]; } ||
-     [ "$(ownership_parent_identity "$(dirname "$target")")" != "$(cat "$OWN_ENTRY/parent_identity" 2>/dev/null)" ]; then
+     ! ownership_same_identity "$(cat "$OWN_ENTRY/parent_identity" 2>/dev/null)" "$(ownership_parent_identity "$(dirname "$target")")"; then
     warn "kept $target: ownership location changed"
     return
   fi

@@ -93,6 +93,16 @@ def parent_identity(path):
     return f"{info.st_dev}:{info.st_ino}"
 
 
+def same_identity(recorded, current):
+    """Whether two device:inode identities name the same folder. Some filesystems (btrfs
+    subvolumes, overlays, network mounts) report another device number after a reboot, so on POSIX
+    the inode decides; the recorded path is compared separately. Windows identities are stable."""
+    if recorded == current or WINDOWS:
+        return recorded == current
+    old, new = recorded.rpartition(":")[2], current.rpartition(":")[2]
+    return ":" in recorded and ":" in current and old.isdigit() and old == new
+
+
 def main():
     action, value = sys.argv[1:3]
     path = Path(canonical(value))

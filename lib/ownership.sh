@@ -151,6 +151,17 @@ ownership_link_replaced() {
   [ "$(cat "$OWN_ENTRY/before_kind" 2>/dev/null)" != absent ]
 }
 
+# ownership_same_identity RECORDED CURRENT: both name the same folder. Some filesystems (btrfs
+# subvolumes, overlays, network mounts) report another device number after a reboot, so the
+# inode decides; native Windows identities are stable and compared whole.
+ownership_same_identity() {
+  [ "$1" != "$2" ] || return 0
+  [ "${OWN_NATIVE:-0}" -ne 1 ] || return 1
+  case "$1:$2" in *:*:*:*) ;; *) return 1 ;; esac
+  case "${1##*:}" in '' | *[!0-9]*) return 1 ;; esac
+  [ "${1##*:}" = "${2##*:}" ]
+}
+
 ownership_parent_identity() {
   if [ "${OWN_NATIVE:-0}" -eq 1 ]; then
     python3 "$REPO/lib/ownership_platform.py" identity "$1"
