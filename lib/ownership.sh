@@ -119,17 +119,23 @@ ownership_release_link() {
   done
 }
 
-# ownership_release_dangling PATH: drops the record of a link that replaced a symlink whose own
-# target no longer exists, such as one into a checkout that was since moved or deleted: putting
-# it back would only restore a broken link.
-ownership_release_dangling() {
-  local before index=0
+# ownership_original_gone PATH: succeeds when tack's link at PATH replaced a symlink whose own
+# target no longer exists, such as one into a checkout that was since moved or deleted. Putting
+# it back would only restore a broken link, so there is nothing of the user's to keep it for.
+ownership_original_gone() {
+  local before
   ownership_find link "$1"
   [ -n "$OWN_ENTRY" ] || return 1
   [ "$(cat "$OWN_ENTRY/before_kind" 2>/dev/null)" = symlink ] || return 1
   before="$(cat "$OWN_ENTRY/before_target" 2>/dev/null)"
   case "$before" in /*) ;; *) return 1 ;; esac
-  [ ! -e "$before" ] || return 1
+  [ ! -e "$before" ]
+}
+
+# ownership_release_dangling PATH: drops the record of such a link once it is removed on purpose.
+ownership_release_dangling() {
+  local index=0
+  ownership_original_gone "$1" || return 1
   rm -rf "$OWN_ENTRY" || return 1
   while [ "$index" -lt "$OWN_COUNT" ]; do
     if [ "${OWN_ENTRIES[$index]}" = "$OWN_ENTRY" ]; then OWN_PATHS[index]='' OWN_KINDS[index]=''; fi

@@ -11,10 +11,10 @@ deselect_agent() {
   [ "$parent" = "$HOME" ] || { warn "kept $target: outside HOME"; return; }
   if [ "$kind" = link ]; then
     [ -L "$target" ] && [ "$(readlink "$target")" = "$source" ] || return 0
-    if ownership_link_replaced "$target"; then
+    if ownership_link_replaced "$target" && ! ownership_original_gone "$target"; then
       warn "kept $target: it replaced your file; uninstall restores it"
     elif [ "$DRY_RUN" -eq 1 ]; then ok "would remove $target (no active set lists it)"
-    elif ownership_release_link "$target"; then
+    elif ownership_release_link "$target" || ownership_release_dangling "$target"; then
       rm -f "$target" && ok "removed $target (no active set lists it)"
     fi
     return

@@ -89,8 +89,8 @@ EOF
       case "$target" in "$store"/*) ;; *) continue ;; esac
       ! grep -qxF "${entry##*/}	$target" "$plan" || continue
       if [ "$DRY_RUN" -eq 1 ]; then ok "would remove $entry (no active set lists it)"
-      elif ownership_link_replaced "$entry"; then warn "kept $entry: it replaced a skill of yours, which ./uninstall.sh restores"
-      elif ownership_release_link "$entry"; then rm -f "$entry" && ok "removed $entry (no active set lists it)"; fi
+      elif ownership_link_replaced "$entry" && ! ownership_original_gone "$entry"; then warn "kept $entry: it replaced a skill of yours, which ./uninstall.sh restores"
+      elif ownership_release_link "$entry" || ownership_release_dangling "$entry"; then rm -f "$entry" && ok "removed $entry (no active set lists it)"; fi
     done
   done <<EOF
 $dirs

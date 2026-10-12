@@ -40,7 +40,7 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 - The PR metadata check accepts a pull request from an automated author such as Dependabot on its title alone, instead of failing it for lacking the template's sections.
 - `tack memory add` refuses environment-style assignments whose variable names a credential, such as `DB_PASS=...` or `AWS_SECRET_ACCESS_KEY=...`.
 - Skill descriptions holding `": "` are quoted and agent descriptions reworded, so strict YAML readers no longer skip `api-design`, `auth`, `e2e-testing`, `frontend` and `git-history`; the validator rejects a new unquoted one.
-- The installer removes a link under the former `harness` name when the link it replaced pointed into a checkout that no longer exists, instead of keeping a broken link.
+- The installer removes a link whose replaced original pointed into a checkout that no longer exists, instead of keeping it for an uninstall that has nothing to restore: links under the former `harness` name, and skill and agent links no active set lists.
 - Windows collaborator setup selects Git Bash explicitly instead of the System32 WSL launcher.
 - Collaborator setup isolates inherited Git directory/index overrides and rejects junctions on older supported Python versions.
 - Team completion checks no longer ask to refresh another branch's handoff merely because its branch differs.

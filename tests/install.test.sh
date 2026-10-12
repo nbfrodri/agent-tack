@@ -75,6 +75,7 @@ H_GONE="$WORK/former-gone"
 run_install "$H_GONE"
 gone_entries="$H_GONE/.local/state/agent-tack/ownership/entries"
 gone_entry="$(grep -lx "$H_GONE/.local/bin/tack" "$gone_entries"/*/path | head -n 1)"
+case "$gone_entry" in "$gone_entries"/*/path) ;; *) fail "no ownership record for the tack command"; gone_entry="$gone_entries/missing/path" ;; esac
 cp -Rp "$(dirname "$gone_entry")" "$gone_entries/9000"
 printf '%s\n' "$H_GONE/.local/bin/harness" > "$gone_entries/9000/path"
 printf '%s\n' "$REPO/bin/harness" > "$gone_entries/9000/target"
@@ -435,6 +436,31 @@ git_global "$H" tack.sets tack-skills
 run_install "$H"
 check "activating a set again installs it again" "[ -L '$H/.agents/skills/frontend' ]"
 check "uninstall still restores after the sets changed" "HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 '$REPO/uninstall.sh' >'$H.uninstall.log' 2>&1 && [ ! -e '$H/.agents/skills/dev-workflow' ]"
+
+echo "Links recorded as replacing a link into a vanished checkout"
+H="$WORK/moved-checkout"
+mkdir -p "$H"
+git_global "$H" tack.sets tack-skills,tack-agents
+run_install "$H"
+check "the set's skills and agents are installed first" "[ -L '$H/.agents/skills/frontend' ] && [ -L '$H/.claude/agents/planner.md' ]"
+moved_entries="$H/.local/state/agent-tack/ownership/entries"
+# What an install from a since-deleted checkout leaves: the record says each link replaced a link.
+for moved in "$H/.agents/skills/frontend" "$H/.claude/skills/frontend" "$H/.claude/agents/planner.md"; do
+  moved_path="$(grep -lx "$moved" "$moved_entries"/*/path 2>/dev/null | head -n 1)"
+  # Without a record there is nothing to rewrite, and dirname of nothing would be this directory.
+  case "$moved_path" in "$moved_entries"/*/path) ;; *) fail "no ownership record for $moved"; continue ;; esac
+  moved_entry="$(dirname "$moved_path")"
+  printf 'symlink\n' > "$moved_entry/before_kind"
+  printf '%s\n' "$WORK/vanished-checkout/${moved##*/}" > "$moved_entry/before_target"
+  chmod -R go-rwx "$moved_entry"
+done
+git_global "$H" --unset tack.sets
+run_install "$H" --dry-run
+check "a dry run says such a skill link would be removed" "grep -q 'would remove $H/.agents/skills/frontend' '$H.log'"
+run_install "$H"
+check "a skill link whose replaced original is gone is removed" "[ ! -e '$H/.agents/skills/frontend' ] && [ ! -L '$H/.claude/skills/frontend' ]"
+check "an agent link whose replaced original is gone is removed" "[ ! -L '$H/.claude/agents/planner.md' ]"
+check "nothing is reported as kept for uninstall" "! grep -q 'kept $H/.agents/skills/frontend' '$H.log'"
 
 echo "Agents of a set preserve displaced user definitions"
 H="$WORK/optional-roles"
