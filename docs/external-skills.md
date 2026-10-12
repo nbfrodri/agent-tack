@@ -23,7 +23,7 @@ List the named candidates with `npx skills add DietrichGebert/ponytail --list` o
 
 | Tool | Fit and boundary |
 | --- | --- |
-| [Aislop](https://github.com/scanaislop/aislop) | Optional diagnostics; trial findings against existing lint. [Verification guidance](verification.md#optional-external-checks). |
+| [Aislop](https://github.com/scanaislop/aislop) | Built in as the optional [slop check](verification.md#slop-check-with-aislop) before the assistant stops; also usable as a CI gate. |
 | [pre-commit](https://github.com/pre-commit/pre-commit) | Reuse the project's hook runner; avoid a competing manager. |
 | [reviewdog](https://github.com/reviewdog/reviewdog) | Optional static-analysis review reporting; public comments need the chosen authorization. |
 | [Worktrunk](https://github.com/max-sixty/worktrunk) | Optional worktree convenience; native Git remains sufficient. |

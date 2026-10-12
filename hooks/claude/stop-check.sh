@@ -134,6 +134,16 @@ EOF
   fi
 fi
 
+# aislop, when installed: a deterministic scan of the changed code for what assistants leave
+# behind. It reads the project's own configuration and may run its linters, so it needs local
+# trust like the tests; lib/slop_check.py turns its telemetry off and prints only findings.
+if command -v python3 >/dev/null 2>&1 && "$cli" trusted --quiet \
+  && [ "$("$cli" config slop-check --get 2>/dev/null)" != "false" ] \
+  && printf '%s\n' "$changed" | grep -E "$SOURCE_FILES" | grep -qvE "$TEST_FILES"; then
+  slop="$(python3 "$(dirname "$cli")/../lib/slop_check.py" "$root" "$base" 2>/dev/null)"
+  [ -z "$slop" ] || add "$slop"
+fi
+
 if [ -f docs-map.txt ]; then
   while IFS='|' read -r pattern docs; do
     pattern="$(printf '%s' "$pattern" | tr -d '[:space:]')"
