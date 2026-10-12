@@ -14,28 +14,19 @@ tack doctor --tools                # check each installed AI tool instead of the
 ./uninstall.sh                         # restore recorded unchanged state
 ```
 
-Fresh installations expose two skills: `dev-workflow` and `new-project`. Specialist agents are off by default. Engineering guidance, project configuration, checks and safety hooks remain available. This keeps the always-visible catalog small. [Sets](sets.md) add skills, agents and plugins for one kind of work, per project or everywhere.
-
-Skills come in groups (`skill-groups.txt`): `core` (the two default skills, always installed), `process` (debugging, testing, documentation, GitHub, delegation and releases) and `stack` (frontend, APIs, databases, auth, end-to-end tests, deployment, observability). Choose optional groups when useful, then re-run the installer:
+A fresh installation has one set active, `core`, with two skills: `dev-workflow` and `new-project`. Every other skill and every agent role comes with a [set](sets.md), which you activate in one project or everywhere:
 
 ```bash
-tack config skill-groups process --global   # core and process; or core, stack, or all
-tack config agent-roles true --global       # optional specialist agent catalog
-./install.sh
+tack set list                      # what exists and where it is active
+tack set use testing               # in this project
+tack set use review --global       # everywhere, applied by ./install.sh
+tack set use tack-skills --global   # every skill of this repository at once
+tack set use tack-agents --global   # every agent role at once
 ```
 
-Upgrading preserves explicit group choices. To keep the previous full catalog, save `skill-groups all` and `agent-roles true` with `--global` before reinstalling. Without an explicit choice the new defaults apply. To return to the small catalog, save `skill-groups core` and `agent-roles false`, then reinstall. Deselection removes only tack's own skill links and unchanged generated roles; edited/foreign files stay. A link that displaced your original file remains until uninstall can restore it. These are personal installation choices, not shared project settings.
+Dropping a set and reinstalling removes only tack's own skill links and unchanged generated roles; edited and foreign files stay, and a link that displaced a file of yours remains until uninstall can restore it. Which sets are active is a personal choice saved in Git config, not a shared project setting.
 
-The first install that registers hooks ends with a short list of them and what each does (from `hooks/summary.txt`), and how to turn them off; later installs skip it. `--no-hooks` registers no git, Claude Code or Codex hooks and removes tack's Claude Code and Codex hooks from an earlier install (your own hooks stay); global git hooks from an earlier install remain until `./uninstall.sh`, which restores your former `core.hooksPath`. Without hooks the rules apply only as instructions.
-
-Doctor checks required tools, managed links, Claude settings and hook registration, ownership metadata, effective Git hooks, project activation and formatter trust. Missing optional CLIs and deliberate foreign hooks paths produce warnings. Broken managed components produce errors (exit 1); a healthy checked installation exits 0. Doctor works outside Git and never runs plugins or prints restoration snapshots or credentials. It diagnoses configuration rather than proving every external tool works. Doctor also warns when the claude CLI is missing or a tack mod is not installed or is disabled, and reports `chat.useAgentsMdFile` for each VS Code install it finds.
-
-`tack doctor --tools` checks each installed AI tool listed in `targets.txt`: version, configured capabilities, minimum version and a non-interactive smoke check (`claude doctor`, `codex doctor --summary`). It prints no tool output or credentials. A failed smoke check or an old version is a warning; a broken managed link is an error. A weekly CI workflow installs the latest Claude Code and Codex and runs the same check, so breaking changes in either tool surface early.
-
-Installation records changes privately under `${XDG_STATE_HOME:-$HOME/.local/state}/agent-tack/ownership`. Original state and installation-time tool declarations survive reinstallations, so later customization does not invalidate historical ownership. These snapshots may include private settings: do not commit or share them. Uninstall needs Python to validate ownership and selectively restore settings. It removes unchanged recorded links, restores safely displaced original files or links, and reverses unchanged owned settings and Git hooks. Changed links, parent directories, settings and hooks are preserved conservatively; retained records allow a later retry.
-
-Uninstall never deletes project files, project activation/trust configuration or shared plugins. It removes only the mods and local marketplace recorded by the installer; plugins from `plugins.txt`, and mods or marketplaces you already had, are kept.
-
+Upgrading from a version with skill groups: the `skill-groups` and `agent-roles` settings are no longer read. Run `tack migrate` once; a choice of optional groups becomes `tack-skills`, enabled roles become `tack-agents`, and `./install.sh` then leaves your installation as it was.
 
 ## Updating
 ```bash

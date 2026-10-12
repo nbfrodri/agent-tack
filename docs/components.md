@@ -1,6 +1,6 @@
 # Components
 
-Available skills, agents and plugins, in one line each. Fresh installations expose only `dev-workflow` and `new-project`; other skills and all specialist agents are opt-in. [Choose the catalog](installation.md).
+Available skills, agents and plugins, in one line each. Fresh installations expose only `dev-workflow` and `new-project`, the `core` set; every other skill and agent comes with a [set](sets.md).
 
 ## Skills
 

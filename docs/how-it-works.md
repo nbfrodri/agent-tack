@@ -33,9 +33,9 @@ One line per tool; `-` means tack does not manage that integration, not that the
 ## What the installer does
 | Step | Details |
 | --- | --- |
-| Instructions and skills | Links `global/AGENTS.md` and every skill of the selected groups (`skill-groups.txt`, `tack config skill-groups`) into each tool's paths (above) and into `~/.agents/skills`; removes its own links to skills of deselected groups. |
-| Sets | Links the skills that the sets active everywhere (`tack set use NAME --global`) take from `sources.txt`, after checking each collection out at its pinned commit under `~/.local/share/agent-tack/sources`; removes its own links to skills no active set lists. A set also selects tack skills, agents and plugins. [Sets](sets.md). |
-| Agents | With `agent-roles true --global`, links Claude definitions and generates native Codex, Gemini, Copilot, OpenCode and Cursor definitions for selected tools. Off by default; deselection preserves edited and foreign files. |
+| Instructions and skills | Links `global/AGENTS.md` and every skill of this repository that a set active everywhere lists (`sets.txt`; `core` is always active) into each tool's paths (above) and into `~/.agents/skills`; removes its own links to skills no active set lists. |
+| Skills from other collections | Links the skills that the sets active everywhere (`tack set use NAME --global`) take from `sources.txt`, after checking each collection out at its pinned commit under `~/.local/share/agent-tack/sources`; removes its own links to skills no active set lists. A set also selects tack skills, agents and plugins. [Sets](sets.md). |
+| Agents | For each agent role a set active everywhere lists, links the Claude definition and generates native Codex, Gemini, Copilot, OpenCode and Cursor definitions for the tools found. None by default; dropping a set preserves edited and foreign files. |
 | Settings | Deep-merges each declared tool template; your keys and hooks are kept, hooks tagged `#tack` are replaced. `--no-hooks` removes managed registrations while preserving your own. |
 | Git hooks | Points the global `core.hooksPath` at `git-hooks/`, unless you use a different one. |
 | Command | Links `bin/tack` into `~/.local/bin`, and the repo into `~/.agents/tack`. |

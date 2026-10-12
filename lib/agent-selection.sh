@@ -13,9 +13,9 @@ deselect_agent() {
     [ -L "$target" ] && [ "$(readlink "$target")" = "$source" ] || return 0
     if ownership_link_replaced "$target"; then
       warn "kept $target: it replaced your file; uninstall restores it"
-    elif [ "$DRY_RUN" -eq 1 ]; then ok "would remove $target (agent roles disabled)"
+    elif [ "$DRY_RUN" -eq 1 ]; then ok "would remove $target (no active set lists it)"
     elif ownership_release_link "$target"; then
-      rm -f "$target" && ok "removed $target (agent roles disabled)"
+      rm -f "$target" && ok "removed $target (no active set lists it)"
     fi
     return
   fi
@@ -30,7 +30,7 @@ deselect_agent() {
   recorded="$(cat "$OWN_ENTRY/sha256" 2>/dev/null)"
   if [ "$(file_sha256 "$target")" != "$recorded" ]; then
     warn "kept $target: edited agent"
-  elif [ "$DRY_RUN" -eq 1 ]; then ok "would remove $target (agent roles disabled)"
-  else rm -f "$target" && ok "removed $target (agent roles disabled)"; fi
+  elif [ "$DRY_RUN" -eq 1 ]; then ok "would remove $target (no active set lists it)"
+  else rm -f "$target" && ok "removed $target (no active set lists it)"; fi
   # Preserve ownership metadata: reinstall can update it; uninstall handles absent files.
 }

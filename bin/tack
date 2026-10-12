@@ -265,6 +265,22 @@ case "$cmd" in
       echo "Replaced $root/.harness with .tack — commit the change to share it."
       migrated=1
     fi
+    # Skill groups and the agent-roles switch became sets: a former choice of optional skills
+    # selects tack-skills, and enabled roles select tack-agents, so nothing installed is lost.
+    if key_scope global skillGroups || key_scope global agentRoles; then
+      sets="$(key_get global sets 2>/dev/null | tr -d ' ' || true)"
+      case ",$(key_get global skillGroups 2>/dev/null | tr -d ' ' || true)," in
+        *,all,* | *,process,* | *,stack,*) case ",$sets," in *,tack-skills,*) ;; *) sets="${sets:+$sets,}tack-skills" ;; esac ;;
+      esac
+      if [ "$(key_get --bool global agentRoles 2>/dev/null || true)" = true ]; then
+        case ",$sets," in *,tack-agents,*) ;; *) sets="${sets:+$sets,}tack-agents" ;; esac
+      fi
+      [ -z "$sets" ] || key_set global sets "$sets" || fail "cannot save the sets"
+      key_unset global skillGroups || fail "cannot remove the former skill-groups setting"
+      key_unset global agentRoles || fail "cannot remove the former agent-roles setting"
+      echo "Replaced the former skill-groups and agent-roles settings with sets${sets:+ ($sets)}; run install.sh to apply."
+      migrated=1
+    fi
     [ "$migrated" -eq 1 ] || echo "Nothing to migrate: only tack names are in use."
     ;;
   status)

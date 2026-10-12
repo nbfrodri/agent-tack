@@ -19,6 +19,8 @@ Treat this repository as one person's configuration, public to read or fork, wit
 
 ## Consequences
 
+- Since 2026-10-12 sets are the only selection mechanism: skill groups and the `agent-roles` switch were folded into them, with `core` always active and `tack-skills` and `tack-agents` as the equivalents of the former full catalog.
+
 - Defaults follow the owner's preferences and may change without a migration path for other users. A fork is the supported way to diverge.
 - Cost remains real: every active skill adds its description to each session. Sets are activated per project by default, and only on purpose everywhere.
 - Skills run with the assistant's permissions. Pinning controls when a skill changes, not what it says; reviewing a collection before pinning it stays a manual step.

@@ -48,7 +48,7 @@ print(json.dumps(d))' "$1" "$2"
   fi
 }
 
-skill_count="$(grep -cE '^[a-z-]+[[:space:]]+core$' "$REPO/skill-groups.txt")"
+skill_count="$(grep -cE '^core[[:space:]]+skill[[:space:]]' "$REPO/sets.txt")"
 
 echo "Fresh machine"
 H="$WORK/fresh"
@@ -395,41 +395,54 @@ echo '{broken' > "$H/.claude/settings.json"
 run_install "$H"
 check "no hook summary when registering the hooks failed" "! grep -q 'Hooks installed' '$H.log'"
 
-echo "Skill groups (tack config skill-groups)"
+echo "Sets select tack's own skills (tack set use NAME --global)"
 H="$WORK/groups"
 run_install "$H"
-check "default core omits advanced skills" "[ ! -e '$H/.agents/skills/frontend' ] && [ ! -e '$H/.agents/skills/improve' ] && [ -L '$H/.agents/skills/dev-workflow' ]"
-git_global "$H" tack.skillGroups process
+check "only the core set's skills are installed by default" "[ ! -e '$H/.agents/skills/frontend' ] && [ ! -e '$H/.agents/skills/improve' ] && [ -L '$H/.agents/skills/dev-workflow' ] && [ -L '$H/.agents/skills/new-project' ]"
+git_global "$H" tack.sets tack-agents
 run_install "$H"
-check "a deselected group's skills are removed" "[ ! -e '$H/.agents/skills/frontend' ] && [ ! -e '$H/.claude/skills/frontend' ]"
-check "selected groups stay" "[ -L '$H/.agents/skills/improve' ]"
-check "core skills including onboarding are always installed" "[ -L '$H/.agents/skills/dev-workflow' ] && [ -L '$H/.agents/skills/lessons' ] && [ -L '$H/.agents/skills/new-project' ]"
-check "the installer says which groups it installed" "grep -q 'skill groups: core, process' '$H.log'"
+check "a set of agents brings its roles and no skills" "[ -L '$H/.claude/agents/planner.md' ] && [ ! -e '$H/.agents/skills/frontend' ]"
+git_global "$H" tack.sets tack-skills
+run_install "$H"
+check "a set's skills are installed for every tool" "[ -L '$H/.agents/skills/frontend' ] && [ -L '$H/.claude/skills/improve' ] && [ -L '$H/.codex/skills/testing' ]"
+check "the agents of a dropped set are removed" "[ ! -e '$H/.claude/agents/planner.md' ]"
+check "the installer says which sets are active" "grep -q 'active everywhere: core,tack-skills' '$H.log'"
+git_global "$H" --unset tack.sets
+run_install "$H"
+check "a dropped set's skills are removed" "[ ! -e '$H/.agents/skills/frontend' ] && [ ! -e '$H/.claude/skills/frontend' ]"
+check "the core set's skills are always installed" "[ -L '$H/.agents/skills/dev-workflow' ] && [ -L '$H/.agents/skills/new-project' ]"
+git_global "$H" tack.skillGroups all
+git_global "$H" tack.agentRoles true
+run_install "$H"
+check "the former group and role settings no longer install anything" "[ ! -e '$H/.agents/skills/frontend' ] && [ ! -e '$H/.claude/agents/planner.md' ]"
+check "and the installer says how to carry them over" "grep -q 'tack migrate' '$H.log'"
+git_global "$H" --unset tack.skillGroups
+git_global "$H" --unset tack.agentRoles
 H2="$WORK/groups-own"
 mkdir -p "$H2/.agents/skills/frontend"
 printf 'my own frontend notes\n' > "$H2/.agents/skills/frontend/SKILL.md"
-git_global "$H2" tack.skillGroups all
+git_global "$H2" tack.sets tack-skills
 run_install "$H2"
 check "a skill of the user's is backed up when tack's takes its name" "[ -L '$H2/.agents/skills/frontend' ]"
-git_global "$H2" tack.skillGroups core
+git_global "$H2" --unset tack.sets
 run_install "$H2" --dry-run
 check "a dry run says the link that replaced the user's skill stays" "grep -q 'would keep $H2/.agents/skills/frontend' '$H2.log' && ! grep -q 'would remove $H2/.agents/skills/frontend' '$H2.log'"
 run_install "$H2"
 check "the link that replaced the user's skill stays until uninstall" "[ -L '$H2/.agents/skills/frontend' ] && grep -q 'kept $H2/.agents/skills/frontend' '$H2.log'"
 check "links that took nothing's place are removed" "[ ! -e '$H2/.claude/skills/frontend' ]"
 check "uninstall gives the user's own skill back" "HOME='$H2' XDG_CONFIG_HOME='$H2/.config' GIT_CONFIG_NOSYSTEM=1 '$REPO/uninstall.sh' >'$H2.uninstall.log' 2>&1 && grep -q 'my own frontend notes' '$H2/.agents/skills/frontend/SKILL.md'"
-git_global "$H" tack.skillGroups all
+git_global "$H" tack.sets tack-skills
 run_install "$H"
-check "selecting a group again installs it again" "[ -L '$H/.agents/skills/frontend' ]"
-check "uninstall still restores after groups changed" "HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 '$REPO/uninstall.sh' >'$H.uninstall.log' 2>&1 && [ ! -e '$H/.agents/skills/dev-workflow' ]"
+check "activating a set again installs it again" "[ -L '$H/.agents/skills/frontend' ]"
+check "uninstall still restores after the sets changed" "HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 '$REPO/uninstall.sh' >'$H.uninstall.log' 2>&1 && [ ! -e '$H/.agents/skills/dev-workflow' ]"
 
-echo "Optional Claude roles preserve displaced user definitions"
+echo "Agents of a set preserve displaced user definitions"
 H="$WORK/optional-roles"
 mkdir -p "$H/.claude/agents"
 echo 'my planner' > "$H/.claude/agents/planner.md"
-git_global "$H" tack.agentRoles true
+git_global "$H" tack.sets tack-agents
 run_install "$H"
-git_global "$H" tack.agentRoles false
+git_global "$H" --unset tack.sets
 run_install "$H"
 check "deselection removes an owned role link" "[ ! -e '$H/.claude/agents/code-reviewer.md' ]"
 check "deselection retains restoration of a displaced role" "[ -L '$H/.claude/agents/planner.md' ] && grep -q 'it replaced your file' '$H.log'"

@@ -10,6 +10,49 @@
 # description to each session, so keep sets focused and activate them where the work happens.
 # Two different skills may not share a name; the same skill may appear in several sets.
 
+# --- Base ---------------------------------------------------------------------------------
+# core is always active: global/AGENTS.md names its skills, so they must be installed everywhere.
+core about The workflow and project setup that every session relies on; always active
+core category base
+core skill dev-workflow
+core skill new-project
+
+# Compatibility: everything of this repository at once, grouped by origin rather than by the
+# work at hand, so the startup index does not offer them. `tack migrate` selects these for a
+# former skill-groups or agent-roles choice; prefer the sets below, by kind of work.
+tack-skills about Every skill of this repository (not the external collections) at once
+tack-skills category compat
+tack-skills skill api-design
+tack-skills skill auth
+tack-skills skill auto-improve
+tack-skills skill database
+tack-skills skill debugging
+tack-skills skill deployment
+tack-skills skill e2e-testing
+tack-skills skill frontend
+tack-skills skill git-history
+tack-skills skill github-issues
+tack-skills skill improve
+tack-skills skill lessons
+tack-skills skill observability
+tack-skills skill orchestrate
+tack-skills skill project-docs
+tack-skills skill release
+tack-skills skill testing
+
+tack-agents about Every agent role of this repository (not the subagent plugins) at once
+tack-agents category compat
+tack-agents agent architecture-reviewer
+tack-agents agent code-reviewer
+tack-agents agent docs-writer
+tack-agents agent evaluator
+tack-agents agent implementer
+tack-agents agent performance-analyzer
+tack-agents agent planner
+tack-agents agent security-auditor
+tack-agents agent test-writer
+tack-agents agent ui-reviewer
+
 # --- Interfaces -----------------------------------------------------------------------------
 design about Web interfaces: visual direction, polish and review
 design category interfaces
@@ -109,7 +152,6 @@ backend skill database
 backend skill auth
 backend skill observability
 backend skill supabase:skills/supabase-postgres-best-practices
-backend skill wshobson:plugins/database-design/skills/postgresql-table-design
 backend skill wshobson:plugins/developer-essentials/skills/sql-optimization-patterns
 backend skill wshobson:plugins/javascript-typescript/skills/nodejs-backend-patterns
 
@@ -167,13 +209,11 @@ video skill remotion:skills/remotion-captions
 video skill remotion:skills/remotion-render
 
 # --- Quality --------------------------------------------------------------------------------
-testing about Tests first, browser tests, debugging and stronger test techniques
+testing about Behavioral tests, browser tests, debugging and stronger test techniques
 testing category quality
 testing skill testing
 testing skill e2e-testing
 testing skill debugging
-testing skill mattpocock:skills/engineering/tdd
-testing skill anthropics:skills/webapp-testing
 testing skill playwright:skills/playwright-cli
 testing skill trailofbits:plugins/property-based-testing/skills/property-based-testing
 testing skill trailofbits:plugins/mutation-testing/skills/mutation-testing
@@ -182,7 +222,6 @@ testing agent test-writer
 review about Code review, simplification and pull request feedback
 review category quality
 review skill improve
-review skill addy:skills/code-review-and-quality
 review skill addy:skills/code-simplification
 review skill sentry:skills/find-bugs
 review skill sentry:skills/iterate-pr
@@ -190,7 +229,6 @@ review skill openai:skills/.curated/gh-address-comments
 review agent code-reviewer
 review agent architecture-reviewer
 review agent evaluator
-review plugin pr-review-toolkit@claude-plugins-official
 
 security about Static analysis, risky changes, dependencies and threat models
 security category quality
@@ -229,8 +267,6 @@ planning skill project-docs
 planning skill mattpocock:skills/productivity/grill-me
 planning skill mattpocock:skills/engineering/to-spec
 planning skill mattpocock:skills/engineering/to-tickets
-planning skill superpowers:skills/brainstorming
-planning skill superpowers:skills/writing-plans
 planning agent planner
 
 git-release about Git history, issues, pull requests, CI fixes and releases
@@ -247,9 +283,6 @@ orchestration category process
 orchestration skill orchestrate
 orchestration skill auto-improve
 orchestration skill superpowers:skills/dispatching-parallel-agents
-orchestration skill superpowers:skills/subagent-driven-development
-orchestration skill superpowers:skills/using-git-worktrees
-orchestration skill superpowers:skills/verification-before-completion
 orchestration agent implementer
 
 modernization about Upgrades and migrations: dependencies, frameworks, schemas and deprecations
@@ -293,7 +326,6 @@ agent-tooling category process
 agent-tooling skill lessons
 agent-tooling skill anthropics:skills/skill-creator
 agent-tooling skill mattpocock:skills/productivity/writing-for-agents
-agent-tooling skill superpowers:skills/writing-skills
 agent-tooling skill vercel-skills:skills/find-skills
 agent-tooling skill sentry:skills/skill-scanner
 agent-tooling skill sentry:skills/agents-md
@@ -341,7 +373,6 @@ cloudflare skill cloudflare:skills/wrangler
 monitoring about Metrics, dashboards, tracing, SLOs and instrumentation
 monitoring category operations
 monitoring skill observability
-monitoring skill addy:skills/observability-and-instrumentation
 monitoring skill wshobson:plugins/observability-monitoring/skills/prometheus-configuration
 monitoring skill wshobson:plugins/observability-monitoring/skills/grafana-dashboards
 monitoring skill wshobson:plugins/observability-monitoring/skills/distributed-tracing
@@ -393,7 +424,6 @@ writing skill project-docs
 writing skill anthropics:skills/doc-coauthoring
 writing skill vercel:skills/writing-guidelines
 writing skill wshobson:plugins/avoid-ai-writing/skills/avoid-ai-writing
-writing skill addy:skills/documentation-and-adrs
 writing skill callstack:skills/writing-user-docs
 writing agent docs-writer
 

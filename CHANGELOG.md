@@ -6,7 +6,7 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ### Added
 
-- Sets: named bundles of skills, agents and Claude Code plugins in `sets.txt`, with external skill collections pinned to a full commit in `sources.txt`. `tack set use NAME` links a set into one project for every tool; `--global` applies it everywhere through `./install.sh`; `tack set update` moves a pin and reports which used skills changed. 48 sets in eight categories are declared: 41 over 24 skill collections and seven `agents-*` sets of subagent plugins from the VoltAgent and wshobson marketplaces.
+- Sets: named bundles of skills, agents and Claude Code plugins in `sets.txt`, with external skill collections pinned to a full commit in `sources.txt`. `tack set use NAME` links a set into one project for every tool; `--global` applies it everywhere through `./install.sh`; `tack set update` moves a pin and reports which used skills changed. 51 sets in ten categories are declared: `core`, two compatibility sets, 41 over 24 skill collections and seven `agents-*` sets of subagent plugins from the VoltAgent and wshobson marketplaces.
 - A set index in the startup context of enabled projects: one line naming every set by category and the active ones, so the assistant can activate a set in the project when a task needs it and drop one the work no longer needs. `tack config set-index false` turns it off; in a mode such as `unleash` the guard lets the assistant read sets but not change them.
 - An audit of the external skills and subagent plugins used by sets (`docs/audits/2026-10-11-external-skills.md`).
 - Shared `collaboration` choice (`solo` or `team`), isolated `tack team` branch diagnostics and focused producer/consumer guidance for monorepos.
@@ -20,6 +20,8 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ### Changed
 
+- Sets keep one voice per job: thirteen external items that competed with this repository's workflow or duplicated another collection's reference material were removed from `testing`, `planning`, `orchestration`, `writing`, `review`, `backend`, `monitoring` and `agent-tooling`.
+- Sets are now the only way a skill or an agent role is installed. The `core` set (`dev-workflow`, `new-project`) is always active; every other skill and agent of this repository comes with a set, per project or everywhere. `tack-skills` and `tack-agents` bring them all at once.
 - The setup, sharing and parallel-branch guides, the documentation index and `AGENTS.md` describe tack as a personal configuration whose shared project setup and branch coordination are optional.
 - tack is now positioned as a personal configuration rather than a general product ([ADR 0004](docs/adr/0004-personal-configuration-with-sets.md)). The README describes what the repository holds and how to install it on another machine.
 - `plugins.txt` installs `claude-code-setup` and `security-guidance` for every project; `frontend-design` moved to the `design` set as a skill, so tools other than Claude Code receive it.
@@ -33,6 +35,8 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ### Fixed
 
+- Agents and skills read each other's files through the checkout (`~/.agents/tack/skills/...`) instead of the installed path, which exists only while a set active everywhere lists that skill; the validator rejects the old form.
+- The `performance-analyzer` description no longer carries Spanish trigger phrases.
 - The PR metadata check accepts a pull request from an automated author such as Dependabot on its title alone, instead of failing it for lacking the template's sections.
 - `tack memory add` refuses environment-style assignments whose variable names a credential, such as `DB_PASS=...` or `AWS_SECRET_ACCESS_KEY=...`.
 - Skill descriptions holding `": "` are quoted and agent descriptions reworded, so strict YAML readers no longer skip `api-design`, `auth`, `e2e-testing`, `frontend` and `git-history`; the validator rejects a new unquoted one.
@@ -45,6 +49,7 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ### Removed
 
+- Skill groups (`skill-groups.txt`) and the `skill-groups` and `agent-roles` settings. `tack migrate` turns a former choice into the `tack-skills` and `tack-agents` sets; until then the installer and doctor say the settings are no longer read.
 - `tack bootstrap` and its generated collaborator setup script, added and removed before a release: it only served teams adopting tack.
 - The evaluation harness (`evals/`), benchmark reports, product audits, archived plans and their offline test suites. They remain in the Git history; no runtime capability was removed.
 - Runtime reads of the former `harness.*` settings and `.harness` markers, the `harness` command and its managed links. Upgrade through v0.1.0 and follow its per-clone migration steps before installing this change ([#122](https://github.com/nbfrodri/agent-tack/pull/122)).
