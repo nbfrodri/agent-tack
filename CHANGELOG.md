@@ -6,6 +6,7 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ### Added
 
+- An optional slop check: when [aislop](https://github.com/scanaislop/aislop) is installed and the project is trusted, the check before the assistant stops scans the code the branch changed and reports the findings on changed lines. Advisory, with aislop's telemetry and update checks turned off; `tack config slop-check false` turns it off.
 - Sets: named bundles of skills, agents and Claude Code plugins in `sets.txt`, with external skill collections pinned to a full commit in `sources.txt`. `tack set use NAME` links a set into one project for every tool; `--global` applies it everywhere through `./install.sh`; `tack set update` moves a pin and reports which used skills changed. 51 sets in ten categories are declared: `core`, two compatibility sets, 41 over 24 skill collections and seven `agents-*` sets of subagent plugins from the VoltAgent and wshobson marketplaces.
 - A set index in the startup context of enabled projects: one line naming every set by category and the active ones, so the assistant can activate a set in the project when a task needs it and drop one the work no longer needs. `tack config set-index false` turns it off; in a mode such as `unleash` the guard lets the assistant read sets but not change them.
 - An audit of the external skills and subagent plugins used by sets (`docs/audits/2026-10-11-external-skills.md`).

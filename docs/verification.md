@@ -103,9 +103,26 @@ The Stop hook also reports uncommitted work, stale handoffs, documentation remin
 
 For a new clone or a completed integration, `tack verify --all --plan` previews every declared check, even with no changed files. After reviewing commands and granting local trust, run `tack verify --all`. It uses the same budget, failure and changed-input handling as ordinary verification. No available checks means `unverified`; a clean Git status is not a successful test run. Without `--all`, selection remains focused on changed paths. This does not infer missing consumer coverage or make every check mandatory after each edit.
 
+## Slop check with aislop
+
+[aislop](https://github.com/scanaislop/aislop) is a deterministic scanner, with no model at run time, for what coding assistants leave behind: swallowed errors, narrative comments, unresolved stubs, unsafe casts and hardcoded secrets. When it is installed, the check before the assistant stops scans the code the branch changed and adds the findings to its report, most serious first, so the assistant fixes them or says why one does not apply.
+
+```bash
+npm install -g aislop        # or: brew install scanaislop/tap/aislop, pipx install aislop
+tack trust                   # the scan reads the project's .aislop configuration
+tack config slop-check false # turn it off for this project; add --global for every project
+```
+
+- It is advisory, like the rest of that report: nothing is blocked.
+- It runs only in an enabled, locally trusted project, and only when a source file changed.
+- Findings in lines the change did not touch are left out.
+- tack never downloads aislop. It calls the installed binary with telemetry and update checks turned off (`AISLOP_NO_TELEMETRY`, `DO_NOT_TRACK`, `AISLOP_NO_UPDATE_NOTIFIER`); set `DO_NOT_TRACK=1` in your shell for your own runs. `TACK_AISLOP` names another binary.
+- A scan that cannot complete is reported as such, not treated as clean.
+- Tune rules and exclusions in the project's `.aislop/config.yml`. For CI, route `aislop ci --changes --base origin/main` through `checks-map.json` like any other check.
+
 ## Optional external checks
 
-Reuse installed project tools before adding a checker. [Aislop](https://github.com/scanaislop/aislop) can be selected for supported languages when it finds useful issues your existing checks miss. Review and pin the chosen version in the project's normal dependency file; do not download latest during verification. A small local trial of 0.18.1 found a swallowed exception, but also warned about a deliberately retained public wrapper. Its score is not a code-quality verdict.
+Reuse installed project tools before adding a checker. Beyond the built-in [slop check](#slop-check-with-aislop), aislop can also gate CI for supported languages when it finds useful issues your existing checks miss. Review and pin the chosen version in the project's normal dependency file; do not download latest during verification. A small local trial of 0.18.1 found a swallowed exception, but also warned about a deliberately retained public wrapper. Its score is not a code-quality verdict.
 
 Start with the installed command `aislop scan --json`, inspect diagnostics and skipped engines, and keep rules advisory while assessing noise. For blocking CI, use the tool's documented CI command and project-calibrated rules through an existing script. Route that script with checks-map.json when useful. A missing dependency or skipped analysis is not evidence of complete verification. No extra model, repair loop, per-edit hook or network service is required.
 

@@ -38,3 +38,4 @@ check-fast tack.checkFast none text any hook yes Shell command run after each ed
 unleash-max-tool-calls tack.unleashMaxToolCalls none number any hook no In a project-only mode such as unleash, refuse tool calls after this many in one session
 unleash-max-cost tack.unleashMaxCost none decimal any mod no In a project-only mode such as unleash, refuse tool calls once the session cost passes this many USD
 set-index tack.setIndex true bool any instruction yes Show the assistant the names of the available sets at session start so it can activate one in the project when a task needs it
+slop-check tack.slopCheck true bool any hook yes Before the assistant stops, scan the changed code with aislop when it is installed and the project is trusted, and report its findings

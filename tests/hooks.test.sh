@@ -25,6 +25,8 @@ git config --global commit.gpgsign false
 # Test repos behave as harness-enabled projects unless a test disables them
 git config --global tack.enabled true
 CLI="$REPO/bin/tack"
+# A scanner installed on the machine running the tests must not take part in them.
+export TACK_AISLOP="$WORK/no-such-aislop"
 
 new_repo() {
   rm -rf "$1"
@@ -812,6 +814,57 @@ printf 'def f(): return 1\n' > "$G/app.py" && printf 'def test_f(): assert True\
 check "test gate: failing tests after a code change are reported" "gate | grep -q 'the tests fail: make test (from Makefile test target)'"
 : > "$G/ok"
 check "test gate: passing tests are not reported" "! gate | grep -q 'the tests'"
+
+echo "Claude hook: stop-check scans changed code with aislop"
+SL="$WORK/slop-repo"
+git init -q -b main "$SL"
+git -C "$SL" config tack.enabled true
+mkdir -p "$SL/tests" && printf 'def test_f(): pass\n' > "$SL/tests/test_app.py" && printf 'def f(): pass\n' > "$SL/app.py"
+git -C "$SL" add -A && git -C "$SL" commit -q -m "chore: initial commit" && git -C "$SL" switch -q -c feat/x
+SLOP_BASE="$(git -C "$SL" rev-parse main)"
+# A stand-in scanner: records how it was called and prints what the test prepared.
+FAKE_AISLOP="$WORK/fake-aislop"
+cat > "$FAKE_AISLOP" <<FAKE
+#!/bin/sh
+{ echo "args: \$*"; echo "telemetry: \${AISLOP_NO_TELEMETRY:-unset} \${DO_NOT_TRACK:-unset} \${AISLOP_NO_UPDATE_NOTIFIER:-unset}"; echo "cwd: \$(pwd)"; } > "$WORK/aislop.calls"
+cat "$WORK/aislop.out" 2>/dev/null
+exit \$(cat "$WORK/aislop.rc" 2>/dev/null || echo 0)
+FAKE
+chmod +x "$FAKE_AISLOP"
+slop() { printf '{"cwd":"%s","stop_hook_active":false}' "$SL" | TACK_AISLOP="$FAKE_AISLOP" bash "$STOP"; }
+slop_findings() {
+  printf '%s' '{"score":56,"scoreable":true,"summary":{"errors":1,"warnings":2},"diagnostics":[
+    {"filePath":"app.py","rule":"ai-slop/narrative-comment","severity":"warning","message":"Comment restates the code","line":3,"changeContext":"changed-line"},
+    {"filePath":"app.py","rule":"ai-slop/swallowed-exception","severity":"error","message":"Bare except with pass swallows errors silently","line":9,"changeContext":"changed-line"},
+    {"filePath":"app.py","rule":"security/hardcoded-secret","severity":"warning","message":"Old secret","line":40,"changeContext":"existing-file-context"}]}' > "$WORK/aislop.out"
+  echo 1 > "$WORK/aislop.rc"
+}
+slop_findings
+printf 'def f(): return 1\n' > "$SL/app.py" && printf 'def test_f(): assert True\n' > "$SL/tests/test_app.py"
+slop >/dev/null
+check "slop check: an untrusted project is never scanned" "[ ! -e '$WORK/aislop.calls' ]"
+git -C "$SL" config tack.trusted true
+check "slop check: findings on changed code are reported with their place and rule" "slop | grep -q 'aislop: 2 finding(s) on changed code' && slop | grep -q 'app.py:9 ai-slop/swallowed-exception: Bare except with pass swallows errors silently'"
+check "slop check: errors come before warnings" "[ \"\$(slop | tr '\\\\' '\n' | grep -o 'app.py:[0-9]*' | head -n 1)\" = app.py:9 ]"
+check "slop check: findings in code the change did not touch are left out" "! slop | grep -q 'Old secret'"
+check "slop check: the report says what to do with them" "slop | grep -q 'aislop fix'"
+check "slop check: only the changes since the branch left main are scanned" "grep -q \"args: scan --changes --base $SLOP_BASE --json\" '$WORK/aislop.calls'"
+check "slop check: telemetry and update checks are turned off" "grep -q 'telemetry: 1 1 1' '$WORK/aislop.calls'"
+check "slop check: it runs from the project root" "grep -q \"cwd: \$(cd '$SL' && pwd -P)\" '$WORK/aislop.calls'"
+printf '%s' '{"score":100,"scoreable":true,"diagnostics":[]}' > "$WORK/aislop.out"; echo 0 > "$WORK/aislop.rc"
+check "slop check: a clean scan adds nothing" "! slop | grep -q aislop"
+printf 'not json at all' > "$WORK/aislop.out"; echo 2 > "$WORK/aislop.rc"
+check "slop check: a scan that could not complete is said, not counted as clean" "slop | grep -q 'aislop could not scan the changes'"
+slop_findings
+git -C "$SL" config tack.slopCheck false
+rm -f "$WORK/aislop.calls"
+check "slop check: tack config slop-check false turns it off" "! slop | grep -q aislop && [ ! -e '$WORK/aislop.calls' ]"
+git -C "$SL" config --unset tack.slopCheck
+check "slop check: without the scanner installed nothing is reported" "! printf '{\"cwd\":\"%s\",\"stop_hook_active\":false}' '$SL' | TACK_AISLOP='$WORK/no-such-aislop' bash '$STOP' | grep -q aislop"
+git -C "$SL" checkout -q -- app.py tests/test_app.py && printf 'notes\n' > "$SL/notes.md"
+rm -f "$WORK/aislop.calls"
+slop >/dev/null
+check "slop check: nothing is scanned while no source file changed" "[ ! -e '$WORK/aislop.calls' ]"
 
 echo "Activity log (tack config activity-log, tack log)"
 LOG="$WORK/state/agent-tack/activity.log"
