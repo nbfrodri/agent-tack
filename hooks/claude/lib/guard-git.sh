@@ -212,7 +212,7 @@ check_tack() {
       # shape, so nothing the CLI might read differently passes by not being recognised here.
       shift
       case "$#:${1:-}" in
-        0: | 1:list | 1:check) return ;;
+        0: | 1:list | 1:check | 1:suggest) return ;;
         2:show) case "$2" in '' | -* | *[!a-z0-9-]*) ;; *) return ;; esac ;;
       esac
       # shellcheck disable=SC2034 # Read by guard-bash.sh after the analysis.

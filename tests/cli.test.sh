@@ -264,6 +264,7 @@ check "the set index says how to activate one for this project" contains 'tack s
 git config --local tack.sets testing
 "$CLI" context > "$WORK/output" 2>&1
 check "the set index names the sets already active here" contains 'Active here: testing'
+check "context carries the skill reminder for tools without a per-message hook" contains 'Required first step'
 git config --local --unset tack.sets
 git config --local tack.setIndex false
 "$CLI" context > "$WORK/output" 2>&1
@@ -517,6 +518,19 @@ mv "$MEMORY" "$real_memory" && ln -s "$real_memory" "$MEMORY"
 check "a symlinked memory file stays a symlink" eval "[ -L '$MEMORY' ] && grep -q 'Through a symlink' '$real_memory'"
 rm -f "$MEMORY" && mv "$real_memory" "$MEMORY"
 check "an empty note is a usage error" expect_exit 2 "$CLI" memory add ""
+
+# Enabling a project says which sets its files call for, and activates none.
+FIT="$WORK/fit"
+git init -q -b main "$FIT"
+printf '[project]\nname = "x"\n' > "$FIT/pyproject.toml"
+(cd "$FIT" && "$CLI" enable) > "$WORK/output" 2>&1
+check "enable says which sets fit the project and why" grep -q "python .*pyproject.toml" "$WORK/output"
+check "enable says how to activate them" contains "tack set suggest --apply"
+check "enable activates no set by itself" test -z "$(git -C "$FIT" config --local --get tack.sets)"
+EMPTY="$WORK/fit-nothing"
+git init -q -b main "$EMPTY"
+(cd "$EMPTY" && "$CLI" enable) > "$WORK/output" 2>&1
+check "enable says nothing about sets when none fits" eval '! contains "tack set suggest"'
 
 # Skill groups and the agent-roles switch became sets; migrate carries a former choice over.
 git config --global tack.skillGroups "core, process"

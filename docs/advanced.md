@@ -106,6 +106,7 @@ tack config disabled-hooks --unset                   # all hooks again
 | `fast-check` | The fast check after edits |
 | `stop-check` | The check before stopping |
 | `format-file` | Automatic formatting of edited files |
+| `skill-reminder` | The line added to each message naming the active sets' skills and the sets that fit the project or the request |
 
 ## CI: wait for it, merge only when green
 

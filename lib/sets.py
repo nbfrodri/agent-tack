@@ -8,6 +8,8 @@ installer call this module; lib/sets.sh reads the same files for what needs no c
 """
 import argparse
 import filecmp
+import fnmatch
+import json
 import os
 from pathlib import Path
 import re
@@ -15,12 +17,25 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import unicodedata
 
 NAME = re.compile(r'^[a-z0-9][a-z0-9-]*$')
 SKILL = re.compile(r'^[A-Za-z0-9][A-Za-z0-9._-]*$')
 COMMIT = re.compile(r'^[0-9a-f]{40}$')
 PLUGIN = re.compile(r'^[A-Za-z0-9._-]+@[A-Za-z0-9._-]+$')
 URL = re.compile(r'^https://[A-Za-z0-9._~/@:-]+$')
+# A match rule: a glob over the project's files, or FILE:NAME for a dependency or word in a file.
+MATCH = re.compile(r'^[A-Za-z0-9_.*-]+(/[A-Za-z0-9_.*-]+)*(:[A-Za-z0-9_.@/-]+)?$')
+# A path safe to repeat in output: no spaces, control characters or punctuation that reads as text.
+PLAIN = re.compile(r'^[A-Za-z0-9_.@+/-]{1,120}$')
+# An ask term: a word of a request, word* for the words that start with it, or word+word for a
+# phrase. Requests are compared in lowercase without accents, so terms are written that way.
+ASK = re.compile(r'^[a-z0-9]+\*?(\+[a-z0-9]+\*?)*$')
+ASK_HELP = ': ask takes lowercase words without accents, as word, word* or word+word'
+# How much of a message is compared with the ask terms.
+ASKED = 4000
+# Bounds for reading a project: how many files to list and how much of one to read.
+LISTED, READ = 20000, 1024 * 1024
 # Where a project's tools look for skills: the open standard folder and Claude Code's own.
 PROJECT_SKILLS = ('.agents/skills', '.claude/skills')
 PROJECT_AGENTS = '.claude/agents'
@@ -76,13 +91,13 @@ def read_sets(root, sources, errors):
     for number, fields in rows(root / 'sets.txt'):
         where = f'sets.txt:{number}'
         if len(fields) < 3:
-            errors.append(f'{where}: expected set, kind and item')
+            errors.append(f'{where}: expected set, kind and item' + (ASK_HELP if fields[1:] == ['ask'] else ''))
             continue
         name, kind, ref = fields[0], fields[1], fields[2]
         if not NAME.match(name):
             errors.append(f'{where}: set name {name!r} must be lowercase letters, digits and hyphens')
             continue
-        entry = sets.setdefault(name, {'about': '', 'category': '', 'items': []})
+        entry = sets.setdefault(name, {'about': '', 'category': '', 'items': [], 'matches': [], 'asks': []})
         if kind == 'about':
             entry['about'] = ' '.join(fields[2:])
             continue
@@ -91,6 +106,20 @@ def read_sets(root, sources, errors):
                 errors.append(f'{where}: category must be one name of lowercase letters, digits and hyphens')
             else:
                 entry['category'] = ref
+            continue
+        if kind == 'match':
+            least = fields[3] if len(fields) == 4 else '1'
+            if len(fields) > 4 or not MATCH.match(ref) or '..' in ref.split('/') or not least.isdigit() or int(least) < 1:
+                errors.append(f'{where}: match needs a relative file pattern, or FILE:NAME, and an optional minimum count')
+            else:
+                entry['matches'].append((ref, int(least)))
+            continue
+        if kind == 'ask':
+            wrong = [term for term in fields[2:] if not ASK.match(term)]
+            if wrong:
+                errors.append(f'{where}: ask term {wrong[0]!r} is not valid' + ASK_HELP)
+            else:
+                entry['asks'].extend(fields[2:])
             continue
         if len(fields) != 3:
             errors.append(f'{where}: unexpected text after {ref!r}')
@@ -123,7 +152,7 @@ def read_sets(root, sources, errors):
                 errors.append(f'{where}: {ref!r} should be plugin@marketplace')
                 continue
         else:
-            errors.append(f'{where}: unknown kind {kind!r} (about, category, skill, agent or plugin)')
+            errors.append(f'{where}: unknown kind {kind!r} (about, category, match, ask, skill, agent or plugin)')
             continue
         owner = owners.setdefault((kind, item['name']), ref)
         if owner != ref:
@@ -345,6 +374,128 @@ def by_category(sets):
     return groups
 
 
+def project_files(repo):
+    """The project's own files: tracked, or untracked and not ignored. Paths only; nothing is run."""
+    code, out, _ = git('ls-files', '-co', '--exclude-standard', '-z', cwd=repo)
+    return [name for name in out.split('\0') if name][:LISTED] if code == 0 else []
+
+
+def mentions(repo, name, word):
+    """Whether a project file names WORD: a dependency key in a JSON manifest, a whole word elsewhere."""
+    path = repo / name
+    if path.is_symlink() or not path.is_file() or path.stat().st_size > READ:
+        return False
+    try:
+        text = path.read_text(encoding='utf-8', errors='replace')
+    except OSError:
+        return False
+    if name.endswith('.json'):
+        try:
+            data = json.loads(text)
+        except ValueError:
+            return False
+        groups = ('dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies', 'require', 'require-dev')
+        return isinstance(data, dict) and any(isinstance(data.get(group), dict) and word in data[group] for group in groups)
+    return re.search(rf'(?<![A-Za-z0-9_.@/-]){re.escape(word)}(?![A-Za-z0-9_.@/-])', text) is not None
+
+
+def fitting(repo, sets):
+    """{set: evidence} for the sets whose match rules the project's files satisfy, in file order."""
+    files = project_files(repo)
+    found = {}
+    for name, entry in sets.items():
+        if name == ALWAYS or entry['category'] == COMPAT:
+            continue
+        for pattern, least in entry['matches']:
+            glob, _, word = pattern.partition(':')
+            # A pattern without a folder matches a file of that name anywhere in the project.
+            hits = [path for path in files
+                    if fnmatch.fnmatchcase(path if '/' in glob else path.rsplit('/', 1)[-1], glob)]
+            if word:
+                hits = [path for path in hits if mentions(repo, path, word)]
+            if len(hits) >= least:
+                # The evidence is read by an assistant, and a file name may be written to instruct
+                # one: name only a file whose path is plain.
+                plain = next((path for path in hits if PLAIN.match(path)), 'a file with an unusual name')
+                shown = plain if least == 1 else f'{len(hits)} files like {plain}'
+                found[name] = f'{shown}{" names " + word if word else ""}'
+                break
+    return found
+
+
+def skipped(repo):
+    code, out, _ = git('config', '--local', '--get', 'tack.setsSkipped', cwd=repo)
+    return [name.strip() for name in out.split(',') if name.strip()] if code == 0 else []
+
+
+def pending(repo, sets):
+    """Sets that fit the project, are active neither here nor everywhere, and were not declined."""
+    done = set(active('local', sets, repo)) | set(active('global', sets)) | set(skipped(repo))
+    return {name: why for name, why in fitting(repo, sets).items() if name not in done}
+
+
+def words(text):
+    """The words of a message as an ask term sees them: lowercase, without accents or punctuation."""
+    plain = unicodedata.normalize('NFKD', text[:ASKED].lower())
+    return re.findall(r'[a-z0-9]+', ''.join(letter for letter in plain if not unicodedata.combining(letter)))
+
+
+def said(term, heard):
+    """Whether the words of a term appear in the message, whole, adjacent and in order."""
+    parts = term.split('+')
+    return any(all(word.startswith(part[:-1]) if part.endswith('*') else word == part
+                   for part, word in zip(parts, heard[start:start + len(parts)]))
+               for start in range(len(heard) - len(parts) + 1))
+
+
+def asked(repo, sets, prompt):
+    """Sets whose ask terms the message names, active neither here nor everywhere, and not declined."""
+    heard = words(prompt)
+    if not heard:
+        return []
+    done = set(active('local', sets, repo)) | set(active('global', sets)) | set(skipped(repo))
+    return [name for name, entry in sets.items()
+            if name != ALWAYS and entry['category'] != COMPAT and name not in done
+            and any(said(term, heard) for term in entry['asks'])]
+
+
+def command_skip(args, root, sources, sets):
+    changeable(args.name, sets)
+    repo = project_root()
+    names = skipped(repo)
+    if args.name not in names:
+        code, _, err = git('config', '--local', 'tack.setsSkipped', ','.join([*names, args.name]), cwd=repo)
+        if code:
+            raise Fail(f'cannot save the declined set: {err}')
+    print(f'Declined for {repo}: {args.name}. tack set use {args.name} still activates it.')
+
+
+def command_suggest(args, root, sources, sets):
+    if args.apply and args.skip:
+        raise Fail('choose --apply or --skip, not both')
+    repo = project_root()
+    found = pending(repo, sets)
+    if not found:
+        print('No set fits this project beyond the active and declined ones (tack set list shows them all).')
+        return
+    if args.skip:
+        code, _, err = git('config', '--local', 'tack.setsSkipped', ','.join([*skipped(repo), *found]), cwd=repo)
+        if code:
+            raise Fail(f'cannot save the declined sets: {err}')
+        print(f'Declined for {repo}: {", ".join(found)}. tack set use NAME still activates one.')
+        return
+    if not args.apply:
+        print('Sets that fit this project and are not active (tack set suggest --apply activates them, --skip declines):')
+        for name, why in found.items():
+            print(f'  {name:<16} {why}')
+        return
+    names = [*active('local', sets, repo), *found]
+    wanted = resolve(root, names, sources, sets)
+    remember('local', names, repo)
+    print(f'Active in {repo}: {", ".join(found)}')
+    apply_project(root, repo, sources, sets, wanted)
+
+
 def command_list(args, root, sources, sets):
     code, top, _ = git('rev-parse', '--show-toplevel')
     here = active('local', sets) if code == 0 and top else []
@@ -376,10 +527,55 @@ def command_index(args, root, sources, sets):
         line += ' Active everywhere: ' + ', '.join(everywhere) + '.'
     if here:
         line += ' Active here: ' + ', '.join(here) + '.'
-    print(line + ' Keep this project\'s sets matched to the work: run tack set use NAME when a task clearly needs one that'
-          ' is not active, and tack set drop NAME for one active here that the work no longer needs; say so in one line.'
-          ' tack set show NAME lists a set\'s contents. If its skills are not listed afterwards, read them from'
-          ' .agents/skills/. Leave --global and update to the user, and change nothing for a read-only request.')
+    if code == 0 and top:
+        fit = pending(Path(top), sets)
+        if fit:
+            line += ' Fit this project and are not active: ' + ', '.join(fit) + ' (tack set suggest --apply).'
+    print(line + ' tack set use NAME and tack set drop NAME change this project\'s sets; tack set show NAME lists a'
+          ' set\'s contents. Leave --global and update to the user.')
+
+
+# How many skill names one reminder carries; past it the assistant is sent to the list.
+REMINDED = 40
+
+
+def command_reminder(args, root, sources, sets):
+    """One line to accompany a message: the skills of the active sets, and the sets still to activate."""
+    code, top, _ = git('rev-parse', '--show-toplevel')
+    if code or not top:
+        return
+    repo = Path(top)
+    always = {item['name'] for item in sets.get(ALWAYS, {'items': []})['items'] if item['kind'] == 'skill'}
+    names = [*active('local', sets, repo), *(name for name in active('global', sets) if name != ALWAYS)]
+    skills = [item['name'] for item in resolve(root, names, sources, sets, False)
+              if item['kind'] == 'skill' and item['name'] not in always]
+    parts = []
+    if skills:
+        shown = ', '.join(skills[:REMINDED]) + (f' and {len(skills) - REMINDED} more (tack set list)' if len(skills) > REMINDED else '')
+        parts.append(f'Skills active in this project: {shown}. Required first step, before reading or editing anything: '
+                     'load the ones whose name matches this task.')
+    fit = pending(repo, sets)
+    if fit:
+        parts.append('Sets that fit this project and are not active: ' + ', '.join(fit)
+                     + '. Activating them is the user\'s choice: end your reply with one line saying which sets fit and'
+                     ' that tack set suggest --apply activates them and tack set suggest --skip declines them.')
+    wanted = [name for name in asked(repo, sets, prompt_given() if args.stdin else '') if name not in fit]
+    if wanted:
+        parts.append('Sets that match this request and are not active: ' + ', '.join(wanted)
+                     + '. Activating them is the user\'s choice: do the task as asked, and end your reply with one line'
+                     ' saying which sets match and that tack set use NAME activates one and tack set skip NAME stops'
+                     ' the suggestion.')
+    if parts:
+        print('[tack] ' + ' '.join(parts))
+
+
+def prompt_given():
+    """The message from a hook's input on standard input; anything else counts as no message."""
+    try:
+        prompt = json.loads(sys.stdin.read(READ)).get('prompt')
+    except (ValueError, AttributeError, OSError):
+        return ''
+    return prompt if isinstance(prompt, str) else ''
 
 
 def command_show(args, root, sources, sets):
@@ -521,7 +717,12 @@ def main():
     command('sync', command_sync, help='recreate this project\'s links')
     command('update', command_update,
             help='move sources to their upstream head and report what changed').add_argument('sources', nargs='*')
+    suggest = command('suggest', command_suggest, help='sets that fit this project\'s files')
+    suggest.add_argument('--apply', action='store_true', help='activate them in this project')
+    suggest.add_argument('--skip', action='store_true', help='decline them for this project')
     command('index', command_index)
+    command('skip', command_skip, help='stop suggesting a set in this project').add_argument('name')
+    command('reminder', command_reminder).add_argument('--stdin', action='store_true')
     command('plan', command_plan).add_argument('--no-fetch', action='store_true')
     check = command('check', command_check, help='validate sets.txt and sources.txt')
     check.add_argument('--fetch', action='store_true', help='also fetch every source and find every skill')

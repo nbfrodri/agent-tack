@@ -207,6 +207,11 @@ case "$cmd" in
       echo "Enabled for this clone (git config tack.enabled true)."
     fi
     echo 'Project setup: run tack setup; the assistant will propose optional additions for your selection. Use tack config setup-review deferred to postpone.'
+    # Sets the project's own files call for; activating them stays an explicit step.
+    if command -v python3 >/dev/null 2>&1; then
+      fitting="$(python3 "$TACK_ROOT/lib/sets.py" "$TACK_ROOT" suggest 2>/dev/null || true)"
+      case "$fitting" in '' | 'No set fits'*) ;; *) printf '%s\n' "$fitting" ;; esac
+    fi
     # The test gate before stopping runs project code, so it waits for the user's trust.
     detected="$(bash "$TACK_ROOT/lib/test-command.sh" "$TACK_ROOT" "$root")"
     if [ -z "$detected" ]; then
@@ -448,6 +453,8 @@ case "$cmd" in
     # The names of the sets, so the assistant can activate one for this project when a task needs it.
     if command -v python3 >/dev/null 2>&1 && [ "$(bash "$TACK_ROOT/lib/config.sh" "$TACK_ROOT" set-index --get)" != false ]; then
       python3 "$TACK_ROOT/lib/sets.py" "$TACK_ROOT" index 2>/dev/null || true
+      # The same reminder the per-message hook gives, for tools that have no such hook.
+      python3 "$TACK_ROOT/lib/sets.py" "$TACK_ROOT" reminder 2>/dev/null || true
     fi
     bash "$source_root/lib/project-context.sh" "$root" "$(context_level)"
     if [ -e "$root/checks-map.json" ] || [ -L "$root/checks-map.json" ]; then

@@ -310,6 +310,10 @@ expect("allow", "tack set list", "unleash: listing sets is allowed", cwd=project
 expect("allow", "tack set show testing", "unleash: reading a set is allowed", cwd=project)
 expect("allow", "tack set show update", "unleash: a set named like a subcommand can still be shown", cwd=project)
 expect("allow", "tack set check", "unleash: validating the declarations is allowed", cwd=project)
+expect("allow", "tack set suggest", "unleash: seeing which sets fit the project is allowed", cwd=project)
+expect("deny", "tack set suggest --apply", "unleash: activating the suggested sets needs the user", cwd=project)
+expect("deny", "tack set suggest --skip", "unleash: declining the suggested sets needs the user", cwd=project)
+expect("deny", "tack set skip review", "unleash: declining one set needs the user", cwd=project)
 # A set can bring plugins, agents and skills that run their own programs, so activating one would
 # let the assistant widen what it can do while nobody is confirming.
 expect("deny", "tack set use testing", "unleash: activating a set needs the user", cwd=project)

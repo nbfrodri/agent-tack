@@ -866,6 +866,36 @@ rm -f "$WORK/aislop.calls"
 slop >/dev/null
 check "slop check: nothing is scanned while no source file changed" "[ ! -e '$WORK/aislop.calls' ]"
 
+echo "Claude hook: skill reminder with each message"
+REMIND="$REPO/hooks/claude/skill-reminder.sh"
+RM="$WORK/remind-repo"
+git init -q -b main "$RM"
+git -C "$RM" config tack.enabled true
+reminding() { printf '{"cwd":"%s","prompt":"add an endpoint"}' "$RM" | bash "$REMIND" "$@"; }
+check "skill reminder: silent while the project has no set active and none fits" "[ -z \"\$(reminding)\" ]"
+# php-laravel lists only skills of this repository, so nothing is fetched.
+git -C "$RM" config tack.sets php-laravel
+check "skill reminder: names the skills of the project's active sets" "reminding | grep -q 'Skills active in this project: api-design, database, testing'"
+check "skill reminder: asks to load the matching ones before starting" "reminding | grep -q 'load the ones whose name matches this task'"
+check "skill reminder: is delivered as context for the message" "reminding | grep -q '\"hookEventName\":\"UserPromptSubmit\"' && reminding | grep -q '\"additionalContext\"'"
+check "skill reminder: leaves out the skills that are always installed" "! reminding | grep -q 'dev-workflow'"
+git -C "$RM" config --unset tack.sets
+printf '[project]\nname = "x"\n' > "$RM/pyproject.toml"
+check "skill reminder: says which sets fit the project and are not active" "reminding | grep -q 'fit this project and are not active: python' && reminding | grep -q 'tack set suggest --apply'"
+asking() { printf '{"cwd":"%s","prompt":"%s"}' "$RM" "$1" | bash "$REMIND"; }
+check "skill reminder: names the set a request asks for" "asking 'Write a threat model for the upload service' | grep -q 'match this request and are not active: security' && asking 'threat model' | grep -q 'tack set use NAME'"
+check "skill reminder: reads a request in Spanish, accents or not" "asking 'haz una revisión de código' | grep -q 'match this request and are not active: review'"
+check "skill reminder: an ordinary request asks for no set" "! asking 'fix the typo in the README' | grep -q 'match this request'"
+check "skill reminder: a request that is not text is ignored" "printf '{\"cwd\":\"%s\",\"prompt\":[\"threat model\"]}' '$RM' | bash '$REMIND' | grep -q 'fit this project' && ! printf '{\"cwd\":\"%s\",\"prompt\":[\"threat model\"]}' '$RM' | bash '$REMIND' | grep -q 'match this request'"
+git -C "$RM" config tack.disabledHooks skill-reminder
+check "skill reminder: tack config disabled-hooks turns it off" "[ -z \"\$(reminding)\" ]"
+git -C "$RM" config --unset tack.disabledHooks
+git -C "$RM" config tack.enabled false
+check "skill reminder: disabled projects are left alone" "[ -z \"\$(reminding)\" ]"
+git -C "$RM" config tack.enabled true
+check "skill reminder: malformed input is ignored" "[ -z \"\$(printf 'not json' | bash '$REMIND')\" ]"
+check "skill reminder: registered for each message in Claude Code" "grep -q 'skill-reminder.sh' '$REPO/claude/settings.json'"
+
 echo "Activity log (tack config activity-log, tack log)"
 LOG="$WORK/state/agent-tack/activity.log"
 A="$WORK/activity-repo"
