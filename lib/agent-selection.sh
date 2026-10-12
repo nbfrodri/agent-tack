@@ -2,7 +2,7 @@
 # Remove only unchanged installer-owned roles when their optional catalog is deselected.
 # Caller provides REPO, HOME, DRY_RUN, ownership helpers, logging and file_sha256.
 deselect_agent() {
-  local kind="$1" source="$2" target="$3" parent recorded
+  local kind="$1" source="$2" target="$3" parent recorded recorded_repo
   parent="$(dirname "$target")"
   while [ "$parent" != "$HOME" ] && [ "$parent" != / ]; do
     if [ -L "$parent" ]; then warn "kept $target: symlink parent"; return; fi
@@ -22,7 +22,10 @@ deselect_agent() {
   [ -f "$target" ] && [ ! -L "$target" ] || return 0
   ownership_find generated "$target"
   [ -n "$OWN_ENTRY" ] || return 0
-  if [ "$(cat "$OWN_ENTRY/repo" 2>/dev/null)" != "$REPO" ] ||
+  # A record from a checkout that no longer exists is this configuration's former location, moved
+  # or deleted since; one from another checkout that is still there belongs to that installation.
+  recorded_repo="$(cat "$OWN_ENTRY/repo" 2>/dev/null)"
+  if { [ "$recorded_repo" != "$REPO" ] && [ -d "$recorded_repo" ]; } ||
      [ "$(ownership_parent_identity "$(dirname "$target")")" != "$(cat "$OWN_ENTRY/parent_identity" 2>/dev/null)" ]; then
     warn "kept $target: ownership location changed"
     return

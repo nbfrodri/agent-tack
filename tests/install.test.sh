@@ -454,6 +454,19 @@ for moved in "$H/.agents/skills/frontend" "$H/.claude/skills/frontend" "$H/.clau
   printf '%s\n' "$WORK/vanished-checkout/${moved##*/}" > "$moved_entry/before_target"
   chmod -R go-rwx "$moved_entry"
 done
+# A generated agent recorded by that deleted checkout, unchanged since.
+moved_path="$(grep -lx "$H/.codex/agents/planner.toml" "$moved_entries"/*/path 2>/dev/null | head -n 1)"
+case "$moved_path" in
+  "$moved_entries"/*/path) printf '%s\n' "$WORK/vanished-checkout" > "$(dirname "$moved_path")/repo" ;;
+  *) fail "no ownership record for the generated Codex agent" ;;
+esac
+# One recorded by another checkout that still exists is not this installation's to remove.
+mkdir -p "$WORK/other-checkout"
+moved_path="$(grep -lx "$H/.codex/agents/evaluator.toml" "$moved_entries"/*/path 2>/dev/null | head -n 1)"
+case "$moved_path" in
+  "$moved_entries"/*/path) printf '%s\n' "$WORK/other-checkout" > "$(dirname "$moved_path")/repo" ;;
+  *) fail "no ownership record for the second generated Codex agent" ;;
+esac
 git_global "$H" --unset tack.sets
 run_install "$H" --dry-run
 check "a dry run says such a skill link would be removed" "grep -q 'would remove $H/.agents/skills/frontend' '$H.log'"
@@ -461,6 +474,8 @@ run_install "$H"
 check "a skill link whose replaced original is gone is removed" "[ ! -e '$H/.agents/skills/frontend' ] && [ ! -L '$H/.claude/skills/frontend' ]"
 check "an agent link whose replaced original is gone is removed" "[ ! -L '$H/.claude/agents/planner.md' ]"
 check "nothing is reported as kept for uninstall" "! grep -q 'kept $H/.agents/skills/frontend' '$H.log'"
+check "an unchanged generated agent from the deleted checkout is removed" "[ ! -e '$H/.codex/agents/planner.toml' ]"
+check "one recorded by another existing checkout is kept" "[ -e '$H/.codex/agents/evaluator.toml' ] && grep -q 'kept $H/.codex/agents/evaluator.toml' '$H.log'"
 
 echo "Agents of a set preserve displaced user definitions"
 H="$WORK/optional-roles"
