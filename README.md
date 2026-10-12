@@ -53,6 +53,13 @@ tack set use review --global  # every project, applied by ./install.sh
 tack set update               # move pins and see which used skills changed
 ```
 
+You rarely need the names. In an enabled project tack works out which sets fit, from the project's files (`pyproject.toml`, a `react` dependency) and from what you ask for ("review this branch"), and the assistant ends its reply by naming them; you say yes or no once. With each message it is also reminded to load the active sets' skills that match the task. It never activates a set on its own.
+
+```bash
+tack set suggest              # sets that fit this project; --apply activates, --skip declines
+tack set skip review          # stop suggesting one set here
+```
+
 Every active skill adds its description to each session, so activate a set where the work happens. [Sets guide](docs/sets.md).
 
 ## In a project

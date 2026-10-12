@@ -26,6 +26,8 @@ PLUGIN = re.compile(r'^[A-Za-z0-9._-]+@[A-Za-z0-9._-]+$')
 URL = re.compile(r'^https://[A-Za-z0-9._~/@:-]+$')
 # A match rule: a glob over the project's files, or FILE:NAME for a dependency or word in a file.
 MATCH = re.compile(r'^[A-Za-z0-9_.*-]+(/[A-Za-z0-9_.*-]+)*(:[A-Za-z0-9_.@/-]+)?$')
+# A path safe to repeat in output: no spaces, control characters or punctuation that reads as text.
+PLAIN = re.compile(r'^[A-Za-z0-9_.@+/-]{1,120}$')
 # An ask term: a word of a request, word* for the words that start with it, or word+word for a
 # phrase. Requests are compared in lowercase without accents, so terms are written that way.
 ASK = re.compile(r'^[a-z0-9]+\*?(\+[a-z0-9]+\*?)*$')
@@ -412,7 +414,10 @@ def fitting(repo, sets):
             if word:
                 hits = [path for path in hits if mentions(repo, path, word)]
             if len(hits) >= least:
-                shown = hits[0] if least == 1 else f'{len(hits)} files like {hits[0]}'
+                # The evidence is read by an assistant, and a file name may be written to instruct
+                # one: name only a file whose path is plain.
+                plain = next((path for path in hits if PLAIN.match(path)), 'a file with an unusual name')
+                shown = plain if least == 1 else f'{len(hits)} files like {plain}'
                 found[name] = f'{shown}{" names " + word if word else ""}'
                 break
     return found

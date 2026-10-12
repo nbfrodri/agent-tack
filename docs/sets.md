@@ -31,14 +31,80 @@ With `--global` the choice is saved in your global Git config and `./install.sh`
 
 ## How a set reaches the work
 
-Three steps, measured on small real tasks with a small and a larger model (2026-10-12):
+A set does nothing until it is active, and an active set does nothing until the assistant opens its skills. tack covers both without you having to remember set names. You can always activate one by hand; the automatic way is on by default in every enabled project.
 
-1. **tack finds the sets that fit.** A set can declare the files that give a project away (`python match pyproject.toml`, `react match package.json:react`). `tack set suggest` lists the sets whose rules this project satisfies, with the evidence; `tack enable` prints the same list.
-   A set for a kind of task leaves no trace in the files, so it declares what a request for it says instead (`security ask threat+model* owasp modelo+de+amenazas`). A term is a word, `word*` for the words that start with it, or `word+word` for a phrase; a request is compared whole word by whole word, in lowercase and without accents, so `review` never matches "preview". The terms are English and Spanish, and deliberately narrow: a phrase such as `review+this+branch` rather than a word ordinary requests also use.
-2. **You say yes once.** With each message, tack tells the assistant which fitting sets are not active, and the assistant ends its reply with one line naming them. Answer yes and it runs `tack set suggest --apply`; `tack set suggest --skip` declines them for this project and ends the reminder. A set whose rules start to match later is offered again. A set the request asks for is named the same way, only with the messages that say one of its terms: `tack set use NAME` activates it and `tack set skip NAME` stops the suggestion in this project.
-3. **The assistant loads the matching skills.** With each message, tack names the skills of the project's active sets and asks the assistant to load the ones whose name matches the task before doing anything else.
+| A set becomes active when | You do | It lasts |
+| --- | --- | --- |
+| tack sees that it fits the project's files | Say yes to the assistant's suggestion, or run `tack set suggest --apply` | In this clone, until `tack set drop NAME` |
+| Your request asks for its kind of work | Say yes, or run `tack set use NAME` | In this clone, until `tack set drop NAME` |
+| You activate it by name | `tack set use NAME` (or `--global` and `./install.sh`) | In this clone, or everywhere |
 
-What the trials showed, and why the steps are split this way:
+### The automatic way, step by step
+
+1. **Enable the project.** `tack enable` prints the sets that fit, with the evidence:
+
+   ```
+   Sets that fit this project and are not active (tack set suggest --apply activates them, --skip declines):
+     python           pyproject.toml
+     shell            14 files like install.sh
+   ```
+
+2. **Work as usual.** With each message, tack adds one line that only the assistant sees. While fitting sets are not active, the assistant does what you asked and ends its reply with a line such as:
+
+   > The sets `python` and `shell` fit this project. `tack set suggest --apply` activates them and `tack set suggest --skip` declines them.
+
+3. **Answer once.** Say yes and the assistant runs `tack set suggest --apply`; say no and it runs `--skip`, which ends the suggestion for those sets in this clone. Either way the line stops. A set whose rules start to match later (you add a `Dockerfile`) is offered then.
+4. **Ask for a kind of work.** Sets such as `review`, `security` or `planning` leave no trace in the files. When a request says what one of them is for ("review this branch", "escribe un modelo de amenazas"), the assistant does the task and ends with:
+
+   > The set `review` matches this request. `tack set use review` activates it and `tack set skip review` stops the suggestion.
+
+   The set helps from the next message on, because its skills are linked when it is activated.
+5. **The skills get used.** With each message, the same line names the skills of the active sets and tells the assistant to load the ones that match the task before reading or editing anything. Nothing to do on your side.
+
+The assistant suggests and you decide: it never activates a set on its own. In a mode such as `unleash`, where nobody confirms each step, the command guard enforces this: it lets the assistant read sets and suggestions and refuses `use`, `drop`, `skip`, `--apply` and `--skip`.
+
+### How tack decides that a set fits
+
+Two kinds of rule in `sets.txt`, both read without running anything from the project:
+
+- **`match`, the project's files.** `python match pyproject.toml` fits a project that has that file anywhere; `shell match *.sh 3` needs at least three; `react match package.json:react` asks the manifest to name that dependency. Only files Git tracks or would track are read, never through a link, and ignored folders do not count.
+- **`ask`, the words of a request.** `security ask threat+model* owasp modelo+de+amenazas`. A term is a word, `word*` for the words that start with it, or `word+word` for a phrase whose words appear together and in order. A request is compared whole word by whole word, in lowercase and without accents, so `review` never matches "preview" and `revision` matches "REVISIÓN". Terms are given in English and Spanish and kept narrow: a phrase such as `review+this+branch` rather than a word ordinary requests also use.
+
+`core` and the compatibility sets are never suggested, and neither is a set that is active here or everywhere, or one you declined.
+
+### Controls
+
+| To | Run |
+| --- | --- |
+| See what fits now, and why | `tack set suggest` |
+| Activate everything that fits | `tack set suggest --apply` |
+| Decline everything that fits, for this clone | `tack set suggest --skip` |
+| Stop one set from being suggested here | `tack set skip NAME` |
+| Be offered the declined sets again | `git config --unset tack.setsSkipped` |
+| Turn the per-message line off | `tack config disabled-hooks skill-reminder` |
+| Leave the list of sets out of the startup context | `tack config set-index false` |
+
+A declined set can still be activated by name. Declining is saved in the clone's Git config, like the active sets, so another clone starts fresh.
+
+### What each tool gets
+
+| | Claude Code | Codex and the other tools |
+| --- | --- | --- |
+| List of sets and what is active | At session start | At session start, from `tack context` |
+| Sets that fit the project's files | With every message | Once, at session start |
+| Sets that a request asks for | With every message | Not available: the startup context is written before any request |
+| Reminder to load the active sets' skills | With every message (`skill-reminder` hook) | Once, at session start |
+
+### When something does not happen
+
+- **A set you expected is not suggested.** `tack set suggest` shows what fits; the set's `match` and `ask` lines in `sets.txt` are its rules. A task set is named only when the request says one of its terms: widen its `ask` line, or use `tack set use NAME`.
+- **A set is suggested too often.** `tack set skip NAME`, or narrow its `ask` line to a phrase.
+- **The assistant ignores an active set's skills.** Check that the project is enabled (`tack status`), that `skill-reminder` is not in `tack config disabled-hooks`, and that the links exist (`tack set sync`).
+- **Nothing is suggested at all.** The project is disabled, the hook is turned off, or every fitting set is already active or declined.
+
+### Why it works this way
+
+Measured on small real tasks with a small and a larger model (2026-10-12 and 2026-10-13):
 
 | Left to the assistant | Result |
 | --- | --- |
@@ -49,11 +115,7 @@ What the trials showed, and why the steps are split this way:
 | Telling the user which sets fit | Yes (3 of 3) |
 | Telling the user which set a request asks for, in English and Spanish | Yes (4 of 4), and nothing on requests that ask for none (2 of 2) |
 
-An assistant loads a skill readily but does not change the project's configuration on its own, so activation stays a choice it reports and you make. The samples are small: one run per case, simple tasks.
-
-Claude Code gets the reminder with every message, through a hook. Tools without such a hook get it once, in the startup context from `tack context`; a real Codex session read the matching skills first. Turn the reminder off with `tack config disabled-hooks skill-reminder`, and the startup index with `tack config set-index false`. In a mode such as `unleash`, where nobody confirms each step, the command guard lets the assistant read sets and suggestions but not change them.
-
-Sets for a kind of task rather than a stack (`review`, `planning`, `security`) have no files to detect: their `ask` terms name them when a request says one, and `tack set use NAME` activates one at any time. The terms are narrow on purpose, so a request worded another way names nothing; widen a set's `ask` line when that happens to you. Tools without a per-message hook get no request suggestions, because the startup context is written before any request.
+An assistant loads a skill readily but does not change the project's configuration on its own, so activation is a choice it reports and you make. A real Codex session, which gets the reminder once at startup, read the matching skills first. The samples are small: one run per case, simple tasks. Whether a loaded skill improves the result has not been measured.
 
 ## On another machine
 
@@ -78,6 +140,7 @@ design agent   ui-reviewer                    # agents/ui-reviewer.md
 python match   pyproject.toml                 # the set fits a project that has this file
 react  match   package.json:react             # ...or whose manifest names this dependency
 shell  match   *.sh 3                         # ...or that has at least three such files
+review ask     code+review revis*+de+codigo   # the set matches a request that says one of these
 design plugin  typescript-lsp@claude-plugins-official
 ```
 
@@ -87,7 +150,7 @@ design plugin  typescript-lsp@claude-plugins-official
 emil  https://github.com/emilkowalski/skills  e8a175de22ae1e49370fc144c1f3bb9aeedf988d
 ```
 
-Names are lowercase letters, digits and hyphens; choose one that tells an assistant when the set applies. A source is an `https` URL or an absolute path to a local repository. Two different skills may not share a name, and a plugin's marketplace must be declared in `plugins.txt`. `tack set check` validates both files; `tack set check --fetch` also downloads every source and confirms each skill exists at its pin.
+Names are lowercase letters, digits and hyphens; choose one that tells an assistant when the set applies. Give a set `match` rules when its work shows in a project's files and `ask` terms when it shows only in what you request; [how tack decides that a set fits](#how-tack-decides-that-a-set-fits) has the syntax. A source is an `https` URL or an absolute path to a local repository. Two different skills may not share a name, and a plugin's marketplace must be declared in `plugins.txt`. `tack set check` validates both files; `tack set check --fetch` also downloads every source and confirms each skill exists at its pin.
 
 ## Update a collection
 
