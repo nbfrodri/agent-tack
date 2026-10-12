@@ -60,7 +60,6 @@ design skill frontend
 design skill emil:skills/emil-design-eng
 design skill taste:skills/taste-skill
 design skill anthropics:skills/frontend-design
-design skill vercel:skills/web-design-guidelines
 design skill emil:skills/break-ui
 design agent ui-reviewer
 
@@ -293,8 +292,11 @@ modernization skill wshobson:plugins/framework-migration/skills/react-modernizat
 modernization skill addy:skills/deprecation-and-migration
 modernization plugin code-modernization@claude-plugins-official
 
-engineering-lifecycle about Addy Osmani's whole engineering lifecycle, from spec to ship (25 skills)
-engineering-lifecycle category process
+# A complete alternative method: eight of its skills prescribe how to work, as core does, and
+# one routes every session through the collection. It is a choice for a whole project, made by
+# the user, so it sits with the compatibility sets and the startup index does not offer it.
+engineering-lifecycle about Addy Osmani's whole engineering lifecycle, an alternative to this workflow (25 skills)
+engineering-lifecycle category compat
 engineering-lifecycle skill addy:skills/using-agent-skills
 engineering-lifecycle skill addy:skills/idea-refine
 engineering-lifecycle skill addy:skills/interview-me
@@ -422,7 +424,6 @@ writing about Documentation and prose that reads as written by a person
 writing category beyond-code
 writing skill project-docs
 writing skill anthropics:skills/doc-coauthoring
-writing skill vercel:skills/writing-guidelines
 writing skill wshobson:plugins/avoid-ai-writing/skills/avoid-ai-writing
 writing skill callstack:skills/writing-user-docs
 writing agent docs-writer
