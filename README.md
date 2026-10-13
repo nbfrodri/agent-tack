@@ -68,6 +68,7 @@ Every active skill adds its description to each session, so activate a set where
 cd ~/Projects/my-app
 tack enable       # local to this clone; adds no project files
 tack setup        # clone settings, local differences and existing guidance
+tack setup --apply  # optional: create the missing base guidance files
 ```
 
 An enabled project gets the workflow mode (`auto` picks lite, standard or strict per task), startup context and completion checks. `tack verify --plan` shows which declared checks a change selects; `tack trust` allows running them. [Setup](docs/setup.md) | [Daily use](docs/usage.md) | [Verification](docs/verification.md).
