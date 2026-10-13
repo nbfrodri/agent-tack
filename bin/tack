@@ -2,84 +2,167 @@
 # tack: manage the workflow, its mode and formatter trust for Git projects.
 set -u
 
-usage() {
+usage_text() {
   cat <<'HELP'
 Usage: tack [command] [options]
 
 Manage the workflow, its mode and local formatter trust for the current Git project.
 Default command: status
 
-Commands:
-  status [--quiet]     Show workflow activation, mode and local formatter trust
-  mode [MODE] [--global|--shared]
-                      Show the effective mode, or set it for this project
-                      (or as the global default with --global)
-  mode --unset [--global|--shared]
-                      Remove the project (or global) mode setting
-  mode list           List built-in and user modes with when to use each
-  mode show           Print the effective mode's rules (auto: the modes to pick from)
-  mode new NAME --from MODE
-                      Create a user mode in ~/.config/agent-tack/modes/
-                      from an existing one, to edit and select
-  config [NAME [VALUE]] [--global|--shared] [--get|--json]
-                      List feature toggles, show one, or set it for this project
-                      (or user-wide with --global); config NAME --unset removes it
-                      --get prints a raw value; --json adds source and sharing metadata
-                      reply-style: brief (default), visual or detailed
-  config --shared --apply FILE [--dry-run]
-                      Merge selected tack.json preferences and mode in one write;
-                      --dry-run previews values and local overrides without changes
-  config --check FILE [--json]
-                      Check approved choices against explicit shared and effective values;
-                      read-only; exit 1 for differences, 2 for invalid input
+Quick start:
+  tack enable                 Turn the workflow on in this clone
+  tack setup                  Review what the project already has
+  tack set suggest --apply    Activate the sets that fit its files
+  tack trust                  Allow tack to run the project's own checks
+  tack verify --plan          See which checks a change selects
+
+Commands: project
+
+  status [--quiet]
+      Show workflow activation, mode and local formatter trust
+
   enable [--shared] [--scaffold]
-                      Enable this clone, or use a shareable .tack marker;
-                      --scaffold adds four evidence-based guidance files (never overwrites)
+      Enable this clone, or use a shareable .tack marker;
+      --scaffold adds four evidence-based guidance files (never overwrites)
+
+  disable
+      Disable this clone and remove the shared marker
+
   setup [--check] [--json]
-                      Inspect project foundations without running project code;
-                      Show clone preferences and overrides; --check exits 1 for broken guidance
-  set [list | show NAME | use NAME [--global] | drop NAME [--global] | sync | update [SOURCE...] | check [--fetch]]
-                      Named sets of skills, agents and plugins from sets.txt: use links one
-                      into this project for every tool, or everywhere through install.sh
-                      with --global; update moves the pinned commits in sources.txt
-  team [--base REF] [--against REF ...] [--json]
-                      Inspect known branch overlap and committed merge conflicts; no fetch
-  team --plan|--verify --against REF [--json] [--budget-seconds N]
-                      Preview or run checks in a temporary prospective merge;
-                      committed clean trees only; execution requires local trust
+      Inspect project foundations without running project code;
+      Show clone preferences and overrides; --check exits 1 for broken guidance
+
+  trust [--revoke]
+      Allow or revoke project formatter execution in this clone
+
+  trusted [--quiet]
+      Query local formatter trust independently of activation
+
+  context
+      Point to project instructions plus an index (or, in strict mode,
+      excerpts) of architecture and the active handoff
+
+Commands: modes and settings
+
+  mode [MODE] [--global|--shared]
+      Show the effective mode, or set it for this project
+      (or as the global default with --global)
+
+  mode --unset [--global|--shared]
+      Remove the project (or global) mode setting
+
+  mode list
+      List built-in and user modes with when to use each
+
+  mode show
+      Print the effective mode's rules (auto: the modes to pick from)
+
+  mode new NAME --from MODE
+      Create a user mode in ~/.config/agent-tack/modes/
+      from an existing one, to edit and select
+
+  config [NAME [VALUE]] [--global|--shared] [--get|--json]
+      List feature toggles, show one, or set it for this project
+      (or user-wide with --global); config NAME --unset removes it
+      --get prints a raw value; --json adds source and sharing metadata
+      reply-style: brief (default), visual or detailed
+
+  config --shared --apply FILE [--dry-run]
+      Merge selected tack.json preferences and mode in one write;
+      --dry-run previews values and local overrides without changes
+
+  config --check FILE [--json]
+      Check approved choices against explicit shared and effective values;
+      read-only; exit 1 for differences, 2 for invalid input
+
+  models [TIER]
+      The model each tool uses for a tier (economical, balanced, strongest),
+      from model-tiers.txt and your own overrides
+
+Commands: sets
+
+  set list
+      Named sets of skills, agents and plugins from sets.txt, and where
+      each is active
+
+  set show NAME
+      List what a set contains
+
+  set use NAME [--global]
+      Link a set into this project for every tool, or everywhere through
+      install.sh with --global
+
+  set drop NAME [--global]
+      Deactivate a set
+
+  set suggest [--apply|--skip]
+      Sets that fit this project's files; --apply activates them,
+      --skip declines them
+
+  set skip NAME
+      Stop suggesting one set in this project
+
+  set sync
+      Recreate this project's links
+
+  set update [SOURCE...]
+      Move the pinned sources in sources.txt to their upstream head and
+      report what changed
+
+  set check [--fetch]
+      Check sets.txt and sources.txt; --fetch also fetches every source
+
+Commands: checks and branches
+
   verify [--all] [--plan] [--json] [--base REF] [--budget-seconds N]
-                      Select checks for changed paths; execute only with local trust
-                      --plan is read-only; report failures and verification gaps
-                      --all selects all declared checks, including on a clean clone
-  disable             Disable this clone and remove the shared marker
-  migrate             Move settings and the marker from the former harness name to tack
-                      (this clone and user-wide); tack doctor says when it is needed
-  trust [--revoke]     Allow or revoke project formatter execution in this clone
-  trusted [--quiet]    Query local formatter trust independently of activation
-  doctor              Diagnose installation and project state without changes
-  models [TIER]       The model each tool uses for a tier (economical, balanced,
-                      strongest), from model-tiers.txt and your own overrides
-  lesson note KEY TEXT | contradict KEY | forget KEY | list   [--global]
-                      Count corrections not yet saved as rules; list marks
-                      the ones seen often enough to ask about (lessons skill)
-  memory [show | add TEXT | path]
-                      Notes about you shared by Claude Code and Codex, loaded at
-                      session start (refuses secrets; edit the file to remove)
+      Select checks for changed paths; execute only with local trust
+      --plan is read-only; report failures and verification gaps
+      --all selects all declared checks, including on a clean clone
+
+  team [--base REF] [--against REF ...] [--json]
+      Inspect known branch overlap and committed merge conflicts; no fetch
+
+  team --plan|--verify --against REF [--json] [--budget-seconds N]
+      Preview or run checks in a temporary prospective merge;
+      committed clean trees only; execution requires local trust
+
+  trace [PLAN]
+      Check that every requirement the plan numbers (R1, R2…) has a test
+      naming it (default: newest file in plans-path);
+      text links only, not test execution; exits 1 for missing links
+
   shots [--before|--after] [--name NAME] URL... | --index | --dir
-                      Screenshots of a visual change at mobile and desktop widths,
-                      side by side in .tack-screenshots/ (needs Playwright)
-  trace [PLAN]        Check that every requirement the plan numbers (R1, R2…) has
-                      a test naming it (default: newest file in plans-path);
-                      text links only, not test execution; exits 1 for missing links
-  log [N]             Print the last N (default 20) activity log entries; turn the
-                      log on with: tack config activity-log true
+      Screenshots of a visual change at mobile and desktop widths,
+      side by side in .tack-screenshots/ (needs Playwright)
+
+Commands: records and diagnostics
+
+  doctor [--tools]
+      Diagnose installation and project state without changes
+
+  log [N]
+      Print the last N (default 20) activity log entries; turn the log on
+      with: tack config activity-log true
+
   log --cost|--skills|--levels [--days N] [--csv]
-                      Summarise the last N days (default 30): tokens and USD per
-                      day, project, tool and model; skill and agent use; the
-                      workflow level stated per task
-  context             Point to project instructions plus an index (or, in strict
-                      mode, excerpts) of architecture and the active handoff
-  help                Show this help (also works outside a Git repository)
+      Summarise the last N days (default 30): tokens and USD per day,
+      project, tool and model; skill and agent use; the workflow level
+      stated per task
+
+  lesson note KEY TEXT | contradict KEY | forget KEY | list   [--global]
+      Count corrections not yet saved as rules; list marks the ones seen
+      often enough to ask about (lessons skill)
+
+  memory [show | add TEXT | path]
+      Notes about you shared by Claude Code and Codex, loaded at session
+      start (refuses secrets; edit the file to remove)
+
+  migrate
+      Move settings and the marker from the former harness name to tack
+      (this clone and user-wide); tack doctor says when it is needed
+
+  help
+      Show this help (also works outside a Git repository)
 
 Global options:
   -h, --help          Show this help
@@ -105,22 +188,30 @@ Exit codes:
   help                0; invalid commands or arguments return 2
 
 Examples:
-  tack enable
-  tack status
-  tack mode lite --global
-  tack mode strict
-  tack config
-  tack config delegation off
-  tack trust
-  tack trusted --quiet
-  tack trust --revoke
-  tack doctor
-  tack doctor --tools
-  tack help
+  tack mode lite --global       Make lite the default mode everywhere
+  tack mode strict              Use strict in this project
+  tack config                   List the effective settings and their sources
+  tack config delegation off    Turn one feature off here
+  tack trusted --quiet          Test local trust in a script
+  tack trust --revoke           Stop tack running project commands
+  tack doctor --tools           Check each installed AI tool
 
 Local trust gates project commands run by tack's formatter/check hooks and verify
 commands; it is not a security sandbox or a general command permission.
 HELP
+}
+
+# Bold the section and command lines for a terminal; piped output stays plain.
+usage() {
+  if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
+    usage_text | awk -v bold="$(printf '\033[1m')" -v plain="$(printf '\033[0m')" '
+      /^Commands: / { commands = 1; print bold $0 plain; next }
+      /:$/ { commands = 0; print bold $0 plain; next }
+      commands && /^  [a-z]/ { print bold $0 plain; next }
+      { print }'
+  else
+    usage_text
+  fi
 }
 
 repo_root() { git rev-parse --show-toplevel 2>/dev/null; }

@@ -64,6 +64,17 @@ check "help works outside a Git repository" expect_exit 0 "$CLI" help
 check "help shows CLI invocation syntax" contains 'Usage: tack [command] [options]'
 check "help documents the default command" contains 'Default command: status'
 check "help lists both global help flags" contains '-h, --help'
+check "help opens with the steps for a new project" contains 'Quick start:'
+check "help groups commands by task" contains 'Commands: sets'
+check "help documents set suggestions" contains 'set suggest [--apply|--skip]'
+commands_spaced() {
+  awk '/^Commands: / { listing = 1; next } /^Global options:/ { listing = 0 }
+    listing && /^  [a-z]/ { seen = 1; if (previous != "") crowded = 1 } { previous = $0 }
+    END { exit crowded || !seen }' "$WORK/output"
+}
+check "help separates each command from the next" commands_spaced
+no_escapes() { ! grep -q "$(printf '\033')" "$WORK/output"; }
+check "help written to a file carries no terminal escapes" no_escapes
 cp "$WORK/output" "$WORK/help-output"
 check "long help flag succeeds outside Git" expect_exit 0 "$CLI" --help
 check "long help flag matches the help command" cmp -s "$WORK/output" "$WORK/help-output"

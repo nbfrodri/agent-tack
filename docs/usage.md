@@ -68,6 +68,7 @@ An active handoff records work another session needs to resume. tack compares it
 | `tack setup` | Read-only project inventory and setup gaps |
 | `tack team --base origin/main --against REF` | Inspect known branch overlap and merge conflicts without fetching; [parallel branches](teamwork.md) |
 | `tack set list` | Sets of skills, agents and plugins, and where each is active; [sets guide](sets.md) |
+| `tack set show NAME` | What a set contains |
 | `tack set use NAME` | Activate a set in this project; add `--global` for every project, then run `./install.sh` |
 | `tack set drop NAME` | Deactivate a set |
 | `tack set suggest` | Sets that fit this project's files; `--apply` activates them, `--skip` declines them |
