@@ -66,6 +66,7 @@ An active handoff records work another session needs to resume. tack compares it
 | --- | --- |
 | `tack status` | Activation, saved mode and local trust |
 | `tack setup` | Read-only project inventory and setup gaps |
+| `tack setup --apply` | Create the missing base guidance files; never overwrites |
 | `tack team --base origin/main --against REF` | Inspect known branch overlap and merge conflicts without fetching; [parallel branches](teamwork.md) |
 | `tack set list` | Sets of skills, agents and plugins, and where each is active; [sets guide](sets.md) |
 | `tack set show NAME` | What a set contains |

@@ -11,7 +11,8 @@ Default command: status
 
 Quick start:
   tack enable                 Turn the workflow on in this clone
-  tack setup                  Review what the project already has
+  tack setup                  Review what the project has and what is missing
+  tack setup --apply          Create the missing base guidance files
   tack set suggest --apply    Activate the sets that fit its files
   tack trust                  Allow tack to run the project's own checks
   tack verify --plan          See which checks a change selects
@@ -23,14 +24,19 @@ Commands: project
 
   enable [--shared] [--scaffold]
       Enable this clone, or use a shareable .tack marker;
-      --scaffold adds four evidence-based guidance files (never overwrites)
+      --scaffold also creates the files of setup --apply
 
   disable
       Disable this clone and remove the shared marker
 
   setup [--check] [--json]
-      Inspect project foundations without running project code;
-      Show clone preferences and overrides; --check exits 1 for broken guidance
+      Read-only report: project foundations, clone preferences and overrides,
+      and what is missing; --check exits 1 for broken guidance
+
+  setup --apply
+      Create the missing base guidance files (AGENTS.md, CLAUDE.md,
+      architecture and docs-map); never overwrites. Tests, CI and other
+      additions are proposed by the assistant, not created here
 
   trust [--revoke]
       Allow or revoke project formatter execution in this clone
@@ -490,10 +496,22 @@ case "$cmd" in
     exit 1
     ;;
   setup)
+    apply=0
     for arg in "$@"; do
-      case "$arg" in --check | --json) ;; *) echo 'tack: usage: tack setup [--check] [--json]' >&2; exit 2 ;; esac
+      case "$arg" in
+        --check | --json) ;;
+        --apply) apply=1 ;;
+        *) echo 'tack: usage: tack setup [--check] [--json] | --apply' >&2; exit 2 ;;
+      esac
     done
+    if [ "$apply" -eq 1 ] && [ "$#" -ne 1 ]; then
+      echo 'tack: setup --apply takes no other option (see --help)' >&2; exit 2
+    fi
     require_repo
+    if [ "$apply" -eq 1 ]; then
+      bash "$TACK_ROOT/lib/scaffold.sh" "$TACK_ROOT" "$root" || fail "cannot create the docs structure"
+      exit
+    fi
     command -v python3 >/dev/null 2>&1 || fail 'setup needs python3'
     TACK_SETUP_BASH="$BASH"
     if command -v cygpath >/dev/null 2>&1; then TACK_SETUP_BASH="$(cygpath -m "$BASH")"; fi

@@ -465,6 +465,25 @@ check "a second scaffold keeps everything" expect_exit 0 scaffold --scaffold
 check "the second scaffold creates nothing" out_lacks "created"
 check "scaffold combines with --shared" expect_exit 0 scaffold --shared --scaffold
 check "the shared marker exists after a shared scaffold" files_exist "$SCAF/.tack"
+
+# tack setup --apply: the same base files, without enabling the project.
+APPLY="$WORK/apply-repo"
+git init -q "$APPLY"
+printf '# Mine\n' > "$APPLY/AGENTS.md"
+setup_in() { local repo="$1"; shift; (cd "$repo" && "$CLI" setup "$@"); }
+check "plain setup names the command that creates missing files" expect_exit 0 setup_in "$APPLY"
+check "the setup report points to setup --apply" contains 'tack setup --apply'
+check "plain setup creates no files" test ! -e "$APPLY/docs"
+check "setup --apply succeeds" expect_exit 0 setup_in "$APPLY" --apply
+check "setup --apply creates the missing base files" files_exist "$APPLY/docs/architecture.md" "$APPLY/docs-map.txt" "$APPLY/CLAUDE.md"
+check "setup --apply never overwrites an existing file" file_is "$APPLY/AGENTS.md" "# Mine"
+check "setup --apply says what it created" contains 'created docs/architecture.md'
+check "setup --apply leaves activation to enable" test -z "$(git -C "$APPLY" config --get tack.enabled)"
+check "a second setup --apply keeps everything" expect_exit 0 setup_in "$APPLY" --apply
+check "the second setup --apply creates nothing" out_lacks "created"
+check "setup --apply rejects the read-only options" expect_exit 2 setup_in "$APPLY" --apply --check
+check "help documents setup --apply" expect_exit 0 "$CLI" help
+check "help includes setup --apply syntax" contains 'setup --apply'
 PLAIN="$WORK/plain-enable"
 git init -q "$PLAIN"
 check "plain enable creates no docs" plain_enable_creates_nothing

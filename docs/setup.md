@@ -44,7 +44,7 @@ tack setup
 
 Setup shows activation, mode, local trust, effective preferences and their origins. It highlights differences from shared choices and how to remove a local override if you want the shared value. Overrides are allowed; setup never removes them. It also lists detected stacks, declared commands, existing guidance and optional additions. Discovery is bounded, so a large monorepo still needs inspection of the relevant packages.
 
-Setup does not write files, run project commands, install dependencies or grant trust. Use `--json` for the same information as data; `tack config --json` adds feature descriptions and sharing/enforcement metadata when needed. Check the guidance with:
+Without `--apply`, setup does not write files; it never runs project commands, installs dependencies or grants trust. Use `--json` for the same information as data; `tack config --json` adds feature descriptions and sharing/enforcement metadata when needed. Check the guidance with:
 
 ```bash
 tack setup --check  # or --check --json for scripts
@@ -65,11 +65,11 @@ Keep agreed decisions in an existing `AGENTS.md` when useful. Finish local revie
 ## 4. Add base guidance if you want it
 
 ```bash
-tack enable --scaffold
-# Or: tack enable --shared --scaffold
+tack setup --apply
+# Or while enabling: tack enable --scaffold (also with --shared)
 ```
 
-Scaffold creates only missing files:
+Both create the same files, and only the missing ones; `setup --apply` does not change activation:
 
 | File | Why it exists |
 | --- | --- |

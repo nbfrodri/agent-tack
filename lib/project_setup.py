@@ -290,7 +290,7 @@ def main():
                 print(f"Area: {area['path']} (instructions: {area['instructions'] or 'not detected'}; ownership unverified)")
             print(f"Docs-map: {report['docs_map_rules']} active rule(s)")
             if report['missing_optional']:
-                print('Optional files not present: ' + ', '.join(report['missing_optional']) + '. Create only if useful.')
+                print('Optional files not present: ' + ', '.join(report['missing_optional']) + '. Create them with tack setup --apply, only if useful.')
             if report['truncated']:
                 print('Inventory limited to 3000 paths; inspect omitted packages before proposing additions.')
             print('Structure: ' + ('needs review' if report['issues'] else 'no problems found') + '; not test results or a factual review of the guidance.')
