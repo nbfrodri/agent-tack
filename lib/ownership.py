@@ -184,7 +184,9 @@ def validate(state, home):
                 raise ValueError("unsupported multiline Git baseline")
         elif kind == "generated":
             parent, name = os.path.split(path)
-            if not generated_parent(parent, home.rstrip('/'), entry / 'targets') or not GENERATED_NAME.fullmatch(name):
+            windows_command = path == canonical(home.rstrip('/') + '/.local/bin/tack.cmd')
+            if not windows_command and (not generated_parent(parent, home.rstrip('/'), entry / 'targets')
+                                        or not GENERATED_NAME.fullmatch(name)):
                 raise ValueError("unexpected generated file")
             if not SHA256.fullmatch(read(entry / "sha256")):
                 raise ValueError("invalid generated file checksum")

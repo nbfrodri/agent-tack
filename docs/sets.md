@@ -21,6 +21,8 @@ tack set skip NAME             # stop suggesting one set in this project
 
 In a project, `use` links each skill into `.agents/skills/` and `.claude/skills/`, each agent into `.claude/agents/`, and installs each plugin for that clone (`claude plugin install --scope local`). The links are added to `.git/info/exclude`, so the project's history and `.gitignore` stay untouched. A skill or agent the project already has under the same name is kept. The choice is saved in the clone's Git config (`tack.sets`), which is why another clone needs `tack set use` or `tack set sync`.
 
+Project activation is saved only after the links have been applied. If linking fails, retry the activation command after fixing the cause; any links already created stay excluded from Git. On native Windows, `WinError 1314` means symbolic-link privileges are missing: enable **Developer Mode** in Windows Settings, or run the command as administrator. If an older version already marked the sets active before failing, use `tack set sync` to finish linking them.
+
 With `--global` the choice is saved in your global Git config and `./install.sh` links the skills into every tool in `targets.txt`, generates the agents for the tools that support them and installs the plugins. Dropping a set and reinstalling removes those links; installed plugins stay, as with `plugins.txt`.
 
 | Item | Project scope | Everywhere |

@@ -52,8 +52,16 @@ check "denies a force-push to main" "[ \"\$(decision 'git push --force origin ma
 check "denies deleting the root directory" "[ \"\$(decision 'rm -rf /')\" = deny ]"
 check "asks before a hard reset" "[ \"\$(decision 'git reset --hard HEAD~1')\" = ask ]"
 
+case "$(uname -s)" in
+  MINGW* | MSYS* | CYGWIN*)
+    export TACK_TEST_INSTALLED_HOME="$HOME"
+    check "PowerShell command and native registered hooks work" "python3 '$REPO/tests/windows-commands.test.py'"
+    unset TACK_TEST_INSTALLED_HOME ;;
+esac
+
 echo "Uninstall"
 check "uninstall succeeds" "'$REPO/uninstall.sh' >'$WORK/uninstall.log' 2>&1 || { cat '$WORK/uninstall.log'; false; }"
+check "uninstall removes the generated Windows launcher" "[ ! -e '$HOME/.local/bin/tack.cmd' ]"
 check "uninstall removes managed links" "[ ! -L '$HOME/.claude/CLAUDE.md' ]"
 check "uninstall restores original instructions" "grep -q 'Original user instructions' '$HOME/.claude/CLAUDE.md'"
 check "uninstall restores original settings" "grep -q smoke '$HOME/.claude/settings.json' && ! grep -q '#tack' '$HOME/.claude/settings.json'"

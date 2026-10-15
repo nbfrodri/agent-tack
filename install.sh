@@ -254,6 +254,7 @@ EOF
   section "Command"
   [ "$DRY_RUN" -eq 1 ] || chmod +x "$REPO/bin/tack" 2>/dev/null
   link "$REPO/bin/tack" "$HOME/.local/bin/tack"
+  install_windows_command
   case ":$PATH:" in
     *":$HOME/.local/bin:"*) ;;
     *) warn "$HOME/.local/bin is not in PATH: add it to use 'tack enable|disable|status'" ;;
@@ -267,6 +268,28 @@ EOF
     if agent_selected "$(basename "$agent" .md)"; then link "$agent" "$HOME/.claude/agents/$(basename "$agent")"
     else deselect_agent link "$agent" "$HOME/.claude/agents/$(basename "$agent")"; fi
   done
+}
+
+# Native shells need an executable extension and the same Bash used for installation.
+install_windows_command() {
+  case "$(uname -s)" in MINGW* | MSYS* | CYGWIN*) ;; *) return 0 ;; esac
+  local target="$HOME/.local/bin/tack.cmd" rendered="$WORKDIR/tack.cmd" recorded=""
+  MSYS2_ENV_CONV_EXCL="${MSYS2_ENV_CONV_EXCL:+$MSYS2_ENV_CONV_EXCL;}TACK_RENDER_ROOT" \
+    TACK_RENDER_ROOT="$REPO" python3 "$REPO/lib/render_settings.py" --launcher "$REPO" "$BASH" > "$rendered" \
+    || { fail "cannot render the Windows command"; return; }
+  ownership_find generated "$target"
+  [ -z "$OWN_ENTRY" ] || recorded="$(cat "$OWN_ENTRY/sha256" 2>/dev/null)"
+  if [ -L "$target" ] || { [ -e "$target" ] && { [ -z "$recorded" ] || [ "$(file_sha256 "$target")" != "$recorded" ]; }; }; then
+    warn "$target exists or was edited; left untouched"
+    return
+  fi
+  if [ -e "$target" ] && cmp -s "$rendered" "$target"; then item_kept "$target"; return; fi
+  if [ "$DRY_RUN" -eq 1 ]; then ok "would write $target"; return; fi
+  if cp "$rendered" "$target" && ownership_generated "$target" "$(file_sha256 "$target")"; then
+    item_new "Windows command $target written"
+  else
+    fail "cannot write $target"
+  fi
 }
 
 # Merges claude/settings.json into ~/.claude/settings.json:
@@ -351,9 +374,15 @@ merge_json() {
   tmp="$WORKDIR/settings-merged.json"
 
   if [ -s "$dest" ]; then cp "$dest" "$base"; else printf '{}\n' > "$base"; fi
-  while IFS= read -r line || [ -n "$line" ]; do
-    printf '%s\n' "${line//__REPO__/$REPO}"
-  done < "$src" > "$rendered"
+  if has python3; then
+    MSYS2_ENV_CONV_EXCL="${MSYS2_ENV_CONV_EXCL:+$MSYS2_ENV_CONV_EXCL;}TACK_RENDER_ROOT" \
+      TACK_RENDER_ROOT="$REPO" python3 "$REPO/lib/render_settings.py" "$src" "$REPO" "$BASH" > "$rendered" \
+      || { fail "cannot render $src"; return; }
+  else
+    while IFS= read -r line || [ -n "$line" ]; do
+      printf '%s\n' "${line//__REPO__/$REPO}"
+    done < "$src" > "$rendered"
+  fi
 
   if has python3; then
     python3 "$REPO/lib/settings-merge.py" "$base" "$rendered" > "$tmp" 2>/dev/null

@@ -57,4 +57,5 @@ if command -v jq >/dev/null 2>&1; then
   else FAILED=$((FAILED + 1)); printf '  ✘ python and jq merge Cursor entries the same way\n'; fi
 fi
 printf '\n%s passed, %s failed\n' "$PASSED" "$FAILED"
+python3 "$REPO/tests/windows-commands.test.py" || FAILED=$((FAILED + 1))
 [ "$FAILED" -eq 0 ]

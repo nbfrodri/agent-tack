@@ -94,6 +94,26 @@ class OwnershipPlatformTest(unittest.TestCase):
         self.assertTrue(ownership.uninstall_entry(entry, False))
         self.assertFalse(path.exists())
 
+    def test_generated_windows_launcher_is_owned_but_its_edits_are_preserved(self):
+        path = self.home / '.local/bin/tack.cmd'
+        entry = self.entry('generated', path, sha256=hashlib.sha256(b'installed').hexdigest())
+        path.write_bytes(b'installed')
+        self.assertEqual(ownership.validate(self.state, str(self.home)), [entry])
+        path.write_bytes(b'user edit')
+        self.assertFalse(ownership.uninstall_entry(entry, False))
+        self.assertEqual(path.read_bytes(), b'user edit')
+        path.write_bytes(b'installed')
+        self.assertTrue(ownership.uninstall_entry(entry, False))
+        self.assertFalse(path.exists())
+
+    def test_generated_command_exception_does_not_allow_other_launchers(self):
+        path = self.home / '.local/bin/other.cmd'
+        self.entry('generated', path, sha256=hashlib.sha256(b'installed').hexdigest())
+        path.write_bytes(b'installed')
+        with self.assertRaisesRegex(ValueError, 'unexpected generated file'):
+            ownership.validate(self.state, str(self.home))
+        self.assertEqual(path.read_bytes(), b'installed')
+
     def test_edited_generated_file_is_preserved(self):
         entry, path = self.generated()
         path.write_bytes(b"user edit")
