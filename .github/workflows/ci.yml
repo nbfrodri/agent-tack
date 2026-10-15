@@ -100,6 +100,10 @@ jobs:
         run: |
           tests/team.test.sh
           tests/pr-policy.test.sh
+      - name: Check native launchers, hook commands and set activation failures
+        run: |
+          python3 tests/windows-commands.test.py
+          python3 tests/sets.test.py SetsTests.test_windows_link_failure_does_not_activate_use_or_suggest SetsTests.test_windows_link_failure_preserves_existing_selection_and_sync_can_recover SetsTests.test_other_link_errors_do_not_suggest_changing_windows_privileges
       - name: Install, doctor, commit through hooks, guard and uninstall
         run: tests/smoke.test.sh
 

@@ -385,6 +385,78 @@ class SetsTests(unittest.TestCase):
 
     # Project scope
 
+    def fail_link(self, *args, after=0, winerror=1314):
+        # Exercise the real CLI, injecting the OS failure without changing machine privileges.
+        script = """
+import os, runpy, sys
+real_symlink = os.symlink
+remaining = int(sys.argv.pop(1))
+winerror = int(sys.argv.pop(1))
+def denied(*args, **kwargs):
+    global remaining
+    if remaining:
+        remaining -= 1
+        return real_symlink(*args, **kwargs)
+    error = OSError('simulated link failure')
+    error.winerror = winerror
+    raise error
+os.symlink = denied
+sys.argv = sys.argv[1:]
+runpy.run_path(sys.argv[0], run_name='__main__')
+"""
+        return self.run_in(self.project, sys.executable, '-c', script, str(after), str(winerror),
+                           str(ROOT / 'lib/sets.py'), str(self.tack), *args, expected=1)
+
+    def local_links(self):
+        self.sets('web about Web\nweb skill frontend\nweb match package.json\n'
+                  'other about Other\nother agent ui-reviewer\n')
+
+    def test_windows_link_failure_does_not_activate_use_or_suggest(self):
+        self.local_links()
+        self.put('package.json', '{}')
+        for args in (('use', 'web'), ('suggest', '--apply')):
+            with self.subTest(command=args):
+                out = self.fail_link(*args)
+                self.assertIn('Developer Mode', out)
+                self.assertIn('administrator', out)
+                self.assertIn('tack set sync', out)
+                self.assertNotIn('Traceback', out)
+                self.assertNotIn('is active in', out)
+                self.assertNotIn('Active in', out)
+                self.assertEqual(self.run_in(self.project, 'git', 'config', '--local',
+                                            '--get', 'tack.sets', expected=1), '')
+                self.assertRegex(self.tool('suggest'), r'(?m)^\s*web\b')
+        self.tool('suggest', '--apply')
+        self.assertEqual(self.git(self.project, 'config', '--local', 'tack.sets'), 'web')
+        self.assertTrue((self.project / '.agents/skills/frontend/SKILL.md').is_file())
+
+    def test_windows_link_failure_preserves_existing_selection_and_sync_can_recover(self):
+        self.local_links()
+        self.git(self.project, 'config', '--local', 'tack.sets', 'other')
+        self.fail_link('use', 'web')
+        self.assertEqual(self.git(self.project, 'config', '--local', 'tack.sets'), 'other')
+        out = self.fail_link('sync')
+        self.assertIn('Developer Mode', out)
+        self.assertNotIn('Project sets are in place', out)
+        self.tool('sync')
+        self.assertTrue((self.project / '.claude/agents/ui-reviewer.md').is_file())
+
+    def test_partial_link_failure_keeps_created_links_out_of_git_and_can_be_retried(self):
+        self.local_links()
+        self.fail_link('use', 'web', after=1)
+        self.assertTrue((self.project / '.agents/skills/frontend').is_symlink())
+        self.assertEqual(self.git(self.project, 'status', '--porcelain'), '')
+        self.tool('use', 'web')
+        self.assertTrue((self.project / '.claude/skills/frontend/SKILL.md').is_file())
+        self.assertEqual(self.git(self.project, 'config', '--local', 'tack.sets'), 'web')
+
+    def test_other_link_errors_do_not_suggest_changing_windows_privileges(self):
+        self.local_links()
+        out = self.fail_link('use', 'web', winerror=5)
+        self.assertIn('simulated link failure', out)
+        self.assertNotIn('Developer Mode', out)
+        self.assertNotIn('Traceback', out)
+
     def test_use_links_the_set_into_the_project_for_every_tool_and_hides_it_from_git(self):
         self.tool('use', 'design')
         for folder in ('.agents/skills', '.claude/skills'):

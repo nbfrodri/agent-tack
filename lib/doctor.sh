@@ -83,6 +83,11 @@ check_tools_and_links() {
   has readlink || return
   check_link "$REPO" "$HOME/.agents/tack"
   check_link "$REPO/bin/tack" "$HOME/.local/bin/tack"
+  case "$(uname -s)" in
+    MINGW* | MSYS* | CYGWIN*)
+      if [ -f "$HOME/.local/bin/tack.cmd" ]; then ok 'Windows command: tack.cmd'
+      else fail 'Windows command missing: re-run install.sh to create tack.cmd'; fi ;;
+  esac
   [ -x "$REPO/bin/tack" ] || fail 'tack CLI is not executable'
   ok "sets active everywhere: $(sets_global)"
   sets_legacy_notice
@@ -206,12 +211,15 @@ check_settings() {
     [ -r "$source" ] || fail 'managed Claude hook script is unreadable'
   done
   if has python3; then
-    MSYS2_ENV_CONV_EXCL="${MSYS2_ENV_CONV_EXCL:+$MSYS2_ENV_CONV_EXCL;}TACK_DOCTOR_ROOT" \
-      TACK_DOCTOR_ROOT="$REPO" python3 - "$dest" "$REPO/claude/settings.json" <<'PYTHON' >/dev/null 2>&1
+    MSYS2_ENV_CONV_EXCL="${MSYS2_ENV_CONV_EXCL:+$MSYS2_ENV_CONV_EXCL;}TACK_RENDER_ROOT" \
+      TACK_RENDER_ROOT="$REPO" python3 - "$dest" "$REPO/claude/settings.json" "$BASH" <<'PYTHON' >/dev/null 2>&1
 import json,os,sys
+from pathlib import Path
+sys.path.insert(0, str(Path(sys.argv[2]).parent.parent / 'lib'))
+from render_settings import render
 try:
     current=json.load(open(sys.argv[1], encoding="utf-8"))
-    expected=json.load(open(sys.argv[2], encoding="utf-8"))
+    expected=render(json.load(open(sys.argv[2], encoding="utf-8")), os.environ['TACK_RENDER_ROOT'], sys.argv[3])
 except (OSError,ValueError):
     sys.exit(2)
 if not isinstance(current,dict): sys.exit(2)
@@ -222,7 +230,7 @@ for event,groups in expected.get('hooks',{}).items():
     if not isinstance(candidates,list): sys.exit(1)
     for group in groups:
         for hook in group['hooks']:
-            command=hook['command'].replace('__REPO__',os.environ['TACK_DOCTOR_ROOT'])
+            command=hook['command']
             matches=0
             for candidate in candidates:
                 if not isinstance(candidate,dict) or candidate.get('matcher')!=group.get('matcher'):

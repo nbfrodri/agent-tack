@@ -326,6 +326,8 @@ def apply_project(root, repo, sources, sets, wanted, dropped_plugins=()):
     for dest in skipped:
         del links[dest]
         print(f'  kept {dest.relative_to(repo)}: a folder above it is a symlink, so it may lead outside the project')
+    # Even an interrupted activation must keep its completed links out of Git.
+    exclude(repo, [f'/{dest.relative_to(repo).as_posix()}' for dest in links])
     for dest, target in links.items():
         if dest.is_symlink() and ours(dest, root):
             if os.readlink(dest) == str(target):
@@ -335,9 +337,15 @@ def apply_project(root, repo, sources, sets, wanted, dropped_plugins=()):
             print(f'  kept {dest.relative_to(repo)}: the project already has it')
             continue
         dest.parent.mkdir(parents=True, exist_ok=True)
-        os.symlink(target, dest)
+        try:
+            os.symlink(target, dest)
+        except OSError as error:
+            if getattr(error, 'winerror', None) == 1314:
+                raise Fail(f'Windows cannot create the symbolic link {dest.relative_to(repo)}: '
+                           'enable Developer Mode in Windows Settings or run this command as administrator, '
+                           'then retry. For sets already marked active, run tack set sync.') from error
+            raise Fail(f'cannot create symbolic link {dest.relative_to(repo)}: {error}') from error
         print(f'  linked {dest.relative_to(repo)}')
-    exclude(repo, [f'/{dest.relative_to(repo).as_posix()}' for dest in links])
     for plugin in dropped_plugins:
         claude_plugin('uninstall', plugin, repo)
     for item in items:
@@ -491,9 +499,9 @@ def command_suggest(args, root, sources, sets):
         return
     names = [*active('local', sets, repo), *found]
     wanted = resolve(root, names, sources, sets)
+    apply_project(root, repo, sources, sets, wanted)
     remember('local', names, repo)
     print(f'Active in {repo}: {", ".join(found)}')
-    apply_project(root, repo, sources, sets, wanted)
 
 
 def command_list(args, root, sources, sets):
@@ -607,9 +615,9 @@ def command_use(args, root, sources, sets):
         print(f'{args.name} is active everywhere after the next install: run {root / "install.sh"}')
         return
     wanted = resolve(root, names, sources, sets)
+    apply_project(root, repo, sources, sets, wanted)
     remember('local', names, repo)
     print(f'{args.name} is active in {repo}')
-    apply_project(root, repo, sources, sets, wanted)
 
 
 def command_drop(args, root, sources, sets):
