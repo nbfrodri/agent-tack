@@ -28,6 +28,7 @@ tests/validate.test.sh   # the validator catches each kind of error
 tests/install.test.sh    # installer, in throwaway HOME directories
 tests/lifecycle.test.sh  # ownership, previews and safe uninstall
 tests/doctor.test.sh     # read-only installation diagnostics
+tests/branches.test.sh   # tack branches: merged, squash-merged and in-use branches (fake gh)
 tests/tools.test.sh      # targets.txt columns, `doctor --tools` and the weekly workflow
 tests/mods.test.sh       # mods step: install, opt-outs, dry run, uninstall and doctor (fake claude CLI)
 tests/vscode.test.sh     # VS Code step: chat.useAgentsMdFile install, opt-out, dry run, uninstall and doctor
