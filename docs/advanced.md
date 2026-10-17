@@ -74,6 +74,12 @@ tack models              # every tool and tier
 tack models economical   # one tier
 ```
 
+### Planning with a stronger model (`opusplan`)
+
+In Claude Code, `/model opusplan` uses Opus while you are in plan mode and Sonnet otherwise, and saves that as your default for new sessions. It is a Claude Code preference of yours, not a tack setting, so tack neither sets nor overrides it. It fits the workflow modes: `standard` and `strict` plan first, and the plan is the part worth the stronger model; `lite` tasks skip planning and run on Sonnet.
+
+The switch follows plan mode only. Enter it with Shift+Tab (it cycles through the modes) or `/plan`; leaving it after you approve the plan switches back. The auto permission mode is not plan mode, so it runs on Sonnet. The status bar and `/model` show which model is active. Subagents and cross-delegation choose their own model from the tiers above.
+
 ### Delegating to the other assistant
 
 When both Claude Code and Codex are installed, the `cross-delegate` skill (set `orchestration`) lets one hand a bounded task to the other through its non-interactive CLI (`codex exec`, `claude -p`) and read back only a short report (verdict, summary, files, tests, blockers) instead of the whole transcript. Follow-ups resume the same session, so the long context stays with the delegate. It follows the same rule as subagents: automatic at strict and unleash, a one-line suggestion at lite and standard. The model comes from the tier mapping above.
