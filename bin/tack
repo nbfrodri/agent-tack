@@ -132,6 +132,11 @@ Commands: checks and branches
       Preview or run checks in a temporary prospective merge;
       committed clean trees only; execution requires local trust
 
+  branches [--apply]
+      List local branches whose work is already merged into main (or whose
+      GitHub PR is merged and whose tip is still its head); --apply deletes them
+      Branches in use and unmerged branches stay; squash merges need gh
+
   trace [PLAN]
       Check that every requirement the plan numbers (R1, R2…) has a test
       naming it (default: newest file in plans-path);
@@ -529,6 +534,13 @@ case "$cmd" in
     command -v python3 >/dev/null 2>&1 || fail 'team needs python3'
     verification_environment
     python3 "$TACK_ROOT/lib/team.py" "$root" "$@"
+    exit
+    ;;
+  branches)
+    require_repo
+    command -v python3 >/dev/null 2>&1 || fail 'branches needs python3'
+    allowed_option='--apply'; check_args "$@"
+    python3 "$TACK_ROOT/lib/branches.py" "$root" "$@"
     exit
     ;;
   verify)
