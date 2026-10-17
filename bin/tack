@@ -137,10 +137,11 @@ Commands: checks and branches
       GitHub PR is merged and whose tip is still its head); --apply deletes them
       Branches in use and unmerged branches stay; squash merges need gh
 
-  usage set|get five_hour|seven_day ... | threshold | hint
-      The 5-hour and weekly usage the usage band mod records (set KIND PERCENT
-      [RESETS_AT]); once per window past delegate-usage-percent the assistant
-      offers to hand tasks to Codex
+  usage set|get five_hour|seven_day ... | record | statusline | threshold | hint
+      The 5-hour and weekly usage, recorded by the usage band mod or by a Claude
+      Code status line running `tack usage statusline` (or `record` inside your
+      own); once per window past delegate-usage-percent the assistant offers to
+      hand tasks to Codex
 
   trace [PLAN]
       Check that every requirement the plan numbers (R1, R2…) has a test

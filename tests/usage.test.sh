@@ -72,6 +72,24 @@ offers_both() { grep -q '5-hour' <<< "$both" && grep -q 'weekly' <<< "$both"; }
 check "both windows past the threshold are both offered" offers_both
 usage set seven_day 30 2026-11-15T00:00:00Z >/dev/null
 
+echo "tack usage record and statusline (Claude Code's status line input, no mod)"
+STATUS='{"rate_limits":{"five_hour":{"used_percentage":23.5,"resets_at":1738425600},"seven_day":{"used_percentage":41.2,"resets_at":1738857600}}}'
+status_in() { printf '%s' "$STATUS" | usage "$@"; }
+status_in record > /dev/null
+check "record stores the 5-hour reading, rounded" test "$(usage get five_hour)" = 24
+check "record stores the weekly reading" test "$(usage get seven_day)" = 41
+check "record prints nothing" test -z "$(status_in record)"
+check "statusline prints both windows" test "$(status_in statusline)" = "5h 24% · 7d 41%"
+check "no rate limits: statusline prints an empty line" test -z "$(printf '{"model":{}}' | usage statusline)"
+garbage_in() { printf 'not json' | usage statusline > /dev/null; }
+check "garbage input is ignored and succeeds" garbage_in
+STATUS='{"rate_limits":{"five_hour":{"used_percentage":64,"resets_at":1738512000}}}'
+status_in record > /dev/null
+check "a recorded reading past the threshold is offered" grep -q '5-hour limit is at 64%' <<< "$(usage hint)"
+STATUS='{"rate_limits":{"five_hour":{"used_percentage":"lots","resets_at":1}}}'
+status_in record > /dev/null
+check "a non-numeric percentage is not recorded" test "$(usage get five_hour)" = 64
+
 echo "tack usage hint: when it stays silent"
 usage set five_hour 90 2026-10-19T06:00:00Z >/dev/null
 check "no codex installed: silent" test -z "$(usage_without_codex hint)"
