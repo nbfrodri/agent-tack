@@ -19,6 +19,7 @@ Open Agent Skills format (`SKILL.md`), read by every supported tool.
 | `project-docs` | Docs for humans and AIs, ADRs, plans, audits, handoffs, AI log |
 | `improve` | Prioritised improvement review with read-only reviewers |
 | `orchestrate` | Multi-agent delegation with model and effort per task; automatic only for strict-level work |
+| `cross-delegate` | Hand a bounded task to the other installed assistant (Codex or Claude) through its CLI and read back a short fixed-shape report; gated by `tack config cross-delegation` |
 | `auto-improve` | Bounded rounds of verified findings, fixes and checks; scores only when requested |
 | `lessons` | Turn corrections into versioned rules; create and reuse justified project-local skills and specialist roles |
 | `frontend` | React/Next.js components, state, forms, accessibility |
