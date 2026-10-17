@@ -10,7 +10,7 @@ The other assistant does the long work in its own context and returns a short, f
 ## 1. Gate
 
 1. `tack config cross-delegation --get`: `off` means work directly; `one-way` means only the assistant the user opened delegates; `both` also lets the delegate hand work back. An explicit user request authorises one delegation even when it is `off`.
-   In an enabled project, delegate on your own only at the strict and unleash workflow levels (`dev-workflow`); at lite and standard, suggest it in one line and wait. Outside enabled projects, suggest and wait. Run Codex with a sandbox (`-s`), never with `--dangerously-bypass-approvals-and-sandbox`.
+   In an enabled project, delegate on your own only at the strict and unleash workflow levels (`dev-workflow`); at lite and standard, suggest it in one line and wait. Outside enabled projects, suggest and wait. A message from tack that the 5-hour or weekly usage is high is such a suggestion: offer it in one line, and the user's yes authorises it. Run Codex with a sandbox (`-s`), never with `--dangerously-bypass-approvals-and-sandbox`.
 2. The other CLI must be on PATH (`command -v codex` or `command -v claude`); otherwise work directly and say so.
 3. A prompt that starts "You are a delegate" is a delegated session: do the task yourself and delegate nothing onward.
 4. Delegate only work that pays back the handoff: wide reading, mechanical edits across files, a second-opinion review. Keep auth, payments, untrusted-input code and small or tightly coupled tasks with you.

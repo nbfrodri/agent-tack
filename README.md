@@ -29,7 +29,7 @@ It is public so you can read it or fork it. It is not a product: defaults follow
 | Command guard, startup context and completion checks | `hooks/` | Claude Code, Codex and the tools with native hooks |
 | Claude Code plugins and mods | `plugins.txt`, `plugins/` | Claude Code |
 | Project checks selected from changed paths | `tack verify`, optional `checks-map.json` | Any project, with or without an AI tool |
-| Hand a task to the other assistant and read back a short report; `/clear` hint when the context grows | `skills/cross-delegate/`, `tack config cross-delegation`, `clear-hint-tokens` | Claude Code and Codex (the hint: Claude Code) |
+| Hand a task to the other assistant and read back a short report; `/clear` hint when the context grows; an offer to delegate when the 5-hour or weekly usage runs high | `skills/cross-delegate/`, `tack config cross-delegation`, `clear-hint-tokens`, `delegate-usage-percent` | Claude Code and Codex (the hint: Claude Code) |
 | Delete local branches that are already merged | `tack branches [--apply]` | Any Git project |
 
 ## Install on a machine

@@ -4,6 +4,8 @@
 # has the skills listed at session start does not open them, and one reminded next to the request
 # loads the matching ones. Also says which sets fit the project's files, or the words of the
 # message (`ask` rules in sets.txt), and are not active, for the assistant to tell the user.
+# Also carries the once-per-window offer to delegate to Codex when the 5-hour usage runs high
+# (`tack usage hint`).
 # Advisory: silent in disabled projects, when listed in `tack config disabled-hooks`, and when
 # there is nothing to say. Never fails the message.
 set -u
@@ -32,6 +34,9 @@ cd "$cwd" || exit 0
 "$root/bin/tack" status --quiet || exit 0
 
 reminder="$(printf '%s' "$input" | python3 "$root/lib/sets.py" "$root" reminder --stdin 2>/dev/null)"
+# Once per 5-hour window past delegate-usage-percent: offer the user to hand tasks to Codex.
+offer="$("$root/bin/tack" usage hint 2>/dev/null)"
+[ -z "$offer" ] || reminder="${reminder:+$reminder }$offer"
 [ -n "$reminder" ] || exit 0
 python3 -c 'import json, sys
 print(json.dumps({"hookSpecificOutput": {"hookEventName": "UserPromptSubmit", "additionalContext": sys.argv[1]}}, separators=(",", ":")))' "$reminder"

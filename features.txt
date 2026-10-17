@@ -24,6 +24,7 @@ ci-watch tack.ciWatch true bool any instruction yes After a push or a new pull r
 activity-log tack.activityLog false bool any hook no Record session starts, guard decisions and Stop findings for Claude Code and Codex; read them with tack log
 disabled-hooks tack.disabledHooks none list:session-context|fast-check|stop-check|format-file|skill-reminder any hook no Comma-separated advisory hooks to skip: session-context, fast-check, stop-check, format-file, skill-reminder (the guard and tool-call limit always run)
 context-max-chars tack.contextMaxChars none number any hook yes Cap the context added at session start at this many characters, dropping project context first (the activation line always stays)
+delegate-usage-percent tack.delegateUsagePercent 50 text global hook no Once per 5-hour or weekly window, when that usage passes this percentage (or off), tell the user on screen and have the assistant offer to hand tasks to Codex (needs the usage band mod, codex and cross-delegation not off)
 clear-hint-tokens tack.clearHintTokens 150000 text any hook yes Once per session, when the context passes this many tokens (or off), make sure the handoff is current and tell the user /clear is safe, because the handoff reloads at session start (Claude Code)
 state-retention-days tack.stateRetentionDays 30 number global hook no Delete per-session state (tool-call counters) older than this many days at session start
 merge-requires-green tack.mergeRequiresGreen true bool any hook no Refuse gh pr merge while the pull request's CI checks fail or are still running

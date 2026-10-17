@@ -1,6 +1,40 @@
 import { expect, test } from 'claude-code/testing'
 
-import { bar, chipNeedsRetry, colorFor, costLimit, crossedWarning, modeChip, overBudget, resetLabel, toUsage } from '../hooks/register'
+import { bar, chipNeedsRetry, colorFor, costLimit, crossedDelegation, crossedWarning, modeChip, overBudget, resetLabel, thresholdFrom, toUsage } from '../hooks/register'
+
+test('the offer to delegate starts at the percentage tack prints, or not at all', () => {
+  expect(thresholdFrom('50\n')).toBe(50)
+  expect(thresholdFrom('')).toBeUndefined()
+  expect(thresholdFrom('off')).toBeUndefined()
+  expect(thresholdFrom('0')).toBeUndefined()
+  expect(thresholdFrom('101')).toBeUndefined()
+})
+
+test('the delegation message appears once, when the 5h window crosses the percentage', () => {
+  const low = [{ kind: 'five_hour', percentUsed: 40 }]
+  const high = [{ kind: 'five_hour', percentUsed: 52 }]
+  expect(crossedDelegation(low, high, 50)).toBe('5h usage passed 50%: ask the assistant to hand tasks to Codex (cross-delegate)')
+  expect(crossedDelegation(high, [{ kind: 'five_hour', percentUsed: 60 }], 50)).toBeUndefined()
+  expect(crossedDelegation(low, [{ kind: 'five_hour', percentUsed: 45 }], 50)).toBeUndefined()
+  expect(crossedDelegation([], high, 50)?.startsWith('5h usage passed 50%')).toBe(true)
+  expect(crossedDelegation(low, high, undefined)).toBeUndefined()
+  expect(crossedDelegation([{ kind: 'spend_limit', percentUsed: 10 }], [{ kind: 'spend_limit', percentUsed: 90 }], 50)).toBeUndefined()
+})
+
+test('the weekly window gets its own message at the same percentage', () => {
+  const low = [{ kind: 'five_hour', percentUsed: 10 }, { kind: 'seven_day', percentUsed: 45 }]
+  const high = [{ kind: 'five_hour', percentUsed: 12 }, { kind: 'seven_day', percentUsed: 51 }]
+  expect(crossedDelegation(low, high, 50)).toBe('7d usage passed 50%: ask the assistant to hand tasks to Codex (cross-delegate)')
+  expect(crossedDelegation(high, [{ kind: 'five_hour', percentUsed: 13 }, { kind: 'seven_day', percentUsed: 60 }], 50)).toBeUndefined()
+})
+
+test('the message returns after the window resets and usage climbs again', () => {
+  const high = [{ kind: 'five_hour', percentUsed: 70 }]
+  const fresh = [{ kind: 'five_hour', percentUsed: 3 }]
+  expect(crossedDelegation(high, fresh, 50)).toBeUndefined()
+  expect(crossedDelegation(fresh, [{ kind: 'five_hour', percentUsed: 51 }], 50)?.startsWith('5h usage passed 50%')).toBe(true)
+})
+
 
 test('mode chip names the active mode, or off when tack is not enabled', () => {
   expect(modeChip(0, 'auto (default)\n')).toBe('tack · auto')
