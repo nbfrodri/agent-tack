@@ -30,6 +30,7 @@ handoff-stale-commits tack.handoffStaleCommits 3 number any hook yes The check b
 stop-check tack.stopCheck true bool any hook no Before the assistant stops, report uncommitted work, a failing fast check, source changes without a test change, a stale handoff or docs the docs map expects
 reply-style tack.replyStyle brief brief|visual|detailed|normal|terse any instruction yes Reply presentation: brief, visual or detailed; normal and terse are legacy aliases for brief
 skill-loading tack.skillLoading normal normal|minimal any instruction yes Load skills only when a task cannot be done without them, to save input tokens
+cross-delegation tack.crossDelegation one-way off|one-way|both any instruction yes Let the assistant hand bounded tasks to the other installed assistant (Codex or Claude) and read back a short report: one-way from the one you opened, or both ways
 subagent-model tack.subagentModel inherit inherit|economical any instruction yes Delegate to the most economical capable model instead of inheriting the main one
 memory tack.memory true bool global hook no Load the shared user memory (tack memory) at session start in Claude Code and Codex
 memory-max-chars tack.memoryMaxChars 2000 number global hook no Cap the notes of the shared user memory added at session start at this many characters, keeping the newest

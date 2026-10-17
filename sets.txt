@@ -345,8 +345,9 @@ git-release skill wshobson:plugins/cicd-automation/skills/github-actions-templat
 
 orchestration about Long or parallel work: subagents, worktrees and autonomous rounds
 orchestration category process
-orchestration ask subagent* subagente* worktree*
+orchestration ask subagent* subagente* worktree* codex*
 orchestration skill orchestrate
+orchestration skill cross-delegate
 orchestration skill auto-improve
 orchestration skill superpowers:skills/dispatching-parallel-agents
 orchestration agent implementer

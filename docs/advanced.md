@@ -74,6 +74,18 @@ tack models              # every tool and tier
 tack models economical   # one tier
 ```
 
+### Delegating to the other assistant
+
+When both Claude Code and Codex are installed, the `cross-delegate` skill (set `orchestration`) lets one hand a bounded task to the other through its non-interactive CLI (`codex exec`, `claude -p`) and read back only a short report (verdict, summary, files, tests, blockers) instead of the whole transcript. Follow-ups resume the same session, so the long context stays with the delegate. It follows the same rule as subagents: automatic at strict and unleash, a one-line suggestion at lite and standard. The model comes from the tier mapping above.
+
+```
+tack config cross-delegation one-way   # default: only the assistant you opened delegates
+tack config cross-delegation both      # the delegate may hand work back (it is told not to delegate onward)
+tack config cross-delegation off       # never delegate on its own; an explicit request still works
+```
+
+A delegate runs in a sandbox and, when it writes, in its own worktree and branch; the delegating assistant checks the diff and the tests before relying on the report.
+
 Documentation follows the same delegation policy as other work. Delegate only useful independent tasks; a number of changed files does not trigger an agent.
 
 Explicitly asking for subagents authorises them for that task even when automatic mode is off. Disabling the workflow with `tack disable` also removes automatic delegation from the enabled-project policy. Delegation is driven by instructions, not enforced by a process scheduler, and can consume more tokens. Values set directly in git config that are neither `auto` nor `off` are treated as off and reported.

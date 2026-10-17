@@ -1,0 +1,12 @@
+{
+  "type": "object",
+  "properties": {
+    "verdict": { "type": "string", "enum": ["done", "partial", "blocked"] },
+    "summary": { "type": "string", "description": "At most five sentences: what was done and why." },
+    "files": { "type": "array", "items": { "type": "string" } },
+    "tests": { "type": "string", "description": "Commands run and their results, or 'not run'." },
+    "blockers": { "type": "array", "items": { "type": "string" } }
+  },
+  "required": ["verdict", "summary", "files", "tests", "blockers"],
+  "additionalProperties": false
+}
