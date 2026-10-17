@@ -113,6 +113,12 @@ class SetsTests(unittest.TestCase):
         self.tool('use', 'design', '--global')
         self.assertIn('Active everywhere: design', self.tool('index'))
 
+    def test_index_sends_the_assistant_to_the_list_when_nothing_fits(self):
+        index = self.tool('index')
+        self.assertEqual(len(index.strip().splitlines()), 1)
+        self.assertIn('tack set list', index)
+        self.assertIn('none is named as fitting', index)
+
     def test_categories_group_the_list_and_the_index(self):
         self.sets('design about Interfaces and polish\ndesign category interfaces\ndesign skill frontend\n'
                   'motion about Animation\nmotion category interfaces\nmotion skill up:skills/motion\n'

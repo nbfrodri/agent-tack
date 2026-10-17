@@ -540,7 +540,9 @@ def command_index(args, root, sources, sets):
         if fit:
             line += ' Fit this project and are not active: ' + ', '.join(fit) + ' (tack set suggest --apply).'
     print(line + ' tack set use NAME and tack set drop NAME change this project\'s sets; tack set show NAME lists a'
-          ' set\'s contents. Leave --global and update to the user.')
+          ' set\'s contents. Leave --global and update to the user. When a task needs a kind of work no active set'
+          ' covers and none is named as fitting, run tack set list once to read what each set is for, then tell the'
+          ' user which one fits.')
 
 
 # How many skill names one reminder carries; past it the assistant is sent to the list.

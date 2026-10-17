@@ -61,6 +61,7 @@ A set does nothing until it is active, and an active set does nothing until the 
    > The set `review` matches this request. `tack set use review` activates it and `tack set skip review` stops the suggestion.
 
    The set helps from the next message on, because its skills are linked when it is activated.
+   When a request uses words the rules do not know ("make this page load faster" instead of "performance") and nothing is named as fitting, the startup index tells the assistant to run `tack set list` once, read what each set is for and tell you which one fits. The list costs a couple of thousand tokens and only when the rules found nothing; `tack config set-index false` removes the index and with it this step.
 5. **The skills get used.** With each message, the same line names the skills of the active sets and tells the assistant to load the ones that match the task before reading or editing anything. Nothing to do on your side.
 
 The assistant suggests and you decide: it never activates a set on its own. In a mode such as `unleash`, where nobody confirms each step, the command guard enforces this: it lets the assistant read sets and suggestions and refuses `use`, `drop`, `skip`, `--apply` and `--skip`.
