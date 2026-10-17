@@ -32,7 +32,7 @@ cli="$(cd "$(dirname "$0")/../../bin" && pwd)/tack"
 retention="$(cd "$cwd" && "$cli" config state-retention-days --get 2>/dev/null)"
 retention="${retention%% *}"
 case "$retention" in '' | *[!0-9]*) retention=30 ;; esac
-for state_dir in budget turns; do
+for state_dir in budget turns clear-hint; do
   state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/agent-tack/$state_dir"
   [ ! -d "$state_dir" ] || find "$state_dir" -type f -mtime +"$retention" -exec rm -f {} + 2>/dev/null
 done

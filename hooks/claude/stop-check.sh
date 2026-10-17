@@ -74,6 +74,30 @@ case "$handoff_check" in
     ;;
 esac
 
+# clear-hint-tokens: once per session, past that context size, the handoff must be current so
+# /clear loses nothing (session start reloads it). A current handoff only needs the user told;
+# a missing or stale one is the assistant's to write first.
+hint=""
+threshold="$("$cli" config clear-hint-tokens --get 2>/dev/null)"
+threshold="${threshold%% *}"
+case "$threshold" in '' | *[!0-9]*) threshold=0 ;; esac
+session="$(field .session_id)"
+case "$session" in '' | *[!A-Za-z0-9_-]*) threshold=0 ;; esac
+if [ "$client" = claude ] && [ "$threshold" -gt 0 ] && command -v python3 >/dev/null 2>&1; then
+  size="$(python3 "$(dirname "$0")/lib/context-size.py" "$(field .transcript_path)" 2>/dev/null)"
+  hint_dir="${XDG_STATE_HOME:-$HOME/.local/state}/agent-tack/clear-hint"
+  case "$size" in '' | *[!0-9]*) size=0 ;; esac
+  if [ "$size" -ge "$threshold" ] && [ ! -e "$hint_dir/$session" ]; then
+    (umask 077; mkdir -p "$hint_dir" && : > "$hint_dir/$session") 2>/dev/null
+    case "$handoff_check" in
+      *"up to date"*)
+        hint="tack: the context is about $size tokens. The handoff is current, so /clear is safe: the next session reloads it." ;;
+      *)
+        add "the context is about $size tokens. Write or refresh the active handoff so a fresh session can resume from it, then tell the user in one line that /clear is safe because the handoff reloads at session start." ;;
+    esac
+  fi
+fi
+
 # Kept out of $( ) because bash 3.2 misparses a case pattern's ")" inside command substitution.
 first_match() {
   local file
@@ -162,7 +186,16 @@ if [ -f docs-map.txt ]; then
   done < docs-map.txt
 fi
 
-[ -n "$findings" ] || exit 0
+if [ -z "$findings" ]; then
+  if [ -n "$hint" ]; then
+    if command -v jq >/dev/null 2>&1; then
+      jq -cn --arg m "$hint" '{systemMessage: $m}'
+    else
+      python3 -c 'import json, sys; print(json.dumps({"systemMessage": sys.argv[1]}))' "$hint"
+    fi
+  fi
+  exit 0
+fi
 reason="Before stopping, check:$findings"
 activity_log "$root" "$client" stop-check "$findings"
 if command -v jq >/dev/null 2>&1; then
