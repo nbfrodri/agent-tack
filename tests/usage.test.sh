@@ -81,6 +81,13 @@ check "record stores the weekly reading" test "$(usage get seven_day)" = 41
 check "record prints nothing" test -z "$(status_in record)"
 check "statusline prints both windows" test "$(status_in statusline)" = "5h 24% · 7d 41%"
 check "no rate limits: statusline prints an empty line" test -z "$(printf '{"model":{}}' | usage statusline)"
+# The status line runs in the project's directory: a json.py planted there must not be imported.
+PLANT="$WORK/planted"
+mkdir -p "$PLANT"
+printf 'open("%s/pwned", "w").close()\n' "$WORK" > "$PLANT/json.py"
+planted_in() { (cd "$PLANT" && printf '%s' "$STATUS" | env PATH="$FAKEBIN:$PATH" "$REPO/bin/tack" usage record > /dev/null 2>&1); }
+planted_in
+check "a json.py in the working directory is not imported" test ! -e "$WORK/pwned"
 garbage_in() { printf 'not json' | usage statusline > /dev/null; }
 check "garbage input is ignored and succeeds" garbage_in
 STATUS='{"rate_limits":{"five_hour":{"used_percentage":64,"resets_at":1738512000}}}'

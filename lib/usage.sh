@@ -73,7 +73,7 @@ write_reading() {
 # "KIND PERCENT RESETS_AT" for each rate-limit window it carries (Pro and Max plans, after the
 # first response). Anything else prints nothing.
 status_readings() {
-  python3 -c '
+  python3 -I -c '
 import json, sys
 try:
     limits = json.load(sys.stdin).get("rate_limits") or {}
