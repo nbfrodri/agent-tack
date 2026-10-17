@@ -10,7 +10,7 @@ Portable guidance and selectable defaults. **A project's existing conventions wi
 | Branches | `type/short-description`, or `type/123-short-description` when there's an issue. Short-lived. |
 | Merging PRs | Recommend merge commit for coherent verified milestones, or squash for one change with temporary intermediate commits. Offer available methods in the integration confirmation; preserve commits unless the user explicitly chooses squash. The PR title and every commit follow Conventional Commits. |
 | Commits inside a PR branch | Commit coherent verified milestones while working. A passing test and its implementation usually share a commit. Resolve temporary fixup commits before publication, without rewriting published history unless authorised. |
-| After merge | Delete the merged branch locally and on the remote right away; repos enable automatic deletion on merge. Unmerged branches are deleted only with the user's approval. |
+| After merge | Delete the merged branch locally and on the remote right away (`gh pr merge --delete-branch`; repos enable automatic deletion on merge). `tack branches` lists the local branches that are already merged and `--apply` deletes them. Unmerged branches are deleted only with the user's approval. |
 | Attribution | No AI attribution anywhere (see `git-github.md`). |
 
 Repository settings to match (new repos, or existing ones with the user's permission):

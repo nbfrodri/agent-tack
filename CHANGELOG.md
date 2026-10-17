@@ -7,6 +7,7 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 ### Added
 
 - The startup set index tells the assistant what to do when a task needs a kind of work no active set covers and the rules named nothing: run `tack set list` once, read what each set is for and tell the user which one fits. The user still decides.
+- `tack branches [--apply]`: lists the local branches whose work is already merged (an ancestor of main, or a merged GitHub PR whose head is still the branch tip) and deletes them with `--apply`. The branch in use, a branch with commits made after its PR merged and unmerged branches stay; without `gh` a squash-merged branch stays too.
 - `clear-hint-tokens` (150000 by default, `off` to disable): once per session, when the context passes the set size, the check before stopping makes sure the handoff is current and tells the user `/clear` is safe, because the handoff reloads at session start. Claude Code only.
 - Documented `/model opusplan` (Opus in plan mode, Sonnet otherwise) and how it fits the workflow modes (`docs/advanced.md`).
 - `cross-delegate` skill and `cross-delegation` setting (`off`, `one-way`, `both`): one assistant hands a bounded task to the other installed one (`codex exec`, `claude -p`) and reads back a short fixed-shape report, continuing the same session for follow-ups, so long work stays out of its context. Strict and unleash delegate automatically; lite and standard suggest.
