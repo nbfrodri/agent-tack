@@ -105,6 +105,8 @@ flowchart LR
 
 Human-readable `tack status` reports activation and local formatter trust together. Its exit code, including `--quiet`, depends only on activation. `tack trusted` and its quiet mode depend only on local trust; both commands share the same trust predicate.
 
+Unless `tack.clearHintTokens` is `off`, Stop reads the size of the main thread's last reply from the Claude Code transcript (`hooks/claude/lib/context-size.py`) and, once per session (a marker under the state directory, pruned like other per-session state), either tells the user `/clear` is safe when the handoff is current or asks the assistant to write the handoff first; the next session's start reloads it through `tack context`. A hook cannot run `/clear`, so the user does.
+
 In team projects, Stop does not demand a refresh merely because the context handoff names another branch. It still checks selected current-task freshness and other findings. This prevents unrelated paused work from generating spurious completion repairs; solo branch-mismatch reminders remain unchanged.
 
 `reply-style` is an instruction setting independent of workflow modes. The shared Claude/Codex session-context hook renders its selected profile through `lib/reply-style.sh`, even when project document loading is disabled. Global instructions provide the CLI fallback for other tools and allow conversational overrides. Longer communication guidance lives in `skills/dev-workflow/references/communication.md`; style selection never changes checks or permissions. PR preparation follows the project's existing template, with `skills/github-issues/assets/pull_request_template.md` as a drafting fallback; tack itself uses `.github/pull_request_template.md`.

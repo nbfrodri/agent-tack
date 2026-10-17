@@ -728,6 +728,39 @@ git -C "$P2" config --unset tack.stopCheck
 git -C "$P2" config tack.enabled false
 check "stop-check: disabled projects are left alone" "[ -z \"\$(stopping)\" ]"
 check "stop-check: malformed input is ignored" "[ -z \"\$(printf 'not json' | bash '$STOP')\" ]"
+
+echo "Claude hook: stop-check clear hint (context size)"
+# A repo with a current handoff (P3) and one without any (P4); transcripts of two sizes.
+P3="$WORK/hint-repo"
+git init -q -b main "$P3"
+git -C "$P3" config tack.enabled true
+mkdir -p "$P3/docs/handoffs"
+printf '# Handoff\nStatus: in progress\n' > "$P3/docs/handoffs/2026-10-17-y.md"
+git -C "$P3" add -A && git -C "$P3" commit -q -m "chore: initial commit"
+git -C "$P3" switch -q -c feat/y
+P4="$WORK/hint-repo-bare"
+git init -q -b main "$P4"
+git -C "$P4" config tack.enabled true
+printf 'x\n' > "$P4/x.txt"
+git -C "$P4" add -A && git -C "$P4" commit -q -m "chore: initial commit"
+git -C "$P4" switch -q -c feat/y
+BIG="$WORK/hint-big.jsonl"
+SMALL="$WORK/hint-small.jsonl"
+printf '%s\n' '{"type":"assistant","message":{"id":"b1","model":"claude-test","usage":{"input_tokens":100000,"output_tokens":50,"cache_read_input_tokens":60000,"cache_creation_input_tokens":1000},"content":[{"type":"text","text":"ok"}]}}' \
+  '{"type":"assistant","isSidechain":true,"message":{"id":"b2","model":"claude-test","usage":{"input_tokens":1,"output_tokens":1},"content":[{"type":"text","text":"sub"}]}}' > "$BIG"
+printf '%s\n' '{"type":"assistant","message":{"id":"s1","model":"claude-test","usage":{"input_tokens":1000,"output_tokens":50,"cache_read_input_tokens":2000},"content":[{"type":"text","text":"ok"}]}}' > "$SMALL"
+hint_stop() { printf '{"cwd":"%s","session_id":"%s","transcript_path":"%s","stop_hook_active":false}' "$1" "$2" "$3" | bash "$STOP"; }
+git -C "$P3" config tack.clearHintTokens off
+check "clear hint: off turns it off" "[ -z \"\$(hint_stop '$P3' hint-off '$BIG')\" ]"
+git -C "$P3" config --unset tack.clearHintTokens
+check "clear hint: a small context is left alone" "[ -z \"\$(hint_stop '$P3' hint-small '$SMALL')\" ]"
+check "clear hint: a large context with a current handoff only tells the user" "hint_stop '$P3' hint-fresh '$BIG' | grep -q '\"systemMessage\"' && ! hint_stop '$P3' hint-fresh2 '$BIG' | grep -q '\"decision\"'"
+check "clear hint: the message names /clear and the size" "hint_stop '$P3' hint-msg '$BIG' | grep -q '/clear' && hint_stop '$P3' hint-msg2 '$BIG' | grep -q '161000'"
+hint_stop "$P3" hint-once "$BIG" > /dev/null
+check "clear hint: it appears once per session" "[ -z \"\$(hint_stop '$P3' hint-once '$BIG')\" ]"
+check "clear hint: without a handoff the assistant is asked to write one first" "hint_stop '$P4' hint-bare '$BIG' | grep -q '\"decision\":\"block\"' && hint_stop '$P4' hint-bare2 '$BIG' | grep -q 'handoff'"
+git -C "$P3" config tack.clearHintTokens 200000
+check "clear hint: the threshold follows clear-hint-tokens" "[ -z \"\$(hint_stop '$P3' hint-high '$BIG')\" ]"
 check "stop-check: registered for Stop" "grep -q 'stop-check.sh' '$REPO/claude/settings.json'"
 git -C "$P2" config tack.enabled true
 git -C "$P2" switch -q main && git -C "$P2" switch -q -c feat/code

@@ -58,7 +58,7 @@ You can also say "keep this answer brief" or "explain this in detail." Reply sty
 
 `tack context` shows project instructions and relevant context. `auto` and `standard` index architecture and active handoffs; `strict` includes bounded excerpts; `lite` keeps handoff pointers. With parallel work, it lists up to five active handoffs and focuses an excerpt only when one matches the current branch or there is just one active handoff. Otherwise the assistant chooses context for the actual task. The locations come from [configuration](configuration.md#reuse-your-documentation-layout).
 
-An active handoff records work another session needs to resume. tack compares it with the branch and recent commits, but the assistant must still check `git status` and current code. A handoff is useful for interrupted work, not every small edit. Restart the AI session after changing saved settings; state immediate preferences in conversation.
+An active handoff records work another session needs to resume. tack compares it with the branch and recent commits, but the assistant must still check `git status` and current code. A handoff is useful for interrupted work, not every small edit. A long conversation costs tokens on every turn; the check before stopping says, once per session past `clear-hint-tokens` (150000 by default; `tack config clear-hint-tokens off` disables it), that `/clear` is safe because the handoff reloads at session start, and has the assistant write the handoff first when it is missing or stale (Claude Code; a hook cannot run `/clear` itself). Restart the AI session after changing saved settings; state immediate preferences in conversation.
 
 ## Useful commands
 
