@@ -43,6 +43,8 @@ Pick the agent for each task:
 | Docs | `docs-writer` |
 | Research, read-only analysis | `architecture-reviewer`, `security-auditor`, `performance-analyzer`, `ui-reviewer`, or a general-purpose/Explore agent |
 
+Before delegating to a role, run `tack set agent ROLE`. If inactive, tell the user in one line which set provides it (`tack set use SET`); continue with the closest installed role or `general-purpose`, naming the fallback in the progress update.
+
 Every implementing agent works in its own Git worktree and branch `type/<slug>`. Use native worktree isolation when supported; otherwise create the worktree before delegation and explicitly pass its path. Shared working directories require disjoint read-only tasks; do not run overlapping writers. Worktrees created inside the repository (such as `.claude/worktrees/`) must be in `.gitignore` before delegating, and the integrating agent stages explicit paths rather than `git add -A`. Tell each agent which branch to start from and give it the approved plan's path.
 
 Regardless of whether the tool inherits conversation context, make each task prompt self-contained:
@@ -54,7 +56,7 @@ Regardless of whether the tool inherits conversation context, make each task pro
 ## 3. Integrate and verify
 1. When each agent reports, read its report and check its branch: diff, commits (Conventional Commits) and tests.
 2. Integrate local task commits in dependency order, resolving conflicts yourself. Run affected checks after each integration and the full required suite once the combined change is ready. Preserve verified milestones and follow the contextual merge choice for PR integration.
-3. Run `code-reviewer` on the integrated diff, and the specialist reviewers if the change touches their area (auth → `security-auditor`, UI → `ui-reviewer`).
+3. Check `tack set agent code-reviewer` before running it on the integrated diff; if inactive, name its providing set (`tack set use SET`) and the closest installed role or `general-purpose` fallback in the progress update. Check specialist reviewers the same way when needed (auth → `security-auditor`, UI → `ui-reviewer`).
 4. Fix what they find (directly, or with another agent round), then update docs (`project-docs`) and log the multi-agent work in `docs/ai/log.md`.
 5. Report to the user: what each agent did, the integrated result, how it was verified, and anything pending. Push or open a PR only after asking, as always.
 

@@ -87,13 +87,66 @@ class SetsTests(unittest.TestCase):
         return self.run_in(cwd, 'git', *args).strip()
 
     def tool(self, *args, cwd=None, expected=0):
-        return self.run_in(cwd or self.project, sys.executable, str(ROOT / 'lib/sets.py'),
+        return self.run_in(cwd or self.project, sys.executable, '-I', str(ROOT / 'lib/sets.py'),
                            str(self.tack), *args, expected=expected)
 
     def store(self, commit=None):
         return self.home / '.local/share/agent-tack/sources/up' / (commit or self.first)
 
     # Declarations
+
+    def test_agent_active_via_project_set(self):
+        self.git(self.project, 'config', 'tack.sets', 'design')
+        self.assertEqual(self.tool('agent', 'ui-reviewer'), 'ui-reviewer: active (via design)\n')
+
+    def test_agent_active_via_global_set(self):
+        self.git(self.project, 'config', '--global', 'tack.sets', 'design')
+        self.assertEqual(self.tool('agent', 'ui-reviewer'), 'ui-reviewer: active (via design)\n')
+        self.assertEqual(self.tool('agent', 'ui-reviewer', cwd=self.home),
+                         'ui-reviewer: active (via design)\n')
+
+    def test_agent_inactive_lists_specific_providers_before_bundles(self):
+        with (self.tack / 'sets.txt').open('a') as stream:
+            stream.write('tack-agents category compat\ntack-agents agent ui-reviewer\n'
+                         'review agent ui-reviewer\n')
+        out = self.tool('agent', 'ui-reviewer', expected=1)
+        self.assertEqual(out, 'ui-reviewer: not active; sets that provide it: design, review '
+                         '(tack set use design activates it)\n')
+
+    def test_agent_unknown_or_invalid_role_exits_two(self):
+        # An agent file alone does not declare a role: it must belong to a set.
+        (self.tack / 'agents/undeclared.md').write_text('unused\n', encoding='utf-8')
+        for role in ('unknown', 'undeclared', '../ui-reviewer', 'UI-reviewer', '-bad', 'ui-reviewer\n'):
+            with self.subTest(role=role):
+                out = self.tool('agent', '--', role, expected=2)
+                self.assertIn('unknown agent role', out)
+
+    def test_agent_only_provided_by_bundle(self):
+        self.sets('tack-agents category compat\ntack-agents agent ui-reviewer\n')
+        self.assertEqual(self.tool('agent', 'ui-reviewer', expected=1),
+                         'ui-reviewer: not active; sets that provide it: tack-agents '
+                         '(tack set use tack-agents activates it)\n')
+        self.git(self.project, 'config', '--global', 'tack.sets', 'tack-agents')
+        self.assertEqual(self.tool('agent', 'ui-reviewer'), 'ui-reviewer: active (via tack-agents)\n')
+
+    def test_agent_core_is_always_active(self):
+        self.sets('core agent ui-reviewer\n')
+        self.assertEqual(self.tool('agent', 'ui-reviewer'), 'ui-reviewer: active (via core)\n')
+
+    def test_agent_queries_do_not_write(self):
+        def snapshot():
+            return {str(path.relative_to(self.work)): (path.lstat().st_mode,
+                    os.readlink(path) if path.is_symlink() else path.read_bytes() if path.is_file() else None)
+                    for path in self.work.rglob('*')}
+
+        for scope in (None, '--local', '--global'):
+            if scope:
+                self.git(self.project, 'config', scope, 'tack.sets', 'design')
+            with self.subTest(scope=scope):
+                before = snapshot()
+                self.tool('agent', 'ui-reviewer', expected=0 if scope else 1)
+                self.tool('agent', 'unknown', expected=2)
+                self.assertEqual(snapshot(), before)
 
     def test_list_names_every_set_and_marks_the_active_ones(self):
         self.tool('use', 'motion')
