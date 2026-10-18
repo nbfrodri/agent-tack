@@ -35,6 +35,8 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ### Changed
 
+- The weekly tools compatibility workflow validates and tests every mod with the latest Claude Code, so a release that makes the engine refuse a mod shows up as a failed run.
+
 - `web-design-guidelines` and `writing-guidelines` leave the `design` and `writing` sets: both download their rules at run time, so their pinned commit did not determine what they instruct. `engineering-lifecycle` moves to the compatibility sets, out of the startup index: it is an alternative method for a whole project, for the user to choose.
 - Sets keep one voice per job: thirteen external items that competed with this repository's workflow or duplicated another collection's reference material were removed from `testing`, `planning`, `orchestration`, `writing`, `review`, `backend`, `monitoring` and `agent-tooling`.
 - Sets are now the only way a skill or an agent role is installed. The `core` set (`dev-workflow`, `new-project`) is always active; every other skill and agent of this repository comes with a set, per project or everywhere. `tack-skills` and `tack-agents` bring them all at once.
