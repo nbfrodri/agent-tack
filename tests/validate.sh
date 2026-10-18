@@ -61,6 +61,12 @@ suites=" $("$REPO/tests/run-all.sh" --list | tr '\n' ' ') "
 for suite in "$REPO"/tests/*.test.sh; do
   case "$suites" in *" $(basename "$suite") "*) ;; *) err "tests/$(basename "$suite") is not run by tests/run-all.sh" ;; esac
 done
+# Suites covered outside the install job: validation runs in lint, mods unit tests in mods.
+while IFS= read -r suite; do
+  case "$suite" in validate.sh | validate.test.sh | mods-unit.sh) continue ;; esac
+  grep -qF "tests/$suite" "$REPO/.github/workflows/ci.yml" \
+    || err "tests/$suite is not run by .github/workflows/ci.yml"
+done < <("$REPO/tests/run-all.sh" --list)
 # CI pins a ShellCheck version; the development docs name the same one for local use.
 ci_shellcheck="$(sed -n 's/^ *SHELLCHECK_VERSION: *v\{0,1\}//p' "$REPO/.github/workflows/ci.yml")"
 grep -q "ShellCheck ${ci_shellcheck:-missing} " "$REPO/docs/development.md" \

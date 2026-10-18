@@ -28,6 +28,22 @@ expect_failure() {
   fi
 }
 
+# expect_success <description> <shell code that updates the copy>
+expect_success() {
+  local description="$1" update="$2" copy out
+  copy="$WORK/case-$((PASSED + FAILED))"
+  mkdir -p "$copy"
+  (cd "$REPO" && tar cf - --exclude .git .) | (cd "$copy" && tar xf -)
+  (cd "$copy" && eval "$update")
+  if out="$("$REPO/tests/validate.sh" "$copy" 2>&1)"; then
+    printf '  ✔ %s\n' "$description"
+    PASSED=$((PASSED + 1))
+  else
+    printf '  ✘ %s (validate.sh failed)\n%s\n' "$description" "$out"
+    FAILED=$((FAILED + 1))
+  fi
+}
+
 echo "Unmodified repo"
 if "$REPO/tests/validate.sh" "$REPO" >/dev/null 2>&1; then
   printf '  ✔ passes\n'
@@ -56,6 +72,10 @@ expect_failure "a description over budget" "max 400" \
   "python3 -c \"import re;p='skills/testing/SKILL.md';s=open(p).read();open(p,'w').write(re.sub(r'^description: .*\$','description: '+'x'*401,s,count=1,flags=re.M))\""
 expect_failure "a suite run-all.sh does not know" "tests/new.test.sh is not run by tests/run-all.sh" \
   "printf '#!/usr/bin/env bash\n' > tests/new.test.sh"
+expect_failure "a registered suite missing from CI" "tests/lifecycle.test.sh is not run by .github/workflows/ci.yml" \
+  "grep -v 'tests/lifecycle.test.sh' .github/workflows/ci.yml > tmp && mv tmp .github/workflows/ci.yml"
+expect_success "a registered suite present in CI" \
+  "printf '#!/usr/bin/env bash\n' > tests/new.test.sh; sed 's/SUITES=(/SUITES=(new.test.sh /' tests/run-all.sh > tmp && mv tmp tests/run-all.sh; chmod +x tests/run-all.sh; printf '\n      - name: Test new suite\n        run: tests/new.test.sh\n' >> .github/workflows/ci.yml"
 expect_failure "CI linting with its own command instead of tests/lint.sh" "ci.yml does not call tests/lint.sh" \
   "sed 's#run: tests/lint.sh#run: shellcheck install.sh#' .github/workflows/ci.yml > tmp && mv tmp .github/workflows/ci.yml"
 expect_failure "a supported tool missing from the capability map" "docs/editors.md has no row for 'crush'" \
