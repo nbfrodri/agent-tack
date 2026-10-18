@@ -49,12 +49,20 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
+      - name: Install shells for completion syntax checks
+        if: runner.os == 'Linux'
+        run: sudo apt-get install -y zsh fish
       - name: Test install.sh in throwaway HOME directories
         run: tests/install.test.sh
       - name: Test git and Claude Code hooks
         run: tests/hooks.test.sh
       - name: Test audit regressions and startup context offline
         run: |
+          tests/completion.test.sh
+          tests/usage.test.sh
+          tests/codex-used.test.sh
+          tests/branches.test.sh
+          tests/cross-delegate.test.sh
           tests/lifecycle.test.sh
           tests/doctor.test.sh
           tests/tools.test.sh

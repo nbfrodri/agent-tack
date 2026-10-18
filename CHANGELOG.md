@@ -52,6 +52,7 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 ### Fixed
 
 - Asking for the `code-reviewer` agent or for a review of the last commit now suggests the `review` set: its `ask` words lacked `code reviewer`, `review my last commit` and the Spanish equivalents. The `roles` trial showed the assistant noticing the missing agent but never saying how to enable it.
+- CI now runs the completion, usage, Codex session metadata, branch cleanup and cross-delegation suites on Linux and macOS; validation rejects runner suites missing from CI, and Linux installs zsh and fish for completion syntax checks.
 - The hook overview now describes mapped verification and fallback test commands using the remaining Stop hook budget instead of promising a 120-second timeout.
 - `usage-band` 0.6.1 refreshes unchanged context readings every two minutes, keeping percentage-based Stop hints fresh during long sessions and retrying failed recordings.
 - Mapped verification, fallback tests and the slop scan now share the remaining Stop hook timeout, shortening or explicitly skipping checks so completion advice can be delivered.
