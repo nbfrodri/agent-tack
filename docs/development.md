@@ -56,6 +56,20 @@ CI runs ShellCheck 0.11.0 (pinned by checksum in `.github/workflows/ci.yml`; use
 
 Native Windows CI also checks ownership/restoration, the verifier, shared project configuration and the portable smoke flow. Symlink tests that need unavailable local privileges report an explicit skip. Keep command examples in their owning guide; the CLI drift check searches the current setup, usage, configuration, verification, installation and advanced guides.
 
+## Live behavior trials
+
+`tests/trials/run-trials.sh` runs `claude -p` in throwaway repositories to measure
+whether tack changes assistant behavior. Run one scenario with
+`tests/trials/run-trials.sh asks 5`; it requires Claude Code, jq and `timeout` and
+costs model tokens. `TRIAL_MODEL` overrides the model and `TRIAL_TACK` overrides
+the default repository `bin/tack`. These opt-in trials are outside the test suite and CI.
+They use the existing Claude login, installed configuration and session storage
+under `HOME`, with temporary XDG directories for each repetition.
+Use `--keep` and read the kept files before concluding that a miss is a product
+fault: three initial misses came from trial defects (scoring only the last
+message, headless shell permissions being denied, and a fixture commit failing
+the commit-msg hook).
+
 ## Adding a skill, agent or tool
 1. Create `skills/<name>/SKILL.md` or `agents/<name>.md` with `name` and `description` (what it does and when to use it, within the budget `validate.sh` enforces), or add a line to `targets.txt` for a new AI tool.
 2. List it in [components](components.md) and, for a skill or agent, in at least one set in `sets.txt` (the validator requires both); mention it in the README only if it changes what a newcomer needs to know.
