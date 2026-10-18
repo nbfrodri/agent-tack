@@ -271,12 +271,48 @@ expect("ask", "terraform -chdir=infra destroy", "terraform: destroy after -chdir
 expect("ask", "terraform apply -destroy -auto-approve", "terraform: apply -destroy asks")
 expect("allow", "terraform plan", "terraform: plan is allowed")
 
+# Codex payloads are inspected only: never launch a model while testing the guard.
+codex_main = work / "codex-main"
+codex_linked = work / "codex-linked"
+subprocess.run(["git", "init", "-q", str(codex_main)], check=True)
+subprocess.run(["git", "-C", str(codex_main), "-c", "user.name=Test", "-c", "user.email=test@example.com",
+                "commit", "-qm", "test: initial", "--allow-empty"], check=True)
+subprocess.run(["git", "-C", str(codex_main), "worktree", "add", "-qb", "delegate", str(codex_linked)], check=True)
+for flag in ("-s workspace-write", "--sandbox workspace-write", "-s danger-full-access",
+             "--sandbox danger-full-access", "--full-auto", "--sandbox=workspace-write"):
+    expect("ask", f"codex exec {flag} 'implement task'", f"codex: main tree asks for {flag}",
+           cwd=codex_main, reason="Codex would write in the main working tree")
+    expect("allow", f"codex exec -C '{codex_linked}' {flag} 'implement task'",
+           f"codex: linked worktree allows {flag}", cwd=codex_main)
+expect("allow", "codex exec -s read-only 'inspect'", "codex: read-only allows", cwd=codex_main)
+expect("allow", "codex exec 'inspect'", "codex: default sandbox allows", cwd=codex_main)
+expect("allow", "codex exec -s workspace-write 'implement'", "codex: outside git allows", cwd=work)
+expect("allow", "codex exec --cd ../codex-linked --full-auto 'implement'", "codex: relative --cd allows", cwd=codex_main)
+expect("allow", f"codex -C '{codex_linked}' e --full-auto 'implement'", "codex: global -C and e alias", cwd=codex_main)
+expect("ask", "codex e --full-auto 'implement'", "codex: e alias asks", cwd=codex_main)
+expect("ask", "codex exec --cd . --full-auto 'implement'", "codex: explicit main directory asks", cwd=codex_main)
+expect("ask", "codex exec resume session-id -s workspace-write 'continue'", "codex: resume in main asks", cwd=codex_main)
+expect("allow", "codex exec resume --last -s workspace-write 'continue'", "codex: resume in linked worktree allows", cwd=codex_linked)
+for directory in (codex_main, codex_linked, work):
+    expect("ask", "codex exec --dangerously-bypass-approvals-and-sandbox 'implement'",
+           f"codex: bypass always asks in {directory.name}", cwd=directory, reason="cross-delegate")
+for wrapper in ("env TASK=test", "command", "timeout 30", "sudo -n", "env -S 'command codex exec --full-auto'"):
+    command = wrapper if wrapper.startswith("env -S") else f"{wrapper} codex exec --full-auto 'implement'"
+    expect("ask", command, f"codex: wrapper {wrapper} still asks", cwd=codex_main)
+expect("allow", "echo 'codex exec --full-auto'", "codex: quoted command stays data", cwd=codex_main)
+expect("allow", "codex exec 'explain --full-auto'", "codex: prompt text stays data", cwd=codex_main)
+expect("deny", "codex exec --full-auto 'implement'", "codex client: confirmation becomes deny",
+       cwd=codex_main, args=("--codex",), reason="confirmation")
+
 # Unleash relaxes only explicit local asks; deny rules and opaque or outside-project asks stay.
 project = work / "unleashed"
 subprocess.run(["git", "init", "-q", str(project)], check=True)
 subprocess.run(["git", "-C", str(project), "config", "tack.enabled", "true"], check=True)
 subprocess.run(["git", "-C", str(project), "config", "tack.mode", "unleash"], check=True)
 expect("allow", "git reset --hard HEAD~1", "unleash: local discard is allowed", cwd=project)
+expect("ask", "codex exec --full-auto 'implement'", "unleash: Codex main tree still asks", cwd=project)
+expect("ask", "codex exec --dangerously-bypass-approvals-and-sandbox 'implement'",
+       "unleash: Codex sandbox bypass still asks", cwd=project)
 expect("allow", "git branch -D old-idea", "unleash: branch force-delete is allowed", cwd=project)
 expect("allow", "git stash drop", "unleash: stash drop is allowed", cwd=project)
 expect("allow", "rm -rf .", "unleash: deleting inside the project is allowed", cwd=project)
