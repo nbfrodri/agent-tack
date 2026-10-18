@@ -375,6 +375,8 @@ class SetsTests(unittest.TestCase):
             'sluggish', 'slow down', 'slow page', 'slows down', 'load time', 'load times',
             'loads slowly', 'speed up', 'make it faster', 'takes too long', 'laggy',
             'lento', 'lenta', 'lentitud', 'más rápido', 'acelerar', 'tarda mucho',
+            'Make the checkout page load faster; I do not know what to use for that.',
+            'the report loading faster', 'make the job run faster', 'hacer que cargue más rápido',
         ):
             with self.subTest(prompt=prompt):
                 self.assertIn('match this request and are not active: performance.', self.remind(prompt))

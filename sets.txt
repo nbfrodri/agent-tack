@@ -308,7 +308,7 @@ security agent security-auditor
 performance about Measure first: web vitals, queries, bundles and hot paths
 performance category quality
 performance ask performance+audit web+vitals lighthouse bundle+size profiling bottleneck* slow+query*
-performance ask sluggish slow+down slow+page slows+down load+time* loads+slowly speed+up make+it+faster takes+too+long laggy
+performance ask sluggish slow+down slow+page slows+down load+time* loads+slowly speed+up make+it+faster load+faster loading+faster run+faster takes+too+long laggy
 performance ask rendimiento cuello+de+botella consulta+lenta lento lenta lentitud mas+rapido acelerar tarda+mucho
 performance skill addy:skills/performance-optimization
 performance skill cloudflare:skills/web-perf
