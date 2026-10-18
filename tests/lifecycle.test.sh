@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Lifecycle operations use only throwaway homes and repositories.
 set -uo pipefail
+unset XDG_DATA_HOME  # the installer writes shell completions there; keep them inside the temp HOME
 unset XDG_STATE_HOME GIT_CONFIG_GLOBAL
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/harness-lifecycle.XXXXXX")"
@@ -139,7 +140,7 @@ check 'explicit managed Git entry is removed and XDG preserved' "! HOME='$H' XDG
 
 H="$WORK/preview-all"
 mkdir -p "$H" "$WORK/fake-cli" "$WORK/repo-preview"
-cp -R "$REPO/bin" "$REPO/git-hooks" "$REPO/lib" "$REPO/global" "$REPO/skills" "$REPO/agents" "$REPO/claude" "$WORK/repo-preview/"
+cp -R "$REPO/bin" "$REPO/git-hooks" "$REPO/lib" "$REPO/global" "$REPO/skills" "$REPO/agents" "$REPO/claude" "$REPO/completions" "$WORK/repo-preview/"
 cp "$REPO/install.sh" "$REPO/uninstall.sh" "$REPO/targets.txt" "$REPO/plugins.txt" "$WORK/repo-preview/"
 chmod -x "$WORK/repo-preview/bin/tack" "$WORK/repo-preview/git-hooks/_chain" "$WORK/repo-preview/git-hooks/commit-msg" "$WORK/repo-preview/git-hooks/pre-push"
 cat > "$WORK/fake-cli/claude" <<'STUB'

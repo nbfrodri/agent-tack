@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -uo pipefail
+unset XDG_DATA_HOME  # the installer writes shell completions there; keep them inside the temp HOME
 umask 077
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/harness-doctor-test.XXXXXX")"
