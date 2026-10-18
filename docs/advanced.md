@@ -67,7 +67,12 @@ tack config delegation --unset # restore the default automatic policy
 tack config delegation         # shows auto (default) when unset
 ```
 
-Delegation picks a tier, never a vendor's model: `economical` for mechanical work, `balanced` for standard implementation, `strongest` for design-heavy or risky work. `tack models` shows each tool's mapping from `model-tiers.txt`. Codex defaults are `gpt-6-luna`, `gpt-6.1-sol` and `gpt-6-astra` respectively ([model guidance](https://learn.chatgpt.com/docs/models), checked 2026-10-07). Other tool mappings may inherit the active model. Override for your account in `~/.config/agent-tack/model-tiers.txt` (same columns; your lines win):
+Delegation picks a tier, never a vendor's model: `economical` for mechanical work, `balanced` for standard implementation, `strongest` for design-heavy or risky work. `tack models` shows each tool's mapping from `model-tiers.txt`. Codex defaults follow the `luna`, `sol` and `astra` families respectively: the visible model with the lowest catalog priority wins (ties use the last lexical slug). The family-to-tier map is still edited by hand; Claude aliases already follow the latest model. Without codex, or if its catalog fails or has no match, the optional fourth column supplies a pinned fallback (`inherit` if omitted). Other tools use that fallback for family values and may otherwise inherit the active model. Override for your account in `~/.config/agent-tack/model-tiers.txt` (same columns; your lines win). A plain model name pins exactly that model:
+
+```text
+codex balanced family:sol gpt-6.1-sol
+codex strongest my-account-model
+```
 
 ```bash
 tack models              # every tool and tier

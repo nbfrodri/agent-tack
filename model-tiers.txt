@@ -4,18 +4,20 @@
 #   economical  fast and cheap: mechanical, well-specified work (docs, renames, fixtures)
 #   balanced    standard implementation following existing patterns
 #   strongest   design-heavy or risky work (architecture, security, tricky bugs)
-# "inherit" keeps the current model. Account-specific overrides remain available for every tier.
-# Codex defaults verified against official model guidance and the local catalog on 2026-10-07:
-# https://learn.chatgpt.com/docs/models
+# "inherit" keeps the current model. A plain model name pins exactly that model.
+# "family:NAME" selects the visible Codex catalog model ending in -NAME with lowest priority
+# (ties: last lexical slug). The optional fourth column is a pinned fallback, else inherit.
+# Other tools and unavailable catalogs use the fallback. The family-to-tier map is edited by hand;
+# Claude aliases already follow the latest model. Account-specific overrides use the same syntax.
 # Every tool with an agents directory in targets.txt needs all three tiers (tests/validate.sh).
 #
-# tool    tier        model
+# tool    tier        model        [fallback]
 claude    economical  haiku
 claude    balanced    sonnet
 claude    strongest   opus
-codex     economical  gpt-6-luna
-codex     balanced    gpt-6.1-sol
-codex     strongest   gpt-6-astra
+codex     economical  family:luna  gpt-6-luna
+codex     balanced    family:sol   gpt-6.1-sol
+codex     strongest   family:astra gpt-6-astra
 gemini    economical  inherit
 gemini    balanced    inherit
 gemini    strongest   inherit
