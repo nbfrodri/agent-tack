@@ -761,6 +761,37 @@ check "clear hint: it appears once per session" "[ -z \"\$(hint_stop '$P3' hint-
 check "clear hint: without a handoff the assistant is asked to write one first" "hint_stop '$P4' hint-bare '$BIG' | grep -q '\"decision\":\"block\"' && hint_stop '$P4' hint-bare2 '$BIG' | grep -q 'handoff'"
 git -C "$P3" config tack.clearHintTokens 200000
 check "clear hint: the threshold follows clear-hint-tokens" "[ -z \"\$(hint_stop '$P3' hint-high '$BIG')\" ]"
+# Percentage readings belong to the hook project, not the caller's directory.
+context_at() { (cd "$1" && "$REPO/bin/tack" usage set context "$2"); }
+git -C "$P3" config tack.clearHintTokens 150000
+context_at "$P3" 59
+check "clear hint: below percentage threshold ignores large tokens" "[ -z \"\$(hint_stop '$P3' percent-low '$BIG')\" ]"
+context_at "$P3" 60
+git -C "$P3" config tack.clearHintTokens off
+check "clear hint: at percentage threshold with small tokens fires" "hint_stop '$P3' percent-at '$SMALL' | grep -q 'about 60% full'"
+check "clear hint: percentage appears once per session" "[ -z \"\$(hint_stop '$P3' percent-at '$SMALL')\" ]"
+context_at "$P3" 75
+check "clear hint: above threshold only tells user with current handoff" "hint_stop '$P3' percent-high '$SMALL' | grep -q '\"systemMessage\"'"
+context_at "$P4" 80
+check "clear hint: percentage without handoff asks to write it" "hint_stop '$P4' percent-bare '$SMALL' | grep -q 'Write or refresh'"
+git -C "$P3" config tack.clearHintPercent 80
+check "clear hint: custom percentage threshold applies" "[ -z \"\$(hint_stop '$P3' percent-custom '$SMALL')\" ]"
+git -C "$P3" config tack.clearHintTokens 150000
+git -C "$P3" config tack.clearHintPercent invalid
+check "clear hint: invalid percentage falls back to tokens" "hint_stop '$P3' percent-invalid '$BIG' | grep -q '161000 tokens'"
+git -C "$P3" config tack.clearHintPercent off
+check "clear hint: percent off falls back to tokens" "hint_stop '$P3' percent-off '$BIG' | grep -q '161000 tokens'"
+git -C "$P3" config tack.clearHintTokens off
+check "clear hint: both sources off stays silent" "[ -z \"\$(hint_stop '$P3' percent-both-off '$BIG')\" ]"
+git -C "$P3" config tack.clearHintTokens 150000
+git -C "$P3" config --unset tack.clearHintPercent
+key="$(printf %s "$(cd "$P3" && pwd -P)" | cksum | cut -d ' ' -f1)"
+context_file="$XDG_STATE_HOME/agent-tack/usage/context/$key"
+mkdir -p "$(dirname "$context_file")"
+printf '90\t\t%s\n' "$(( $(date +%s) - 601 ))" > "$context_file"
+check "clear hint: stale context falls back to tokens" "hint_stop '$P3' percent-stale '$BIG' | grep -q '161000 tokens'"
+rm "$context_file"
+check "clear hint: absent context falls back to tokens" "hint_stop '$P3' percent-absent '$BIG' | grep -q '161000 tokens'"
 check "stop-check: registered for Stop" "grep -q 'stop-check.sh' '$REPO/claude/settings.json'"
 git -C "$P2" config tack.enabled true
 git -C "$P2" switch -q main && git -C "$P2" switch -q -c feat/code

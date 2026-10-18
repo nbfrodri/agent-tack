@@ -97,6 +97,48 @@ STATUS='{"rate_limits":{"five_hour":{"used_percentage":"lots","resets_at":1}}}'
 status_in record > /dev/null
 check "a non-numeric percentage is not recorded" test "$(usage get five_hour)" = 64
 
+echo "tack usage context"
+check "set context records a percentage" usage set context 60
+check "get context prints it" test "$(usage get context)" = 60
+check "fresh context prints it" test "$(usage context)" = 60
+context_key="$(printf %s "$(pwd -P)" | cksum | cut -d ' ' -f1)"
+context_file="$XDG_STATE_HOME/agent-tack/usage/context/$context_key"
+check "context rejects percentages above 100" fails usage set context 101
+check "context rejects non-numeric percentages" fails usage set context lots
+# shellcheck disable=SC2016 # These are awk fields, not shell variables.
+check "context uses three columns with empty resets" awk -F '\t' 'NF != 3 || $2 != "" {exit 1}' "$context_file"
+ln -s "$PWD" "$WORK/project-link"
+check "a symlink uses the physical directory key" test "$(cd "$WORK/project-link" && usage context)" = 60
+mkdir -p "$(dirname "$context_file")"
+printf '60\t\t%s\n' "$(( $(date +%s) - 601 ))" > "$context_file"
+check "context older than 600 seconds is silent" test -z "$(usage context)"
+check "get still prints stale context" test "$(usage get context)" = 60
+printf '60\t\t%s\n' "$(date +%s)" > "$context_file"
+OTHER="$WORK/other project"
+mkdir -p "$OTHER"
+check "another directory has no context" test -z "$(cd "$OTHER" && usage context)"
+STATUS="{\"workspace\":{\"current_dir\":\"$OTHER\"},\"context_window\":{\"used_percentage\":61.8},\"rate_limits\":{\"five_hour\":{\"used_percentage\":24},\"seven_day\":{\"used_percentage\":41}}}"
+check "statusline puts context first" test "$(status_in statusline)" = 'ctx 62% · 5h 24% · 7d 41%'
+check "statusline keys context by workspace directory" test "$(cd "$OTHER" && usage context)" = 62
+check "workspace reading leaves process directory unchanged" test "$(usage context)" = 60
+STATUS='{"workspace":{"current_dir":"/nonexistent/tack-context"},"context_window":{"used_percentage":72.7}}'
+check "context alone has no separator" test "$(status_in statusline)" = 'ctx 73%'
+check "invalid workspace falls back to working directory" test "$(usage get context)" = 73
+for value in null '"lots"' true '{}' '[]' NaN Infinity; do
+  STATUS="{\"context_window\":{\"used_percentage\":$value}}"
+  check "invalid context $value prints nothing" test -z "$(status_in statusline)"
+  check "invalid context $value preserves previous reading" test "$(usage get context)" = 73
+done
+STATUS='{"workspace":{"current_dir":42},"context_window":{"used_percentage":12.8}}'
+status_in record >/dev/null
+check "non-string workspace falls back to working directory" test "$(usage context)" = 13
+STATUS='{"context_window":{"used_percentage":140}}'
+status_in record >/dev/null
+check "record clamps context to 100" test "$(usage context)" = 100
+STATUS='{"context_window":{"used_percentage":-2}}'
+status_in record >/dev/null
+check "record clamps context to zero" test "$(usage context)" = 0
+
 echo "tack usage hint: when it stays silent"
 usage set five_hour 90 2026-10-19T06:00:00Z >/dev/null
 check "no codex installed: silent" test -z "$(usage_without_codex hint)"

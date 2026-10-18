@@ -9,7 +9,7 @@ field() {
   if command -v jq >/dev/null 2>&1; then
     printf '%s' "$input" | jq -r "$1 // empty" 2>/dev/null
   elif command -v python3 >/dev/null 2>&1; then
-    printf '%s' "$input" | python3 -c 'import json, sys
+    printf '%s' "$input" | python3 -I -c 'import json, sys
 try:
     value = json.load(sys.stdin).get(sys.argv[1].lstrip("."))
 except Exception:
@@ -74,26 +74,41 @@ case "$handoff_check" in
     ;;
 esac
 
-# clear-hint-tokens: once per session, past that context size, the handoff must be current so
+# clear-hint-percent, with a token fallback: once per session, the handoff must be current so
 # /clear loses nothing (session start reloads it). A current handoff only needs the user told;
 # a missing or stale one is the assistant's to write first.
 hint=""
-threshold="$("$cli" config clear-hint-tokens --get 2>/dev/null)"
+size=""
+threshold="$("$cli" config clear-hint-percent --get 2>/dev/null)"
 threshold="${threshold%% *}"
+case "$threshold" in '' | *[!0-9]*) threshold=0 ;; esac
+if [ "${#threshold}" -le 3 ] && [ "$threshold" -ge 1 ] && [ "$threshold" -le 100 ]; then
+  size="$(cd "$cwd" && "$cli" usage context 2>/dev/null)"
+fi
+description="$size% full"
+if [ -z "$size" ]; then
+  threshold="$("$cli" config clear-hint-tokens --get 2>/dev/null)"
+  threshold="${threshold%% *}"
+fi
 case "$threshold" in '' | *[!0-9]*) threshold=0 ;; esac
 session="$(field .session_id)"
 case "$session" in '' | *[!A-Za-z0-9_-]*) threshold=0 ;; esac
-if [ "$client" = claude ] && [ "$threshold" -gt 0 ] && command -v python3 >/dev/null 2>&1; then
-  size="$(python3 "$(dirname "$0")/lib/context-size.py" "$(field .transcript_path)" 2>/dev/null)"
+if [ "$client" = claude ] && [ "$threshold" -gt 0 ]; then
+  if [ -z "$size" ]; then
+    if command -v python3 >/dev/null 2>&1; then
+      size="$(python3 -I "$(dirname "$0")/lib/context-size.py" "$(field .transcript_path)" 2>/dev/null)"
+    fi
+    description="$size tokens"
+  fi
   hint_dir="${XDG_STATE_HOME:-$HOME/.local/state}/agent-tack/clear-hint"
   case "$size" in '' | *[!0-9]*) size=0 ;; esac
   if [ "$size" -ge "$threshold" ] && [ ! -e "$hint_dir/$session" ]; then
     (umask 077; mkdir -p "$hint_dir" && : > "$hint_dir/$session") 2>/dev/null
     case "$handoff_check" in
       *"up to date"*)
-        hint="tack: the context is about $size tokens. The handoff is current, so /clear is safe: the next session reloads it." ;;
+        hint="tack: the context is about $description. The handoff is current, so /clear is safe: the next session reloads it." ;;
       *)
-        add "the context is about $size tokens. Write or refresh the active handoff so a fresh session can resume from it, then tell the user in one line that /clear is safe because the handoff reloads at session start." ;;
+        add "the context is about $description. Write or refresh the active handoff so a fresh session can resume from it, then tell the user in one line that /clear is safe because the handoff reloads at session start." ;;
     esac
   fi
 fi
@@ -164,7 +179,7 @@ fi
 if command -v python3 >/dev/null 2>&1 && "$cli" trusted --quiet \
   && [ "$("$cli" config slop-check --get 2>/dev/null)" != "false" ] \
   && printf '%s\n' "$changed" | grep -E "$SOURCE_FILES" | grep -qvE "$TEST_FILES"; then
-  slop="$(python3 "$(dirname "$cli")/../lib/slop_check.py" "$root" "$base" 2>/dev/null)"
+  slop="$(python3 -I "$(dirname "$cli")/../lib/slop_check.py" "$root" "$base" 2>/dev/null)"
   [ -z "$slop" ] || add "$slop"
 fi
 
@@ -191,7 +206,7 @@ if [ -z "$findings" ]; then
     if command -v jq >/dev/null 2>&1; then
       jq -cn --arg m "$hint" '{systemMessage: $m}'
     else
-      python3 -c 'import json, sys; print(json.dumps({"systemMessage": sys.argv[1]}))' "$hint"
+      python3 -I -c 'import json, sys; print(json.dumps({"systemMessage": sys.argv[1]}))' "$hint"
     fi
   fi
   exit 0
@@ -201,5 +216,5 @@ activity_log "$root" "$client" stop-check "$findings"
 if command -v jq >/dev/null 2>&1; then
   jq -cn --arg r "$reason" '{decision: "block", reason: $r}'
 else
-  python3 -c 'import json, sys; print(json.dumps({"decision": "block", "reason": sys.argv[1]}))' "$reason"
+  python3 -I -c 'import json, sys; print(json.dumps({"decision": "block", "reason": sys.argv[1]}))' "$reason"
 fi

@@ -12,6 +12,10 @@ const LABELS: Record<string, string> = { five_hour: '5h', seven_day: '7d', spend
 const WARN_AT = [80, 90]
 const BAR_CELLS = 10
 
+export function contextPercent(value: number | undefined): number | undefined {
+  return value !== undefined && Number.isFinite(value) ? Math.min(100, Math.max(0, Math.round(value))) : undefined
+}
+
 export function toUsage(context: SessionContextUsage, rateLimits: SessionRateLimit[], cost?: SessionCost): Usage {
   return {
     windows: rateLimits.map(({ kind, percentUsed, resetsAt }) => ({ kind, percentUsed, resetsAt })),
@@ -107,6 +111,7 @@ export function overBudget(costUsd: number | undefined, limitUsd: number | undef
 export const register: Register = on => {
   let limitUsd: number | undefined
   let delegateAt: number | undefined
+  let recordedContext: number | undefined
   const recorded: Record<string, string> = {}
   let chipTries = 0
   let chipError = ''
@@ -182,6 +187,15 @@ export const register: Register = on => {
     if (warning) $.ui.toast(warning)
     const delegation = crossedDelegation(before, after.windows, delegateAt)
     if (delegation) $.ui.toast(delegation)
+    const percent = contextPercent(after.contextPercent)
+    if (percent !== undefined && percent !== recordedContext) {
+      try {
+        const result = await $.process.run(['tack', 'usage', 'set', 'context', String(percent)], { timeoutMs: 5000 })
+        if (result.exitCode === 0) recordedContext = percent
+      } catch {
+        // Context hints are optional: a failed record must not disturb the session.
+      }
+    }
     if (delegateAt !== undefined) await recordWindows($, after.windows)
     if (chipTries < CHIP_TRIES && chipNeedsRetry(await read($, chip))) await refreshChip($)
     return next(e)
