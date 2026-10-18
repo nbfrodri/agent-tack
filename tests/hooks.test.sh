@@ -950,6 +950,22 @@ asking() { printf '{"cwd":"%s","prompt":"%s"}' "$RM" "$1" | bash "$REMIND"; }
 check "skill reminder: names the set a request asks for" "asking 'Write a threat model for the upload service' | grep -q 'match this request and are not active: security' && asking 'threat model' | grep -q 'tack set use NAME'"
 check "skill reminder: reads a request in Spanish, accents or not" "asking 'haz una revisión de código' | grep -q 'match this request and are not active: review'"
 check "skill reminder: an ordinary request asks for no set" "! asking 'fix the typo in the README' | grep -q 'match this request'"
+for prompt in \
+  'Customers say the checkout page is sluggish when the cart has many items. Please deal with it.' \
+  'sluggish' 'slow down' 'slow page' 'slows down' 'load time' 'load times' \
+  'loads slowly' 'speed up' 'make it faster' 'takes too long' 'laggy' \
+  'lento' 'lenta' 'lentitud' 'más rápido' 'acelerar' 'tarda mucho'; do
+  check "skill reminder: performance vocabulary: $prompt" "asking '$prompt' | grep -q 'match this request and are not active: performance'"
+done
+for item in 'testing|add regression tests' 'review|simplify this code' \
+  'security|check for SQL injection' 'planning|break this into tasks'; do
+  set_name="${item%%|*}"
+  prompt="${item#*|}"
+  check "skill reminder: request vocabulary: $prompt" "asking '$prompt' | grep -q 'match this request and are not active: $set_name'"
+done
+for prompt in 'fix the typo in the README' 'add an endpoint' 'rename this variable' 'update the changelog'; do
+  check "skill reminder: ordinary vocabulary: $prompt" "! asking '$prompt' | grep -q 'match this request'"
+done
 check "skill reminder: a request that is not text is ignored" "printf '{\"cwd\":\"%s\",\"prompt\":[\"threat model\"]}' '$RM' | bash '$REMIND' | grep -q 'fit this project' && ! printf '{\"cwd\":\"%s\",\"prompt\":[\"threat model\"]}' '$RM' | bash '$REMIND' | grep -q 'match this request'"
 git -C "$RM" config tack.disabledHooks skill-reminder
 check "skill reminder: tack config disabled-hooks turns it off" "[ -z \"\$(reminding)\" ]"
