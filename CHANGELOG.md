@@ -50,6 +50,7 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ### Fixed
 
+- The hook overview now describes mapped verification and fallback test commands using the remaining Stop hook budget instead of promising a 120-second timeout.
 - `usage-band` 0.6.1 refreshes unchanged context readings every two minutes, keeping percentage-based Stop hints fresh during long sessions and retrying failed recordings.
 - Mapped verification, fallback tests and the slop scan now share the remaining Stop hook timeout, shortening or explicitly skipping checks so completion advice can be delivered.
 - The native-agent installer regression now isolates `XDG_DATA_HOME`, keeping shell completions out of a developer's inherited data directory.
