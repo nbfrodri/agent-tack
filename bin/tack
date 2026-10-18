@@ -85,6 +85,9 @@ Commands: modes and settings
       The model each tool uses for a tier (economical, balanced, strongest),
       from model-tiers.txt and your own overrides
 
+  codex-used SESSION_ID
+      Show the model and effort recorded for a Codex session
+
 Commands: sets
 
   set list
@@ -637,6 +640,10 @@ Test command: %s (from %s). Use it to verify changes instead of searching for on
     ;;
   usage)
     bash "$TACK_ROOT/lib/usage.sh" "$TACK_ROOT" "$@"
+    exit
+    ;;
+  codex-used)
+    bash "$TACK_ROOT/lib/codex-used.sh" "$@"
     exit
     ;;
   models)

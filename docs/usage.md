@@ -80,6 +80,7 @@ An active handoff records work another session needs to resume. tack compares it
 | `tack set update` | Move pinned skill collections to their upstream head and report what changed |
 | `tack mode [MODE]` | Show or set the workflow mode (`auto`, `lite`, `standard`, `strict`) |
 | `tack config` | Effective settings and their sources |
+| `tack codex-used SESSION_ID` | Model and effort recorded for a local Codex delegation session; exit 1 when unavailable, 2 for invalid ids |
 | `tack verify --plan` | Selected checks without running commands |
 | `tack verify` | Execute selected checks with local trust |
 | `tack doctor` | Diagnose installation and project configuration |

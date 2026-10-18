@@ -82,7 +82,7 @@ The switch follows plan mode only. Enter it with Shift+Tab (it cycles through th
 
 ### Delegating to the other assistant
 
-When both Claude Code and Codex are installed, the `cross-delegate` skill (set `orchestration`) lets one hand a bounded task to the other through its non-interactive CLI (`codex exec`, `claude -p`) and read back only a short report (verdict, summary, files, tests, blockers) instead of the whole transcript. Follow-ups resume the same session, so the long context stays with the delegate. It follows the same rule as subagents: automatic at strict and unleash, a one-line suggestion at lite and standard. The model comes from the tier mapping above.
+When both Claude Code and Codex are installed, the `cross-delegate` skill (set `orchestration`) lets one hand a bounded task to the other through its non-interactive CLI (`codex exec`, `claude -p`) and read back only a short report (verdict, summary, files, tests, blockers) instead of the whole transcript. Follow-ups resume the same session, with Codex launched from its worktree, so the long context stays with the delegate. It follows the same rule as subagents: automatic at strict and unleash, a one-line suggestion at lite and standard. The model comes from the tier mapping above.
 
 ```
 tack config cross-delegation one-way   # default: only the assistant you opened delegates
@@ -109,6 +109,18 @@ tack usage get five_hour                         # the last recorded reading (or
 ```
 
 A delegate runs in a sandbox and, when it writes, in its own worktree and branch; the delegating assistant checks the diff and the tests before relying on the report.
+
+Before a writing delegation in an enabled project, the assistant records the task, branch and worktree, announced model and effort, event/report paths and expected return in the active handoff under the configured `handoffs-path`, then adds the session id and outcome when the run ends. This lets another session inspect and recover the work if the delegating assistant hits its own usage limit or is closed; read-only tasks need no entry, and integrated, verified work has its entry removed.
+
+If Codex stops on a usage limit or another failure, the assistant checks the last events and partial work, tells you why it stopped (or that the reason is unclear), and offers to finish directly, wait for the reset and resume the same session from its worktree (`cd WORKTREE && codex exec resume SESSION_ID -m MODEL -c model_reasoning_effort='"LEVEL"' -o REPORT.json "FOLLOW-UP" </dev/null >/dev/null`), or discard the worktree. It recommends finishing directly when little remains or resuming from the worktree after the reset when a lot remains; it never retries immediately or merges partial work unverified.
+
+Before each run, the assistant announces the model, effort, tier and reason: `Delegating to Codex: MODEL, effort LEVEL (tier TIER): REASON`. Effort starts at low for economical, medium for balanced and high for strongest; unclear requirements, missing tests or costly mistakes bump the choice one level. Codex receives an explicit effort setting. The summary includes its recorded model and effort and calls out differences from the request. You can check afterwards with the session id from the first events line (`thread_id`):
+
+```bash
+tack codex-used SESSION_ID   # model=MODEL effort=LEVEL
+```
+
+This reads the first turn context in the local rollout under `${CODEX_HOME:-$HOME/.codex}/sessions`; missing metadata produces no output and exit 1, while invalid ids return 2. Symlinked rollouts and directories are ignored. The Claude route also announces and selects effort when `claude --help` lists `--effort`; otherwise it announces the model alone. Its summary reports the CLI's recorded model and identifies requested effort as unverified when the CLI does not expose actual effort.
 
 Documentation follows the same delegation policy as other work. Delegate only useful independent tasks; a number of changed files does not trigger an agent.
 
