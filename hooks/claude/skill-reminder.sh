@@ -38,5 +38,10 @@ reminder="$(printf '%s' "$input" | python3 "$root/lib/sets.py" "$root" reminder 
 offer="$("$root/bin/tack" usage hint 2>/dev/null)"
 [ -z "$offer" ] || reminder="${reminder:+$reminder }$offer"
 [ -n "$reminder" ] || exit 0
-python3 -c 'import json, sys
-print(json.dumps({"hookSpecificOutput": {"hookEventName": "UserPromptSubmit", "additionalContext": sys.argv[1]}}, separators=(",", ":")))' "$reminder"
+# The offer also reaches the user on screen: a model may not pass it on, the message is shown anyway.
+python3 -I -c 'import json, sys
+out = {"hookSpecificOutput": {"hookEventName": "UserPromptSubmit", "additionalContext": sys.argv[1]}}
+notes = [line.split(". ")[0].replace("Usage: ", "").strip() for line in sys.argv[2].splitlines() if line.strip()]
+if notes:
+    out["systemMessage"] = "tack: " + "; ".join(notes) + ". You can ask the assistant to hand bounded tasks to Codex (cross-delegate)."
+print(json.dumps(out, separators=(",", ":")))' "$reminder" "$offer"

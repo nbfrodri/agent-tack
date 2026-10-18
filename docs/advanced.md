@@ -98,7 +98,7 @@ Without the mod (`--skip-mods`, `tack config mods false`), Claude Code's status 
 { "statusLine": { "type": "command", "command": "tack usage statusline" } }
 ```
 
-It shows `5h 24% · 7d 41%` and records the readings. The on-screen message at the threshold comes from the mod; without it the assistant still makes the offer, in its next reply. Claude Code has one status line, and a custom one replaces most of the footer's keyboard hints, so tack does not set it for you. If you already have a status line script, keep it and pipe its input to the recorder: `printf '%s' "$input" | tack usage record` after reading `input="$(cat)"`. With the mod installed you need neither; the mod shows the same usage in its band.
+It shows `5h 24% · 7d 41%` and records the readings. The mod also shows a toast when the threshold is crossed. Either way, the hook that runs with each message shows the user the same notice on screen (a `systemMessage`, so it appears whether or not the assistant passes the offer on), once per window; the assistant is also told to end its reply with the offer, which a small model does not always do. Claude Code has one status line, and a custom one replaces most of the footer's keyboard hints, so tack does not set it for you. If you already have a status line script, keep it and pipe its input to the recorder: `printf '%s' "$input" | tack usage record` after reading `input="$(cat)"`. With the mod installed you need neither; the mod shows the same usage in its band.
 
 ```
 tack config delegate-usage-percent 70 --global   # offer later

@@ -932,14 +932,17 @@ printf '#!/usr/bin/env bash\nexit 0\n' > "$USAGE_BIN/codex"
 chmod +x "$USAGE_BIN/codex"
 reminding_codex() { printf '{"cwd":"%s","prompt":"add an endpoint"}' "$RM" | env PATH="$USAGE_BIN:$PATH" bash "$REMIND"; }
 bash "$REPO/bin/tack" usage set five_hour 20 2026-10-20T10:00:00Z
-check "skill reminder: usage below the threshold offers nothing" "! reminding_codex | grep -q 'Offer the user'"
+check "skill reminder: usage below the threshold offers nothing" "! reminding_codex | grep -q 'offering the user'"
 bash "$REPO/bin/tack" usage set five_hour 70 2026-10-20T10:00:00Z
-check "skill reminder: usage past the threshold offers Codex" "reminding_codex | grep -q 'Offer the user.*Codex'"
-check "skill reminder: the offer comes once per window" "! reminding_codex | grep -q 'Offer the user'"
+check "skill reminder: usage past the threshold offers Codex" "reminding_codex | grep -q 'offering the user.*Codex'"
+check "skill reminder: the offer comes once per window" "! reminding_codex | grep -q 'offering the user'"
 git -C "$RM" config --unset tack.sets 2>/dev/null
 rm -f "$RM/pyproject.toml"
 bash "$REPO/bin/tack" usage set five_hour 75 2026-10-20T15:00:00Z
-check "skill reminder: the offer is delivered even with no set to mention" "reminding_codex | grep -q 'Offer the user'"
+check "skill reminder: the offer is delivered even with no set to mention" "reminding_codex | grep -q 'offering the user'"
+bash "$REPO/bin/tack" usage set five_hour 80 2026-10-21T00:00:00Z
+check "skill reminder: the offer also shows the user a message, whatever the assistant does" "reminding_codex | grep -q '\"systemMessage\":\"tack: the 5-hour limit is at 80%.*ask the assistant to hand bounded tasks to Codex'"
+check "skill reminder: without an offer there is no user message" "! reminding_codex | grep -q systemMessage"
 check "skill reminder: malformed input is ignored" "[ -z \"\$(printf 'not json' | bash '$REMIND')\" ]"
 check "skill reminder: registered for each message in Claude Code" "grep -q 'skill-reminder.sh' '$REPO/claude/settings.json'"
 

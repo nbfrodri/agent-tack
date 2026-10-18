@@ -57,7 +57,7 @@ offer() {
   window="${resets:-slot$((seen / span))}"
   [ "$(cat "$dir/$kind.offered" 2>/dev/null)" != "$window" ] || return 0
   printf '%s\n' "$window" > "$dir/$kind.offered"
-  printf 'Usage: the %s limit is at %s%%. Offer the user, in one line, to hand bounded tasks (wide reading, mechanical edits, a review) to Codex with the cross-delegate skill so this window lasts longer; do it only if they say yes.\n' "$label" "$percent"
+  printf 'Usage: the %s limit is at %s%%. End your reply with one line offering the user to hand bounded tasks (wide reading, mechanical edits, a review) to Codex with the cross-delegate skill so this window lasts longer; delegate only if they say yes.\n' "$label" "$percent"
 }
 
 # write_reading KIND PERCENT RESETS_AT: stores one reading atomically.
