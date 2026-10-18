@@ -1,6 +1,6 @@
 name: Tools compatibility
 
-# Weekly check that the installer still works with the latest Claude Code and Codex.
+# Weekly check that the installer and the mods still work with the latest Claude Code and Codex.
 # No credentials: only installation, config discovery and non-interactive diagnostics run.
 on:
   schedule:
@@ -34,3 +34,11 @@ jobs:
           export HOME="$RUNNER_TEMP/home"
           export PATH="$HOME/.local/bin:$PATH"
           tack doctor --tools
+      - name: Validate and test the mods with the latest Claude Code
+        run: |
+          export HOME="$RUNNER_TEMP/home"
+          claude plugin validate plugins
+          for mod in plugins/*/; do
+            claude plugin validate "$mod"
+            claude plugin test "$mod"
+          done
