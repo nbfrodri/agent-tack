@@ -489,6 +489,34 @@ git init -q "$PLAIN"
 check "plain enable creates no docs" plain_enable_creates_nothing
 check "enable rejects unknown options" expect_exit 2 scaffold --everything
 
+# Keep model tests independent of the installed CLI and account catalog.
+MODEL_PATH="$PATH"
+mkdir -p "$WORK/model-bin" "$WORK/no-codex"
+for model_command in bash dirname cat awk python3; do
+  ln -s "$(command -v "$model_command")" "$WORK/no-codex/$model_command"
+done
+cat > "$WORK/model-bin/codex" <<'CODEX'
+#!/usr/bin/env bash
+[ "$*" = 'debug models' ] || exit 2
+case "${MODEL_CATALOG_MODE:-ok}" in
+  fail) exit 1 ;;
+  garbage) echo 'not JSON'; exit ;;
+esac
+cat "$MODEL_CATALOG"
+CODEX
+chmod +x "$WORK/model-bin/codex"
+export PATH="$WORK/model-bin:$PATH" MODEL_CATALOG="$WORK/catalog.json"
+cat > "$MODEL_CATALOG" <<'JSON'
+{"models":[
+  {"slug":"gpt-6-luna","visibility":"list","priority":4},
+  {"slug":"gpt-6-astra","visibility":"list","priority":2},
+  {"slug":"gpt-6-sol","visibility":"list","priority":3},
+  {"slug":"gpt-6.1-sol","visibility":"list","priority":1},
+  {"slug":"gpt-5.6-sol","visibility":"list","priority":5},
+  {"slug":"gpt-99-sol","visibility":"hide","priority":0}
+]}
+JSON
+
 # tack models: provider-neutral tiers mapped to each tool's models (model-tiers.txt).
 check "models lists every tier for each tool" expect_exit 0 "$CLI" models
 check "Claude Code's tiers are mapped" out_matches "^claude +economical +haiku"
@@ -508,6 +536,38 @@ check "a user line with an unknown tier is ignored" out_lacks "foo"
 check "malformed user lines are reported" contains 'ignored'
 rm -f "$XDG_CONFIG_HOME/agent-tack/model-tiers.txt"
 check "an unknown tier is rejected" expect_exit 2 "$CLI" models fastest
+
+# A new generation wins by priority; ties use the last lexical slug.
+cat > "$MODEL_CATALOG" <<'JSON'
+{"models":[
+  {"slug":"gpt-6.1-sol","visibility":"list","priority":1},
+  {"slug":"gpt-7-sol","visibility":"list","priority":0},
+  {"slug":"gpt-7.1-sol","visibility":"list","priority":0},
+  {"slug":"gpt-99-sol","visibility":"hide","priority":-1}
+]}
+JSON
+check "new generation resolves with lexical tie break" expect_exit 0 "$CLI" models balanced
+check "lowest priority and last lexical slug win; hidden ignored" out_matches '^codex +balanced +gpt-7.1-sol$'
+printf 'codex balanced family:missing pinned-model\n' > "$XDG_CONFIG_HOME/agent-tack/model-tiers.txt"
+check "unmatched family resolves" expect_exit 0 "$CLI" models balanced
+check "unmatched family uses pinned fallback" out_matches '^codex +balanced +pinned-model$'
+printf 'codex balanced family:missing\ngemini balanced family:sol other-fallback\ncursor balanced family:sol\n' > "$XDG_CONFIG_HOME/agent-tack/model-tiers.txt"
+check "unsupported tool families resolve" expect_exit 0 "$CLI" models balanced
+check "unmatched family without fallback inherits" out_matches '^codex +balanced +inherit$'
+check "other tools use pinned fallback" out_matches '^gemini +balanced +other-fallback$'
+check "other tools without fallback inherit" out_matches '^cursor +balanced +inherit$'
+rm "$XDG_CONFIG_HOME/agent-tack/model-tiers.txt"
+for catalog_mode in fail garbage; do
+  export MODEL_CATALOG_MODE="$catalog_mode"
+  check "$catalog_mode catalog resolves" expect_exit 0 "$CLI" models balanced
+  check "$catalog_mode catalog uses shipped fallback" out_matches '^codex +balanced +gpt-6.1-sol$'
+done
+unset MODEL_CATALOG_MODE
+check "missing codex resolves" expect_exit 0 env PATH="$WORK/no-codex" "$CLI" models economical
+check "missing codex uses shipped fallback" out_matches '^codex +economical +gpt-6-luna$'
+check "economical tier still filters" out_lacks balanced
+PATH="$MODEL_PATH"
+unset MODEL_CATALOG
 
 # tack memory: user-level notes shared by Claude Code and Codex (docs/adr/0002-shared-memory.md).
 MEMORY="$XDG_CONFIG_HOME/agent-tack/memory.md"
@@ -672,6 +732,8 @@ check "trace without a plan explains itself" expect_exit 2 trace
 SHOTS="$WORK/shots-project"
 mkdir -p "$SHOTS" && git -C "$SHOTS" init -q -b feat/new-button
 printf '<!doctype html><title>Fixture</title><h1>Hello</h1>\n' > "$SHOTS/page.html"
+git -C "$SHOTS" add page.html
+git -C "$SHOTS" -c user.name=T -c user.email=t@example.com commit -q -m 'test: initialize screenshot fixture'
 STUB="$WORK/playwright-stub"
 cat > "$STUB" <<'EOF_STUB'
 #!/usr/bin/env bash

@@ -126,10 +126,17 @@ while read -r tool _ _ _ _ agents_dir _; do
       || err "model-tiers.txt: $tool has no '$tier' tier"
   done
 done < "$REPO/targets.txt"
+# Validate repository defaults using the same resolver, without real HOME or machine overrides.
+model_home="$(mktemp -d "${TMPDIR:-/tmp}/tack-validate-models.XXXXXX")" || exit 1
+tier_models="$(HOME="$model_home" XDG_CONFIG_HOME="$model_home/.config" \
+  XDG_STATE_HOME="$model_home/.local/state" GIT_CONFIG_NOSYSTEM=1 \
+  GIT_CONFIG_GLOBAL="$model_home/gitconfig" "$REPO/bin/tack" models)"
+rm -rf "$model_home"
+claude_models="$(printf '%s\n' "$tier_models" | awk '$1 == "claude" { print $3 }')"
 for agent in "$REPO"/agents/*.md; do
   agent_model="$(sed -n 's/^model: *//p' "$agent" | head -n 1)"
   [ -z "$agent_model" ] || [ "$agent_model" = inherit ] \
-    || grep -qE "^claude[[:space:]]+[a-z]+[[:space:]]+$agent_model$" "$REPO/model-tiers.txt" \
+    || printf '%s\n' "$claude_models" | grep -qxF -- "$agent_model" \
     || err "agents/$(basename "$agent"): model '$agent_model' is not a Claude Code tier model (model-tiers.txt)"
 done
 # Sets are the only way a skill or an agent role gets installed, so each one is in some set, and
@@ -159,7 +166,7 @@ while read -r feature _; do
 done < "$REPO/features.txt"
 # Large doc updates are delegated to docs-writer to save tokens: it runs on Claude Code's
 # economical tier (model-tiers.txt), not the main model.
-economical_model="$(sed -n 's/^claude[[:space:]][[:space:]]*economical[[:space:]][[:space:]]*\([^[:space:]]*\).*/\1/p' "$REPO/model-tiers.txt")"
+economical_model="$(printf '%s\n' "$tier_models" | awk '$1 == "claude" && $2 == "economical" { print $3 }')"
 [ "$(sed -n 's/^model: *//p' "$REPO/agents/docs-writer.md")" = "${economical_model:-missing}" ] \
   || err "agents/docs-writer.md: docs-writer must use the economical tier's model (${economical_model:-none} in model-tiers.txt)"
 # Global instructions load in every session, so the skills they name must always be installed.
