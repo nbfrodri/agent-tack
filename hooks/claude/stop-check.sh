@@ -154,7 +154,12 @@ fi
 # projects; a detected command runs only when source or test files changed, an explicit
 # check-fast always does.
 if [ -e checks-map.json ] || [ -L checks-map.json ]; then
-  verification="$("$cli" verify 2>&1)"
+  # The hook is killed at its timeout (settings.json: 90 s), so verification gets what is left,
+  # minus a margin to print the result; otherwise a slow suite would also swallow the /clear hint.
+  budget=$(( ${TACK_STOP_TIMEOUT:-90} - SECONDS - 10 ))
+  [ "$budget" -ge 1 ] || budget=1
+  [ "$budget" -le 120 ] || budget=120
+  verification="$("$cli" verify --budget-seconds "$budget" 2>&1)"
   verification_status=$?
   [ "$verification_status" -eq 0 ] || add "project verification needs attention:
 $verification"
@@ -213,8 +218,13 @@ if [ -z "$findings" ]; then
 fi
 reason="Before stopping, check:$findings"
 activity_log "$root" "$client" stop-check "$findings"
+# The hint is recorded as shown once per session, so it travels with the block too.
 if command -v jq >/dev/null 2>&1; then
-  jq -cn --arg r "$reason" '{decision: "block", reason: $r}'
+  jq -cn --arg r "$reason" --arg m "$hint" '{decision: "block", reason: $r} + (if $m == "" then {} else {systemMessage: $m} end)'
 else
-  python3 -I -c 'import json, sys; print(json.dumps({"decision": "block", "reason": sys.argv[1]}))' "$reason"
+  python3 -I -c 'import json, sys
+out = {"decision": "block", "reason": sys.argv[1]}
+if sys.argv[2]:
+    out["systemMessage"] = sys.argv[2]
+print(json.dumps(out))' "$reason" "$hint"
 fi
