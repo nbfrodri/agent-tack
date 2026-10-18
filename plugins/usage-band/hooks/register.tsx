@@ -54,6 +54,28 @@ export function crossedWarning(before: UsageWindow[], after: UsageWindow[]): str
   return undefined
 }
 
+// `tack usage threshold` prints the percentage the offer to delegate to Codex starts at, or nothing.
+export function thresholdFrom(stdout: string): number | undefined {
+  const value = Number(stdout.trim())
+  return Number.isInteger(value) && value > 0 && value <= 100 ? value : undefined
+}
+
+// The windows the offer to delegate to Codex follows, with the label the on-screen message uses.
+const OFFERED: Record<string, string> = { five_hour: '5h', seven_day: '7d' }
+
+// The message shown once when the 5h or weekly window crosses the percentage the offer starts at.
+export function crossedDelegation(before: UsageWindow[], after: UsageWindow[], at: number | undefined): string | undefined {
+  if (at === undefined) return undefined
+  for (const window of after) {
+    if (!(window.kind in OFFERED)) continue
+    const previous = before.find(one => one.kind === window.kind)?.percentUsed ?? 0
+    if (previous < at && window.percentUsed >= at) {
+      return `${OFFERED[window.kind]} usage passed ${at}%: ask the assistant to hand tasks to Codex (cross-delegate)`
+    }
+  }
+  return undefined
+}
+
 // A cost limit applies only in a project-only mode (tack prints a WARNING line for those)
 // and only when `tack config unleash-max-cost` holds a positive amount.
 export function costLimit(modeShow: string, configValue: string): number | undefined {
@@ -84,6 +106,8 @@ export function overBudget(costUsd: number | undefined, limitUsd: number | undef
 
 export const register: Register = on => {
   let limitUsd: number | undefined
+  let delegateAt: number | undefined
+  const recorded: Record<string, string> = {}
   let chipTries = 0
   let chipError = ''
 
@@ -114,9 +138,31 @@ export const register: Register = on => {
     } catch {
       limitUsd = undefined
     }
+    try {
+      const threshold = await $.process.run(['tack', 'usage', 'threshold'], { timeoutMs: 5000 })
+      delegateAt = threshold.exitCode === 0 ? thresholdFrom(threshold.stdout) : undefined
+    } catch {
+      delegateAt = undefined
+    }
     await refreshChip($)
     return next(e)
   })
+
+  // The hook that runs with each message reads this to offer Codex once per 5h or weekly window.
+  const recordWindows = async ($: Engine, windows: UsageWindow[]) => {
+    for (const window of windows) {
+      if (!(window.kind in OFFERED)) continue
+      const percent = Math.min(100, Math.max(0, Math.round(window.percentUsed)))
+      const key = `${percent}|${window.resetsAt ?? ''}`
+      if (recorded[window.kind] === key) continue
+      try {
+        const result = await $.process.run(['tack', 'usage', 'set', window.kind, String(percent), window.resetsAt ?? ''], { timeoutMs: 5000 })
+        if (result.exitCode === 0) recorded[window.kind] = key
+      } catch {
+        // The offer is optional: a failed record must not disturb the session.
+      }
+    }
+  }
 
   on('tool.call', async ($, e, next) => {
     const current = await read($, usage)
@@ -134,6 +180,9 @@ export const register: Register = on => {
     await update($, usage, () => after)
     const warning = crossedWarning(before, after.windows)
     if (warning) $.ui.toast(warning)
+    const delegation = crossedDelegation(before, after.windows, delegateAt)
+    if (delegation) $.ui.toast(delegation)
+    if (delegateAt !== undefined) await recordWindows($, after.windows)
     if (chipTries < CHIP_TRIES && chipNeedsRetry(await read($, chip))) await refreshChip($)
     return next(e)
   })

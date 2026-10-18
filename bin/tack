@@ -137,6 +137,12 @@ Commands: checks and branches
       GitHub PR is merged and whose tip is still its head); --apply deletes them
       Branches in use and unmerged branches stay; squash merges need gh
 
+  usage set|get five_hour|seven_day ... | record | statusline | threshold | hint
+      The 5-hour and weekly usage, recorded by the usage band mod or by a Claude
+      Code status line running `tack usage statusline` (or `record` inside your
+      own); once per window past delegate-usage-percent the assistant offers to
+      hand tasks to Codex
+
   trace [PLAN]
       Check that every requirement the plan numbers (R1, R2…) has a test
       naming it (default: newest file in plans-path);
@@ -627,6 +633,10 @@ Test command: %s (from %s). Use it to verify changes instead of searching for on
     command -v python3 >/dev/null 2>&1 || fail "log reports need python3"
     python3 "$TACK_ROOT/lib/log-report.py" "$report" "$log_file" "$days" "$csv" \
       "${XDG_CONFIG_HOME:-$HOME/.config}/agent-tack/pricing.txt" "$TACK_ROOT"
+    ;;
+  usage)
+    bash "$TACK_ROOT/lib/usage.sh" "$TACK_ROOT" "$@"
+    exit
     ;;
   models)
     [ "$#" -le 1 ] || { echo "tack: models takes at most one tier (see --help)" >&2; exit 2; }
