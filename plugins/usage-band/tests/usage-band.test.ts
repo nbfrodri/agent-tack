@@ -1,6 +1,51 @@
 import { expect, test } from 'claude-code/testing'
 
 import { bar, chipNeedsRetry, colorFor, contextPercent, costLimit, crossedDelegation, crossedWarning, modeChip, overBudget, resetLabel, thresholdFrom, toUsage } from '../hooks/register'
+import { register } from '../hooks/register'
+import type { Engine } from 'claude-code'
+
+test('unchanged context refreshes after two minutes and failed refreshes retry', async () => {
+  const handlers: Record<string, Function> = {}
+  register(((event: string, ...args: Function[]) => { handlers[event] = args[args.length - 1] }) as never)
+  let now = 1000
+  let exitCode = 0
+  let throws = false
+  let calls = 0
+  const engine = {
+    clock: { now: async () => now },
+    process: { run: async (args: string[], options: { timeoutMs: number }) => {
+      if (args[3] === 'context') {
+        expect(options.timeoutMs).toBe(5000)
+        calls += 1
+        if (throws) throw new Error('unavailable')
+      }
+      return { exitCode, stdout: 'auto', stderr: '' }
+    } },
+    ui: { toast: () => {} },
+  } as unknown as Engine
+  const measure = (percent = 62) => handlers['session.measure'](engine,
+    { context: { percent }, rateLimits: [] }, async () => {})
+  await measure()
+  await measure()
+  expect(calls).toBe(1)
+  now += 120000
+  exitCode = 1
+  await measure()
+  expect(calls).toBe(2)
+  throws = true
+  await measure()
+  expect(calls).toBe(3)
+  throws = false
+  exitCode = 0
+  await measure()
+  await measure()
+  expect(calls).toBe(4)
+  now += 119999
+  await measure()
+  expect(calls).toBe(4)
+  await measure(63)
+  expect(calls).toBe(5)
+})
 
 test('context percentage is finite, rounded and clamped', () => {
   expect(contextPercent(61.8)).toBe(62)

@@ -78,8 +78,11 @@ class Installation(unittest.TestCase):
                 stub.write_text('#!/bin/sh\necho "1.0.0"\n', encoding='utf-8')
                 stub.chmod(0o755)
             env = dict(os.environ, HOME=str(home), XDG_CONFIG_HOME=str(home / '.config'),
+                       XDG_DATA_HOME=str(home / '.local/share'),
                        XDG_STATE_HOME=str(home / '.local/state'), GIT_CONFIG_NOSYSTEM='1',
                        GIT_CONFIG_GLOBAL=str(home / '.gitconfig'), PATH=str(bins) + os.pathsep + os.environ['PATH'])
+            self.assertTrue(Path(env.get('XDG_DATA_HOME', home / '.local/share')).is_relative_to(home),
+                            'installer test inherits an external XDG_DATA_HOME')
             for key in list(env):
                 if key in ('GIT_DIR', 'GIT_WORK_TREE', 'GIT_CONFIG_COUNT') or key.startswith(('GIT_CONFIG_KEY_', 'GIT_CONFIG_VALUE_')):
                     env.pop(key)

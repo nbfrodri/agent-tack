@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Scan the code a branch changed with aislop and print the findings worth acting on.
 
-Usage: slop_check.py ROOT [BASE]
+Usage: slop_check.py ROOT [BASE] [BUDGET_SECONDS]
 
 aislop (https://github.com/scanaislop/aislop) is an optional deterministic scanner for what
 coding assistants leave behind: swallowed errors, narrative comments, stubs, unsafe casts,
@@ -29,14 +29,14 @@ def scanner():
     return shutil.which('aislop')
 
 
-def scan(binary, root, base):
+def scan(binary, root, base, budget=SECONDS):
     command = [binary, 'scan', '--changes', *(['--base', base] if base else []), '--json']
     env = dict(os.environ, AISLOP_NO_TELEMETRY='1', DO_NOT_TRACK='1', AISLOP_NO_UPDATE_NOTIFIER='1')
     try:
         result = subprocess.run(command, cwd=root, env=env, stdin=subprocess.DEVNULL, capture_output=True,
-                                text=True, encoding='utf-8', errors='replace', timeout=SECONDS)
+                                text=True, encoding='utf-8', errors='replace', timeout=budget)
     except subprocess.TimeoutExpired:
-        return None, f'it did not finish within {SECONDS} s'
+        return None, f'it did not finish within {budget} s'
     except OSError as error:
         return None, str(error)
     try:
@@ -62,7 +62,8 @@ def main():
     binary = scanner()
     if not binary:
         return 0
-    report, problem = scan(binary, sys.argv[1], sys.argv[2] if len(sys.argv) > 2 else '')
+    budget = min(SECONDS, max(1, int(sys.argv[3]))) if len(sys.argv) > 3 else SECONDS
+    report, problem = scan(binary, sys.argv[1], sys.argv[2] if len(sys.argv) > 2 else '', budget)
     if report is None:
         # No scan is not a clean scan.
         print(f'aislop could not scan the changes ({problem}): run aislop scan --changes to see why.')

@@ -95,7 +95,7 @@ Trace reports `linked` when a tracked test file mentions an ID and `MISSING` oth
 
 ## Automatic checks
 
-Set `check-fast` to an existing short command when feedback after edits is useful. It runs only in a trusted project, with a 60-second timeout. The unmapped Stop fallback has a 120-second timeout. Both use Bash pipeline failure detection and bounded failure output, including on systems without the `timeout` utility. Supported hook integrations are listed in [tool support](editors.md).
+Set `check-fast` to an existing short command when feedback after edits is useful. It runs only in a trusted project, with a 60-second timeout after edits. At Stop, mapped verification, the unmapped test fallback and the subsequent slop scan share the remaining hook budget: `TACK_STOP_TIMEOUT` (90 seconds by default) minus elapsed time and a 10-second reporting margin. Tests are capped at 120 seconds and the scan at 60; an exhausted budget skips the check with an explicit finding. Both test paths use Bash pipeline failure detection and bounded failure output, including on systems without the `timeout` utility. Supported hook integrations are listed in [tool support](editors.md).
 
 The Stop hook also reports uncommitted work, stale handoffs, documentation reminders and source changes without test-file changes. Existing tests may already cover a change: review their behavior rather than adding a test just to change a filename. The hook asks once; a second stop is permitted. Separate invocations can repeat checks; tack does not cache a passing result.
 

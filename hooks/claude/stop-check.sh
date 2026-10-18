@@ -153,28 +153,38 @@ fi
 # The project's tests must pass before the turn ends. It runs project code, so only in trusted
 # projects; a detected command runs only when source or test files changed, an explicit
 # check-fast always does.
+remaining_budget() {
+  budget=$(( ${TACK_STOP_TIMEOUT:-90} - SECONDS - 10 ))
+  [ "$budget" -le 120 ] || budget=120
+  [ "$budget" -gt 0 ]
+}
 if [ -e checks-map.json ] || [ -L checks-map.json ]; then
   # The hook is killed at its timeout (settings.json: 90 s), so verification gets what is left,
   # minus a margin to print the result; otherwise a slow suite would also swallow the /clear hint.
-  budget=$(( ${TACK_STOP_TIMEOUT:-90} - SECONDS - 10 ))
-  [ "$budget" -ge 1 ] || budget=1
-  [ "$budget" -le 120 ] || budget=120
-  verification="$("$cli" verify --budget-seconds "$budget" 2>&1)"
-  verification_status=$?
-  [ "$verification_status" -eq 0 ] || add "project verification needs attention:
+  if remaining_budget; then
+    verification="$("$cli" verify --budget-seconds "$budget" 2>&1)"
+    verification_status=$?
+    [ "$verification_status" -eq 0 ] || add "project verification needs attention:
 $verification"
+  else
+    add "project verification skipped: the Stop hook time budget is exhausted; run tack verify."
+  fi
 elif "$cli" trusted --quiet; then
   IFS="$(printf '\t')" read -r check check_source <<EOF
 $(bash "$(dirname "$0")/../../lib/test-command.sh" "$(dirname "$0")/../.." "$root")
 EOF
   if [ -n "$check" ] && { [ "$check_source" = 'tack config check-fast' ] \
     || printf '%s\n' "$changed" | grep -qE "$SOURCE_FILES|$TEST_FILES"; }; then
-    bash "$(dirname "$cli")/../lib/run-check.sh" "$root" 120 "$check" >/dev/null 2>&1
-    case $? in
+    if remaining_budget; then
+      bash "$(dirname "$cli")/../lib/run-check.sh" "$root" "$budget" "$check" >/dev/null 2>&1
+      case $? in
       0) ;;
-      124) add "the tests did not finish within 120 s: $check (set a faster target with tack config check-fast)" ;;
+      124) add "the tests did not finish within $budget s (remaining Stop hook budget): $check (set a faster target with tack config check-fast)" ;;
       *) add "the tests fail: $check (from $check_source): fix them, or tell the user why they fail." ;;
-    esac
+      esac
+    else
+      add "the tests were skipped: the Stop hook time budget is exhausted; run $check."
+    fi
   fi
 fi
 
@@ -184,8 +194,12 @@ fi
 if command -v python3 >/dev/null 2>&1 && "$cli" trusted --quiet \
   && [ "$("$cli" config slop-check --get 2>/dev/null)" != "false" ] \
   && printf '%s\n' "$changed" | grep -E "$SOURCE_FILES" | grep -qvE "$TEST_FILES"; then
-  slop="$(python3 -I "$(dirname "$cli")/../lib/slop_check.py" "$root" "$base" 2>/dev/null)"
-  [ -z "$slop" ] || add "$slop"
+  if remaining_budget; then
+    slop="$(python3 -I "$(dirname "$cli")/../lib/slop_check.py" "$root" "$base" "$budget" 2>/dev/null)"
+    [ -z "$slop" ] || add "$slop"
+  else
+    add "aislop scan skipped: the Stop hook time budget is exhausted; run aislop scan --changes."
+  fi
 fi
 
 if [ -f docs-map.txt ]; then

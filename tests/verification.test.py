@@ -317,15 +317,47 @@ class VerificationTests(unittest.TestCase):
             'id': 'm1', 'model': 'claude-test', 'usage': {'input_tokens': 5000, 'output_tokens': 1},
             'content': [{'type': 'text', 'text': 'ok'}]}}) + '\n', encoding='utf-8')
         payload = {'cwd': str(self.root), 'session_id': 'slow-check', 'transcript_path': str(transcript)}
-        env = dict(self.env, TACK_STOP_TIMEOUT='14')
+        env = dict(self.env, TACK_STOP_TIMEOUT='30')
         started = time.monotonic()
         result = subprocess.run([BASH, str(REPO / 'hooks/claude/stop-check.sh')], input=json.dumps(payload),
-                                cwd=self.root, env=env, text=True, capture_output=True, timeout=40)
-        self.assertLess(time.monotonic() - started, 14, result.stdout + result.stderr)
+                                cwd=self.root, env=env, text=True, capture_output=True, timeout=70)
+        self.assertLess(time.monotonic() - started, 30, result.stdout + result.stderr)
         output = json.loads(result.stdout)
         self.assertEqual(output['decision'], 'block')
         self.assertIn('timed_out', output['reason'])
         self.assertIn('/clear', output['systemMessage'])
+
+    def test_stop_hook_shares_deadline_with_legacy_checks_and_slop(self):
+        self.git('config', 'tack.enabled', 'true')
+        self.git('config', 'tack.checkFast', 'sleep 60')
+        self.trust()
+        self.write('src/api.py', 'value = 2\n')
+        scanner = self.directory / 'aislop'
+        scanner.write_text('#!/bin/sh\nsleep 60\necho \'{"diagnostics": []}\'\n', encoding='utf-8')
+        scanner.chmod(0o755)
+        env = dict(self.env, TACK_STOP_TIMEOUT='30', TACK_AISLOP=str(scanner))
+        started = time.monotonic()
+        result = subprocess.run([BASH, str(REPO / 'hooks/claude/stop-check.sh')],
+                                input=json.dumps({'cwd': str(self.root)}), cwd=self.root,
+                                env=env, text=True, capture_output=True, timeout=70)
+        self.assertLess(time.monotonic() - started, 30, result.stdout + result.stderr)
+        self.assertIn('did not finish', result.stdout)
+
+    def test_stop_hook_bounds_slop_after_mapped_verification(self):
+        self.define([self.check(command='sleep 1')])
+        self.git('config', 'tack.enabled', 'true')
+        self.trust()
+        self.write('src/api.py', 'value = 2\n')
+        scanner = self.directory / 'aislop'
+        scanner.write_text('#!/bin/sh\nsleep 60\n', encoding='utf-8')
+        scanner.chmod(0o755)
+        env = dict(self.env, TACK_STOP_TIMEOUT='30', TACK_AISLOP=str(scanner))
+        started = time.monotonic()
+        result = subprocess.run([BASH, str(REPO / 'hooks/claude/stop-check.sh')],
+                                input=json.dumps({'cwd': str(self.root)}), cwd=self.root,
+                                env=env, text=True, capture_output=True, timeout=70)
+        self.assertLess(time.monotonic() - started, 30, result.stdout + result.stderr)
+        self.assertIn('aislop', result.stdout)
 
 
 if __name__ == '__main__':

@@ -293,6 +293,16 @@ expect("ask", "codex e --full-auto 'implement'", "codex: e alias asks", cwd=code
 expect("ask", "codex exec --cd . --full-auto 'implement'", "codex: explicit main directory asks", cwd=codex_main)
 expect("ask", "codex exec resume session-id -s workspace-write 'continue'", "codex: resume in main asks", cwd=codex_main)
 expect("allow", "codex exec resume --last -s workspace-write 'continue'", "codex: resume in linked worktree allows", cwd=codex_linked)
+for prefix in (f"cd '{codex_main}' &&", f"pushd '{codex_main}';", f"(cd '{codex_main}';"):
+    suffix = ')' if prefix.startswith('(') else ''
+    expect("ask", f"{prefix} codex exec --full-auto 'implement'{suffix}",
+           "codex: directory change requires review", cwd=codex_linked)
+expect("ask", f"cd '{codex_main}' && codex exec -C . -s workspace-write 'implement'",
+       "codex: relative override after cd requires review", cwd=codex_linked)
+expect("allow", f"cd '{codex_main}' && codex exec -C '{codex_linked}' --full-auto 'implement'",
+       "codex: absolute linked override after cd allows", cwd=codex_linked)
+expect("allow", f"cd '{codex_main}' && codex exec -s read-only 'inspect'",
+       "codex: read-only after cd allows", cwd=codex_linked)
 for directory in (codex_main, codex_linked, work):
     expect("ask", "codex exec --dangerously-bypass-approvals-and-sandbox 'implement'",
            f"codex: bypass always asks in {directory.name}", cwd=directory, reason="cross-delegate")

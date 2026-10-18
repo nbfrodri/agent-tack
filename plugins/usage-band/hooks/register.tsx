@@ -112,6 +112,7 @@ export const register: Register = on => {
   let limitUsd: number | undefined
   let delegateAt: number | undefined
   let recordedContext: number | undefined
+  let recordedContextAt = 0
   const recorded: Record<string, string> = {}
   let chipTries = 0
   let chipError = ''
@@ -188,10 +189,14 @@ export const register: Register = on => {
     const delegation = crossedDelegation(before, after.windows, delegateAt)
     if (delegation) $.ui.toast(delegation)
     const percent = contextPercent(after.contextPercent)
-    if (percent !== undefined && percent !== recordedContext) {
+    const now = await $.clock.now()
+    if (percent !== undefined && (percent !== recordedContext || now - recordedContextAt >= 120000)) {
       try {
         const result = await $.process.run(['tack', 'usage', 'set', 'context', String(percent)], { timeoutMs: 5000 })
-        if (result.exitCode === 0) recordedContext = percent
+        if (result.exitCode === 0) {
+          recordedContext = percent
+          recordedContextAt = await $.clock.now()
+        }
       } catch {
         // Context hints are optional: a failed record must not disturb the session.
       }
