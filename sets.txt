@@ -276,10 +276,10 @@ testing agent test-writer
 review about Code review, simplification and pull request feedback
 review category quality
 review ask code+review review+this+branch review+the+branch review+this+pr review+the+pr review+this+pull+request
-review ask review+my+code review+the+code review+this+code review+the+diff review+my+changes
+review ask review+my+code review+the+code review+this+code review+the+diff review+my+changes code+reviewer* review+my+last+commit review+the+last+commit
 review ask simplify+this+code simplify+the+code review+feedback address+review+comments review+these+changes
 review ask revision+de+codigo revisa+el+codigo revisar+el+codigo revisa+la+rama revisa+esta+rama revisa+el+pr
-review ask revisa+la+pr revisa+los+cambios revisa+mis+cambios
+review ask revisa+la+pr revisa+los+cambios revisa+mis+cambios revisa+el+ultimo+commit revisa+mi+ultimo+commit
 review ask simplifica+este+codigo simplifica+el+codigo comentarios+de+revision
 review skill improve
 review skill addy:skills/code-simplification
