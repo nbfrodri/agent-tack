@@ -45,6 +45,7 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ### Fixed
 
+- The check before stopping no longer loses the `/clear` hint in a project with `checks-map.json`: verification now gets only the time left before the hook's 90-second timeout (`tack verify --budget-seconds`), so a slow suite is reported as timed out instead of killing the hook, and the hint travels with the block when other findings are reported.
 - Installed files are recognised again after a reboot on filesystems that change a folder's device number (btrfs subvolumes, overlays, network mounts): the folder's inode identifies it. Before, dropping a set kept generated agents as "ownership location changed" and uninstall skipped what it could restore.
 - Agents and skills read each other's files through the checkout (`~/.agents/tack/skills/...`) instead of the installed path, which exists only while a set active everywhere lists that skill; the validator rejects the old form.
 - The `performance-analyzer` description no longer carries Spanish trigger phrases.

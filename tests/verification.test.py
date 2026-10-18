@@ -6,6 +6,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+import time
 import unittest
 
 REPO = Path(__file__).resolve().parents[1]
@@ -303,6 +304,28 @@ class VerificationTests(unittest.TestCase):
         self.assertTrue((self.root / '.results').exists())
         self.write('checks-map.json', '{invalid')
         self.assertIn('Verification: error', stop().stdout)
+
+    def test_stop_hook_bounds_slow_checks_and_keeps_the_clear_hint(self):
+        self.write('docs/handoffs/2026-10-18-x.md', '# Handoff\nStatus: in progress\n')
+        self.define([self.check(command='sleep 60')])
+        self.git('config', 'tack.enabled', 'true')
+        self.git('config', 'tack.clearHintTokens', '1000')
+        self.trust()
+        self.write('src/api.py', 'value = 2\n')
+        transcript = self.directory / 'transcript.jsonl'
+        transcript.write_text(json.dumps({'type': 'assistant', 'message': {
+            'id': 'm1', 'model': 'claude-test', 'usage': {'input_tokens': 5000, 'output_tokens': 1},
+            'content': [{'type': 'text', 'text': 'ok'}]}}) + '\n', encoding='utf-8')
+        payload = {'cwd': str(self.root), 'session_id': 'slow-check', 'transcript_path': str(transcript)}
+        env = dict(self.env, TACK_STOP_TIMEOUT='14')
+        started = time.monotonic()
+        result = subprocess.run([BASH, str(REPO / 'hooks/claude/stop-check.sh')], input=json.dumps(payload),
+                                cwd=self.root, env=env, text=True, capture_output=True, timeout=40)
+        self.assertLess(time.monotonic() - started, 14, result.stdout + result.stderr)
+        output = json.loads(result.stdout)
+        self.assertEqual(output['decision'], 'block')
+        self.assertIn('timed_out', output['reason'])
+        self.assertIn('/clear', output['systemMessage'])
 
 
 if __name__ == '__main__':
