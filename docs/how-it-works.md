@@ -87,6 +87,8 @@ The guard is a safety net for an assistant's mistakes, not a sandbox against a d
 
 It does **not** cover: overwriting files through redirection (`> ~/.bashrc`, `truncate`, `cp /dev/null …`), moving files out of the way (`mv ~/.ssh …`), `rsync --delete`, destructive commands of tools it does not know, interpreters outside its list (`deno`, `bun`, `pypy`, `fish`, `busybox sh`), anything run inside a script file, and actions taken through tools other than the shell (editors, MCP servers). Add rules for your own risky commands in `~/.config/agent-tack/guard-policy.txt`; for untrusted work, use a container or VM.
 
+For `codex exec` (also `codex e` and `codex exec resume`), the guard asks when an explicit writing sandbox (`-s`/`--sandbox workspace-write` or `danger-full-access`, or `--full-auto`) would run in a Git repository's main working tree. It resolves `-C`/`--cd` against the hook's cwd; without that option it uses the hook's cwd. A linked worktree or a non-Git directory passes silently, as do read-only and unspecified sandboxes. Wrappers such as `env`, `command`, `timeout` and `sudo` are inspected too. The parser records directory changes but does not resolve them: use `-C WORKTREE` for a fresh run, or launch `exec resume` from a shell already in the worktree. `--dangerously-bypass-approvals-and-sandbox`, forbidden by the cross-delegate skill, always asks whatever the directory. These confirmations remain in unleash; in Codex clients they become refusals because its hooks cannot ask for confirmation.
+
 ## Repository layout
 ```
 global/AGENTS.md      # global instructions for every AI tool

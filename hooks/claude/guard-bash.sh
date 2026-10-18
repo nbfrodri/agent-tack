@@ -221,6 +221,7 @@ check_command() {
   case "$base" in
     *'__subst__'* | *'$'* | *'`'*) ask "Dynamic executable name requires review." ;;
     git) check_git "${args[@]+"${args[@]}"}" ;;
+    codex) check_codex "${args[@]+"${args[@]}"}" ;;
     rm) check_rm "${args[@]+"${args[@]}"}" ;;
     find) check_find "${args[@]+"${args[@]}"}" ;;
     gh) check_gh "${args[@]+"${args[@]}"}" ;;
