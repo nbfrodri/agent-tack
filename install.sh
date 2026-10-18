@@ -87,6 +87,8 @@ source "$REPO/lib/agent-selection.sh"
 source "$REPO/lib/vscode.sh"
 # shellcheck source=lib/codex.sh
 source "$REPO/lib/codex.sh"
+# shellcheck source=lib/completion.sh
+source "$REPO/lib/completion.sh"
 # shellcheck source=lib/native-agents.sh
 source "$REPO/lib/native-agents.sh"
 
@@ -667,6 +669,7 @@ main() {
   install_vscode
   install_codex_agents
   install_native_agents
+  install_completions
   explain_hooks
 
   section "Summary"

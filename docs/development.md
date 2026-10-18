@@ -25,6 +25,7 @@ tests/lint.sh            # ShellCheck on every script and ruff on the Python (ru
 tests/run-all.sh         # every suite below, in parallel (-j N), with a one-line summary each
 tests/validate.sh        # skills, agents, references, budgets, former names, closed docs and local human-doc links/anchors
 tests/validate.test.sh   # the validator catches each kind of error
+tests/completion.test.sh # dynamic candidates, bash contexts, syntax checks and completion installation/uninstall
 tests/install.test.sh    # installer, in throwaway HOME directories
 tests/lifecycle.test.sh  # ownership, previews and safe uninstall
 tests/doctor.test.sh     # read-only installation diagnostics
