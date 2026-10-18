@@ -1,6 +1,15 @@
 import { expect, test } from 'claude-code/testing'
 
-import { bar, chipNeedsRetry, colorFor, costLimit, crossedDelegation, crossedWarning, modeChip, overBudget, resetLabel, thresholdFrom, toUsage } from '../hooks/register'
+import { bar, chipNeedsRetry, colorFor, contextPercent, costLimit, crossedDelegation, crossedWarning, modeChip, overBudget, resetLabel, thresholdFrom, toUsage } from '../hooks/register'
+
+test('context percentage is finite, rounded and clamped', () => {
+  expect(contextPercent(61.8)).toBe(62)
+  expect(contextPercent(-2)).toBe(0)
+  expect(contextPercent(120)).toBe(100)
+  expect(contextPercent(undefined)).toBeUndefined()
+  expect(contextPercent(NaN)).toBeUndefined()
+  expect(contextPercent(Infinity)).toBeUndefined()
+})
 
 test('the offer to delegate starts at the percentage tack prints, or not at all', () => {
   expect(thresholdFrom('50\n')).toBe(50)

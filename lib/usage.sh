@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
-# `tack usage`: the 5-hour and weekly usage the Claude Code usage band records, and the one offer
+# `tack usage`: context fill, the 5-hour and weekly usage the Claude Code usage band records, and the one offer
 # per window to delegate to Codex once one passes `tack config delegate-usage-percent`.
-#   usage set KIND PERCENT [RESETS_AT]   record a reading, KIND five_hour or seven_day (the usage
+#   usage set KIND PERCENT [RESETS_AT]   record a reading, KIND context, five_hour or seven_day (the usage
 #                                        band calls this)
 #   usage record                         read Claude Code's status line JSON on stdin and record both
 #                                        windows (for a status line script you already have)
-#   usage statusline                     the same, and print "5h N% · 7d N%" (a ready status line
+#   usage statusline                     the same, and print "ctx N% · 5h N% · 7d N%" (a ready status line
 #                                        command, for when the usage band mod is not installed)
 #   usage get KIND                       print the last percentage
+#   usage context                        print this directory's context fill if at most 600s old
 #   usage threshold                      print the percentage the offer starts at, or nothing when
 #                                        the offer is off (setting, cross-delegation, no codex)
 #   usage hint                           print the offer for each window past the threshold that
@@ -28,7 +29,15 @@ percent_ok() {
   [ "${#1}" -le 3 ] && [ "$1" -le 100 ]
 }
 
-kind_ok() { case "$1" in five_hour | seven_day) return 0 ;; esac; return 1; }
+kind_ok() { case "$1" in five_hour | seven_day | context) return 0 ;; esac; return 1; }
+
+context_path() {
+  local key _
+  read -r key _ <<EOF
+$(printf %s "$(pwd -P)" | cksum)
+EOF
+  printf 'context/%s\n' "$key"
+}
 
 # threshold: the percentage to offer from, or empty.
 threshold() {
@@ -64,27 +73,38 @@ offer() {
 write_reading() {
   local resets tmp
   resets="$(printf '%s' "${3:-}" | tr -cd 'A-Za-z0-9:.+-')"
-  (umask 077; mkdir -p "$dir") || die "cannot create $dir"
+  (umask 077; mkdir -p "$(dirname "$dir/$1")") || die "cannot create $dir"
   tmp="$dir/$1.$$.tmp"
   printf '%s\t%s\t%s\n' "$2" "$resets" "$(date +%s)" > "$tmp" && mv "$tmp" "$dir/$1"
 }
 
 # status_readings: reads the JSON Claude Code gives a status line command on stdin and prints
-# "KIND PERCENT RESETS_AT" for each rate-limit window it carries (Pro and Max plans, after the
-# first response). Anything else prints nothing.
+# "context PERCENT KEY" first, then "KIND PERCENT RESETS_AT" for each rate-limit window
+# (Pro and Max plans, after the first response). Anything else prints nothing.
 status_readings() {
   python3 -I -c '
-import json, sys
+import json, math, os, subprocess, sys
 try:
-    limits = json.load(sys.stdin).get("rate_limits") or {}
+    data = json.load(sys.stdin)
+    limits = data.get("rate_limits") or {}
 except Exception:
+    data = {}
     limits = {}
+context = data.get("context_window") if isinstance(data, dict) else None
+used = context.get("used_percentage") if isinstance(context, dict) else None
+if not isinstance(used, bool) and isinstance(used, (int, float)) and math.isfinite(used):
+    workspace = data.get("workspace")
+    cwd = workspace.get("current_dir") if isinstance(workspace, dict) else None
+    if not isinstance(cwd, str) or not os.path.isdir(cwd):
+        cwd = os.getcwd()
+    key = subprocess.check_output(["cksum"], input=os.fsencode(os.path.realpath(cwd))).split()[0].decode("ascii")
+    print("context", min(100, max(0, round(used))), key)
 for kind in ("five_hour", "seven_day"):
     window = limits.get(kind) if isinstance(limits, dict) else None
     if not isinstance(window, dict):
         continue
     used = window.get("used_percentage")
-    if isinstance(used, bool) or not isinstance(used, (int, float)):
+    if isinstance(used, bool) or not isinstance(used, (int, float)) or not math.isfinite(used):
         continue
     resets = window.get("resets_at")
     print(kind, min(100, max(0, round(used))), resets if isinstance(resets, int) and not isinstance(resets, bool) else "")
@@ -93,17 +113,26 @@ for kind in ("five_hour", "seven_day"):
 
 case "${1:-}" in
   set)
-    kind_ok "${2:-}" || die 'usage set takes five_hour|seven_day PERCENT [RESETS_AT]'
+    kind_ok "${2:-}" || die 'usage set takes five_hour|seven_day|context PERCENT [RESETS_AT]'
     percent_ok "${3:-}" || die 'usage set needs a whole percentage from 0 to 100'
-    write_reading "$2" "$3" "${4:-}"
+    if [ "$2" = context ]; then
+      write_reading "$(context_path)" "$3" ''
+    else
+      write_reading "$2" "$3" "${4:-}"
+    fi
     ;;
   record | statusline)
     command -v python3 >/dev/null 2>&1 || exit 0
     line=""
     while IFS=" " read -r kind percent resets; do
       kind_ok "$kind" || continue
-      write_reading "$kind" "$percent" "$resets"
-      case "$kind" in five_hour) label=5h ;; *) label=7d ;; esac
+      if [ "$kind" = context ]; then
+        case "$resets" in '' | *[!0-9]*) continue ;; esac
+        write_reading "context/$resets" "$percent" ''
+      else
+        write_reading "$kind" "$percent" "$resets"
+      fi
+      case "$kind" in context) label=ctx ;; five_hour) label=5h ;; *) label=7d ;; esac
       line="${line:+$line · }$label $percent%"
     done <<EOF
 $(status_readings)
@@ -111,9 +140,21 @@ EOF
     if [ "$1" = statusline ]; then printf '%s\n' "$line"; fi
     ;;
   get)
-    kind_ok "${2:-}" || die 'usage get takes five_hour|seven_day'
-    [ -r "$dir/$2" ] || exit 1
-    IFS="$(printf '\t')" read -r percent _ < "$dir/$2" && printf '%s\n' "$percent"
+    kind_ok "${2:-}" || die 'usage get takes five_hour|seven_day|context'
+    kind="$2"
+    [ "$kind" != context ] || kind="$(context_path)"
+    [ -r "$dir/$kind" ] || exit 1
+    IFS="$(printf '\t')" read -r percent _ < "$dir/$kind" && printf '%s\n' "$percent"
+    ;;
+  context)
+    file="$dir/$(context_path)"
+    [ -r "$file" ] || exit 0
+    IFS="$(printf '\t')" read -r percent seen < "$file" || exit 0
+    percent_ok "$percent" || exit 0
+    case "$seen" in '' | *[!0-9]*) exit 0 ;; esac
+    age=$(( $(date +%s) - seen ))
+    [ "$age" -ge 0 ] && [ "$age" -le 600 ] || exit 0
+    printf '%s\n' "$percent"
     ;;
   threshold)
     threshold
@@ -125,6 +166,6 @@ EOF
     offer seven_day "$from"
     ;;
   *)
-    die 'usage takes set, get, threshold or hint (see --help)'
+    die 'usage takes set, get, context, record, statusline, threshold or hint (see --help)'
     ;;
 esac
