@@ -11,6 +11,7 @@ test('unchanged context refreshes after two minutes and failed refreshes retry',
   let exitCode = 0
   let throws = false
   let calls = 0
+  const held = new Map<string, unknown>()
   const engine = {
     clock: { now: async () => now },
     process: { run: async (args: string[], options: { timeoutMs: number }) => {
@@ -21,6 +22,13 @@ test('unchanged context refreshes after two minutes and failed refreshes retry',
       }
       return { exitCode, stdout: 'auto', stderr: '' }
     } },
+    state: {
+      get: async (ref: { plugin: string, key: string }) => ({ value: held.get(`${ref.plugin}:${ref.key}`), version: 0 }),
+      set: async (ref: { plugin: string, key: string }, value: unknown) => {
+        held.set(`${ref.plugin}:${ref.key}`, value)
+        return { isSet: true, version: 1 }
+      },
+    },
     ui: { toast: () => {} },
   } as unknown as Engine
   const measure = (percent = 62) => handlers['session.measure'](engine,
