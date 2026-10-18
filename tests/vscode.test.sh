@@ -3,6 +3,7 @@
 # directories and fake editor commands. Never touches the real HOME or VS Code settings.
 # Usage: tests/vscode.test.sh
 set -uo pipefail
+unset XDG_DATA_HOME  # the installer writes shell completions there; keep them inside the temp HOME
 unset XDG_STATE_HOME GIT_CONFIG_GLOBAL XDG_CONFIG_HOME
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

@@ -184,6 +184,9 @@ Commands: records and diagnostics
       Move settings and the marker from the former harness name to tack
       (this clone and user-wide); tack doctor says when it is needed
 
+  completion bash|zsh|fish
+      Print a shell completion script
+
   help
       Show this help (also works outside a Git repository)
 
@@ -222,6 +225,12 @@ Examples:
 Local trust gates project commands run by tack's formatter/check hooks and verify
 commands; it is not a security sandbox or a general command permission.
 HELP
+}
+
+# Derive command candidates from the same headings that document the dispatch below.
+completion_commands() {
+  usage_text | awk '/^Commands:/ { listing=1; next } /^Global options:/ { listing=0 }
+    listing && /^  [a-z]/ && !seen[$1]++ { print $1 }'
 }
 
 # Bold the section and command lines for a terminal; piped output stays plain.
@@ -291,6 +300,22 @@ cmd="${1:-status}"
 [ $# -gt 0 ] && shift
 
 case "$cmd" in
+  completion)
+    if [ "$#" -ne 1 ]; then
+      echo 'tack: usage: tack completion bash|zsh|fish' >&2; exit 2
+    fi
+    case "$1" in
+      bash|zsh|fish) cat "$TACK_ROOT/completions/tack.$1" ;;
+      *) echo 'tack: usage: tack completion bash|zsh|fish' >&2; exit 2 ;;
+    esac
+    exit
+    ;;
+  __complete)
+    # shellcheck source=SCRIPTDIR/../lib/completion.sh
+    . "$TACK_ROOT/lib/completion.sh"
+    completion_candidates "$@"
+    exit
+    ;;
   enable)
     shared=0 scaffold=0
     for arg in "$@"; do

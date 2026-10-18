@@ -2,6 +2,7 @@
 # Tests install.sh against throwaway HOME directories. Never touches the real HOME.
 # Usage: tests/install.test.sh
 set -uo pipefail
+unset XDG_DATA_HOME  # the installer writes shell completions there; keep them inside the temp HOME
 unset XDG_STATE_HOME GIT_CONFIG_GLOBAL
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

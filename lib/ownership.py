@@ -89,6 +89,14 @@ def expected_link(path, target, home, repo, declaration):
     return False
 
 
+def completion_paths(home):
+    """Only the two completion destinations may be generated shell files."""
+    data = os.environ.get('XDG_DATA_HOME', home + '/.local/share')
+    config = os.environ.get('XDG_CONFIG_HOME', home + '/.config')
+    return {canonical(data + '/bash-completion/completions/tack'),
+            canonical(config + '/fish/completions/tack.fish')}
+
+
 def generated_parent(path, home, declaration):
     if path == home + '/.codex/agents':
         return True  # Legacy generated records predate the saved target declaration.
@@ -185,8 +193,10 @@ def validate(state, home):
         elif kind == "generated":
             parent, name = os.path.split(path)
             windows_command = path == canonical(home.rstrip('/') + '/.local/bin/tack.cmd')
-            if not windows_command and (not generated_parent(parent, home.rstrip('/'), entry / 'targets')
-                                        or not GENERATED_NAME.fullmatch(name)):
+            shell_completion = path in completion_paths(home)
+            if not windows_command and not shell_completion and (
+                    not generated_parent(parent, home.rstrip('/'), entry / 'targets')
+                    or not GENERATED_NAME.fullmatch(name)):
                 raise ValueError("unexpected generated file")
             if not SHA256.fullmatch(read(entry / "sha256")):
                 raise ValueError("invalid generated file checksum")

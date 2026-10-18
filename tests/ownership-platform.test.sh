@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Native Windows and POSIX ownership boundaries, always in a disposable HOME.
 set -euo pipefail
+unset XDG_DATA_HOME  # the installer writes shell completions there; keep them inside the temp HOME
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/tack-platform.XXXXXX")"
 trap 'rm -rf "$WORK"' EXIT

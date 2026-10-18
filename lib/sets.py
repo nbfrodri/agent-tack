@@ -6,18 +6,24 @@ full commit. A set is active everywhere (git config --global tack.sets, applied 
 in one project (local tack.sets, linked into that clone by `tack set use`). `tack set` and the
 installer call this module; lib/sets.sh reads the same files for what needs no checkout.
 """
-import argparse
-import filecmp
-import fnmatch
-import json
 import os
 from pathlib import Path
 import re
-import shutil
 import subprocess
 import sys
-import tempfile
-import unicodedata
+from types import SimpleNamespace
+
+# Name completion never checks out, renders or matches skills.
+NAMES_ONLY = (__name__ == '__main__' and len(sys.argv) > 2 and sys.argv[2] == 'names'
+              and sys.argv[3:] in ([], ['--active'], ['--inactive']))
+if not NAMES_ONLY:
+    import argparse
+    import filecmp
+    import fnmatch
+    import json
+    import shutil
+    import tempfile
+    import unicodedata
 
 NAME = re.compile(r'^[a-z0-9][a-z0-9-]*$')
 SKILL = re.compile(r'^[A-Za-z0-9][A-Za-z0-9._-]*$')
@@ -504,6 +510,30 @@ def command_suggest(args, root, sources, sets):
     print(f'Active in {repo}: {", ".join(found)}')
 
 
+def command_names(args, root, sources, sets):
+    """Read-only completion names, combining project and global activation."""
+    # Completion needs names and categories, without validating every installed skill path.
+    for _, fields in rows(root / 'sets.txt'):
+        if len(fields) < 3 or not NAME.fullmatch(fields[0]):
+            continue
+        entry = sets.setdefault(fields[0], {'category': ''})
+        if fields[1] == 'category':
+            entry['category'] = fields[2]
+    if not args.active and not args.inactive:
+        print('\n'.join(sets))
+        return
+    # --local queries already return no values outside a repository.
+    enabled = set(active('local', sets)) | set(active('global', sets))
+    declined = set(skipped(None)) if args.inactive else set()
+    for name, entry in sets.items():
+        if args.active and name not in enabled:
+            continue
+        if args.inactive and (name in enabled or name in declined or name == ALWAYS
+                              or entry['category'] == COMPAT):
+            continue
+        print(name)
+
+
 def command_list(args, root, sources, sets):
     code, top, _ = git('rev-parse', '--show-toplevel')
     here = active('local', sets) if code == 0 and top else []
@@ -721,6 +751,10 @@ def command_update(args, root, sources, sets):
 
 
 def main():
+    if NAMES_ONLY:
+        selection = SimpleNamespace(active='--active' in sys.argv[3:], inactive='--inactive' in sys.argv[3:])
+        command_names(selection, Path(sys.argv[1]).resolve(), {}, {})
+        return 0
     # The command guard decides from the literal words of a command, so nothing here may accept
     # another spelling: no abbreviated options, and the checkout comes from the caller (bin/tack,
     # install.sh) as the first argument, never from an option a later argument could repeat.
@@ -734,6 +768,10 @@ def main():
         sub.set_defaults(run=run)
         return sub
 
+    names = command('names', command_names, help='read-only set names for completion')
+    selection = names.add_mutually_exclusive_group()
+    selection.add_argument('--active', action='store_true')
+    selection.add_argument('--inactive', action='store_true')
     command('list', command_list, help='every set and where it is active (default)')
     command('show', command_show, help='what a set contains').add_argument('name')
     command('agent', command_agent, help='whether an agent role is active and which sets provide it').add_argument('name')

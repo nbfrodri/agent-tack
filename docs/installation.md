@@ -28,6 +28,33 @@ Dropping a set and reinstalling removes only tack's own skill links and unchange
 
 Upgrading from a version with skill groups: the `skill-groups` and `agent-roles` settings are no longer read. Run `tack migrate` once; a choice of optional groups becomes `tack-skills`, enabled roles become `tack-agents`, and `./install.sh` then leaves your installation as it was.
 
+## Shell completions
+
+The installer writes bash completion to `${XDG_DATA_HOME:-$HOME/.local/share}/bash-completion/completions/tack`
+and, when `fish` is on PATH, fish completion to `${XDG_CONFIG_HOME:-$HOME/.config}/fish/completions/tack.fish`.
+Bash loads it lazily when bash-completion is enabled; fish loads its completion directory automatically.
+Candidates come from tack's commands, sets, features and built-in/user modes at completion time.
+Edited files and foreign files are kept with a warning; uninstall removes only unchanged files it owns.
+The step also runs with `--skip-plugins`, `--skip-mods` and `--no-hooks`. `--dry-run` previews writes.
+Disable future installation with `tack config completions false --global` (default: true),
+then run `./uninstall.sh` if you also want to remove previously installed files.
+
+For bash without bash-completion, add this manual alternative to your shell startup file:
+
+```bash
+eval "$(tack completion bash)"
+```
+
+`tack completion fish` prints the fish script. Zsh is manual: save `tack completion zsh` as
+`_tack` in a directory on `fpath`, adding that directory before `compinit`:
+
+```zsh
+mkdir -p ~/.local/share/zsh/site-functions
+tack completion zsh > ~/.local/share/zsh/site-functions/_tack
+fpath=(~/.local/share/zsh/site-functions $fpath)
+autoload -Uz compinit && compinit
+```
+
 ## Updating
 ```bash
 cd /path/to/your/agent-tack && git pull && ./install.sh
