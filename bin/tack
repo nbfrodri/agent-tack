@@ -97,6 +97,8 @@ Commands: sets
   set show NAME
       List what a set contains
 
+  set agent ROLE              Check role availability and its providing sets (read-only)
+
   set use NAME [--global]
       Link a set into this project for every tool, or everywhere through
       install.sh with --global

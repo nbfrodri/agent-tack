@@ -595,6 +595,25 @@ def command_show(args, root, sources, sets):
         print(f'  {item["kind"]:<7} {item["ref"]}')
 
 
+def command_agent(args, root, sources, sets):
+    providers = [name for name, entry in sets.items()
+                 if any(item['kind'] == 'agent' and item['name'] == args.name for item in entry['items'])]
+    if not NAME.fullmatch(args.name) or not providers:
+        print(f'tack: unknown agent role {args.name!r} (see sets.txt)', file=sys.stderr)
+        return 2
+    providers.sort(key=lambda name: sets[name]['category'] == COMPAT)
+    enabled = set(active('local', sets)) | set(active('global', sets))
+    for name in providers:
+        if name in enabled:
+            print(f'{args.name}: active (via {name})')
+            return 0
+    specific = [name for name in providers if sets[name]['category'] != COMPAT]
+    providers = specific or providers
+    print(f'{args.name}: not active; sets that provide it: {", ".join(providers)} '
+          f'(tack set use {providers[0]} activates it)')
+    return 1
+
+
 def known(name, sets):
     if name not in sets:
         raise Fail(f'unknown set {name!r} (see tack set list)')
@@ -719,6 +738,7 @@ def main():
 
     command('list', command_list, help='every set and where it is active (default)')
     command('show', command_show, help='what a set contains').add_argument('name')
+    command('agent', command_agent, help='whether an agent role is active and which sets provide it').add_argument('name')
     for name, run, text in (('use', command_use, 'activate a set in this project, or everywhere with --global'),
                             ('drop', command_drop, 'deactivate a set')):
         sub = command(name, run, help=text)
@@ -740,7 +760,7 @@ def main():
     root = args.root.resolve()
     try:
         sources, sets = load(root)
-        getattr(args, 'run', command_list)(args, root, sources, sets)
+        return getattr(args, 'run', command_list)(args, root, sources, sets) or 0
     except Fail as error:
         print(f'tack: {error}', file=sys.stderr)
         return 1

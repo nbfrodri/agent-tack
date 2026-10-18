@@ -31,6 +31,10 @@ With `--global` the choice is saved in your global Git config and `./install.sh`
 | Agents | Claude Code | Every tool with an agents folder in `targets.txt` |
 | Plugins | Claude Code | Claude Code |
 
+### Agent roles
+
+Roles come from sets: `code-reviewer` and `evaluator`, for example, come with `review`. Run `tack set agent ROLE` before delegating to see whether a role is active here or everywhere and which set provides it. It changes nothing: exit 0 means active, 1 means inactive (with an activation command), and 2 means an unknown or invalid role. Specific sets are shown in preference to compatibility bundles.
+
 ## How a set reaches the work
 
 A set does nothing until it is active, and an active set does nothing until the assistant opens its skills. tack covers both without you having to remember set names. You can always activate one by hand; the automatic way is on by default in every enabled project.

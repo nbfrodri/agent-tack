@@ -213,7 +213,7 @@ check_tack() {
       shift
       case "$#:${1:-}" in
         0: | 1:list | 1:check | 1:suggest) return ;;
-        2:show) case "$2" in '' | -* | *[!a-z0-9-]*) ;; *) return ;; esac ;;
+        2:show | 2:agent) case "$2" in '' | -* | *[!a-z0-9-]*) ;; *) return ;; esac ;;
       esac
       # shellcheck disable=SC2034 # Read by guard-bash.sh after the analysis.
       SETTINGS_WRITE="Changing which sets are active is the user's decision in this mode." ;;
