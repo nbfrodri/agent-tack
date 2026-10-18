@@ -327,6 +327,38 @@ class VerificationTests(unittest.TestCase):
         self.assertIn('timed_out', output['reason'])
         self.assertIn('/clear', output['systemMessage'])
 
+    def test_stop_hook_shares_deadline_with_legacy_checks_and_slop(self):
+        self.git('config', 'tack.enabled', 'true')
+        self.git('config', 'tack.checkFast', 'sleep 30')
+        self.trust()
+        self.write('src/api.py', 'value = 2\n')
+        scanner = self.directory / 'aislop'
+        scanner.write_text('#!/bin/sh\nsleep 30\necho \'{"diagnostics": []}\'\n', encoding='utf-8')
+        scanner.chmod(0o755)
+        env = dict(self.env, TACK_STOP_TIMEOUT='14', TACK_AISLOP=str(scanner))
+        started = time.monotonic()
+        result = subprocess.run([BASH, str(REPO / 'hooks/claude/stop-check.sh')],
+                                input=json.dumps({'cwd': str(self.root)}), cwd=self.root,
+                                env=env, text=True, capture_output=True, timeout=18)
+        self.assertLess(time.monotonic() - started, 14, result.stdout + result.stderr)
+        self.assertIn('did not finish', result.stdout)
+
+    def test_stop_hook_bounds_slop_after_mapped_verification(self):
+        self.define([self.check(command='sleep 1')])
+        self.git('config', 'tack.enabled', 'true')
+        self.trust()
+        self.write('src/api.py', 'value = 2\n')
+        scanner = self.directory / 'aislop'
+        scanner.write_text('#!/bin/sh\nsleep 30\n', encoding='utf-8')
+        scanner.chmod(0o755)
+        env = dict(self.env, TACK_STOP_TIMEOUT='14', TACK_AISLOP=str(scanner))
+        started = time.monotonic()
+        result = subprocess.run([BASH, str(REPO / 'hooks/claude/stop-check.sh')],
+                                input=json.dumps({'cwd': str(self.root)}), cwd=self.root,
+                                env=env, text=True, capture_output=True, timeout=18)
+        self.assertLess(time.monotonic() - started, 14, result.stdout + result.stderr)
+        self.assertIn('aislop', result.stdout)
+
 
 if __name__ == '__main__':
     unittest.main()

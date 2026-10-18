@@ -50,6 +50,7 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ### Fixed
 
+- Mapped verification, fallback tests and the slop scan now share the remaining Stop hook timeout, shortening or explicitly skipping checks so completion advice can be delivered.
 - The native-agent installer regression now isolates `XDG_DATA_HOME`, keeping shell completions out of a developer's inherited data directory.
 - Writing Codex commands after a shell directory change now require review without an inspectable absolute directory override; main-tree overrides still require review.
 - A request such as "make the page load faster" now suggests the `performance` set: its `ask` words lacked `load faster`, `loading faster` and `run faster`, found by a trial whose prompt matched none of them.
