@@ -81,6 +81,7 @@ ask_local() { [ -n "$LOCAL_ASK_REASON" ] || LOCAL_ASK_REASON="$1"; }
 # A command that changes directory or points git elsewhere may act outside the project,
 # so its local asks are never waived.
 ACTS_ELSEWHERE=0
+DIRECTORY_CHANGED=0
 # Writes to tack's own settings; refused in project-only modes so an autonomous
 # agent cannot lift its limits or leave its mode.
 SETTINGS_WRITE=""
@@ -225,7 +226,7 @@ check_command() {
     rm) check_rm "${args[@]+"${args[@]}"}" ;;
     find) check_find "${args[@]+"${args[@]}"}" ;;
     gh) check_gh "${args[@]+"${args[@]}"}" ;;
-    cd | pushd | popd) ACTS_ELSEWHERE=1 ;;
+    cd | pushd | popd) ACTS_ELSEWHERE=1; DIRECTORY_CHANGED=1 ;;
     tack) check_tack "${args[@]+"${args[@]}"}" ;;
     bash | sh | zsh | dash | ksh) check_shell "${args[@]+"${args[@]}"}" ;;
     source | .) check_source "${args[@]+"${args[@]}"}" ;;

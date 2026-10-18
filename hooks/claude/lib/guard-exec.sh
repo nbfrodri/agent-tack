@@ -6,7 +6,7 @@
 # sandbox triggers git inspection; no option or read-only leaves the normal flow alone.
 check_codex() {
   # shellcheck disable=SC2154 # cwd is set by guard-bash.sh.
-  local sub="" writing=0 dir="$cwd" a value git_info git_dir common_dir inside
+  local sub="" writing=0 dir="$cwd" explicit_dir=0 a value git_info git_dir common_dir inside
   while [ "$#" -gt 0 ]; do
     a="$1"
     shift
@@ -22,10 +22,11 @@ check_codex() {
       --sandbox=workspace-write | --sandbox=danger-full-access | -sworkspace-write | -sdanger-full-access | --full-auto)
         writing=1 ;;
       -C | --cd)
+        explicit_dir=1
         dir="${1:-}"
         [ "$#" -eq 0 ] || shift ;;
-      --cd=*) dir="${a#--cd=}" ;;
-      -C?*) dir="${a#-C}" ;;
+      --cd=*) dir="${a#--cd=}"; explicit_dir=1 ;;
+      -C?*) dir="${a#-C}"; explicit_dir=1 ;;
       -c | --config | -m | --model | -p | --profile | -i | --image | -o | --output-last-message | --output-schema | --color | --add-dir | --enable | --disable | --local-provider)
         [ "$#" -eq 0 ] || shift ;;
       -*) ;;
@@ -36,8 +37,20 @@ check_codex() {
     esac
   done
   [ -n "$sub" ] && [ "$writing" -eq 1 ] || return 0
+  # The parser does not track shell directory state. Only an absolute override is
+  # independent of a preceding cd/pushd (including inside a subshell).
+  # shellcheck disable=SC2154 # Set by guard-bash.sh.
+  if [ "$DIRECTORY_CHANGED" -eq 1 ]; then
+    case "$explicit_dir:$dir" in
+      1:/*) ;;
+      *) ask "Codex's working directory after a directory change requires review. Use -C with an absolute worktree path."; return 0 ;;
+    esac
+  fi
   dir="$(resolve_path "$dir")"
-  [ -n "$dir" ] || return 0
+  if [ -z "$dir" ]; then
+    [ "$DIRECTORY_CHANGED" -eq 0 ] || ask "Codex's working directory after a directory change requires review."
+    return 0
+  fi
   # One git process, after the cheap option check. Both dirs use the same path format;
   # a linked worktree's per-worktree git dir differs from its shared common dir.
   git_info="$(git -C "$dir" rev-parse --git-dir --git-common-dir --is-inside-work-tree 2>/dev/null)" || return 0
