@@ -263,7 +263,8 @@ testing match playwright.config.ts
 testing match playwright.config.js
 testing match package.json:@playwright/test
 testing ask playwright e2e end+to+end unit+test* test+suite test+coverage tdd flaky property+based mutation+testing
-testing ask prueba+unitaria pruebas+unitarias cobertura+de+pruebas
+testing ask regression+test* integration+test* browser+test* failing+test* add+tests write+tests
+testing ask prueba+unitaria pruebas+unitarias cobertura+de+pruebas pruebas+de+integracion pruebas+de+regresion anade+pruebas escribe+pruebas
 testing skill testing
 testing skill e2e-testing
 testing skill debugging
@@ -276,8 +277,10 @@ review about Code review, simplification and pull request feedback
 review category quality
 review ask code+review review+this+branch review+the+branch review+this+pr review+the+pr review+this+pull+request
 review ask review+my+code review+the+code review+this+code review+the+diff review+my+changes
+review ask simplify+this+code simplify+the+code review+feedback address+review+comments review+these+changes
 review ask revision+de+codigo revisa+el+codigo revisar+el+codigo revisa+la+rama revisa+esta+rama revisa+el+pr
 review ask revisa+la+pr revisa+los+cambios revisa+mis+cambios
+review ask simplifica+este+codigo simplifica+el+codigo comentarios+de+revision
 review skill improve
 review skill addy:skills/code-simplification
 review skill sentry:skills/find-bugs
@@ -290,7 +293,8 @@ review agent evaluator
 security about Static analysis, risky changes, dependencies and threat models
 security category quality
 security ask threat+model* security+audit security+review vulnerabilit* supply+chain owasp cve pentest*
-security ask modelo+de+amenazas auditoria+de+seguridad vulnerabilidad*
+security ask sql+injection cross+site+scripting leaked+secret* exposed+credential* dependency+audit
+security ask modelo+de+amenazas auditoria+de+seguridad vulnerabilidad* inyeccion+sql secretos+filtrados credenciales+expuestas auditoria+de+dependencias
 security skill auth
 security skill trailofbits:plugins/static-analysis/skills/semgrep
 security skill trailofbits:plugins/static-analysis/skills/codeql
@@ -304,7 +308,8 @@ security agent security-auditor
 performance about Measure first: web vitals, queries, bundles and hot paths
 performance category quality
 performance ask performance+audit web+vitals lighthouse bundle+size profiling bottleneck* slow+query*
-performance ask rendimiento cuello+de+botella consulta+lenta
+performance ask sluggish slow+down slow+page slows+down load+time* loads+slowly speed+up make+it+faster takes+too+long laggy
+performance ask rendimiento cuello+de+botella consulta+lenta lento lenta lentitud mas+rapido acelerar tarda+mucho
 performance skill addy:skills/performance-optimization
 performance skill cloudflare:skills/web-perf
 performance skill wshobson:plugins/python-development/skills/python-performance-optimization
@@ -313,6 +318,8 @@ performance agent performance-analyzer
 architecture about System and codebase design: boundaries, domain models and service patterns
 architecture category quality
 architecture ask architecture arquitectura domain+model* bounded+context* microservic*
+architecture ask system+design service+boundaries module+boundaries circular+dependenc* tightly+coupled
+architecture ask diseno+del+sistema limites+entre+servicios limites+entre+modulos dependencias+circulares
 architecture skill wshobson:plugins/backend-development/skills/architecture-patterns
 architecture skill wshobson:plugins/backend-development/skills/microservices-patterns
 architecture skill wshobson:plugins/backend-development/skills/api-design-principles
@@ -326,7 +333,9 @@ architecture agent architecture-reviewer
 planning about From a vague idea to a spec, a plan and tickets
 planning category process
 planning ask implementation+plan write+a+spec technical+spec brainstorm*
+planning ask break+this+into+tasks break+it+down plan+the+implementation acceptance+criteria clarify+requirements
 planning ask plan+de+implementacion escribe+una+especificacion especificacion+tecnica lluvia+de+ideas
+planning ask divide+esto+en+tareas planifica+la+implementacion criterios+de+aceptacion aclarar+requisitos
 planning skill project-docs
 planning skill mattpocock:skills/productivity/grill-me
 planning skill mattpocock:skills/engineering/to-spec
@@ -335,7 +344,9 @@ planning agent planner
 
 git-release about Git history, issues, pull requests, CI fixes and releases
 git-release category process
-git-release ask changelog release+notes semver cut+a+release rebase squash cherry+pick notas+de+version
+git-release ask generate+changelog release+changelog release+notes semver cut+a+release rebase squash cherry+pick
+git-release ask prepare+a+pull+request open+a+pull+request failing+ci ci+failure*
+git-release ask notas+de+version prepara+una+solicitud+de+cambios publicar+una+version fallos+de+ci
 git-release skill git-history
 git-release skill github-issues
 git-release skill release
@@ -346,6 +357,8 @@ git-release skill wshobson:plugins/cicd-automation/skills/github-actions-templat
 orchestration about Long or parallel work: subagents, worktrees and autonomous rounds
 orchestration category process
 orchestration ask subagent* subagente* worktree* codex*
+orchestration ask parallel+agents delegate+this+task autonomous+rounds
+orchestration ask agentes+en+paralelo delega+esta+tarea rondas+autonomas
 orchestration skill orchestrate
 orchestration skill cross-delegate
 orchestration skill auto-improve
@@ -355,7 +368,9 @@ orchestration agent implementer
 modernization about Upgrades and migrations: dependencies, frameworks, schemas and deprecations
 modernization category process
 modernization ask migrate+to migrate+from migration+to upgrade+to deprecat* legacy+code
+modernization ask upgrade+dependenc* update+dependenc* schema+migration* framework+upgrade*
 modernization ask migrar+a actualizar+a codigo+legado
+modernization ask actualiza+las+dependencias actualizar+dependencias migracion+de+esquema*
 modernization skill wshobson:plugins/framework-migration/skills/dependency-upgrade
 modernization skill wshobson:plugins/framework-migration/skills/database-migration
 modernization skill wshobson:plugins/framework-migration/skills/react-modernization
@@ -396,6 +411,8 @@ engineering-lifecycle skill addy:skills/shipping-and-launch
 agent-tooling about Writing and auditing skills, plugins, hooks and agent instructions
 agent-tooling category process
 agent-tooling ask write+a+skill create+a+skill agents+md claude+md escribe+una+skill crea+una+skill
+agent-tooling ask custom+skill* agent+instructions audit+skills
+agent-tooling ask habilidad+personalizada instrucciones+del+agente auditar+skills
 agent-tooling skill lessons
 agent-tooling skill anthropics:skills/skill-creator
 agent-tooling skill mattpocock:skills/productivity/writing-for-agents
@@ -414,6 +431,8 @@ devops match Dockerfile
 devops match compose.yaml
 devops match docker-compose.yml
 devops ask dockerfile docker github+actions ci+cd pipeline+de+ci
+devops ask continuous+integration continuous+deployment deployment+pipeline* container+image* infrastructure+as+code
+devops ask integracion+continua despliegue+continuo imagen+de+contenedor infraestructura+como+codigo
 devops skill deployment
 devops skill observability
 devops skill hashicorp:plugins/terraform/skills/terraform-style-guide
@@ -531,6 +550,8 @@ data-engineering skill wshobson:plugins/data-engineering/skills/data-quality-fra
 writing about Documentation and prose that reads as written by a person
 writing category beyond-code
 writing ask write+documentation write+the+docs technical+writing blog+post escribe+la+documentacion redacta*
+writing ask user+guide* document+this+feature document+the+api draft+a+post getting+started+guide
+writing ask guia+de+usuario documenta+esta+funcionalidad documenta+la+api guia+de+inicio
 writing skill project-docs
 writing skill anthropics:skills/doc-coauthoring
 writing skill wshobson:plugins/avoid-ai-writing/skills/avoid-ai-writing

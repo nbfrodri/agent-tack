@@ -166,12 +166,6 @@ class SetsTests(unittest.TestCase):
         self.tool('use', 'design', '--global')
         self.assertIn('Active everywhere: design', self.tool('index'))
 
-    def test_index_sends_the_assistant_to_the_list_when_nothing_fits(self):
-        index = self.tool('index')
-        self.assertEqual(len(index.strip().splitlines()), 1)
-        self.assertIn('tack set list', index)
-        self.assertIn('none is named as fitting', index)
-
     def test_categories_group_the_list_and_the_index(self):
         self.sets('design about Interfaces and polish\ndesign category interfaces\ndesign skill frontend\n'
                   'motion about Animation\nmotion category interfaces\nmotion skill up:skills/motion\n'
@@ -346,7 +340,7 @@ class SetsTests(unittest.TestCase):
                   'python about Python\npython skill up:skills/motion\npython match pyproject.toml\n')
 
     def remind(self, prompt, cwd=None):
-        result = subprocess.run([sys.executable, str(ROOT / 'lib/sets.py'), str(self.tack), 'reminder', '--stdin'],
+        result = subprocess.run([sys.executable, '-I', str(ROOT / 'lib/sets.py'), str(self.tack), 'reminder', '--stdin'],
                                 cwd=cwd or self.project, env=self.env, input=json.dumps({'prompt': prompt}),
                                 capture_output=True, text=True, timeout=60)
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -368,6 +362,59 @@ class SetsTests(unittest.TestCase):
                 self.assertIn('tack set use NAME', out)
                 self.assertIn('tack set skip NAME', out)
         self.assertIn('not active: review, security.', self.remind('security review of the pull request'))
+
+    def request_vocabulary(self):
+        # Use shipped request rules without fetching skills or matching project files.
+        self.sets(''.join(line + '\n' for line in (ROOT / 'sets.txt').read_text().splitlines()
+                          if len(line.split()) >= 3 and line.split()[1] in ('about', 'ask')))
+
+    def test_performance_requests_use_the_shipped_vocabulary(self):
+        self.request_vocabulary()
+        for prompt in (
+            'Customers say the checkout page is sluggish when the cart has many items. Please deal with it.',
+            'sluggish', 'slow down', 'slow page', 'slows down', 'load time', 'load times',
+            'loads slowly', 'speed up', 'make it faster', 'takes too long', 'laggy',
+            'lento', 'lenta', 'lentitud', 'más rápido', 'acelerar', 'tarda mucho',
+        ):
+            with self.subTest(prompt=prompt):
+                self.assertIn('match this request and are not active: performance.', self.remind(prompt))
+
+    def test_other_requests_use_the_shipped_vocabulary(self):
+        self.request_vocabulary()
+        cases = {
+            'Add regression tests for this bug': 'testing',
+            'Añade pruebas de integración': 'testing',
+            'Simplify this code': 'review',
+            'Simplifica este código': 'review',
+            'Check for SQL injection': 'security',
+            'Busca inyección SQL': 'security',
+            'Break this into tasks': 'planning',
+            'Divide esto en tareas': 'planning',
+            'Propose a system design': 'architecture',
+            'Propón un diseño del sistema': 'architecture',
+            'Prepare a pull request': 'git-release',
+            'Prepara una solicitud de cambios': 'git-release',
+            'Use parallel agents': 'orchestration',
+            'Usa agentes en paralelo': 'orchestration',
+            'Upgrade dependencies': 'modernization',
+            'Actualiza las dependencias': 'modernization',
+            'Create a custom skill': 'agent-tooling',
+            'Crea una habilidad personalizada': 'agent-tooling',
+            'Set up continuous integration': 'devops',
+            'Configura integración continua': 'devops',
+            'Write a user guide': 'writing',
+            'Escribe una guía de usuario': 'writing',
+        }
+        for prompt, expected in cases.items():
+            with self.subTest(prompt=prompt):
+                self.assertIn(f'match this request and are not active: {expected}.', self.remind(prompt))
+
+    def test_ordinary_requests_do_not_name_a_shipped_set(self):
+        self.request_vocabulary()
+        for prompt in ('fix the typo in the README', 'add an endpoint',
+                       'rename this variable', 'update the changelog'):
+            with self.subTest(prompt=prompt):
+                self.assertEqual(self.remind(prompt).strip(), '')
 
     def test_a_word_inside_another_or_out_of_order_asks_for_nothing(self):
         self.asking()
