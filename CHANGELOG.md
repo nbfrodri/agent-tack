@@ -51,6 +51,7 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ### Fixed
 
+- The `usage-band` mod loads again. Claude Code refused it at startup (`$ is passed to "refreshChip", which is not a function declared at the top of this file`) because two helpers that take `$` were declared inside `register`, so since 0.4.2 there was no usage band, no context or 5-hour and weekly readings, and no offer to delegate. They are module-level now (0.6.2). The `mods` CI job missed it because it skipped validation when the Claude Code CLI was absent; it now installs a pinned CLI and always runs `claude plugin validate` and `claude plugin test`.
 - Asking for the `code-reviewer` agent or for a review of the last commit now suggests the `review` set: its `ask` words lacked `code reviewer`, `review my last commit` and the Spanish equivalents. The `roles` trial showed the assistant noticing the missing agent but never saying how to enable it.
 - CI now runs the completion, usage, Codex session metadata, branch cleanup and cross-delegation suites on Linux and macOS; validation rejects runner suites missing from CI, and Linux installs zsh and fish for completion syntax checks.
 - The hook overview now describes mapped verification and fallback test commands using the remaining Stop hook budget instead of promising a 120-second timeout.

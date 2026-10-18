@@ -108,30 +108,50 @@ export function overBudget(costUsd: number | undefined, limitUsd: number | undef
   return limitUsd !== undefined && costUsd !== undefined && costUsd >= limitUsd
 }
 
+// Helpers that take `$` are declared at the top of the module: the engine only follows `$` into
+// functions declared there, so a closure inside `register` stops the whole module from loading.
+// Their state lives here for the same reason; a reload starts it over.
+const recorded: Record<string, string> = {}
+let chipTries = 0
+let chipError = ''
+
+// Asks tack for the project's state; at session start the call can fail before the session is
+// ready, so an unknown answer is retried with the next measurement instead of reading as off.
+const refreshChip = async ($: Engine) => {
+  chipTries += 1
+  try {
+    const status = await $.process.run(['tack', 'status', '--quiet'], { timeoutMs: 5000 })
+    const mode = await $.process.run(['tack', 'mode'], { timeoutMs: 5000 })
+    const label = modeChip(status.exitCode, mode.exitCode === 0 ? mode.stdout : '')
+    chipError = label === CHIP_UNKNOWN ? `tack status exited ${status.exitCode}: ${status.stderr.trim()}` : ''
+    await update($, chip, () => label)
+  } catch (error) {
+    chipError = `could not run tack: ${error instanceof Error ? error.message : String(error)}`
+    await update($, chip, () => CHIP_UNKNOWN)
+  }
+}
+
+// The hook that runs with each message reads this to offer Codex once per 5h or weekly window.
+const recordWindows = async ($: Engine, windows: UsageWindow[]) => {
+  for (const window of windows) {
+    if (!(window.kind in OFFERED)) continue
+    const percent = Math.min(100, Math.max(0, Math.round(window.percentUsed)))
+    const key = `${percent}|${window.resetsAt ?? ''}`
+    if (recorded[window.kind] === key) continue
+    try {
+      const result = await $.process.run(['tack', 'usage', 'set', window.kind, String(percent), window.resetsAt ?? ''], { timeoutMs: 5000 })
+      if (result.exitCode === 0) recorded[window.kind] = key
+    } catch {
+      // The offer is optional: a failed record must not disturb the session.
+    }
+  }
+}
+
 export const register: Register = on => {
   let limitUsd: number | undefined
   let delegateAt: number | undefined
   let recordedContext: number | undefined
   let recordedContextAt = 0
-  const recorded: Record<string, string> = {}
-  let chipTries = 0
-  let chipError = ''
-
-  // Asks tack for the project's state; at session start the call can fail before the session is
-  // ready, so an unknown answer is retried with the next measurement instead of reading as off.
-  const refreshChip = async ($: Engine) => {
-    chipTries += 1
-    try {
-      const status = await $.process.run(['tack', 'status', '--quiet'], { timeoutMs: 5000 })
-      const mode = await $.process.run(['tack', 'mode'], { timeoutMs: 5000 })
-      const label = modeChip(status.exitCode, mode.exitCode === 0 ? mode.stdout : '')
-      chipError = label === CHIP_UNKNOWN ? `tack status exited ${status.exitCode}: ${status.stderr.trim()}` : ''
-      await update($, chip, () => label)
-    } catch (error) {
-      chipError = `could not run tack: ${error instanceof Error ? error.message : String(error)}`
-      await update($, chip, () => CHIP_UNKNOWN)
-    }
-  }
 
   on('session.start', async ($, e, next) => {
     const { context, rateLimits, cost } = await $.session.usage()
@@ -153,22 +173,6 @@ export const register: Register = on => {
     await refreshChip($)
     return next(e)
   })
-
-  // The hook that runs with each message reads this to offer Codex once per 5h or weekly window.
-  const recordWindows = async ($: Engine, windows: UsageWindow[]) => {
-    for (const window of windows) {
-      if (!(window.kind in OFFERED)) continue
-      const percent = Math.min(100, Math.max(0, Math.round(window.percentUsed)))
-      const key = `${percent}|${window.resetsAt ?? ''}`
-      if (recorded[window.kind] === key) continue
-      try {
-        const result = await $.process.run(['tack', 'usage', 'set', window.kind, String(percent), window.resetsAt ?? ''], { timeoutMs: 5000 })
-        if (result.exitCode === 0) recorded[window.kind] = key
-      } catch {
-        // The offer is optional: a failed record must not disturb the session.
-      }
-    }
-  }
 
   on('tool.call', async ($, e, next) => {
     const current = await read($, usage)
