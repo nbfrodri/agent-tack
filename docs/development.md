@@ -37,6 +37,7 @@ claude plugin validate plugins && claude plugin test plugins/usage-band && claud
 tests/mods-unit.sh                    # the mods' unit tests with Node only (esbuild via npx), as CI runs them
 tests/hooks.test.sh      # git and Claude Code hooks, in throwaway repos
 tests/cli.test.sh        # activation, modes, config, startup context and the help-vs-docs drift check
+tests/codex-used.test.sh # recorded model/effort, invalid ids, missing metadata and symlink isolation
 tests/settings.test.sh   # mixed user and tack hook groups in Python and jq
 tests/safety.test.sh     # final index scanning, exact paths and formatter trust
 tests/guard.test.sh      # executable shell syntax, boundaries and long inputs
