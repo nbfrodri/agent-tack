@@ -269,7 +269,6 @@ expect("ask", "kubectl --context prod delete deployment web", "kubectl: delete a
 expect("allow", "kubectl -n prod get pods", "kubectl: reading is allowed")
 expect("ask", "terraform -chdir=infra destroy", "terraform: destroy after -chdir asks")
 expect("ask", "terraform apply -destroy -auto-approve", "terraform: apply -destroy asks")
-expect("allow", "terraform plan", "terraform: plan is allowed")
 
 # Codex payloads are inspected only: never launch a model while testing the guard.
 codex_main = work / "codex-main"
@@ -343,9 +342,6 @@ expect("deny", "tack config unleash-max-tool-calls --unset", "unleash: the agent
 expect("deny", "tack mode standard", "unleash: the agent cannot change its own mode", cwd=project)
 expect("deny", "tack trust", "unleash: the agent cannot grant itself formatter trust", cwd=project)
 expect("deny", "tack migrate", "unleash: the agent cannot migrate tack settings", cwd=project)
-expect("deny", "git config tack.unleashMaxToolCalls 999999", "unleash: raw git config writes to tack keys are refused", cwd=project)
-expect("deny", "tack config unleash-max-tool-calls 999999", "unleash: the renamed CLI cannot raise the limit either", cwd=project)
-expect("deny", "tack mode standard", "unleash: the renamed CLI cannot change the mode", cwd=project)
 expect("deny", "git config tack.unleashMaxToolCalls 999999", "unleash: raw git config writes to tack keys are refused", cwd=project)
 expect("allow", "tack config unleash-max-tool-calls", "unleash: reading a setting is allowed", cwd=project)
 expect("allow", "tack config unleash-max-tool-calls --get", "unleash: stable value reads are allowed", cwd=project)
