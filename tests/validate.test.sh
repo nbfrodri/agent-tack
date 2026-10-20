@@ -111,6 +111,8 @@ expect_failure "a test that moves HOME but leaves the real state directory" "tes
   "printf 'export HOME=/tmp/x\n' > tests/leaky.test.sh"
 expect_failure "a toggle name too long for the tack config table" "features.txt: name" \
   "printf 'a-toggle-name-far-too-long tack.x none bool any hook Too long\n' >> features.txt"
+expect_failure "a guard function longer than 60 lines" "guard-files.sh:too_long" \
+  "{ printf 'too_long() {\n'; seq 61 | sed 's/.*/  :/'; printf '}\n'; } >> hooks/claude/lib/guard-files.sh"
 expect_failure "a missing references/ file of the skill itself" "testing/references/python.md" \
   "rm skills/testing/references/python.md"
 expect_failure "a missing file referenced from another skill" "dev-workflow/references/tdd.md" \
