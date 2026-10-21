@@ -1,0 +1,40 @@
+name: Feature request
+description: Propose an improvement to tack
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is hard or missing today, and for which workflow? Describe the need, not the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: How it could work, preferably as data (sets, features, modes) or a skill before new code. Mention alternatives you considered.
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority (MoSCoW)
+      description: Your suggestion; the maintainer sets the final label.
+      options:
+        - Must (needed for the workflow to work)
+        - Should (important, but not blocking)
+        - Could (nice to have)
+        - Won't (not now)
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Concrete, testable conditions for this to be done.
+      placeholder: |
+        - [ ] R1: …
+        - [ ] R2: …
+    validations:
+      required: true
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope

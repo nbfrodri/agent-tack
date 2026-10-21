@@ -171,6 +171,17 @@ class ProjectSetup(unittest.TestCase):
         self.assertEqual(report['commands'], {})  # no root command invented for a nested package
         self.assertFalse((self.project / 'AGENTS.md').exists())
 
+    def test_issue_templates_are_a_candidate_only_while_missing(self):
+        def items():
+            return [item['item'] for item in json.loads(self.tack('setup', '--json'))['candidates']]
+
+        self.assertIn('issue templates', items())
+        self.write('.github/ISSUE_TEMPLATE/bug_report.yml', 'name: Bug report\n')
+        self.assertNotIn('issue templates', items())
+        (self.project / '.github/ISSUE_TEMPLATE/bug_report.yml').unlink()
+        self.write('.github/ISSUE_TEMPLATE.md', '# Issue\n')
+        self.assertNotIn('issue templates', items())
+
     def test_readiness_checks_links_map_targets_and_review_markers(self):
         self.tack('enable', '--scaffold')
         for relative in ('AGENTS.md', 'docs/architecture.md'):

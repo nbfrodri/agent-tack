@@ -120,6 +120,8 @@ def analyze(root):
         candidates.append({'item': 'CI', 'reason': 'No recognized CI entrypoint; select the repository host and useful checks before creating one.'})
     if not templates:
         candidates.append({'item': 'PR template', 'reason': 'No repository PR template; check organization defaults and whether this project uses pull requests.'})
+    if not any('issue_template' in p.lower() for p in files):
+        candidates.append({'item': 'issue templates', 'reason': 'No repository issue templates; check organization defaults and whether this project tracks issues on GitHub. The github-issues skill has adaptable forms.'})
     if not any(p.lower() == 'readme.md' for p in files):
         candidates.append({'item': 'README', 'reason': 'No root README.md; a short setup and usage guide may help.'})
     issues, missing_optional = [], []
