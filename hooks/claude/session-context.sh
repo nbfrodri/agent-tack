@@ -25,8 +25,8 @@ case "${1:-}" in --gemini) client=gemini ;; --copilot) client=copilot ;; esac
 # shellcheck source=SCRIPTDIR/lib/activity-log.sh
 . "$(dirname "$0")/lib/activity-log.sh"
 cli="$(cd "$(dirname "$0")/../../bin" && pwd)/tack"
-# shellcheck source=SCRIPTDIR/lib/settings-snapshot.sh
-. "$(dirname "$0")/lib/settings-snapshot.sh"
+# shellcheck source=SCRIPTDIR/../../lib/settings-snapshot.sh
+. "$(dirname "$0")/../../lib/settings-snapshot.sh"
 load_settings_snapshot "$cwd" "$cli"
 # Preserve the hook's first-word handling of legacy Git values; the snapshot keeps full values.
 session_setting() { local value; value="$(setting "$1")"; printf '%s' "${value%% *}"; }

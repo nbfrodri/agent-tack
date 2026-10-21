@@ -94,7 +94,7 @@ POSIX ownership still requires the current UID and private mode bits. Windows us
 
 ## Project activation and sessions
 
-`hooks/claude/lib/settings-snapshot.sh` loads effective preferences with one `tack config --json` call from the project directory. It converts the records to in-memory `name=value` lines using jq or Python, escaping backslashes and newlines, and exposes `setting NAME` for shell lookups; failed reads leave an empty snapshot. SessionStart loads this snapshot before state pruning and reuses it for retention, skill loading, delegation, workflow, reply style and context limits. Hook disabling, activity logging and memory retain their independent CLI reads.
+`lib/settings-snapshot.sh`, shared by `bin/tack` and the session hook, loads effective preferences with one `tack config --json` call from the project directory. It converts the records to in-memory `name=value` lines using jq or Python, escaping backslashes and newlines, and exposes `setting NAME` for shell lookups; failed reads leave an empty snapshot. SessionStart loads this snapshot before state pruning and reuses it for retention, skill loading, delegation, workflow, reply style and context limits. Hook disabling, activity logging and memory retain their independent CLI reads.
 
 `tack context` takes its own settings snapshot for `context`, `collaboration` and `set-index`, preserving configuration-error exits. When the index is enabled, `lib/sets.py index --reminder` emits the index and skill reminder in one Python run, in their original order; separate `index` and `reminder` commands remain available. Snapshots last only for the current invocation.
 

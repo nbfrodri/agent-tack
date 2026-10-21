@@ -7,7 +7,7 @@ load_settings_snapshot() {
   local cli json
   settings_snapshot=''
   settings_snapshot_failed=1
-  cli="${2:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../bin" 2>/dev/null && pwd)/tack}"
+  cli="${2:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../bin" 2>/dev/null && pwd)/tack}"
   json="$(cd "$1" 2>/dev/null && "$cli" config --json 2>/dev/null)" || return 0
   if command -v jq >/dev/null 2>&1; then
     settings_snapshot="$(printf '%s' "$json" | jq -r '.[] | .name + "=" + (.value | tostring | gsub("\\\\"; "\\\\") | gsub("\n"; "\\n"))' 2>/dev/null)" || { settings_snapshot=''; return 0; }

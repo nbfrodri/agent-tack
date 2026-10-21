@@ -590,8 +590,8 @@ case "$cmd" in
   context)
     allowed_option=''; check_args "$@"
     is_enabled || exit 0
-    # shellcheck source=hooks/claude/lib/settings-snapshot.sh
-    . "$TACK_ROOT/hooks/claude/lib/settings-snapshot.sh"
+    # shellcheck source=lib/settings-snapshot.sh
+    . "$TACK_ROOT/lib/settings-snapshot.sh"
     load_settings_snapshot "$PWD" "$TACK_ROOT/bin/tack"
     [ "$settings_snapshot_failed" -eq 0 ] || exit 2
     context_enabled="$(setting context)"

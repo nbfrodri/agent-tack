@@ -33,7 +33,7 @@ class ProjectConfigTests(unittest.TestCase):
             FIXTURE.BASH, '-c',
             '. "$1"; load_settings_snapshot "$PWD" "$2"; shift 2; '
             'for name in "$@"; do value="$(setting "$name")"; printf "%s=%s\\0" "$name" "$value"; done',
-            'snapshot', str(REPO / 'hooks/claude/lib/settings-snapshot.sh'),
+            'snapshot', str(REPO / 'lib/settings-snapshot.sh'),
             str(cli or REPO / 'bin/tack'), *names)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stderr, '')
