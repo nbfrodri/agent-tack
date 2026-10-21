@@ -122,6 +122,22 @@ def analyze(root):
         candidates.append({'item': 'PR template', 'reason': 'No repository PR template; check organization defaults and whether this project uses pull requests.'})
     if not any('issue_template' in p.lower() for p in files):
         candidates.append({'item': 'issue templates', 'reason': 'No repository issue templates; check organization defaults and whether this project tracks issues on GitHub. The github-issues skill has adaptable forms.'})
+    if not any(p.lower() in ('security.md', '.github/security.md', 'docs/security.md') for p in files):
+        candidates.append({'item': 'security policy', 'reason': 'No repository SECURITY.md; review how this project should receive vulnerability reports before creating a policy.'})
+    unpinned = []
+    for relative in files:
+        path = Path(relative)
+        if path.parent.as_posix() != '.github/workflows' or path.suffix not in ('.yml', '.yaml'):
+            continue
+        references = re.findall(r'''^\s*(?:-\s*)?uses:\s*["']?([^\s"'#,}]+)''', read(root, relative), re.M)
+        if any(re.fullmatch(r'[\w.-]+/[\w./-]+@(.+)', ref) and
+               not re.fullmatch(r'[0-9a-fA-F]{40}', ref.rsplit('@', 1)[1])
+               for ref in references if not ref.startswith(('./', 'docker://'))):
+            unpinned.append(relative)
+    if unpinned:
+        candidates.append({'item': 'pinned actions', 'reason': f'Actions are not pinned to 40-hex commit SHAs in {", ".join(unpinned[:3])}; review immutable references before changing workflows.'})
+    if (root / '.github/workflows').is_dir():
+        candidates.append({'item': 'branch protection', 'reason': 'Use gh api (read-only) to check whether the default branch requires PRs and passing checks; ask before changing any setting.'})
     if not any(p.lower() == 'readme.md' for p in files):
         candidates.append({'item': 'README', 'reason': 'No root README.md; a short setup and usage guide may help.'})
     issues, missing_optional = [], []

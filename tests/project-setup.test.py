@@ -182,6 +182,52 @@ class ProjectSetup(unittest.TestCase):
         self.write('.github/ISSUE_TEMPLATE.md', '# Issue\n')
         self.assertNotIn('issue templates', items())
 
+    def test_security_policy_is_a_candidate_only_while_missing(self):
+        def items():
+            return [item['item'] for item in json.loads(self.tack('setup', '--json'))['candidates']]
+
+        self.assertIn('security policy', items())
+        self.write('src/SECURITY.md', '# Not a repository policy\n')
+        self.assertIn('security policy', items())
+        for relative in ('SECURITY.md', '.github/security.MD', 'docs/SeCuRiTy.md', 'DOCS/SECURITY.md'):
+            with self.subTest(relative=relative):
+                self.write(relative, '# Security\n')
+                self.assertNotIn('security policy', items())
+                (self.project / relative).unlink()
+
+    def test_pinned_actions_candidate_names_first_three_offending_workflows(self):
+        def candidates():
+            return {item['item']: item['reason'] for item in json.loads(self.tack('setup', '--json'))['candidates']}
+
+        self.assertNotIn('pinned actions', candidates())
+        pinned = 'aB' * 20
+        self.write('.github/workflows/safe.yml', f'steps:\n  - uses: actions/checkout@{pinned}\n'
+                   '  - uses: ./local-action\n  - uses: docker://alpine:3\n'
+                   '  # uses: actions/checkout@v4\n')
+        self.write('.github/workflows/ignored.txt', 'uses: actions/checkout@v4\n')
+        self.write('.github/workflows/nested/ignored.yml', 'uses: actions/checkout@v4\n')
+        self.assertNotIn('pinned actions', candidates())
+        for name, reference in (('a.yml', 'v4'), ('b.yaml', 'main'), ('c.yml', 'a' * 39), ('d.yaml', 'g' * 40)):
+            self.write(f'.github/workflows/{name}', f'steps:\n  - uses: "owner/repo/path@{reference}"\n')
+        before = self.run_command('git', 'status', '--porcelain')
+        reason = candidates()['pinned actions']
+        for name in ('a.yml', 'b.yaml', 'c.yml'):
+            self.assertIn(f'.github/workflows/{name}', reason)
+        self.assertNotIn('d.yaml', reason)
+        self.assertEqual(self.run_command('git', 'status', '--porcelain'), before)
+
+    def test_branch_protection_reminder_requires_workflows_directory(self):
+        def candidates():
+            return {item['item']: item['reason'] for item in json.loads(self.tack('setup', '--json'))['candidates']}
+
+        self.assertNotIn('branch protection', candidates())
+        self.write('.github/README.md', '# GitHub\n')
+        self.assertNotIn('branch protection', candidates())
+        (self.project / '.github/workflows').mkdir()
+        reason = candidates()['branch protection']
+        for text in ('gh api', 'read-only', 'default branch', 'PRs', 'passing checks', 'ask before'):
+            self.assertIn(text, reason)
+
     def test_readiness_checks_links_map_targets_and_review_markers(self):
         self.tack('enable', '--scaffold')
         for relative in ('AGENTS.md', 'docs/architecture.md'):

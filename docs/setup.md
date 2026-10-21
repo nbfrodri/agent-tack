@@ -56,7 +56,7 @@ Ask your assistant:
 
 > Set up tack for this project. Read the existing conventions and tools first. Propose useful additions with their exact paths and purpose, and let me choose what to create. Keep the setup small.
 
-In an existing project, the assistant reuses what is already there. In a new project, it asks about the intended application and stack. It can propose tests, CI, PR and issue templates, a development guide, a check map or a reusable skill when there is a reason for one. It can also offer individual [external skills](external-skills.md) after checking for overlap with existing guidance. Nothing from those collections is downloaded by the base installer. Previous answers and approvals count; focused tasks do not need unrelated onboarding.
+In an existing project, the assistant reuses what is already there. In a new project, it asks about the intended application and stack. It can propose tests, CI, PR and issue templates, a security policy, pinned actions, a read-only branch protection review, a development guide, a check map or a reusable skill when there is a reason for one. It can also offer individual [external skills](external-skills.md) after checking for overlap with existing guidance. Nothing from those collections is downloaded by the base installer. Previous answers and approvals count; focused tasks do not need unrelated onboarding.
 
 For team preferences, the assistant can [preview and apply the selected values together](configuration.md#apply-several-selected-preferences), including values that match current defaults. This keeps the choices portable without copying personal settings. Local-only setup remains available.
 
