@@ -56,12 +56,13 @@ sets_legacy_notice() {
 # skills folder (one per line), and removes its own links to skills no active set lists any more.
 # Caller provides section, ok, warn, fail, has, link, DRY_RUN, WORKDIR and the ownership helpers.
 install_set_skills() {
-  local dirs="$1" store plan="$WORKDIR/set-skills" name path dir entry target fetch=''
+  local dirs="$1" store plan="$WORKDIR/set-skills" name path dir entry target skills fetch=''
   store="$(sets_store)"
   section "Skills from other collections"
   : > "$plan"
   # Only a skill taken from sources.txt (SOURCE:PATH) needs a checkout, and so python and git.
-  if set_items skill | grep -q ':'; then
+  skills="$(set_items skill)"
+  if grep -q ':' <<< "$skills"; then
     if ! has python3 || ! has git; then
       warn "python3 and git are needed for the skills that sets take from sources.txt"
       return

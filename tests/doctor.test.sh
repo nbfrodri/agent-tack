@@ -130,6 +130,30 @@ git -C "$WORK/outside" config tack.mode unleash
 run_doctor
 check 'unleash mode is a visible warning' grep -q 'WARN current project mode: unleash (local); autonomous' "$WORK/report"
 check 'unleash on the main branch is flagged' grep -q 'WARN current branch is .* in a project-only mode' "$WORK/report"
+# A checkout facade exercises a mode producer larger than a pipe buffer.
+mkdir -p "$WORK/verbose-checkout/bin"
+for entry in "$REPO"/*; do
+  [ "${entry##*/}" = bin ] || ln -s "$entry" "$WORK/verbose-checkout/${entry##*/}"
+done
+cat > "$WORK/verbose-checkout/bin/tack" <<'TACK'
+#!/usr/bin/env bash
+if [ "${1:-}" = mode ] && [ "${2:-}" = show ]; then
+  exec python3 - <<'OUTPUT'
+import os
+import signal
+signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+os.write(1, b"WARNING: unleash mode is active\n")
+for _ in range(256):
+    os.write(1, b"mode rule details " * 4096 + b"\n")
+OUTPUT
+fi
+exec "$DOCTOR_TEST_TACK" "$@"
+TACK
+chmod +x "$WORK/verbose-checkout/bin/tack"
+# Installed link targets differ from the facade; assert only mode diagnostics.
+(cd "$WORK/outside" && DOCTOR_TEST_TACK="$REPO/bin/tack" bash "$REPO/lib/doctor.sh" "$WORK/verbose-checkout") > "$WORK/report" 2>&1
+check 'large mode output preserves the autonomous warning' grep -q 'WARN current project mode: unleash (local); autonomous' "$WORK/report"
+check 'large mode output preserves the main branch warning' grep -q 'WARN current branch is .* in a project-only mode' "$WORK/report"
 git -C "$WORK/outside" config --unset tack.mode
 git -C "$WORK/outside" config core.hooksPath /project/deliberate/hooks
 run_doctor

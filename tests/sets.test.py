@@ -95,6 +95,25 @@ class SetsTests(unittest.TestCase):
 
     # Declarations
 
+    def test_installer_plans_external_skills_after_large_set_output(self):
+        items = self.work / 'items'
+        items.write_text('up:skills/polish\n' + 'frontend\n' * 200000, encoding='utf-8')
+        marker = self.work / 'planned'
+        self.run_in(self.home, BASH, '-c', '''
+set -uo pipefail
+source "$1/lib/sets.sh"
+WORKDIR="$2" REPO="$1" DRY_RUN=1
+set_items() { cat "$WORKDIR/items"; }
+section() { :; }
+ok() { :; }
+warn() { :; }
+fail() { return 1; }
+has() { return 0; }
+python3() { touch "$WORKDIR/planned"; }
+install_set_skills "$WORKDIR/links"
+''', 'bash', str(ROOT), str(self.work))
+        self.assertTrue(marker.exists(), 'external skills must reach the planner')
+
     def test_agent_active_via_project_set(self):
         self.git(self.project, 'config', 'tack.sets', 'design')
         self.assertEqual(self.tool('agent', 'ui-reviewer'), 'ui-reviewer: active (via design)\n')
