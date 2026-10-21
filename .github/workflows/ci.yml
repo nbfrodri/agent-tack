@@ -22,7 +22,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Install the pinned ShellCheck
         run: |
           curl -fsSL -o shellcheck.tar.xz "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION}/shellcheck-${SHELLCHECK_VERSION}.linux.x86_64.tar.xz"
@@ -48,7 +48,7 @@ jobs:
         os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Install shells for completion syntax checks
         if: runner.os == 'Linux'
         run: sudo apt-get install -y zsh fish
@@ -93,7 +93,7 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Validate skills, agents and cross-references
         run: tests/validate.sh
       - name: Validate native ownership paths, ACLs and restoration
@@ -120,7 +120,7 @@ jobs:
     # a mod that passes the Node unit tests can still be refused at load (usage-band was, from 0.4.2).
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Unit-test the mods with Node
         run: tests/mods-unit.sh
       - name: Install the pinned Claude Code CLI
