@@ -195,6 +195,49 @@ class ProjectSetup(unittest.TestCase):
                 self.assertNotIn('security policy', items())
                 (self.project / relative).unlink()
 
+    def test_team_file_candidates_are_disabled_by_default_and_explicit_false(self):
+        for value in (None, 'false'):
+            with self.subTest(value=value):
+                if value is not None:
+                    self.run_command('git', 'config', 'tack.setupTeamFiles', value)
+                report = json.loads(self.tack('setup', '--json'))
+                items = {item['item'] for item in report['candidates']}
+                self.assertTrue(items.isdisjoint({'code owners', 'contributing guide', 'release notes config'}))
+
+    def test_team_file_candidates_respect_existing_locations_and_never_create_files(self):
+        self.run_command('git', 'config', 'tack.setupTeamFiles', 'true')
+
+        def candidates():
+            return {item['item']: item['reason'] for item in json.loads(self.tack('setup', '--json'))['candidates']}
+
+        before = self.run_command('git', 'status', '--porcelain')
+        missing = candidates()
+        for item in ('code owners', 'contributing guide', 'release notes config'):
+            self.assertIn(item, missing)
+        self.assertIn('Conventional Commits', missing['release notes config'])
+        self.assertIn('categories', missing['release notes config'])
+        self.assertEqual(self.run_command('git', 'status', '--porcelain'), before)
+        for item, locations in (
+            ('code owners', ('CODEOWNERS', '.github/CODEOWNERS', 'docs/CODEOWNERS')),
+            ('contributing guide', ('CONTRIBUTING.md', '.github/contributing.MD', 'docs/CoNtRiBuTiNg.md', 'DOCS/CONTRIBUTING.md')),
+            ('release notes config', ('.github/release.yml', '.github/release.yaml')),
+        ):
+            self.write('src/' + locations[0].split('/')[-1], '# Unrelated file\n')
+            for relative in locations:
+                with self.subTest(item=item, relative=relative):
+                    self.assertIn(item, candidates())
+                    self.write(relative, '# Existing configuration\n')
+                    self.assertNotIn(item, candidates())
+                    (self.project / relative).unlink()
+
+    def test_team_file_candidates_use_shared_preferences_and_local_overrides(self):
+        self.write('tack.json', '{"version":1,"config":{"setup-team-files":true}}')
+        report = json.loads(self.tack('setup', '--json'))
+        self.assertIn('code owners', [item['item'] for item in report['candidates']])
+        self.run_command('git', 'config', 'tack.setupTeamFiles', 'false')
+        report = json.loads(self.tack('setup', '--json'))
+        self.assertNotIn('code owners', [item['item'] for item in report['candidates']])
+
     def test_pinned_actions_candidate_names_first_three_offending_workflows(self):
         def candidates():
             return {item['item']: item['reason'] for item in json.loads(self.tack('setup', '--json'))['candidates']}
