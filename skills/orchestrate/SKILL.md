@@ -12,7 +12,7 @@ You plan, delegate, integrate and verify. Delegation pays off when a complex tas
 In an enabled project, automatic delegation applies only to useful separable work at the strict workflow level (`dev-workflow`); at lite and standard, suggest it and wait for approval. Read `tack config delegation --get` once so shared preferences and local overrides apply: `auto` permits eligible delegation; `off` disables it. Treat an invalid value as off and explain it. Outside enabled projects, suggest delegation and wait for approval unless the user requested it. An explicit request for subagents authorises delegation for that task even when automatic mode is off.
 
 - Follow the approved scope and planning requirements in `dev-workflow`. Automatic delegation does not authorise an unapproved large or risky implementation plan.
-- After the plan is approved, automatically delegate complex separable work in auto mode. Show the task, owner, files, model, effort and reason in a concise progress update; do not ask again for delegation approval.
+- After the plan is approved, automatically delegate complex separable work in auto mode. Show the task, owner, files and reason in a concise progress update; do not ask again for delegation approval. The model and effort are the user's choice (see "Model and effort per task").
 - Give each task acceptance criteria and clear contracts: shared types, API shapes, function signatures and file ownership. Each file has one owner.
 - Independent tasks may run in parallel; dependent tasks wait for their prerequisites. Establish shared contracts first.
 - Prefer two or three workers and stay within the runtime's concurrency limit. Delegate only when the expected benefit justifies the added token and integration cost.
@@ -20,7 +20,7 @@ In an enabled project, automatic delegation applies only to useful separable wor
 
 ### Model and effort per task
 
-Inspect the current tool's actual model and reasoning controls before choosing. Use available capabilities, not hardcoded provider names or assumptions about a product. Apply these recommendations automatically in auto mode, unless the user specified another policy:
+Inspect the current tool's actual model and reasoning controls before choosing. Use available capabilities, not hardcoded provider names or assumptions about a product. For each subagent, or group of similar ones, offer the user two or three options (tier, its model and effort), recommend one from this table and launch with the option they pick, passing both `model` and `effort`; `guard-agent.sh` refuses a launch without them (a fork is exempt). A policy the user already stated for this task replaces the question:
 
 | Task complexity | Examples | Model capability | Effort |
 | --- | --- | --- | --- |
@@ -28,8 +28,7 @@ Inspect the current tool's actual model and reasoning controls before choosing. 
 | Medium: standard implementation | A feature following existing patterns, tests, typical bug fixes | Balanced coding model | medium |
 | High: design-heavy or risky | Architecture, security, migrations, tricky bugs, integration | Most capable suitable model available | high |
 
-The capabilities map to tiers (`economical`, `balanced`, `strongest`); `tack models TIER` gives the current tool's model for one, from data the user can override, so rules never name a vendor's model. When `tack config subagent-model` is `economical`, start every task on the most economical model that can do it and move up only when it cannot. Bump the recommendation for unclear requirements, missing tests or costly mistakes. If the runtime exposes no model choice, inherit the available model. If a model or effort cannot be set, report the actual fallback; do not claim a selection was applied. Do not rewrite shared agent definitions just to change one invocation's effort. Ask only when an unresolved choice materially affects the approved budget or scope.
-
+The capabilities map to tiers (`economical`, `balanced`, `strongest`); `tack models TIER` gives the current tool's model for one, from data the user can override, so rules never name a vendor's model. When `tack config subagent-model` is `economical`, start every task on the most economical model that can do it and move up only when it cannot. Bump the recommendation for unclear requirements, missing tests or costly mistakes. If the runtime exposes no model choice, inherit the available model. If a model or effort cannot be set, report the actual fallback; do not claim a selection was applied. Do not rewrite shared agent definitions just to change one invocation's effort.
 Record actual models, effort settings, fallbacks, branches/worktrees and task status in a useful orchestration handoff. Use an AI log only when project policy requires it or it adds evidence beyond that handoff and Git/PR history. Keep the handoff current at milestones so work can resume after interruption.
 
 ## 2. Delegate

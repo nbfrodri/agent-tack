@@ -97,7 +97,7 @@ check "one that replaced a link which still resolves is kept for uninstall" "run
 
 check "fresh install creates no backups" "! find '$H' -name '*.bak-*' | grep -q ."
 check "fresh install counts links instead of listing them" "grep -qE '✔ [0-9]+ new$' '$H.log' && ! grep -q -- ' -> ' '$H.log'"
-check "fresh install output stays short" "[ \"\$(wc -l < '$H.log')\" -lt 80 ]"
+check "fresh install output stays short" "[ \"\$(wc -l < '$H.log')\" -lt 90 ]"
 H_VERBOSE="$WORK/verbose"
 check "--verbose lists every link" "run_install '$H_VERBOSE' --verbose && grep -q -- '/.claude/CLAUDE.md -> ' '$H_VERBOSE.log'"
 
@@ -162,6 +162,8 @@ check "exits 0" "run_install '$H'"
 S="$H/.claude/settings.json"
 check "repo path substituted (no __REPO__ left)" "! grep -q __REPO__ '$S'"
 check "guard hook points at this repo" "grep -q \"$REPO/hooks/claude/guard-bash.sh\" '$S'"
+check "the subagent guard is registered for the Agent tool" "grep -q \"$REPO/hooks/claude/guard-agent.sh\" '$S'"
+check "reinstalling does not register the subagent guard twice" "run_install '$H' && [ \"\$(grep -c 'guard-agent.sh' '$S')\" = 1 ]"
 C="$H/.codex/hooks.json"
 check "codex: hooks are registered in ~/.codex/hooks.json" "[ -f '$C' ] && ! grep -q __REPO__ '$C'"
 check "codex: the guard runs in Codex mode" "grep -q \"guard-bash.sh' --codex #tack\" '$C'"
@@ -169,11 +171,11 @@ check "codex: session context and stop check are registered" "grep -q 'session-c
 check "your own hooks are kept" "grep -q my-own-hook '$S'"
 check "outdated tagged hooks are replaced" "! grep -q /old/path '$S'"
 check "events left empty are removed" "! grep -q '\"Notification\"' '$S'"
-check "one guard and one budget hook" "[ \"\$(count_ours '$S' PreToolUse)\" = 2 ]"
+check "one guard, one subagent guard and one budget hook" "[ \"\$(count_ours '$S' PreToolUse)\" = 3 ]"
 check "one format and one fast-check hook" "[ \"\$(count_ours '$S' PostToolUse)\" = 2 ]"
 check "exactly one session-start hook" "[ \"\$(count_ours '$S' SessionStart)\" = 1 ]"
 run_install "$H"
-check "no duplicates after re-running" "[ \"\$(count_ours '$S' PreToolUse)\" = 2 ] && [ \"\$(count_ours '$S' PostToolUse)\" = 2 ]"
+check "no duplicates after re-running" "[ \"\$(count_ours '$S' PreToolUse)\" = 3 ] && [ \"\$(count_ours '$S' PostToolUse)\" = 2 ]"
 
 echo "Settings merge with jq only (no python3)"
 if command -v jq >/dev/null 2>&1; then
@@ -192,7 +194,7 @@ if command -v jq >/dev/null 2>&1; then
   check "jq merge keeps your keys" "[ \"\$(jq -r .theme '$H/.claude/settings.json')\" = dark ]"
   check "jq merge keeps your hooks" "grep -q my-own-hook '$H/.claude/settings.json'"
   check "jq merge replaces tagged hooks" "! grep -q /old/x.sh '$H/.claude/settings.json'"
-  check "jq merge leaves the guard and budget hooks once" "[ \"\$(count_ours '$H/.claude/settings.json' PreToolUse)\" = 2 ]"
+  check "jq merge leaves the guard, subagent guard and budget hooks once" "[ \"\$(count_ours '$H/.claude/settings.json' PreToolUse)\" = 3 ]"
 else
   echo "  - skipped (jq not installed)"
 fi
@@ -217,7 +219,7 @@ cat >"$H/.claude/settings.json" <<JSON
 JSON
 git_global "$H" core.hooksPath "$OLD/git-hooks"
 check "exits 0" "run_install '$H'"
-check "hooks tagged with the old name are replaced" "! grep -q '#agent-config' '$H/.claude/settings.json' && [ \"\$(count_ours '$H/.claude/settings.json' PreToolUse)\" = 2 ]"
+check "hooks tagged with the old name are replaced" "! grep -q '#agent-config' '$H/.claude/settings.json' && [ \"\$(count_ours '$H/.claude/settings.json' PreToolUse)\" = 3 ]"
 check "the user's own hooks survive the migration" "grep -q my-own-hook '$H/.claude/settings.json'"
 check "old agent-config command link removed" "[ ! -L '$H/.local/bin/agent-config' ]"
 check "old ~/.agents/agent-config link removed" "[ ! -L '$H/.agents/agent-config' ]"

@@ -113,6 +113,10 @@ expect_failure "a toggle name too long for the tack config table" "features.txt:
   "printf 'a-toggle-name-far-too-long tack.x none bool any hook Too long\n' >> features.txt"
 expect_failure "a guard function longer than 60 lines" "guard-files.sh:too_long" \
   "{ printf 'too_long() {\n'; seq 61 | sed 's/.*/  :/'; printf '}\n'; } >> hooks/claude/lib/guard-files.sh"
+expect_failure "orchestrate no longer offering the user a model and effort choice" "skills/orchestrate/SKILL.md: must offer the user" \
+  "sed 's/offer the user/pick for the user/' skills/orchestrate/SKILL.md > tmp && mv tmp skills/orchestrate/SKILL.md"
+expect_failure "cross-delegate no longer offering the user a tier choice" "skills/cross-delegate/SKILL.md: must offer the user" \
+  "sed 's/Offer the user/Pick for the user/' skills/cross-delegate/SKILL.md > tmp && mv tmp skills/cross-delegate/SKILL.md"
 expect_failure "a missing references/ file of the skill itself" "testing/references/python.md" \
   "rm skills/testing/references/python.md"
 expect_failure "a missing file referenced from another skill" "dev-workflow/references/tdd.md" \

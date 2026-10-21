@@ -914,6 +914,27 @@ rm -f "$WORK/aislop.calls"
 slop >/dev/null
 check "slop check: nothing is scanned while no source file changed" "[ ! -e '$WORK/aislop.calls' ]"
 
+echo "Claude hook: subagents need an explicit model and effort"
+AGENT_GUARD="$REPO/hooks/claude/guard-agent.sh"
+AG="$WORK/agent-repo"
+git init -q -b main "$AG"
+git -C "$AG" config tack.enabled true
+launching() { printf '{"cwd":"%s","tool_name":"Agent","tool_input":%s}' "$AG" "$1" | bash "$AGENT_GUARD"; }
+check "subagent guard: a launch with neither model nor effort is refused" "launching '{\"subagent_type\":\"Explore\",\"prompt\":\"x\"}' | grep -q '\"permissionDecision\":\"deny\"'"
+check "subagent guard: the refusal tells how to choose the model" "launching '{\"subagent_type\":\"Explore\",\"prompt\":\"x\"}' | grep -q 'tack models'"
+check "subagent guard: a model without effort is refused" "launching '{\"subagent_type\":\"Explore\",\"model\":\"haiku\"}' | grep -q '\"deny\"'"
+check "subagent guard: an effort without model is refused" "launching '{\"subagent_type\":\"Explore\",\"effort\":\"low\"}' | grep -q '\"deny\"'"
+check "subagent guard: a launch without a type is checked too" "launching '{\"prompt\":\"x\"}' | grep -q '\"deny\"'"
+check "subagent guard: model and effort together are allowed" "[ -z \"\$(launching '{\"subagent_type\":\"Explore\",\"model\":\"haiku\",\"effort\":\"low\"}')\" ]"
+check "subagent guard: a fork inherits both and is allowed" "[ -z \"\$(launching '{\"subagent_type\":\"fork\",\"prompt\":\"x\"}')\" ]"
+check "subagent guard: input that is not JSON is allowed" "[ -z \"\$(printf 'not json' | bash '$AGENT_GUARD')\" ]"
+git -C "$AG" config tack.disabledHooks agent-model
+check "subagent guard: tack config disabled-hooks turns it off" "[ -z \"\$(launching '{\"subagent_type\":\"Explore\"}')\" ]"
+git -C "$AG" config --unset tack.disabledHooks
+git -C "$AG" config tack.enabled false
+check "subagent guard: disabled projects are left alone" "[ -z \"\$(launching '{\"subagent_type\":\"Explore\"}')\" ]"
+check "subagent guard: registered for the Agent tool in Claude Code" "grep -q 'guard-agent.sh' '$REPO/claude/settings.json'"
+
 echo "Claude hook: skill reminder with each message"
 REMIND="$REPO/hooks/claude/skill-reminder.sh"
 RM="$WORK/remind-repo"
