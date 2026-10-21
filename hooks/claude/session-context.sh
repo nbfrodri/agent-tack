@@ -25,11 +25,16 @@ case "${1:-}" in --gemini) client=gemini ;; --copilot) client=copilot ;; esac
 # shellcheck source=SCRIPTDIR/lib/activity-log.sh
 . "$(dirname "$0")/lib/activity-log.sh"
 cli="$(cd "$(dirname "$0")/../../bin" && pwd)/tack"
+# shellcheck source=SCRIPTDIR/lib/settings-snapshot.sh
+. "$(dirname "$0")/lib/settings-snapshot.sh"
+load_settings_snapshot "$cwd" "$cli"
+# Preserve the hook's first-word handling of legacy Git values; the snapshot keeps full values.
+session_setting() { local value; value="$(setting "$1")"; printf '%s' "${value%% *}"; }
 
 # Per-session state (tool-call counters) is pruned here: SessionStart is the one hook every
 # tool runs, whether or not the project is enabled. It is maintenance, so it runs even when
 # the session-context hook is turned off, and its period is user-wide because the state is.
-retention="$(cd "$cwd" && "$cli" config state-retention-days --get 2>/dev/null)"
+retention="$(setting state-retention-days)"
 retention="${retention%% *}"
 case "$retention" in '' | *[!0-9]*) retention=30 ;; esac
 for state_dir in budget turns clear-hint; do
@@ -56,14 +61,13 @@ if (cd "$cwd" && "$cli" status --quiet); then
   fi
   head="tack: ENABLED for this project (mode: $mode). $level At every level: work on a branch off main, test the change, and make a Conventional Commit for each verified milestone. Ask the user whenever you have a real doubt."
   mode_rules="$(cd "$cwd" && "$cli" mode show)" || mode_rules=''
-  setting() { local value; value="$(cd "$cwd" && "$cli" config "$1" --get 2>/dev/null)"; printf '%s' "${value%% *}"; }
   tokens=''
-  [ "$(setting skill-loading)" != minimal ] || tokens="$tokens Load a skill only when the task cannot be done without it; prefer the rules already in context."
-  [ "$(setting subagent-model)" != economical ] || tokens="$tokens When delegating, use the most economical model that can do the task."
+  [ "$(session_setting skill-loading)" != minimal ] || tokens="$tokens Load a skill only when the task cannot be done without it; prefer the rules already in context."
+  [ "$(session_setting subagent-model)" != economical ] || tokens="$tokens When delegating, use the most economical model that can do the task."
   workflow=''
-  [ "$(setting ci-watch)" != false ] || workflow="$workflow Do not wait for CI after a push unless the user asks; merges still need green checks."
-  [ "$(setting visual-review)" != false ] || workflow="$workflow Skip the visual review (tack shots and the ui-reviewer score) for UI changes."
-  settings="$(bash "${cli%/bin/tack}/lib/reply-style.sh" "$(setting reply-style)")"
+  [ "$(session_setting ci-watch)" != false ] || workflow="$workflow Do not wait for CI after a push unless the user asks; merges still need green checks."
+  [ "$(session_setting visual-review)" != false ] || workflow="$workflow Skip the visual review (tack shots and the ui-reviewer score) for UI changes."
+  settings="$(bash "${cli%/bin/tack}/lib/reply-style.sh" "$(session_setting reply-style)")"
   [ -z "$tokens" ] || settings="${settings:+$settings$'\n'}Token settings:$tokens"
   [ -z "$workflow" ] || settings="${settings:+$settings$'\n'}Workflow settings:$workflow"
   activity_log "$cwd" "$client" session-start "mode=$mode"
@@ -79,7 +83,7 @@ if (cd "$cwd" && "$cli" status --quiet); then
   # context-max-chars: past the cap, keep parts by priority (activation line, settings, mode
   # rules, user memory, project context, candidate lessons), trim the first that does not fit and say where the rest is. The
   # activation line always stays; the pointer is dropped when even it does not fit.
-  cap="$(setting context-max-chars)"
+  cap="$(session_setting context-max-chars)"
   case "$cap" in '' | *[!0-9]*) cap=0 ;; esac
   if [ "$cap" -gt 0 ] && [ "${#context}" -gt "$cap" ]; then
     pointer="[Context capped at $cap characters by tack config context-max-chars; run 'tack mode show', 'tack memory' and 'tack context' for the rest.]"

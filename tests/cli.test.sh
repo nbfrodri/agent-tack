@@ -276,6 +276,10 @@ git config --local tack.sets testing
 "$CLI" context > "$WORK/output" 2>&1
 check "the set index names the sets already active here" contains 'Active here: testing'
 check "context carries the skill reminder for tools without a per-message hook" contains 'Required first step'
+python3 "$REPO/lib/sets.py" "$REPO" index > "$WORK/sets-separate"
+python3 "$REPO/lib/sets.py" "$REPO" reminder >> "$WORK/sets-separate"
+python3 "$REPO/lib/sets.py" "$REPO" index --reminder > "$WORK/sets-combined"
+check "combined set index and reminder preserve the separate commands' bytes" cmp "$WORK/sets-separate" "$WORK/sets-combined"
 git config --local --unset tack.sets
 git config --local tack.setIndex false
 "$CLI" context > "$WORK/output" 2>&1

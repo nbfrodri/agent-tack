@@ -32,12 +32,12 @@ class ProjectConfigTests(unittest.TestCase):
         result = self.fixture.command(
             FIXTURE.BASH, '-c',
             '. "$1"; load_settings_snapshot "$PWD" "$2"; shift 2; '
-            'for name in "$@"; do printf "%s=" "$name"; setting "$name"; printf "\\n"; done',
+            'for name in "$@"; do value="$(setting "$name")"; printf "%s=%s\\0" "$name" "$value"; done',
             'snapshot', str(REPO / 'hooks/claude/lib/settings-snapshot.sh'),
             str(cli or REPO / 'bin/tack'), *names)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stderr, '')
-        return dict(line.split('=', 1) for line in result.stdout.splitlines())
+        return dict(record.split('=', 1) for record in result.stdout.split('\0') if record)
 
     def features(self):
         return [line.split(maxsplit=7) for line in (REPO / 'features.txt').read_text().splitlines()
@@ -59,7 +59,7 @@ class ProjectConfigTests(unittest.TestCase):
                     elif values == 'path':
                         value = 'work/' + name
                     elif values == 'text':
-                        value = 'value with spaces = and \\slashes'
+                        value = 'value with spaces = and \\slashes\nci-watch=shadow'
                     elif values.startswith('list:'):
                         value = values[5:].split('|')[0]
                     else:
@@ -83,7 +83,8 @@ class ProjectConfigTests(unittest.TestCase):
         for name in ('bash', 'python3', 'git', 'dirname', 'sed'):
             (tools / name).symlink_to(shutil.which(name))
         self.fixture.env['PATH'] = str(tools)
-        self.fixture.write('tack.json', '{"version":1,"config":{"ci-watch":false}}')
+        self.fixture.write('tack.json', json.dumps({'version': 1, 'config': {
+            'ci-watch': False, 'check-fast': 'line one\\literal\nci-watch=shadow'}}))
         names = [feature[0] for feature in self.features()]
         self.assertEqual(self.snapshot(names), {name: self.tack('config', name, '--get') for name in names})
 
