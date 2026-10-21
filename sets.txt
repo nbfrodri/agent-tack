@@ -581,6 +581,8 @@ marketing skill knowledge-work:marketing/skills/competitive-brief
 
 # Kept apart: brag renders through `npx hyperframes`, an npm CLI that no pin fixes
 # (docs/audits/2026-10-21-launch-video.md). Activate it only where you accept that.
+# Before use: pin an exact hyperframes version in the project, set HYPERFRAMES_SKIP_SKILLS=1 and
+# HYPERFRAMES_NO_TELEMETRY=1, and decline skill installs (animate-text), usage polling and feedback reports.
 launch-video about Launch and demo videos of a project with brag and Hyperframes; runs npx hyperframes
 launch-video category beyond-code
 launch-video ask brag launch+video demo+video video+demo promo+video video+de+lanzamiento video+de+demostracion video+promocional
