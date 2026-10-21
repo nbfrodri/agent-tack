@@ -579,6 +579,19 @@ marketing skill knowledge-work:marketing/skills/email-sequence
 marketing skill knowledge-work:marketing/skills/brand-review
 marketing skill knowledge-work:marketing/skills/competitive-brief
 
+# Kept apart: brag renders through `npx hyperframes`, an npm CLI that no pin fixes
+# (docs/audits/2026-10-21-launch-video.md). Activate it only where you accept that.
+launch-video about Launch and demo videos of a project with brag and Hyperframes; runs npx hyperframes
+launch-video category beyond-code
+launch-video ask brag launch+video demo+video video+demo promo+video video+de+lanzamiento video+de+demostracion video+promocional
+launch-video skill brag:skills/brag
+launch-video skill brag:skills/brag-slim
+launch-video skill hyperframes:skills/hyperframes-core
+launch-video skill hyperframes:skills/hyperframes-animation
+launch-video skill hyperframes:skills/hyperframes-creative
+launch-video skill hyperframes:skills/hyperframes-keyframes
+launch-video skill hyperframes:skills/hyperframes-cli
+
 # --- Subagent teams (Claude Code only) --------------------------------------------------------
 # Plugins from the VoltAgent and wshobson marketplaces. Each brings several specialist subagents,
 # and every one adds its description to the session: activate these per project. Marketplace
