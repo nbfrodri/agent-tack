@@ -16,6 +16,7 @@ handoffs-path tack.handoffsPath docs/handoffs path any hook yes Project-relative
 context tack.context true bool any instruction yes Load project instructions, the docs index and the handoff check at session start
 collaboration tack.collaboration solo solo|team any instruction yes Coordinate shared contracts, parallel branches and integration checks in team projects; independent of task mode
 setup-review tack.setupReview pending pending|done|deferred any instruction no Project onboarding conversation: inspect and propose optional files once; reset to pending to revisit choices
+setup-team-files tack.setupTeamFiles false bool any instruction yes Suggest missing code owners, contributing guide and release notes configuration during setup; never create them automatically
 conventional-commits tack.conventionalCommits true bool any hook yes Enforce Conventional Commits in enabled projects
 delegation tack.delegation auto auto|off any instruction yes Delegate separable strict-level work to subagents automatically
 completions tack.completions true bool global installer no Install bash and available fish shell completions

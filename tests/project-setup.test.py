@@ -171,6 +171,106 @@ class ProjectSetup(unittest.TestCase):
         self.assertEqual(report['commands'], {})  # no root command invented for a nested package
         self.assertFalse((self.project / 'AGENTS.md').exists())
 
+    def test_issue_templates_are_a_candidate_only_while_missing(self):
+        def items():
+            return [item['item'] for item in json.loads(self.tack('setup', '--json'))['candidates']]
+
+        self.assertIn('issue templates', items())
+        self.write('.github/ISSUE_TEMPLATE/bug_report.yml', 'name: Bug report\n')
+        self.assertNotIn('issue templates', items())
+        (self.project / '.github/ISSUE_TEMPLATE/bug_report.yml').unlink()
+        self.write('.github/ISSUE_TEMPLATE.md', '# Issue\n')
+        self.assertNotIn('issue templates', items())
+
+    def test_security_policy_is_a_candidate_only_while_missing(self):
+        def items():
+            return [item['item'] for item in json.loads(self.tack('setup', '--json'))['candidates']]
+
+        self.assertIn('security policy', items())
+        self.write('src/SECURITY.md', '# Not a repository policy\n')
+        self.assertIn('security policy', items())
+        for relative in ('SECURITY.md', '.github/security.MD', 'docs/SeCuRiTy.md', 'DOCS/SECURITY.md'):
+            with self.subTest(relative=relative):
+                self.write(relative, '# Security\n')
+                self.assertNotIn('security policy', items())
+                (self.project / relative).unlink()
+
+    def test_team_file_candidates_are_disabled_by_default_and_explicit_false(self):
+        for value in (None, 'false'):
+            with self.subTest(value=value):
+                if value is not None:
+                    self.run_command('git', 'config', 'tack.setupTeamFiles', value)
+                report = json.loads(self.tack('setup', '--json'))
+                items = {item['item'] for item in report['candidates']}
+                self.assertTrue(items.isdisjoint({'code owners', 'contributing guide', 'release notes config'}))
+
+    def test_team_file_candidates_respect_existing_locations_and_never_create_files(self):
+        self.run_command('git', 'config', 'tack.setupTeamFiles', 'true')
+
+        def candidates():
+            return {item['item']: item['reason'] for item in json.loads(self.tack('setup', '--json'))['candidates']}
+
+        before = self.run_command('git', 'status', '--porcelain')
+        missing = candidates()
+        for item in ('code owners', 'contributing guide', 'release notes config'):
+            self.assertIn(item, missing)
+        self.assertIn('Conventional Commits', missing['release notes config'])
+        self.assertIn('categories', missing['release notes config'])
+        self.assertEqual(self.run_command('git', 'status', '--porcelain'), before)
+        for item, locations in (
+            ('code owners', ('CODEOWNERS', '.github/CODEOWNERS', 'docs/CODEOWNERS')),
+            ('contributing guide', ('CONTRIBUTING.md', '.github/contributing.MD', 'docs/CoNtRiBuTiNg.md', 'DOCS/CONTRIBUTING.md')),
+            ('release notes config', ('.github/release.yml', '.github/release.yaml')),
+        ):
+            self.write('src/' + locations[0].split('/')[-1], '# Unrelated file\n')
+            for relative in locations:
+                with self.subTest(item=item, relative=relative):
+                    self.assertIn(item, candidates())
+                    self.write(relative, '# Existing configuration\n')
+                    self.assertNotIn(item, candidates())
+                    (self.project / relative).unlink()
+
+    def test_team_file_candidates_use_shared_preferences_and_local_overrides(self):
+        self.write('tack.json', '{"version":1,"config":{"setup-team-files":true}}')
+        report = json.loads(self.tack('setup', '--json'))
+        self.assertIn('code owners', [item['item'] for item in report['candidates']])
+        self.run_command('git', 'config', 'tack.setupTeamFiles', 'false')
+        report = json.loads(self.tack('setup', '--json'))
+        self.assertNotIn('code owners', [item['item'] for item in report['candidates']])
+
+    def test_pinned_actions_candidate_names_first_three_offending_workflows(self):
+        def candidates():
+            return {item['item']: item['reason'] for item in json.loads(self.tack('setup', '--json'))['candidates']}
+
+        self.assertNotIn('pinned actions', candidates())
+        pinned = 'aB' * 20
+        self.write('.github/workflows/safe.yml', f'steps:\n  - uses: actions/checkout@{pinned}\n'
+                   '  - uses: ./local-action\n  - uses: docker://alpine:3\n'
+                   '  # uses: actions/checkout@v4\n')
+        self.write('.github/workflows/ignored.txt', 'uses: actions/checkout@v4\n')
+        self.write('.github/workflows/nested/ignored.yml', 'uses: actions/checkout@v4\n')
+        self.assertNotIn('pinned actions', candidates())
+        for name, reference in (('a.yml', 'v4'), ('b.yaml', 'main'), ('c.yml', 'a' * 39), ('d.yaml', 'g' * 40)):
+            self.write(f'.github/workflows/{name}', f'steps:\n  - uses: "owner/repo/path@{reference}"\n')
+        before = self.run_command('git', 'status', '--porcelain')
+        reason = candidates()['pinned actions']
+        for name in ('a.yml', 'b.yaml', 'c.yml'):
+            self.assertIn(f'.github/workflows/{name}', reason)
+        self.assertNotIn('d.yaml', reason)
+        self.assertEqual(self.run_command('git', 'status', '--porcelain'), before)
+
+    def test_branch_protection_reminder_requires_workflows_directory(self):
+        def candidates():
+            return {item['item']: item['reason'] for item in json.loads(self.tack('setup', '--json'))['candidates']}
+
+        self.assertNotIn('branch protection', candidates())
+        self.write('.github/README.md', '# GitHub\n')
+        self.assertNotIn('branch protection', candidates())
+        (self.project / '.github/workflows').mkdir()
+        reason = candidates()['branch protection']
+        for text in ('gh api', 'read-only', 'default branch', 'PRs', 'passing checks', 'ask before'):
+            self.assertIn(text, reason)
+
     def test_readiness_checks_links_map_targets_and_review_markers(self):
         self.tack('enable', '--scaffold')
         for relative in ('AGENTS.md', 'docs/architecture.md'):

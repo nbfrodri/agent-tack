@@ -120,6 +120,31 @@ def analyze(root):
         candidates.append({'item': 'CI', 'reason': 'No recognized CI entrypoint; select the repository host and useful checks before creating one.'})
     if not templates:
         candidates.append({'item': 'PR template', 'reason': 'No repository PR template; check organization defaults and whether this project uses pull requests.'})
+    if not any('issue_template' in p.lower() for p in files):
+        candidates.append({'item': 'issue templates', 'reason': 'No repository issue templates; check organization defaults and whether this project tracks issues on GitHub. The github-issues skill has adaptable forms.'})
+    if not any(p.lower() in ('security.md', '.github/security.md', 'docs/security.md') for p in files):
+        candidates.append({'item': 'security policy', 'reason': 'No repository SECURITY.md; review how this project should receive vulnerability reports before creating a policy.'})
+    if next(item['value'] for item in settings if item['name'] == 'setup-team-files') == 'true':
+        if not any(p in ('CODEOWNERS', '.github/CODEOWNERS', 'docs/CODEOWNERS') for p in files):
+            candidates.append({'item': 'code owners', 'reason': 'No repository CODEOWNERS; agree on ownership and review responsibilities before creating one.'})
+        if not any(p.lower() in ('contributing.md', '.github/contributing.md', 'docs/contributing.md') for p in files):
+            candidates.append({'item': 'contributing guide', 'reason': 'No repository CONTRIBUTING.md; review contribution setup, checks and expectations before creating a guide.'})
+        if not any(p in ('.github/release.yml', '.github/release.yaml') for p in files):
+            candidates.append({'item': 'release notes config', 'reason': 'No GitHub release notes configuration; agree on categories tied to Conventional Commits before creating one.'})
+    unpinned = []
+    for relative in files:
+        path = Path(relative)
+        if path.parent.as_posix() != '.github/workflows' or path.suffix not in ('.yml', '.yaml'):
+            continue
+        references = re.findall(r'''^\s*(?:-\s*)?uses:\s*["']?([^\s"'#,}]+)''', read(root, relative), re.M)
+        if any(re.fullmatch(r'[\w.-]+/[\w./-]+@(.+)', ref) and
+               not re.fullmatch(r'[0-9a-fA-F]{40}', ref.rsplit('@', 1)[1])
+               for ref in references if not ref.startswith(('./', 'docker://'))):
+            unpinned.append(relative)
+    if unpinned:
+        candidates.append({'item': 'pinned actions', 'reason': f'Actions are not pinned to 40-hex commit SHAs in {", ".join(unpinned[:3])}; review immutable references before changing workflows.'})
+    if (root / '.github/workflows').is_dir():
+        candidates.append({'item': 'branch protection', 'reason': 'Use gh api (read-only) to check whether the default branch requires PRs and passing checks; ask before changing any setting.'})
     if not any(p.lower() == 'readme.md' for p in files):
         candidates.append({'item': 'README', 'reason': 'No root README.md; a short setup and usage guide may help.'})
     issues, missing_optional = [], []

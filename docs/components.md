@@ -15,7 +15,7 @@ Open Agent Skills format (`SKILL.md`), read by every supported tool.
 | `testing` | What and how to test per layer; pytest, Pest/PHPUnit, Vitest/Jest |
 | `git-history` | Amend, fixup, squash, undo and recover commits |
 | `release` | SemVer, tags, CHANGELOG, GitHub Releases, release-please |
-| `github-issues` | From an issue to a PR that closes it; writing and splitting issues |
+| `github-issues` | From an issue to a PR that closes it; writing and splitting issues, MoSCoW priority labels, issue and PR templates |
 | `project-docs` | Docs for humans and AIs, ADRs, plans, audits, handoffs, AI log |
 | `improve` | Prioritised improvement review with read-only reviewers |
 | `orchestrate` | Multi-agent delegation with model and effort per task; automatic only for strict-level work |

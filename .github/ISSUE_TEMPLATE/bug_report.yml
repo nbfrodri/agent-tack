@@ -1,0 +1,60 @@
+name: Bug report
+description: Something in tack does not work as expected
+labels: [bug]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What is wrong, in one or two sentences.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: The command, hook event or skill involved, starting from a clean checkout when possible.
+      placeholder: |
+        1. Run ./install.sh …
+        2. Run tack …
+        3. See error
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      description: Include error messages and the output of `tack doctor`. Remove secrets and private paths.
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority (MoSCoW)
+      description: Your suggestion; the maintainer sets the final label.
+      options:
+        - Must (blocks normal use)
+        - Should (important, has a workaround)
+        - Could (minor)
+        - Won't (not now)
+  - type: input
+    id: version
+    attributes:
+      label: Commit
+      description: Output of `git rev-parse --short HEAD` in your tack checkout.
+  - type: input
+    id: tools
+    attributes:
+      label: AI tool and version
+      description: For example Claude Code or Codex, with its version.
+  - type: input
+    id: system
+    attributes:
+      label: OS and shell
+      description: For example macOS with bash 3.2, or Linux with bash 5.

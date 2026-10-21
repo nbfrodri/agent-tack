@@ -72,7 +72,7 @@ For work that spans several PRs (a feature, a migration, the `planner` agent's o
 Don't silently fix unrelated problems inside the current change, and don't forget them either. Mention them in your summary and offer to open an issue with what you know (location, reproduction, suspected cause).
 
 ## Labels, milestones, triage
-- Use the repo's existing labels (`gh label list`). For new repos, a minimal set: `bug`, `enhancement`, `documentation`, `chore`, `good first issue`, `priority: high`.
+- Use the repo's existing labels (`gh label list`). For new repos, a minimal set: `bug`, `enhancement`, `documentation`, `chore`, `good first issue`, and MoSCoW priorities `must`, `should`, `could`, `wont`. Give each triaged issue one priority label; an existing repo that already ranks priority keeps its own scheme.
 - Milestones group the issues of a release (pairs well with the `release` skill).
 - "What is pending?": `gh issue list --state open --limit 50` (filter with `--label`, `--assignee @me`, `--milestone`), then summarise by priority and suggest what to tackle next and why.
 

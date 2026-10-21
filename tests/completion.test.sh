@@ -57,6 +57,9 @@ check query_has sets-active tack-agents
 check query_has sets-inactive writing
 check query_has roles planner
 check query_has features reply-style
+check query_has features setup-team-files
+check query_has feature-values true setup-team-files
+check query_has feature-values false setup-team-files
 check query_has feature-values visual reply-style
 check query_has feature-values true completions
 check test -z "$(tack __complete feature-values context-max-chars)"

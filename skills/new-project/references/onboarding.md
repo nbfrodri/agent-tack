@@ -27,6 +27,7 @@ Examples to consider only when evidence supports them:
 | Tests and a fast-check command | Missing coverage for real behavior; inspect current tooling before adding a framework. |
 | `checks-map.json` | Different changed paths require existing checks. Inspect what commands cover: a small project may need only its canonical suite; avoid selecting both focused tests and a full suite that repeats them. Keep manual documentation review visible instead of mapping prose to unrelated tests. |
 | CI | Repository host is known and reproducible checks exist; reuse current workflows. |
+| Security policy, pinned actions and branch protection | Propose a missing SECURITY.md or unpinned GitHub Actions when detected; with `.github/workflows`, use `gh api` (read-only) to check whether the default branch requires PRs and passing checks, and ask before changing any setting. |
 | Minimum PR checks | Team requests automated title/review-information checks; use `github-issues/references/pr-checks.md` and keep real code checks separate. A PR template alone does not select this workflow. |
 | `.github/pull_request_template.md` | Team uses PRs and has no suitable project or organization template; adapt validation to actual commands. |
 | README or a development guide | Setup knowledge is missing; link existing docs instead of copying them. |
