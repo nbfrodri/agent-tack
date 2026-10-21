@@ -162,6 +162,7 @@ tack config disabled-hooks --unset                   # all hooks again
 | `stop-check` | The check before stopping |
 | `format-file` | Automatic formatting of edited files |
 | `skill-reminder` | The line added to each message naming the active sets' skills and the sets that fit the project or the request |
+| `agent-model` | The refusal of a subagent launched without an explicit model and effort (`guard-agent.sh`) |
 
 ## CI: wait for it, merge only when green
 

@@ -279,6 +279,13 @@ long_functions="$(
 )"
 [ -z "$long_functions" ] || err "guard functions longer than 60 lines: $(printf '%s' "$long_functions" | tr '\n' ' ')"
 
+# The user picks each subagent's model and effort; guard-agent.sh refuses launches without them.
+echo "Model and effort choice"
+for chooser in orchestrate cross-delegate; do
+  grep -qi 'offer the user' "$REPO/skills/$chooser/SKILL.md" \
+    || err "skills/$chooser/SKILL.md: must offer the user a model and effort choice before delegating"
+done
+
 [ "$SKILLS_TOTAL" -le "$SKILLS_TOTAL_MAX" ] \
   || err "skill descriptions total $SKILLS_TOTAL chars (max $SKILLS_TOTAL_MAX): shorten some"
 echo "Skill descriptions: $SKILLS_TOTAL / $SKILLS_TOTAL_MAX chars"

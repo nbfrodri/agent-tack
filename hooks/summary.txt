@@ -10,4 +10,5 @@ Claude Code, Codex | stop-check | before the assistant stops, reports uncommitte
 Claude Code, Codex | budget | in unleash mode, enforces tack config unleash-max-tool-calls
 Claude Code | format-file | formats edited files with the project's own formatter (only in trusted projects)
 Cursor | command guard | the same deny and ask rules as Claude Code and Codex, through hooks/cursor/guard.sh
+Claude Code | agent-model | refuses a subagent launched without an explicit model and effort, so the assistant offers you the choice first
 Claude Code | skill-reminder | with each message, names the skills of the project's active sets so the assistant loads the matching ones, and the sets that fit the project or the request and are not active

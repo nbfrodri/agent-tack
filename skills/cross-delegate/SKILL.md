@@ -17,8 +17,8 @@ The other assistant does the long work in its own context and returns a short, f
 
 ## 2. Prepare
 
-- Choose the tier by the `orchestrate` table and read the other tool's model with `tack models TIER`.
-- Effort follows that table: economical → low, balanced → medium, strongest → high. Bump the model tier and effort one level (up to strongest/high) for unclear requirements, missing tests or costly mistakes.
+- Offer the user two or three tier options and recommend one by the `orchestrate` table; read the other tool's model with `tack models TIER`. The user's pick sets the tier and effort, unless they already stated a policy for this task.
+- Effort follows that table: economical → low, balanced → medium, strongest → high. Bump the recommended tier and effort one level (up to strongest/high) for unclear requirements, missing tests or costly mistakes.
 - Writing tasks run in their own worktree and branch, as in `orchestrate` section 2; read-only tasks (review, research) use `-s read-only`.
 - The prompt is self-contained: goal, acceptance criteria, files it owns, the project's `AGENTS.md`, and the first line `You are a delegate: complete this task yourself and reply in the report shape.`
 
