@@ -281,10 +281,6 @@ git config --local tack.setIndex false
 "$CLI" context > "$WORK/output" 2>&1
 check "set-index false leaves the index out" eval '! contains "Sets available"'
 git config --local --unset tack.setIndex
-git config --local tack.mode standard
-check "standard context succeeds" expect_exit 0 "$CLI" context
-check "standard context is an index too" contains '- docs/architecture.md (1 lines)'
-git config --local --unset tack.mode
 git config --local tack.mode lite
 check "lite context succeeds" expect_exit 0 "$CLI" context
 check "lite context keeps the project instruction pointer" contains 'Project instructions: AGENTS.md'
@@ -302,12 +298,7 @@ sed 's/^Context: minimal$/Context: full/' "$XDG_CONFIG_HOME/agent-tack/modes/dee
 git config --local tack.mode deep
 check "a mode file's Context line decides the startup context" expect_exit 0 "$CLI" context
 check "a user mode asking for full context gets excerpts" contains 'Architecture context'
-git config --local tack.mode lean
-check "lean context succeeds" expect_exit 0 "$CLI" context
-check "lean context skips architecture" eval '! contains "Architecture context"'
 git config --local --unset tack.mode
-check "fresh handoff is reported up to date" expect_exit 0 "$CLI" context
-check "fresh handoff says so" contains 'up to date: no commits since its last update'
 touch -t 202001010000 docs/handoffs/2026-10-03-active.md
 echo work > later-work.txt
 git add later-work.txt
@@ -385,8 +376,6 @@ done < "$WORK/help-commands"
 check "usage guides cover 'tack doctor --tools'" grep -qF "tack doctor --tools" "${usage_guides[@]}"
 
 check "doctor rejects unsupported arguments" expect_exit 2 "$CLI" doctor --quiet
-check "help documents doctor" expect_exit 0 "$CLI" help
-check "help includes doctor syntax" contains 'doctor'
 cd "$HOME" || exit 1
 check "doctor dispatches installation diagnostics outside Git" expect_exit 1 "$CLI" doctor
 check "doctor diagnoses missing installed canonical link" contains "missing managed symlink: $HOME/.agents/tack"

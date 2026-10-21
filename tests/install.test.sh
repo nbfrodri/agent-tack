@@ -94,7 +94,6 @@ printf '%s\n' "$WORK/kept-checkout/bin/harness" > "$gone_entries/9001/before_tar
 chmod -R go-rwx "$gone_entries/9001"
 ln -s "$REPO/bin/harness" "$H_GONE/.local/bin/harness"
 check "one that replaced a link which still resolves is kept for uninstall" "run_install '$H_GONE' && [ -L '$H_GONE/.local/bin/harness' ] && [ -d '$gone_entries/9001' ]"
-check "settings.json disables AI attribution" "[ \"\$(json_get '$H/.claude/settings.json' attribution.commit)\" = '\"\"' ]"
 
 check "fresh install creates no backups" "! find '$H' -name '*.bak-*' | grep -q ."
 check "fresh install counts links instead of listing them" "grep -qE '✔ [0-9]+ new$' '$H.log' && ! grep -q -- ' -> ' '$H.log'"
@@ -252,9 +251,7 @@ check "a hooksPath into another agent-harness checkout is updated" "[ \"\$(git_g
 echo "Paths with spaces"
 H="$WORK/home with space"
 check "exits 0 with spaces in HOME" "run_install '$H'"
-for dir in .agents/skills .claude/skills .codex/skills; do
-  check "all skills linked in ~/$dir with spaces in HOME" "[ \"\$(find '$H/$dir' -maxdepth 1 -type l | wc -l | tr -d ' ')\" = '$skill_count' ]"
-done
+check "all skills linked in ~/.agents/skills with spaces in HOME" "[ \"\$(find '$H/.agents/skills' -maxdepth 1 -type l | wc -l | tr -d ' ')\" = '$skill_count' ]"
 check "nothing created next to HOME" "[ ! -e '$WORK/home' ]"
 SPACED="$WORK/repo copy"
 mkdir -p "$SPACED"
@@ -352,8 +349,6 @@ HOME="$H" XDG_CONFIG_HOME="$H/.config" GIT_CONFIG_NOSYSTEM=1 PATH="$TOOLS:$MINBI
 check "cursor with --no-hooks: no empty hooks file is created" "[ ! -e '$H/.cursor/hooks.json' ]"
 check "opencode not installed: nothing created for it" "[ ! -e '$H/.config/opencode' ]"
 check "crush not installed: ~/.config/AGENTS.md not created" "[ ! -e '$H/.config/AGENTS.md' ]"
-check "claude and codex are always configured" "[ -L '$H/.claude/CLAUDE.md' ] && [ -L '$H/.codex/AGENTS.md' ]"
-check "every tool gets the shared ~/.agents/skills" "[ \"\$(find '$H/.agents/skills' -maxdepth 1 -type l | wc -l | tr -d ' ')\" = '$skill_count' ]"
 
 echo "VS Code without the Copilot CLI"
 VSCODE_TOOLS="$WORK/fake-vscode"

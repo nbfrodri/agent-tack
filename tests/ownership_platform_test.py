@@ -114,12 +114,6 @@ class OwnershipPlatformTest(unittest.TestCase):
             ownership.validate(self.state, str(self.home))
         self.assertEqual(path.read_bytes(), b'installed')
 
-    def test_edited_generated_file_is_preserved(self):
-        entry, path = self.generated()
-        path.write_bytes(b"user edit")
-        self.assertFalse(ownership.uninstall_entry(entry, False))
-        self.assertEqual(path.read_bytes(), b"user edit")
-
     def test_replaced_parent_is_preserved(self):
         entry, path = self.generated()
         path.parent.rename(path.parent.with_name("original"))

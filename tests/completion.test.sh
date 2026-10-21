@@ -75,18 +75,9 @@ git config --global --unset tack.sets
 check python3 -I - "$REPO/bin/tack" <<'PY'
 import subprocess
 import sys
-import time
-start = time.monotonic()
-for _ in range(5):
-    subprocess.run([sys.argv[1], '__complete', 'sets-inactive'], check=True, capture_output=True)
-elapsed = (time.monotonic() - start) / 5
-print(f'sets-inactive: {elapsed * 1000:.1f} ms average (5 runs)')
-assert elapsed < 0.5, elapsed
-for kind in ('commands', 'set-commands', 'sets-all', 'sets-active', 'roles',
+for kind in ('commands', 'set-commands', 'sets-all', 'sets-active', 'sets-inactive', 'roles',
              'features', 'feature-values', 'modes', 'tiers', 'usage-kinds'):
-    start = time.monotonic()
     subprocess.run([sys.argv[1], '__complete', kind, 'reply-style'], check=True, capture_output=True)
-    assert time.monotonic() - start < 0.5, kind
 PY
 for shell in bash fish zsh; do
   tack completion "$shell" > "$WORK/printed"

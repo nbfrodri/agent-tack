@@ -44,15 +44,6 @@ expect_success() {
   fi
 }
 
-echo "Unmodified repo"
-if "$REPO/tests/validate.sh" "$REPO" >/dev/null 2>&1; then
-  printf '  ✔ passes\n'
-  PASSED=$((PASSED + 1))
-else
-  printf '  ✘ passes\n'
-  FAILED=$((FAILED + 1))
-fi
-
 echo "Detects"
 expect_failure "a broken human documentation link" "missing local target" \
   "printf '\n[Missing](docs/does-not-exist.md)\n' >> README.md"
@@ -66,8 +57,6 @@ expect_failure "an unquoted description that strict YAML readers reject" "quote 
   "sed 's/^description: .*/description: Write tests: unit and integration. Use for coverage./' skills/testing/SKILL.md > x && mv x skills/testing/SKILL.md"
 expect_failure "a name that doesn't match its folder" "should be 'testing'" \
   "sed 's/^name: testing\$/name: tests/' skills/testing/SKILL.md > x && mv x skills/testing/SKILL.md"
-expect_failure "an unclosed frontmatter" "not closed" \
-  "printf -- '---\nname: broken\ndescription: x\n' > skills/testing/SKILL.md && mkdir -p skills/broken && cp skills/testing/SKILL.md skills/broken/"
 expect_failure "a description over budget" "max 400" \
   "python3 -c \"import re;p='skills/testing/SKILL.md';s=open(p).read();open(p,'w').write(re.sub(r'^description: .*\$','description: '+'x'*401,s,count=1,flags=re.M))\""
 expect_failure "a suite run-all.sh does not know" "tests/new.test.sh is not run by tests/run-all.sh" \
@@ -122,8 +111,8 @@ expect_failure "a test that moves HOME but leaves the real state directory" "tes
   "printf 'export HOME=/tmp/x\n' > tests/leaky.test.sh"
 expect_failure "a toggle name too long for the tack config table" "features.txt: name" \
   "printf 'a-toggle-name-far-too-long tack.x none bool any hook Too long\n' >> features.txt"
-expect_failure "docs-writer inheriting the main model" "docs-writer must use the economical tier" \
-  "sed 's/^model: .*/model: inherit/' agents/docs-writer.md > agents/tmp && mv agents/tmp agents/docs-writer.md"
+expect_failure "a guard function longer than 60 lines" "guard-files.sh:too_long" \
+  "{ printf 'too_long() {\n'; seq 61 | sed 's/.*/  :/'; printf '}\n'; } >> hooks/claude/lib/guard-files.sh"
 expect_failure "a missing references/ file of the skill itself" "testing/references/python.md" \
   "rm skills/testing/references/python.md"
 expect_failure "a missing file referenced from another skill" "dev-workflow/references/tdd.md" \

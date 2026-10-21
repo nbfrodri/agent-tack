@@ -80,7 +80,8 @@ git_global() { HOME="$H" XDG_CONFIG_HOME="$H/.config" GIT_CONFIG_NOSYSTEM=1 git 
 mod_names="$(for d in "$REPO"/plugins/*/; do basename "$d"; done | tr '\n' ' ')"
 
 echo "Shipped mods"
-check "both mods ship with an author" "[ \"\$(grep -l '\"author\"' '$REPO'/plugins/*/.claude-plugin/plugin.json | wc -l | tr -d ' ')\" = 2 ]"
+mod_count="$(printf '%s' "$mod_names" | wc -w | tr -d ' ')"
+check "every mod ships with an author" "[ \"\$(grep -l '\"author\"' '$REPO'/plugins/*/.claude-plugin/plugin.json | wc -l | tr -d ' ')\" = '$mod_count' ]"
 check "local marketplace lists every mod folder" "for m in $mod_names; do grep -q \"\\\"./\$m\\\"\" '$REPO/plugins/.claude-plugin/marketplace.json' || exit 1; done"
 
 echo "Default install"

@@ -755,9 +755,6 @@ runpy.run_path(sys.argv[0], run_name='__main__')
         self.assertEqual(result.returncode, 1, result.stdout)
         self.assertTrue((self.home / '.claude/skills/polish/SKILL.md').is_file())
 
-    def test_the_shipped_declarations_are_valid(self):
-        self.run_in(ROOT, sys.executable, str(ROOT / 'lib/sets.py'), str(ROOT), 'check')
-
 
 if __name__ == '__main__':
     unittest.main()

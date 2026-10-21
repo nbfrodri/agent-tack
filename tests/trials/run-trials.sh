@@ -133,7 +133,9 @@ EOF
       default_model=haiku
       ;;
     usage)
-      XDG_STATE_HOME=$run_dir/state "$tack_bin" usage set five_hour 70 2026-12-01T00:00:00Z >/dev/null || {
+      # A reset five hours ahead, so the window is still open whenever the scenario runs.
+      reset_at=$(date -u -d '+5 hours' +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -v+5H +%Y-%m-%dT%H:%M:%SZ)
+      XDG_STATE_HOME=$run_dir/state "$tack_bin" usage set five_hour 70 "$reset_at" >/dev/null || {
         printf '%s usage: miss (usage setup failed)\n' "$i"; continue;
       }
       prompt='Add a README.md with one line describing this repo.'

@@ -265,6 +265,20 @@ for hook in "$REPO"/git-hooks/*; do
   fi
 done
 
+# The guard stays readable: no function longer than 60 lines in the dispatcher or its libraries.
+echo "Guard function length"
+long_functions="$(
+  for guard_file in "$REPO/hooks/claude/guard-bash.sh" "$REPO"/hooks/claude/lib/guard-*.sh; do
+    awk -v file="$(basename "$guard_file")" '
+      /^[A-Za-z_][A-Za-z0-9_]*\(\) *\{/ {
+        if ($0 ~ /\}[ ]*$/) { name = "" } else { name = $1; sub(/\(\).*/, "", name); start = NR }
+      }
+      /^}$/ { if (name != "" && NR - start + 1 > 60) print file ":" name " (" NR - start + 1 " lines)"; name = "" }
+    ' "$guard_file"
+  done
+)"
+[ -z "$long_functions" ] || err "guard functions longer than 60 lines: $(printf '%s' "$long_functions" | tr '\n' ' ')"
+
 [ "$SKILLS_TOTAL" -le "$SKILLS_TOTAL_MAX" ] \
   || err "skill descriptions total $SKILLS_TOTAL chars (max $SKILLS_TOTAL_MAX): shorten some"
 echo "Skill descriptions: $SKILLS_TOTAL / $SKILLS_TOTAL_MAX chars"
