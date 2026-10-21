@@ -30,3 +30,5 @@ antfu           https://github.com/antfu/skills                        feb0f3aba
 huggingface     https://github.com/huggingface/skills                  c3ff942be3e07116b475253f0a8fc4f54682c1a8
 knowledge-work  https://github.com/anthropics/knowledge-work-plugins   95bdacc803aa5cfdb10f35e5b9fb2d4b11100133
 stripe          https://github.com/stripe/ai                           e9deec62821ca59aa6ca18b4d243c9ced389cd54
+brag            https://github.com/latent-spaces/brag                  069432cac935ed1895859df201c31436c07fb74e
+hyperframes     https://github.com/heygen-com/hyperframes              ffcef8f886b4a1ed9dba12f21b9939db5c17746e
