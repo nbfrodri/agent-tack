@@ -2,6 +2,7 @@
 """Project preferences survive cloning without sharing personal state or execution trust."""
 import importlib.util
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -77,6 +78,8 @@ class ProjectConfigTests(unittest.TestCase):
                     if source in ('local', 'global'):
                         self.fixture.git('config', '--' + source, '--unset-all', key)
 
+    # Symlinked Git Bash tools lose their DLLs on Windows, so bin/tack cannot find its own root there.
+    @unittest.skipUnless(os.name == 'posix', 'a PATH of symlinked tools needs POSIX')
     def test_settings_snapshot_without_jq_matches_individual_reads(self):
         tools = self.fixture.directory / 'tools'
         tools.mkdir()
