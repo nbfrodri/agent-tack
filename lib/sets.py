@@ -571,6 +571,8 @@ def command_index(args, root, sources, sets):
             line += ' Fit this project and are not active: ' + ', '.join(fit) + ' (tack set suggest --apply).'
     print(line + ' tack set use NAME and tack set drop NAME change this project\'s sets; tack set show NAME lists a'
           ' set\'s contents. Leave --global and update to the user.')
+    if args.reminder:
+        command_reminder(args, root, sources, sets)
 
 
 # How many skill names one reminder carries; past it the assistant is sent to the list.
@@ -597,7 +599,7 @@ def command_reminder(args, root, sources, sets):
         parts.append('Sets that fit this project and are not active: ' + ', '.join(fit)
                      + '. Activating them is the user\'s choice: end your reply with one line saying which sets fit and'
                      ' that tack set suggest --apply activates them and tack set suggest --skip declines them.')
-    wanted = [name for name in asked(repo, sets, prompt_given() if args.stdin else '') if name not in fit]
+    wanted = [name for name in asked(repo, sets, prompt_given() if getattr(args, 'stdin', False) else '') if name not in fit]
     if wanted:
         parts.append('Sets that match this request and are not active: ' + ', '.join(wanted)
                      + '. Activating them is the user\'s choice: do the task as asked, and end your reply with one line'
@@ -786,7 +788,7 @@ def main():
     suggest = command('suggest', command_suggest, help='sets that fit this project\'s files')
     suggest.add_argument('--apply', action='store_true', help='activate them in this project')
     suggest.add_argument('--skip', action='store_true', help='decline them for this project')
-    command('index', command_index)
+    command('index', command_index).add_argument('--reminder', action='store_true')
     command('skip', command_skip, help='stop suggesting a set in this project').add_argument('name')
     command('reminder', command_reminder).add_argument('--stdin', action='store_true')
     command('plan', command_plan).add_argument('--no-fetch', action='store_true')

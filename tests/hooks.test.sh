@@ -542,6 +542,8 @@ rm -f "$XDG_STATE_HOME/agent-tack/lessons.tsv"
 check "ci-watch: the default adds no setting line" "! session '$WORK/repo' | grep -q 'Workflow settings'"
 git -C "$WORK/repo" config tack.ciWatch false
 check "ci-watch: turning it off tells the assistant not to wait for CI" "session '$WORK/repo' | grep -q 'Workflow settings:.*Do not wait for CI'"
+git -C "$WORK/repo" config tack.ciWatch 'false legacy suffix'
+check "ci-watch: legacy Git values retain first-word handling" "session '$WORK/repo' | grep -q 'Workflow settings:.*Do not wait for CI'"
 git -C "$WORK/repo" config --unset tack.ciWatch
 git -C "$WORK/repo" config tack.visualReview false
 check "visual-review: turning it off tells the assistant to skip it" "session '$WORK/repo' | grep -q 'Workflow settings:.*Skip the visual review'"
