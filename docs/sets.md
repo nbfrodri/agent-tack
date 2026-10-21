@@ -173,7 +173,7 @@ It reads the upstream head, reports which of the skills you use changed (with a 
 
 Skills run with the assistant's permissions. Pinning means a skill changes only when you move its commit; it is not a review of what the skill says or runs. Read a skill before relying on it, and prefer few focused sets. tack refuses a skill path that leaves its checkout, runs Git without hooks or prompts while fetching, and links nothing when a source or skill is missing.
 
-The [audit of 2026-10-11](audits/2026-10-11-external-skills.md) records what a scan of every used skill found at the current pins, including one skill that downloads and runs a native binary. Repeat it after moving a pin.
+The [audit of 2026-10-11](audits/2026-10-11-external-skills.md) records what a scan of every skill used then found at those pins, including one skill that downloads and runs a native binary. The [launch-video audit of 2026-10-21](audits/2026-10-21-launch-video.md) covers brag and Hyperframes, including runtime downloads, live skill loading, public feedback and references to skills outside the set. Repeat the relevant audit after moving a pin.
 
 Checkouts live in `~/.local/share/agent-tack/sources/<name>/<commit>` (or under `XDG_DATA_HOME`). Nothing from a collection is copied into this repository, and each one keeps its own license in its checkout. Old checkouts are not deleted automatically; remove a commit's folder once nothing links to it.
 
@@ -208,5 +208,6 @@ The `agents-*` sets install plugins from two subagent collections, [VoltAgent](h
 | `expo`, `callstack` | expo/skills, callstackincubator/agent-skills | Expo and React Native |
 | `antfu` | antfu/skills | Vue, Nuxt and Vite |
 | `remotion`, `playwright` | remotion-dev/skills, microsoft/playwright-cli | Video and browser automation |
+| `brag`, `hyperframes` | latent-spaces/brag, heygen-com/hyperframes | Launch and demo video creation in the separate `launch-video` set; complements `video`, with runtime download and instruction-loading risks documented in its audit |
 | `huggingface` | huggingface/skills | Models and datasets |
 | `knowledge-work` | anthropics/knowledge-work-plugins | Data analysis, product and design research |
