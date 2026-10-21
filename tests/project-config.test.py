@@ -3,6 +3,7 @@
 import importlib.util
 import json
 from pathlib import Path
+import shutil
 import subprocess
 import unittest
 from unittest.mock import patch
@@ -26,6 +27,78 @@ class ProjectConfigTests(unittest.TestCase):
 
     def selection(self, **config):
         self.fixture.write('selected.json', json.dumps({'version': 1, 'mode': 'auto', 'config': config}))
+
+    def snapshot(self, names, cli=None):
+        result = self.fixture.command(
+            FIXTURE.BASH, '-c',
+            '. "$1"; load_settings_snapshot "$PWD" "$2"; shift 2; '
+            'for name in "$@"; do printf "%s=" "$name"; setting "$name"; printf "\\n"; done',
+            'snapshot', str(REPO / 'hooks/claude/lib/settings-snapshot.sh'),
+            str(cli or REPO / 'bin/tack'), *names)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stderr, '')
+        return dict(line.split('=', 1) for line in result.stdout.splitlines())
+
+    def features(self):
+        return [line.split(maxsplit=7) for line in (REPO / 'features.txt').read_text().splitlines()
+                if line and not line.startswith('#')]
+
+    def test_settings_snapshot_matches_individual_reads_for_every_source(self):
+        features = self.features()
+        names = [feature[0] for feature in features]
+        for source in ('default', 'local', 'global', 'shared'):
+            with self.subTest(source=source):
+                shared = {}
+                for name, key, default, values, _scope, _enforcement, shareable, _about in features:
+                    if values == 'bool':
+                        value = 'false' if default == 'true' else 'true'
+                    elif values == 'number':
+                        value = '41'
+                    elif values == 'decimal':
+                        value = '1.25'
+                    elif values == 'path':
+                        value = 'work/' + name
+                    elif values == 'text':
+                        value = 'value with spaces = and \\slashes'
+                    elif values.startswith('list:'):
+                        value = values[5:].split('|')[0]
+                    else:
+                        value = next(option for option in values.split('|') if option != default)
+                    if source in ('local', 'global'):
+                        self.fixture.git('config', '--' + source, key, value)
+                    elif source == 'shared' and shareable == 'yes':
+                        shared[name] = value == 'true' if values == 'bool' else int(value) if values == 'number' else value
+                if source == 'shared':
+                    self.fixture.write('tack.json', json.dumps({'version': 1, 'config': shared}))
+                actual = self.snapshot(names)
+                for name in names:
+                    self.assertEqual(actual[name], self.tack('config', name, '--get'), (source, name))
+                for _name, key, *_rest in features:
+                    if source in ('local', 'global'):
+                        self.fixture.git('config', '--' + source, '--unset-all', key)
+
+    def test_settings_snapshot_without_jq_matches_individual_reads(self):
+        tools = self.fixture.directory / 'tools'
+        tools.mkdir()
+        for name in ('bash', 'python3', 'git', 'dirname', 'sed'):
+            (tools / name).symlink_to(shutil.which(name))
+        self.fixture.env['PATH'] = str(tools)
+        self.fixture.write('tack.json', '{"version":1,"config":{"ci-watch":false}}')
+        names = [feature[0] for feature in self.features()]
+        self.assertEqual(self.snapshot(names), {name: self.tack('config', name, '--get') for name in names})
+
+    def test_settings_snapshot_failure_clears_values_and_succeeds(self):
+        cli = self.fixture.root / 'broken-tack'
+        cli.write_text('#!/bin/sh\necho broken >&2\necho "[{\\"name\\":\\"ci-watch\\",\\"value\\":\\"false\\"}]"\nexit 1\n')
+        cli.chmod(0o755)
+        names = [feature[0] for feature in self.features()]
+        self.assertEqual(self.snapshot(names, cli), dict.fromkeys(names, ''))
+
+    def test_settings_snapshot_outside_a_git_repository(self):
+        self.fixture.root = self.fixture.directory / 'outside'
+        self.fixture.root.mkdir()
+        names = [feature[0] for feature in self.features()]
+        self.assertEqual(self.snapshot(names), {name: self.tack('config', name, '--get') for name in names})
 
     def test_batch_preview_apply_and_noop_preserve_unselected_values(self):
         self.tack('config', 'reply-style', 'visual', '--shared')
