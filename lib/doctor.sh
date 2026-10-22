@@ -136,8 +136,9 @@ first_command() {
   return 1
 }
 tool_version() {
-  "$1" --version 2>/dev/null </dev/null | head -1 |
-    sed -n 's/.*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/p'
+  local output
+  output="$("$1" --version 2>/dev/null </dev/null)"
+  sed -n '1s/.*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/p' <<< "$output"
 }
 run_smoke() {
   local command="$1" smoke="$2"
@@ -384,6 +385,7 @@ check_vscode() {
   [ "$found" -eq 1 ] || ok 'VS Code: not installed, skipped'
 }
 check_project() {
+  local mode show
   has git || return
   ! git config --global --get-regexp '^harness\.' >/dev/null 2>&1 \
     || warn 'user-wide settings use the former harness name: run tack migrate'
@@ -406,9 +408,11 @@ check_project() {
     warn 'project preferences: Python 3 is unavailable; profile validation skipped'
   fi
   mode="$("$REPO/bin/tack" mode)"
+  # Read the producer completely: grep -q may otherwise cause SIGPIPE under pipefail.
+  show="$("$REPO/bin/tack" mode show)"
   if [ -z "${mode##*invalid*}" ] || [ -z "${mode##*ignored*}" ]; then
     warn "current project mode: $mode"
-  elif "$REPO/bin/tack" mode show | grep -q '^WARNING:'; then
+  elif grep -q '^WARNING:' <<< "$show"; then
     warn "current project mode: $mode; autonomous mode without confirmations is active"
     case "$(git branch --show-current 2>/dev/null)" in
       main | master) warn "current branch is $(git branch --show-current) in a project-only mode; switch to a branch or worktree" ;;

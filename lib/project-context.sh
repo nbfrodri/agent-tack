@@ -38,7 +38,7 @@ modified_at() { stat -c %Y "$1" 2>/dev/null || stat -f %m "$1"; }
 
 # Compares the handoff with git so a resumed session knows whether it can trust it.
 handoff_freshness() {
-  local path="$root/$1" since committed commits named current
+  local path="$root/$1" since committed commits named current branches
   since="$(modified_at "$path")" || return 0
   # A commit that includes the handoff updates it too, whatever the file's mtime says.
   committed="$(git -C "$root" log -1 --format=%ct -- "$1" 2>/dev/null)"
@@ -47,7 +47,8 @@ handoff_freshness() {
   commits="$(git -C "$root" rev-list --count --since="@$((since + 1))" HEAD -- . \
     ":(exclude)$TACK_PLANS" ":(exclude)$TACK_HANDOFFS" ':(exclude)docs/archive' 2>/dev/null)" || commits=0
   # shellcheck disable=SC2016 # The backticks are literal Markdown, not command substitution.
-  named="$(sed -n 's/^[-[:space:]]*\**Branch:\**[[:space:]]*`\{0,1\}\([^`[:space:]]*\).*/\1/p' "$path" | head -n 1)"
+  branches="$(sed -n 's/^[-[:space:]]*\**Branch:\**[[:space:]]*`\{0,1\}\([^`[:space:]]*\).*/\1/p' "$path")"
+  named="$(head -n 1 <<< "$branches")"
   current="$(git -C "$root" branch --show-current 2>/dev/null)"
   if [ -n "$named" ] && [ -n "$current" ] && [ "$named" != "$current" ]; then
     printf 'Handoff check: handoff names branch %s; current branch is %s. Confirm which work to resume.\n' "$named" "$current"
@@ -75,7 +76,8 @@ for file in "$root/$TACK_HANDOFFS"/*.md; do
     active_count=$((active_count + 1))
     if [ "${#handoffs[@]}" -lt 5 ]; then handoffs+=("$relative"); fi
     # shellcheck disable=SC2016 # Literal Markdown backticks.
-    named="$(sed -n 's/^[-[:space:]]*\**Branch:\**[[:space:]]*`\{0,1\}\([^`[:space:]]*\).*/\1/p' "$file" | head -n 1)"
+    branches="$(sed -n 's/^[-[:space:]]*\**Branch:\**[[:space:]]*`\{0,1\}\([^`[:space:]]*\).*/\1/p' "$file")"
+    named="$(head -n 1 <<< "$branches")"
     if [ -n "$current_branch" ] && [ "$named" = "$current_branch" ]; then
       matching="$relative"
       matching_count=$((matching_count + 1))
@@ -108,6 +110,7 @@ if [ "$level" != minimal ] && safe_file "$TACK_ARCHITECTURE"; then
 fi
 if [ -n "$active" ] && safe_file "$active"; then
   printf -- '- Active handoff: %s\n' "$active"
-  grep -iE '^[-[:space:]]*(\*\*)?(Status|Next):' "$root/$active" | head -n 4 | cut -c1-300
+  summary="$(grep -iE '^[-[:space:]]*(\*\*)?(Status|Next):' "$root/$active")"
+  head -n 4 <<< "$summary" | cut -c1-300
   handoff_freshness "$active"
 fi
