@@ -579,20 +579,26 @@ marketing skill knowledge-work:marketing/skills/email-sequence
 marketing skill knowledge-work:marketing/skills/brand-review
 marketing skill knowledge-work:marketing/skills/competitive-brief
 
-# Kept apart: brag renders through `npx hyperframes`, an npm CLI that no pin fixes
+# brag-slim builds the video with the tools already on the machine and uses no Hyperframes; the
+# audit (docs/audits/2026-10-21-launch-video.md) found none of its High risks in it.
+launch-video about Launch and demo videos of a project, built by the assistant with brag-slim
+launch-video category beyond-code
+launch-video ask brag launch+video demo+video video+demo promo+video video+de+lanzamiento video+de+demostracion video+promocional
+launch-video skill brag:skills/brag-slim
+
+# Kept apart: the full brag renders through `npx hyperframes`, an npm CLI that no pin fixes
 # (docs/audits/2026-10-21-launch-video.md). Activate it only where you accept that.
 # Before use: pin an exact hyperframes version in the project, set HYPERFRAMES_SKIP_SKILLS=1 and
 # HYPERFRAMES_NO_TELEMETRY=1, and decline skill installs (animate-text), usage polling and feedback reports.
-launch-video about Launch and demo videos of a project with brag and Hyperframes; runs npx hyperframes
-launch-video category beyond-code
-launch-video ask brag launch+video demo+video video+demo promo+video video+de+lanzamiento video+de+demostracion video+promocional
-launch-video skill brag:skills/brag
-launch-video skill brag:skills/brag-slim
-launch-video skill hyperframes:skills/hyperframes-core
-launch-video skill hyperframes:skills/hyperframes-animation
-launch-video skill hyperframes:skills/hyperframes-creative
-launch-video skill hyperframes:skills/hyperframes-keyframes
-launch-video skill hyperframes:skills/hyperframes-cli
+launch-video-full about Launch videos with the full brag and Hyperframes; runs npx hyperframes
+launch-video-full category beyond-code
+launch-video-full ask hyperframes
+launch-video-full skill brag:skills/brag
+launch-video-full skill hyperframes:skills/hyperframes-core
+launch-video-full skill hyperframes:skills/hyperframes-animation
+launch-video-full skill hyperframes:skills/hyperframes-creative
+launch-video-full skill hyperframes:skills/hyperframes-keyframes
+launch-video-full skill hyperframes:skills/hyperframes-cli
 
 # --- Subagent teams (Claude Code only) --------------------------------------------------------
 # Plugins from the VoltAgent and wshobson marketplaces. Each brings several specialist subagents,

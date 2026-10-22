@@ -1,6 +1,6 @@
 # Audit: launch-video skills
 
-- Date: 2026-10-21. Scope: the seven skill folders selected by `launch-video` in `sets.txt`: `brag` and `brag-slim` from `latent-spaces/brag` at `069432cac935ed1895859df201c31436c07fb74e`, and `hyperframes-core`, `hyperframes-animation`, `hyperframes-creative`, `hyperframes-keyframes` and `hyperframes-cli` from `heygen-com/hyperframes` at `ffcef8f886b4a1ed9dba12f21b9939db5c17746e`. Inventory: 516 files, including 245 UTF-8 text files, 265 audio assets and six fonts. Both checkouts were read-only and their HEADs matched these pins.
+- Date: 2026-10-21. Scope: the seven skill folders selected when this audit was written, since split in `sets.txt` into `launch-video` (`brag-slim`, none of the High findings below) and `launch-video-full` (the other six): `brag` and `brag-slim` from `latent-spaces/brag` at `069432cac935ed1895859df201c31436c07fb74e`, and `hyperframes-core`, `hyperframes-animation`, `hyperframes-creative`, `hyperframes-keyframes` and `hyperframes-cli` from `heygen-com/hyperframes` at `ffcef8f886b4a1ed9dba12f21b9939db5c17746e`. Inventory: 516 files, including 245 UTF-8 text files, 265 audio assets and six fonts. Both checkouts were read-only and their HEADs matched these pins.
 - Method: follow the [external-skills audit](2026-10-11-external-skills.md): scan text for pipe-to-shell installs, `sudo`, global installs, destructive commands, permission bypass, credential paths and secret variables, network sends, telemetry, instruction overrides, agent settings writes and dynamic execution; read hits in context. Run `skill-scanner` on all seven folders, then supplement its zero findings with recursive searches covering HTML, nested recipes and `.mjs` helpers that its main content scan misses. Check hidden Unicode, symlinks, hook/MCP files and frontmatter. Separately search prose for instructions to fetch rules, install skills or obtain code at run time; trace dependencies outside the set.
 - Limits: static review of the pinned skill text and bundled scripts, not an execution or dependency audit. No skill commands, installs, rendering, cloud operations or feedback submissions were run. Audio/font binaries and downloaded npm/Python packages, models, browser binaries, registry components and remote skills were not reviewed. CLI behavior described below is what the skills document; the npm implementation was not verified. The sibling plugin-installation reference was read to understand its conditional protection, but the omitted skills were not audited in full. Repeat after either pin changes; a skill pin does not freeze its runtime downloads.
 
@@ -33,7 +33,7 @@ The second pass found the two High-severity instruction-loading paths above: `in
 
 All five Hyperframes skills link `../hyperframes/references/plugin-installation.md`. That omitted sibling reference tells plugin installations to use a manifest-versioned launcher, disable standalone skill refreshes and report missing bundled skills rather than download replacements. This is conditional on a plugin installation; tack installs selected standalone folders, so those protections cannot be assumed for this set.
 
-## Dependencies outside launch-video
+## Dependencies outside launch-video-full
 
 These names are referenced by the selected skills but are not selected by this set. They are not all requirements for every brag video.
 
