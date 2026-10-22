@@ -75,5 +75,8 @@ the commit-msg hook).
 2. List it in [components](components.md) and, for a skill or agent, in at least one set in `sets.txt` (the validator requires both); mention it in the README only if it changes what a newcomer needs to know.
 3. Run `tests/validate.sh` and `./install.sh`, then commit and push.
 
+## Code scanning (CodeQL)
+`.github/workflows/codeql.yml` analyzes the GitHub Actions workflows, JavaScript/TypeScript and Python on every push to main, every pull request and weekly. Results appear under Security and quality, Code scanning. Shell has no CodeQL support; ShellCheck in `ci.yml` covers it.
+
 ## Tools compatibility (weekly)
 `.github/workflows/tools-compat.yml` runs every Monday (and on demand from the Actions tab). It installs the latest Claude Code and Codex with npm, runs `./install.sh --skip-plugins` in a temporary HOME and then `tack doctor --tools`. It also validates and tests every mod with the latest Claude Code. A validation or test failure matters because Claude Code silently refuses a module it cannot load, making the usage band, readings and delegation offer disappear without an error. It uses no credentials. A failure means a new tool release changed something the installer or a mod relies on: read the log, then adjust `targets.txt`, the installer or the mod.
