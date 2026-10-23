@@ -12,6 +12,7 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 ### Changed
 
 - `tests/run-all.sh` accepts suite names after its options and runs only those; an unknown name exits 2. In this repository's `checks-map.json`, edits to `sets.txt` or `sources.txt` now select a `data` check (the `cli`, `completion` and `native-agents` suites, about 90 s) instead of the full 20-minute suite, which `tack verify` could never finish. The other data files and `modes/*` still select the full suite (#190).
+- The Stop hook reports a verification or a test command it had no time left to start (`project verification skipped`, `the tests were skipped`) as a note in its system message instead of blocking the stop, like the out-of-time checks and the skipped aislop scan before it. A failure, an unmapped path or edited inputs still block (#199).
 
 ## [0.2.0] - 2026-10-23
 
