@@ -385,6 +385,37 @@ class VerificationTests(unittest.TestCase):
         self.assertNotIn('decision', output, result.stdout)
         self.assertIn('Not completed (out of time, nothing failed): api', output['systemMessage'])
 
+    def stop_with_spent_budget(self):
+        # A 10 s hook budget is spent before any step starts, whatever the speed of the machine.
+        env = dict(self.env, TACK_STOP_TIMEOUT='10')
+        result = subprocess.run([BASH, str(REPO / 'hooks/claude/stop-check.sh')],
+                                input=json.dumps({'cwd': str(self.root)}), cwd=self.root,
+                                env=env, text=True, capture_output=True, timeout=60)
+        return json.loads(result.stdout)
+
+    def test_stop_hook_notes_a_skipped_verification_instead_of_blocking_on_it(self):
+        self.define([self.check(command='true')])
+        self.git('config', 'tack.enabled', 'true')
+        self.git('config', 'tack.slopCheck', 'false')
+        self.trust()
+        self.write('src/api.py', 'value = 2\n')
+        self.commit()
+        output = self.stop_with_spent_budget()
+        self.assertNotIn('decision', output, output)
+        self.assertIn('project verification skipped', output['systemMessage'])
+        self.assertIn('run tack verify', output['systemMessage'])
+
+    def test_stop_hook_notes_skipped_tests_instead_of_blocking_on_them(self):
+        self.git('config', 'tack.enabled', 'true')
+        self.git('config', 'tack.slopCheck', 'false')
+        self.git('config', 'tack.checkFast', 'true')
+        self.trust()
+        self.write('src/api.py', 'value = 2\n')
+        self.commit()
+        output = self.stop_with_spent_budget()
+        self.assertNotIn('decision', output, output)
+        self.assertIn('the tests were skipped', output['systemMessage'])
+
     def test_stop_hook_shares_deadline_with_legacy_checks_and_slop(self):
         self.git('config', 'tack.enabled', 'true')
         self.git('config', 'tack.checkFast', 'sleep 60')

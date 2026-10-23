@@ -175,7 +175,8 @@ if [ -e checks-map.json ] || [ -L checks-map.json ]; then
 $verification"
     fi
   else
-    add "project verification skipped: the Stop hook time budget is exhausted; run tack verify."
+    # Nothing failed and the user cannot act on a block, so a skipped step is a note.
+    hint="${hint:+$hint }tack: project verification skipped: the Stop hook time budget is exhausted; run tack verify."
   fi
 elif "$cli" trusted --quiet; then
   IFS="$(printf '\t')" read -r check check_source <<EOF
@@ -191,7 +192,7 @@ EOF
       *) add "the tests fail: $check (from $check_source): fix them, or tell the user why they fail." ;;
       esac
     else
-      add "the tests were skipped: the Stop hook time budget is exhausted; run $check."
+      hint="${hint:+$hint }tack: the tests were skipped: the Stop hook time budget is exhausted; run $check."
     fi
   fi
 fi
