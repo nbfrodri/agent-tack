@@ -19,7 +19,7 @@ tack set suggest               # sets that fit this project's files; --apply act
 tack set skip NAME             # stop suggesting one set in this project
 ```
 
-In a project, `use` links each skill into `.agents/skills/` and `.claude/skills/`, each agent into `.claude/agents/`, generates Codex agents in `.codex/agents/<name>.toml`, and installs each plugin for that clone (`claude plugin install --scope local`). The links and generated files are added to `.git/info/exclude`, so the project's history and `.gitignore` stay untouched. A skill or agent the project already has under the same name is kept. Codex agents have a checksum header: unmodified generated files are refreshed on activation or sync and removed when no longer needed; files you edit are kept. Codex loads project agents only in trusted projects and asks about trust the first time you open the project; tack does not change Codex's trust configuration. The choice is saved in the clone's Git config (`tack.sets`), which is why another clone needs `tack set use` or `tack set sync`.
+In a project, `use` links each skill into `.agents/skills/` and `.claude/skills/`, each agent into `.claude/agents/`, generates Codex agents in `.codex/agents/<name>.toml` and OpenCode agents in `.opencode/agents/<name>.md`, and installs each plugin for that clone (`claude plugin install --scope local`). The links and generated files are added to `.git/info/exclude`, so the project's history and `.gitignore` stay untouched. A skill or agent the project already has under the same name is kept. Generated agents have a checksum marker (the first line for Codex, a YAML comment on the second line for OpenCode): unmodified generated files are refreshed on activation or sync and removed when no longer needed; files you edit are kept. Codex loads project agents only in trusted projects and asks about trust the first time you open the project; tack does not change Codex's trust configuration. Claude Code, Cursor and Copilot CLI read `.claude/agents/`; Cursor requires a trusted workspace, and Copilot warns that `model: inherit` is unavailable and uses `auto`. Gemini CLI project agent discovery is unverified (#205). The choice is saved in the clone's Git config (`tack.sets`), which is why another clone needs `tack set use` or `tack set sync`.
 
 Project activation is saved only after the links have been applied. If linking fails, retry the activation command after fixing the cause; any links already created stay excluded from Git. On native Windows, `WinError 1314` means symbolic-link privileges are missing: enable **Developer Mode** in Windows Settings, or run the command as administrator. If an older version already marked the sets active before failing, use `tack set sync` to finish linking them.
 
@@ -30,7 +30,7 @@ If an agent role moves to global scope, an old generated project file can remain
 | Item | Project scope | Everywhere |
 | --- | --- | --- |
 | Skills | Tools that read `.agents/skills` or `.claude/skills` in a repository | Every tool in `targets.txt` |
-| Agents | Claude Code and Codex (Codex requires a trusted project) | Every tool with an agents folder in `targets.txt` |
+| Agents | Claude Code, Cursor and Copilot CLI via `.claude/agents`; Codex and OpenCode via generated files. Codex and Cursor require trust; Copilot uses `auto` for `model: inherit`. Gemini CLI unverified (#205) | Every tool with an agents folder in `targets.txt` |
 | Plugins | Claude Code | Claude Code |
 
 ### Agent roles
