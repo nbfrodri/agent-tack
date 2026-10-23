@@ -51,6 +51,7 @@ tests/pr-policy.test.sh  # offline PR metadata, drafts, project conventions and 
 tests/verification.test.sh # path-selected checks, real failure detection, trust, timeouts and Stop integration
 tests/native-agents.test.sh # native formats, installation preservation and Gemini/Copilot hook protocols
 tests/smoke.test.sh      # portable installation and hook smoke checks
+tests/run-all.test.sh    # tests/run-all.sh suite selection: names narrow the run, an unknown one exits 2
 ```
 CI runs ShellCheck 0.11.0 (pinned by checksum in `.github/workflows/ci.yml`; use the same version locally, as the runner's default one reports different warnings) and content validation on Linux, the installer and hook regression suites on Linux and macOS, and `claude plugin validate`/`test` for each mod on Linux when the claude CLI is available (it skips otherwise). Rules for contributors (bash 3.2, isolated tests…) are in [`AGENTS.md`](../AGENTS.md).
 
