@@ -18,7 +18,7 @@
 
 This is a personal configuration, kept in Git so that a new machine or another AI tool works the way the last one did. Installing it links the repository into each tool's own folders; nothing is copied, so an edit here applies everywhere.
 
-It is public so you can read it or fork it. It is not a product: defaults follow one person's preferences and change without notice. Its main idea is not to trust the assistant blindly: effort follows risk, a critic challenges a plan before code, and the project's own checks decide what is verified. [How it differs from Everything Claude Code](docs/comparison.md).
+It is public so you can read it or fork it. It is not a product: defaults follow one person's preferences and change without notice. In short: the same instructions, skills and agents reach every AI tool; sets of them load only where a project needs them; a command guard and Git hooks stop risky actions; workflow modes match effort to risk, with a critic that challenges the plan at the strictest level; and the project's own checks, not the assistant's word, decide what is verified. [How it differs from Everything Claude Code](docs/comparison.md).
 
 ## What it holds
 
