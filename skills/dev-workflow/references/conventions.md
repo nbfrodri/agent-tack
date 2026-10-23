@@ -2,6 +2,8 @@
 
 Portable guidance and selectable defaults. **A project's existing conventions win**: follow its linter, formatter and style first, and use these where it has none (and in new projects).
 
+In a legacy codebase with no written rules, find the implicit ones before editing: name one to three exemplar files, record them in AGENTS.md, and follow them. When two styles are evenly split, ask the user one question at a time with the evidence; a style used by a small minority yields to the majority. Reuse an exemplar's structure, never its defects.
+
 ## Git
 
 | Topic | Convention |

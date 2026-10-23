@@ -59,7 +59,7 @@ Capturing needs Playwright in the project (`npm i -D playwright && npx playwrigh
 
 ## Automatic delegation and integration choices
 
-At strict, the `critic` role (set `review`) challenges the plan before code and returns findings and questions; you decide. At any level you can ask for it, and for 2–3 design options, when a choice is open.
+At strict, the `critic` role (set `review`) challenges the plan before code and returns findings and questions; you decide. At any level you can ask for it, and for 2–3 design options, when a choice is open. Also at strict, output that ships without human review or makes claims a model may invent gets two independent reviews with the same rubric; both must pass, with fresh reviewers each round and a stop after three rounds to ask you. It costs two to three times the generation, so it is skipped where a test or build already decides.
 
 In enabled projects, complex strict-level work with independent parts is delegated automatically after the plan is approved; at lite and standard the assistant suggests delegation and waits for your OK, because each subagent starts cold and costs extra tokens. Small or tightly coupled tasks stay with the main assistant. Tack recommends available models and effort according to complexity; the actual selection depends on the tool's supported controls. Tools without subagents perform the plan sequentially.
 

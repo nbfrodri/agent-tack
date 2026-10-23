@@ -39,6 +39,9 @@ For each unit of behaviour, cover:
 
 Use parametrised or table tests when the same behaviour is checked with many inputs.
 
+## Code an assistant wrote
+The model that wrote a change shares its assumptions when it reviews it, so a "looks correct" review is weak evidence. Run the tests and the build before any review, and let a failing check outrank the model's opinion. Aim tests where defects were found, since assistants repeat the same kind of mistake: a field added to one code path and forgotten in another (mock and real, flagged and unflagged, cached and uncached), a query that omits a new column, an error that leaves stale state, an optimistic update without rollback. Assert that every path returns the same shape.
+
 ## Writing them well
 - **Name = behaviour:** `test_rejects_order_when_stock_is_insufficient`, `it('shows an error when the email is taken')`. The name should read like a spec.
 - **Arrange / Act / Assert**, visibly separated, one behaviour per test. Several assertions are fine if they check the same behaviour.
