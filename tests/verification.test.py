@@ -374,6 +374,21 @@ class VerificationTests(unittest.TestCase):
         self.assertLess(time.monotonic() - started, 30, result.stdout + result.stderr)
         self.assertIn('did not finish', result.stdout)
 
+    def test_stop_hook_notes_a_skipped_slop_scan_instead_of_blocking_on_it(self):
+        self.define([self.check(command='true')])
+        self.git('config', 'tack.enabled', 'true')
+        self.trust()
+        self.write('src/api.py', 'value = 2\n')
+        self.commit()
+        # A 10 s hook budget is spent before any step starts, whatever the speed of the machine.
+        env = dict(self.env, TACK_STOP_TIMEOUT='10')
+        result = subprocess.run([BASH, str(REPO / 'hooks/claude/stop-check.sh')],
+                                input=json.dumps({'cwd': str(self.root)}), cwd=self.root,
+                                env=env, text=True, capture_output=True, timeout=60)
+        output = json.loads(result.stdout)
+        self.assertNotIn('aislop', output.get('reason', ''), result.stdout)
+        self.assertIn('aislop scan skipped', output['systemMessage'])
+
     def test_stop_hook_bounds_slop_after_mapped_verification(self):
         self.define([self.check(command='sleep 1')])
         self.git('config', 'tack.enabled', 'true')
