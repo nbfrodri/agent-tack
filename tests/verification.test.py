@@ -94,6 +94,33 @@ class VerificationTests(unittest.TestCase):
                 self.assertEqual(report['unmapped_paths'], [])
                 (self.root / path).unlink()
 
+    def test_set_data_selects_targeted_suites_instead_of_the_full_suite(self):
+        self.define(json.loads((REPO / 'checks-map.json').read_text(encoding='utf-8'))['checks'])
+        for path in ('sets.txt', 'sources.txt'):
+            with self.subTest(path=path):
+                self.write(path, '# Data change\n')
+                report = self.verify('--plan')
+                self.assertEqual([check['id'] for check in report['checks']], ['content', 'data'])
+                self.assertEqual(report['unmapped_paths'], [])
+                (self.root / path).unlink()
+        self.write('sets.txt', '# Data change\n')
+        report = self.verify('--plan')
+        command = {check['id']: check for check in report['checks']}['data']['command']
+        self.assertNotEqual(command.strip(), 'tests/run-all.sh -j 4')
+        listed = subprocess.run([BASH, str(REPO / 'tests/run-all.sh'), '--list'], capture_output=True, text=True,
+                                env=self.env).stdout.split()
+        named = [word for word in command.split() if word.endswith(('.sh',)) and word != 'tests/run-all.sh']
+        self.assertTrue(named, command)
+        for suite in named:
+            with self.subTest(suite=suite):
+                self.assertIn(suite, listed)
+
+    def test_unmapped_data_file_still_selects_the_full_suite(self):
+        self.define(json.loads((REPO / 'checks-map.json').read_text(encoding='utf-8'))['checks'])
+        self.write('targets.txt', '# Target change\n')
+        report = self.verify('--plan')
+        self.assertIn('regressions', {check['id'] for check in report['checks']})
+
     def test_shared_contract_selects_both_areas_but_web_change_stays_focused(self):
         self.define([self.check('api', ['apps/api/*', 'packages/contracts/*'], 'npm run test:api'),
                      self.check('web', ['apps/web/*', 'packages/contracts/*'], 'npm run test:web')])

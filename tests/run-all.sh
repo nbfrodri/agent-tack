@@ -1,25 +1,34 @@
 #!/usr/bin/env bash
 # Runs every test suite, several at a time, and prints one line per suite plus a summary. Each
 # suite already works in its own temp HOME, so they can run side by side.
-# Usage: tests/run-all.sh [-j N] [--list]   (N defaults to the number of CPUs, at least 1)
-# Exit codes: 0 every suite passed, 1 a suite failed (its log is kept), 2 bad options.
+# Usage: tests/run-all.sh [-j N] [--list] [suite.sh ...]   (N defaults to the number of CPUs, at
+# least 1; suite names, as --list prints them, run just those suites)
+# Exit codes: 0 every suite passed, 1 a suite failed (its log is kept), 2 bad options or suite name.
 set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SUITES=(completion.test.sh validate.sh validate.test.sh cross-delegate.test.sh codex-used.test.sh branches.test.sh usage.test.sh lifecycle.test.sh doctor.test.sh install.test.sh tools.test.sh
 hooks.test.sh mods.test.sh vscode.test.sh codex.test.sh cli.test.sh settings.test.sh safety.test.sh
-guard.test.sh project-capabilities.test.sh native-agents.test.sh project-setup.test.sh verification.test.sh project-config.test.sh team.test.sh sets.test.sh pr-policy.test.sh ownership-platform.test.sh smoke.test.sh mods-unit.sh)
+guard.test.sh project-capabilities.test.sh native-agents.test.sh project-setup.test.sh verification.test.sh project-config.test.sh team.test.sh sets.test.sh pr-policy.test.sh ownership-platform.test.sh smoke.test.sh run-all.test.sh mods-unit.sh)
 
 jobs="$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 2)"
+picked=()
 while [ "$#" -gt 0 ]; do
   case "$1" in
     -j) jobs="${2:-}"; shift ;;
     --list) printf '%s\n' "${SUITES[@]}"; exit 0 ;;
-    *) echo "run-all: unknown option $1 (use -j N or --list)" >&2; exit 2 ;;
+    -*) echo "run-all: unknown option $1 (use -j N, --list or suite names)" >&2; exit 2 ;;
+    *)
+      case " ${SUITES[*]} " in
+        *" $1 "*) picked+=("$1") ;;
+        *) echo "run-all: unknown suite $1 (--list names them)" >&2; exit 2 ;;
+      esac ;;
   esac
   shift
 done
 case "$jobs" in '' | *[!0-9]* | 0) echo "run-all: -j needs a positive number" >&2; exit 2 ;; esac
+# Suite names narrow the run, in the order given; with none, every suite runs.
+if [ "${#picked[@]}" -gt 0 ]; then SUITES=("${picked[@]}"); fi
 
 LOGS="$(mktemp -d "${TMPDIR:-/tmp}/tack-run-all.XXXXXX")" || exit 1
 # Suites share the CPUs here, so the guard's latency test gets the wider budget CI uses.

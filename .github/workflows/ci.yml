@@ -87,6 +87,7 @@ jobs:
           tests/pr-policy.test.sh
           tests/ownership-platform.test.sh
           tests/smoke.test.sh
+          tests/run-all.test.sh
 
   windows:
     # Native Windows through Git Bash is experimental (docs/editors.md#windows). This job keeps the
