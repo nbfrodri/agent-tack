@@ -94,32 +94,44 @@ class VerificationTests(unittest.TestCase):
                 self.assertEqual(report['unmapped_paths'], [])
                 (self.root / path).unlink()
 
-    def test_set_data_selects_targeted_suites_instead_of_the_full_suite(self):
+    def test_data_files_with_a_measured_fast_check_select_it_instead_of_the_full_suite(self):
+        # Each file was broken on purpose in three ways (shape, value, deletion) and every fast suite
+        # run: these are the files whose slips the named suites caught (see AGENTS.md).
         self.define(json.loads((REPO / 'checks-map.json').read_text(encoding='utf-8'))['checks'])
-        for path in ('sets.txt', 'sources.txt'):
+        expected = {
+            'sets.txt': 'data', 'sources.txt': 'data', 'targets.txt': 'data-targets',
+            'features.txt': 'data-config', 'modes/lite.md': 'data-config',
+        }
+        for path, check_id in expected.items():
             with self.subTest(path=path):
                 self.write(path, '# Data change\n')
                 report = self.verify('--plan')
-                self.assertEqual([check['id'] for check in report['checks']], ['content', 'data'])
+                self.assertEqual([check['id'] for check in report['checks']], ['content', check_id])
                 self.assertEqual(report['unmapped_paths'], [])
                 (self.root / path).unlink()
-        self.write('sets.txt', '# Data change\n')
-        report = self.verify('--plan')
-        command = {check['id']: check for check in report['checks']}['data']['command']
-        self.assertNotEqual(command.strip(), 'tests/run-all.sh -j 4')
+
+    def test_data_files_without_a_measured_fast_check_still_select_the_full_suite(self):
+        # Their value slip (or, for reply-styles.txt, every slip) passed all the fast suites.
+        self.define(json.loads((REPO / 'checks-map.json').read_text(encoding='utf-8'))['checks'])
+        for path in ('model-tiers.txt', 'plugins.txt', 'reply-styles.txt'):
+            with self.subTest(path=path):
+                self.write(path, '# Data change\n')
+                ids = {check['id'] for check in self.verify('--plan')['checks']}
+                self.assertIn('regressions', ids)
+                self.assertFalse({i for i in ids if i.startswith('data')}, ids)
+                (self.root / path).unlink()
+
+    def test_every_suite_named_by_a_data_check_exists(self):
+        checks = json.loads((REPO / 'checks-map.json').read_text(encoding='utf-8'))['checks']
         listed = subprocess.run([BASH, str(REPO / 'tests/run-all.sh'), '--list'], capture_output=True, text=True,
                                 env=self.env).stdout.split()
-        named = [word for word in command.split() if word.endswith(('.sh',)) and word != 'tests/run-all.sh']
-        self.assertTrue(named, command)
-        for suite in named:
-            with self.subTest(suite=suite):
-                self.assertIn(suite, listed)
-
-    def test_unmapped_data_file_still_selects_the_full_suite(self):
-        self.define(json.loads((REPO / 'checks-map.json').read_text(encoding='utf-8'))['checks'])
-        self.write('targets.txt', '# Target change\n')
-        report = self.verify('--plan')
-        self.assertIn('regressions', {check['id'] for check in report['checks']})
+        for check in (c for c in checks if c['id'].startswith('data')):
+            named = [word for word in check['command'].split() if word.endswith('.sh') and word != 'tests/run-all.sh']
+            self.assertTrue(named, check)
+            self.assertLessEqual(len(named), 4, 'one batch of four suites at most')
+            for suite in named:
+                with self.subTest(check=check['id'], suite=suite):
+                    self.assertIn(suite, listed)
 
     def test_shared_contract_selects_both_areas_but_web_change_stays_focused(self):
         self.define([self.check('api', ['apps/api/*', 'packages/contracts/*'], 'npm run test:api'),

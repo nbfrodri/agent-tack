@@ -13,6 +13,7 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 ### Changed
 
 - `tests/run-all.sh` accepts suite names after its options and runs only those; an unknown name exits 2. In this repository's `checks-map.json`, edits to `sets.txt` or `sources.txt` now select a `data` check (the `cli`, `completion` and `native-agents` suites, about 90 s) instead of the full 20-minute suite, which `tack verify` could never finish. The other data files and `modes/*` still select the full suite (#190).
+- More data files select a targeted check instead of the full suite, each chosen by breaking the file in three ways (shape, value, deletion) and running the fast suites: `targets.txt` runs `data-targets` (`sets`, `tools`, `native-agents`, about 85 s); `features.txt` and `modes/*` run `data-config` (`cli`, `project-config`, about 60 s). `model-tiers.txt`, `plugins.txt` and `reply-styles.txt` still select the full suite, because a value slip passed every fast suite (for `reply-styles.txt`, every slip did) (#198).
 - The Stop hook reports a verification or a test command it had no time left to start (`project verification skipped`, `the tests were skipped`) as a note in its system message instead of blocking the stop, like the out-of-time checks and the skipped aislop scan before it. A failure, an unmapped path or edited inputs still block (#199).
 
 ## [0.2.0] - 2026-10-23
