@@ -1,6 +1,6 @@
 # Components
 
-Available skills, agents and plugins, in one line each. Fresh installations expose only `dev-workflow` and `new-project`, the `core` set; every other skill and agent comes with a [set](sets.md).
+Available skills, agents and plugins, in one line each. Fresh installations expose only `dev-workflow`, `new-project` and `tack`, the `core` set; every other skill and agent comes with a [set](sets.md).
 
 ## Skills
 
@@ -11,6 +11,7 @@ Open Agent Skills format (`SKILL.md`), read by every supported tool.
 | --- | --- |
 | `dev-workflow` | The workflow at lite, standard or strict level: impact mapping, minimal modular changes, architecture fit, plan, TDD, SOLID/DDD, code, git and release conventions, docs |
 | `new-project` | Analyze a new or existing project, initialize minimal guidance, select optional foundations with the user and remember choices |
+| `tack` | Operate tack itself: who decides what, the traps in sets, trust, checks and hook messages, and where each topic is documented |
 | `debugging` | Reproduce → regression test → isolate → verify → fix the root cause |
 | `testing` | What and how to test per layer; pytest, Pest/PHPUnit, Vitest/Jest |
 | `git-history` | Amend, fixup, squash, undo and recover commits |

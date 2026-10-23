@@ -24,6 +24,7 @@ core about The workflow and project setup that every session relies on; always a
 core category base
 core skill dev-workflow
 core skill new-project
+core skill tack
 
 # Compatibility: everything of this repository at once, grouped by origin rather than by the
 # work at hand, so the startup index does not offer them. `tack migrate` selects these for a
@@ -46,6 +47,7 @@ tack-skills skill observability
 tack-skills skill orchestrate
 tack-skills skill project-docs
 tack-skills skill release
+tack-skills skill tack
 tack-skills skill testing
 
 tack-agents about Every agent role of this repository (not the subagent plugins) at once
