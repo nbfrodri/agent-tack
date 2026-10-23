@@ -9,7 +9,7 @@ Architecture and execution flows: `docs/architecture.md`; keep it current when c
 - Validate skills, agents and cross-references alone: `tests/validate.sh` (its own tests: `tests/validate.test.sh`)
 - One suite at a time: `tests/<name>.test.sh` (`tests/run-all.sh --list` names them)
 - Apply locally: `./install.sh` (idempotent)
-- Select repository checks: `bin/tack verify --plan`; after local trust, `bin/tack verify --budget-seconds 600`. Runtime changes select the full suite; docs-only changes select content validation. Review semantic correctness separately.
+- Select repository checks: `bin/tack verify --plan`; after local trust, `bin/tack verify --budget-seconds 600`. Runtime changes select the full suite, which takes about 20 minutes (1337 s on one machine) and cannot finish within `tack verify`'s 600 s cap: it reports `Not completed`, so run `tests/run-all.sh` directly or rely on CI. Docs-only changes select content validation. Review semantic correctness separately.
 
 ## Rules for this repo
 - Keep all repository content in English, including documentation, examples, skill trigger phrases and eval prompts, so it stays consistent for readers. Conversation language follows the global instructions.

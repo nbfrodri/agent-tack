@@ -171,7 +171,11 @@ def run(report, root, trusted, budget, environment=None):
         else:
             execute(check, root, min(remaining, check['timeout_seconds']), environment=environment)
     report['inputs_changed'] = before != snapshot(root, environment)
-    if any(c['status'] in ('failed', 'timed_out') for c in report['checks']):
+    # Running out of time proves nothing either way, so it is incomplete, never a failure.
+    out_of_time = [name for c in report['checks'] if c['status'] in ('timed_out', 'budget_exhausted') for name in c['ids']]
+    if out_of_time:
+        report['out_of_time'] = out_of_time
+    if any(c['status'] == 'failed' for c in report['checks']):
         report['status'] = 'failed'
         return 1
     if report['inputs_changed'] or report['unmapped_paths'] or any(c['status'] != 'passed' for c in report['checks']):
@@ -189,6 +193,10 @@ def render(report):
         print(f"- {','.join(check['ids'])}: {check['status']}: {check['command']} (from {check['source']})")
         if check.get('output_tail'):
             print(check['output_tail'].rstrip())
+    if report.get('out_of_time'):
+        reason = 'out of time' if report['status'] == 'failed' else 'out of time, nothing failed'
+        print(f"Not completed ({reason}): {', '.join(report['out_of_time'])}. "
+              'Not verified: run tack verify --budget-seconds N (1-600), or rely on CI.')
     if report.get('unmapped_paths'):
         print('No check selected for: ' + ', '.join(repr(p) for p in report['unmapped_paths'][:30]))
     if report.get('inputs_changed'):

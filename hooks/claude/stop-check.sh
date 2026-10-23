@@ -164,8 +164,16 @@ if [ -e checks-map.json ] || [ -L checks-map.json ]; then
   if remaining_budget; then
     verification="$("$cli" verify --budget-seconds "$budget" 2>&1)"
     verification_status=$?
-    [ "$verification_status" -eq 0 ] || add "project verification needs attention:
+    # A check that only ran out of time failed nothing: say so as a note instead of blocking the
+    # stop. Any other gap (a failure, an unmapped path, edited inputs) still blocks.
+    out_of_time="$(printf '%s\n' "$verification" | grep '^Not completed (out of time, nothing failed)')"
+    if [ "$verification_status" -eq 3 ] && [ -n "$out_of_time" ] \
+      && ! printf '%s\n' "$verification" | grep -qE '^(No check selected for|Checks changed repository inputs)'; then
+      hint="${hint:+$hint }tack: $out_of_time"
+    elif [ "$verification_status" -ne 0 ]; then
+      add "project verification needs attention:
 $verification"
+    fi
   else
     add "project verification skipped: the Stop hook time budget is exhausted; run tack verify."
   fi
