@@ -35,7 +35,7 @@ tack is a personal configuration: the [README](../README.md) says what it holds 
 
 ## Decisions and history
 
-[ADRs](adr/) explain design decisions; [0004](adr/0004-personal-configuration-with-sets.md) records why this repository is a personal configuration. [AI work records](ai/README.md) log assisted changes. Benchmarks, audits and archived plans from the period when tack was evaluated as a general product were removed from the tree and remain in the Git history.
+[ADRs](adr/) explain design decisions; [0004](adr/0004-personal-configuration-with-sets.md) records why this repository is a personal configuration and [0005](adr/0005-stay-a-personal-configuration-for-now.md) what presenting it as a product would change and when to decide. [AI work records](ai/README.md) log assisted changes. Benchmarks, audits and archived plans from the period when tack was evaluated as a general product were removed from the tree and remain in the Git history.
 
 ## Keep these guides current
 
