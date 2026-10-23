@@ -25,7 +25,7 @@ For a bigger change:
 | --- | --- | --- |
 | `lite` | Small, clear changes | Focused edit, relevant checks, brief summary |
 | `standard` | A feature or bug fix within one area | Short plan, behavior tests, affected docs and review where useful |
-| `strict` | Broad or risky changes, such as auth or migrations | Written plan challenged by the `critic` role, deeper verification and review, useful decision records |
+| `strict` | Broad or risky changes, such as auth or migrations | Written plan challenged by the `critic` role, deeper verification and review (two independent reviews for unreviewed output), useful decision records |
 
 A new feature is not automatically strict. A one-line security fix can be. Explicit strict preferences remain supported. Plan approval already given by the user does not need to be requested again.
 

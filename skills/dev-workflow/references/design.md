@@ -40,6 +40,7 @@ Dependencies point inwards: `interfaces → application → domain`, and `infras
 ## Minimal, modular change
 - **Smallest diff that solves the problem:** fewer files and lines mean less risk and easier review. Don't reformat, rename or reorganise code you aren't changing.
 - **Change in one place:** a new variant (a mode, a provider, a rule) should be a new entry in data or a new implementation of an existing interface, not edits scattered across call sites. If it can't be, the missing extension point is the design problem to raise.
+- **Impact before a risky change:** for cross-module work, public interfaces, migrations, auth or deployment, list from real imports, routes, schemas and `git grep` (not from directory names) the affected code, data, interfaces, tests, docs and release steps, including the rollback and any irreversible effect. A missing rollback or compatibility window is a blocker; mark what you could not verify as unverified. After implementing, compare the actual diff with that list and report scope drift.
 - **Signals that the architecture needs attention:** shotgun surgery (one feature touches many files), god files or functions, dependency cycles or domain logic depending on infrastructure, copy-pasted logic, configuration hard-coded in code, and load or data growth the current design can't absorb. Report them with evidence and options; refactor only with the user's agreement.
 
 ## Contracts, failures and recovery
