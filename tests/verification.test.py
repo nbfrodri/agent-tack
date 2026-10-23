@@ -343,15 +343,17 @@ class VerificationTests(unittest.TestCase):
         self.assertIn('/clear', output['systemMessage'])
 
     def test_stop_hook_reports_an_out_of_time_check_as_a_note_not_a_block(self):
-        self.define([self.check(command='sleep 60')])
+        # The check's own timeout ends it, and the hook budget is generous, so a slow runner that
+        # needs seconds to start the hook cannot leave verification without time to run.
+        self.define([self.check(command='sleep 30', timeout_seconds=2)])
         self.git('config', 'tack.enabled', 'true')
         self.git('config', 'tack.slopCheck', 'false')
         self.trust()
         self.write('src/api.py', 'value = 2\n')
         self.commit()
-        env = dict(self.env, TACK_STOP_TIMEOUT='14')
+        env = dict(self.env, TACK_STOP_TIMEOUT='90')
         result = subprocess.run([BASH, str(REPO / 'hooks/claude/stop-check.sh')], input=json.dumps({'cwd': str(self.root)}),
-                                cwd=self.root, env=env, text=True, capture_output=True, timeout=40)
+                                cwd=self.root, env=env, text=True, capture_output=True, timeout=80)
         output = json.loads(result.stdout)
         self.assertNotIn('decision', output, result.stdout)
         self.assertIn('Not completed (out of time, nothing failed): api', output['systemMessage'])
