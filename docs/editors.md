@@ -17,7 +17,7 @@ Restart the tool or editor after installing or updating so it reloads instructio
 | Claude Code (`claude`; CLI, VS Code, JetBrains) | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
 | Codex (`codex`; CLI, VS Code) | ✔ | ✔ | ✔ | ✔ (approve once with `/hooks`) | — | ✔ |
 | GitHub Copilot (`copilot`; CLI, VS Code Copilot Chat) | ✔ | ✔ | CLI | CLI | — | ✔ |
-| Gemini CLI (`gemini`) | ✔ | ✔ | ✔ | ✔ | — | ✔ |
+| Gemini CLI (`gemini`) | ✔ | ✔ | global; project unverified (#205) | ✔ | — | ✔ |
 | OpenCode (`opencode`) | ✔ | ✔ | ✔ | — | — | ✔ |
 | Crush (`crush`) | ✔ | ✔ | — | — | — | ✔ |
 | Cursor (`cursor`; editor and CLI) | manual, once | ✔ | ✔ | command guard only | — | ✔ |
@@ -48,7 +48,7 @@ Restart the tool or editor after installing or updating so it reloads instructio
 ## GitHub Copilot
 
 - **Copilot CLI:** `copilot` in the project. Reads `~/.copilot/copilot-instructions.md` and the skills.
-- **CLI agents and hooks:** generated `~/.copilot/agents/*.agent.md` and merged `~/.copilot/hooks/tack.json`, following [agent configuration](https://docs.github.com/en/copilot/reference/custom-agents-configuration) and [hook protocols](https://docs.github.com/en/copilot/reference/hooks-reference). CLI integration does not establish equivalent native support in VS Code Chat. Custom definitions and hook entries are preserved.
+- **CLI agents and hooks:** generated `~/.copilot/agents/*.agent.md` and merged `~/.copilot/hooks/tack.json`, following [agent configuration](https://docs.github.com/en/copilot/reference/custom-agents-configuration) and [hook protocols](https://docs.github.com/en/copilot/reference/hooks-reference). Project sets reach Copilot CLI through `.claude/agents/`; it warns that `model: inherit` is unavailable and uses `auto`. CLI integration does not establish equivalent native support in VS Code Chat. Custom definitions and hook entries are preserved.
 - **Copilot Chat in VS Code:** configured whenever VS Code is installed (`code`, `code-insiders` or `codium`), even without the Copilot CLI. It reads the user instructions in `~/.copilot/copilot-instructions.md` and the skills in `~/.agents/skills`, `~/.claude/skills` and `~/.copilot/skills`.
   - The installer turns on the VS Code setting `chat.useAgentsMdFile` in your user settings, so each project's `AGENTS.md` loads too. It only adds the key when it is absent: an existing value (even `false`) is kept, and a `settings.json` with comments or trailing commas is left untouched with a warning (add `"chat.useAgentsMdFile": true` yourself). Opt out with `tack config vscode-agents-md false --global`; `./uninstall.sh` removes the key only if it still holds the installed value.
   - Use agent mode for tasks that edit files and run commands; the instructions tell it to follow `dev-workflow` in enabled projects.
@@ -58,14 +58,14 @@ Restart the tool or editor after installing or updating so it reloads instructio
 
 - **One manual step:** Cursor keeps global rules in its settings, not in a file. Copy the contents of `global/AGENTS.md` from your checkout into *Cursor Settings → Rules* (User Rules) once; the installer reminds you. Paste again after updates that change that file.
 - **Command guard:** the installer registers `hooks/cursor/guard.sh` for `beforeShellExecution` in `~/.cursor/hooks.json`, next to your own hooks. It translates Cursor's hook format to the shared guard and back, so Cursor refuses or asks about the same commands as Claude Code. The adapter needs `python3`; without it Cursor runs commands unchecked. The other agent hooks (startup context, checks after edits and before stopping) do not run in Cursor yet.
-- **Skills and agents:** tool-specific links in `~/.cursor/skills` and generated `~/.cursor/agents/*.md`, following [skills](https://cursor.com/docs/skills) and [subagents](https://cursor.com/docs/subagents). Read-only roles set `readonly: true`; role text preserves more specific restrictions. Tack does not enable cloud sync.
+- **Skills and agents:** tool-specific links in `~/.cursor/skills` and generated `~/.cursor/agents/*.md`, following [skills](https://cursor.com/docs/skills) and [subagents](https://cursor.com/docs/subagents). Project sets reach Cursor through `.claude/agents/` in trusted workspaces. Read-only roles set `readonly: true`; role text preserves more specific restrictions. Tack does not enable cloud sync.
 - **`cursor-agent`** (terminal) uses the same rules and skills.
 - **Check:** `tack doctor` shows "cursor: detected but not configured by this installation" until you paste the rules; the warning stays because tack cannot see Cursor's settings.
 
 ## Gemini CLI, OpenCode and Crush
 
-- **Gemini CLI:** `~/.gemini/GEMINI.md`, `~/.gemini/skills`, native roles in `~/.gemini/agents/*.md`, and hooks in `~/.gemini/settings.json`. [Subagents](https://geminicli.com/docs/core/subagents/) and [hooks](https://geminicli.com/docs/hooks/reference/) have native schemas; tack translates them instead of copying Claude configuration. Guard asks become denials requiring user confirmation.
-- **OpenCode:** `~/.config/opencode/AGENTS.md`, `~/.config/opencode/skills` and [native Markdown subagents](https://opencode.ai/docs/agents/) in `~/.config/opencode/agents/`. Tack manages no OpenCode runtime plugin/hooks; global git hooks still apply.
+- **Gemini CLI:** `~/.gemini/GEMINI.md`, `~/.gemini/skills`, native roles in `~/.gemini/agents/*.md`, and hooks in `~/.gemini/settings.json`. [Subagents](https://geminicli.com/docs/core/subagents/) and [hooks](https://geminicli.com/docs/hooks/reference/) have native schemas; tack translates them instead of copying Claude configuration. Project agent discovery is unverified (#205). Guard asks become denials requiring user confirmation.
+- **OpenCode:** `~/.config/opencode/AGENTS.md`, `~/.config/opencode/skills` and [native Markdown subagents](https://opencode.ai/docs/agents/) in `~/.config/opencode/agents/`. Project sets generate `.opencode/agents/<name>.md`; OpenCode does not read `.claude/agents/` and showed no project trust prompt. Unmodified generated files are refreshed or removed as sets change; user files and edits are kept. Tack manages no OpenCode runtime plugin/hooks; global git hooks still apply.
 - **Crush:** `~/.config/AGENTS.md` and `~/.config/crush/skills`, as documented in its [official configuration guide](https://github.com/charmbracelet/crush). No verified native agent/hook adapter is installed; use portable role instructions when needed.
 
 They are configured only when installed; rerun `./install.sh` after installing one of them later.
