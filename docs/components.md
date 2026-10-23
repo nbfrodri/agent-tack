@@ -38,6 +38,7 @@ Portable role definitions, linked for Claude and rendered into native Codex, Gem
 | `planner` | Read-only plan: design, tests first, commits, optional delegation |
 | `implementer` | Implements one task on its own branch or worktree |
 | `code-reviewer` | Reviews a diff, branch or whole scope |
+| `critic` | Challenges a proposal or plan before code: assumptions, failure modes, over-engineering, a simpler option and questions for the user |
 | `test-writer` | Adds tests to existing code; never touches production code |
 | `docs-writer` | Keeps docs in sync and logs AI work; runs on an economical model and handles useful independent doc updates when delegation is appropriate |
 | `evaluator` | Scores a project 0–10 per dimension with evidence when a scored assessment is requested |

@@ -52,6 +52,7 @@ tack-agents about Every agent role of this repository (not the subagent plugins)
 tack-agents category compat
 tack-agents agent architecture-reviewer
 tack-agents agent code-reviewer
+tack-agents agent critic
 tack-agents agent docs-writer
 tack-agents agent evaluator
 tack-agents agent implementer
@@ -287,6 +288,7 @@ review skill sentry:skills/find-bugs
 review skill sentry:skills/iterate-pr
 review skill openai:skills/.curated/gh-address-comments
 review agent code-reviewer
+review agent critic
 review agent architecture-reviewer
 review agent evaluator
 
