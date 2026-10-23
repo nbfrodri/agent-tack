@@ -15,7 +15,7 @@
 
 This is a personal configuration, kept in Git so that a new machine or another AI tool works the way the last one did. Installing it links the repository into each tool's own folders; nothing is copied, so an edit here applies everywhere.
 
-It is public so you can read it or fork it. It is not a product: defaults follow one person's preferences and change without notice.
+It is public so you can read it or fork it. It is not a product: defaults follow one person's preferences and change without notice. Its main idea is not to trust the assistant blindly: effort follows risk, a critic challenges a plan before code, and the project's own checks decide what is verified. [How it differs from Everything Claude Code](docs/comparison.md).
 
 ## What it holds
 
