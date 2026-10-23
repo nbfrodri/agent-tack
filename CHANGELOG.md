@@ -4,6 +4,10 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+
+- `tests/validate.sh` checks each file in `modes/`: the first line is `# NAME`, `When:`, `Scope:` and `Context:` are present, `Scope` is `any` or `project` and `Context` is `minimal`, `index` or `full`. Before, removing the `When:` line from a mode passed all 30 suites (`Scope: project` is what makes `unleash` project-only, so a mode file is worth checking) (#196).
+
 ### Changed
 
 - `tests/run-all.sh` accepts suite names after its options and runs only those; an unknown name exits 2. In this repository's `checks-map.json`, edits to `sets.txt` or `sources.txt` now select a `data` check (the `cli`, `completion` and `native-agents` suites, about 90 s) instead of the full 20-minute suite, which `tack verify` could never finish. The other data files and `modes/*` still select the full suite (#190).
