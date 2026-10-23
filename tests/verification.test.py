@@ -232,11 +232,25 @@ class VerificationTests(unittest.TestCase):
             self.skipTest('Creating symlinks requires local permission')
         self.assertIn('symlink', self.verify('--plan', expected=2)['error'])
 
-    def test_timeout_is_a_failed_check(self):
+    def test_timeout_is_incomplete_not_failed(self):
         self.define([self.check(command='sleep 10', timeout_seconds=1)])
         self.trust()
         self.write('src/api.py', 'value = 2\n')
-        self.assertEqual(self.verify(expected=1)['checks'][0]['status'], 'timed_out')
+        report = self.verify(expected=3)
+        self.assertEqual(report['checks'][0]['status'], 'timed_out')
+        self.assertEqual(report['status'], 'incomplete')
+        text = self.command(BASH, str(REPO / 'bin/tack'), 'verify')
+        self.assertEqual(text.returncode, 3, text.stdout + text.stderr)
+        self.assertIn('Not completed (out of time, nothing failed): api', text.stdout)
+        self.assertNotIn('Verification: failed', text.stdout)
+
+    def test_a_failed_check_outranks_a_timeout(self):
+        self.define([self.check(command='sleep 10', timeout_seconds=1), self.check('second', command='false')])
+        self.trust()
+        self.write('src/api.py', 'value = 2\n')
+        report = self.verify(expected=1)
+        self.assertEqual(report['status'], 'failed')
+        self.assertEqual([c['status'] for c in report['checks']], ['timed_out', 'failed'])
 
     def test_check_that_edits_inputs_invalidates_success(self):
         self.define([self.check(command="printf 'value = 4\n' > src/api.py")])
@@ -271,7 +285,7 @@ class VerificationTests(unittest.TestCase):
         self.define([self.check(command='sleep 10'), self.check('second', command='touch .results')])
         self.trust()
         self.write('src/api.py', 'value = 2\n')
-        report = self.verify('--budget-seconds', '1', expected=1)
+        report = self.verify('--budget-seconds', '1', expected=3)
         self.assertEqual(report['checks'][1]['status'], 'budget_exhausted')
         self.assertFalse((self.root / '.results').exists())
 
@@ -324,8 +338,23 @@ class VerificationTests(unittest.TestCase):
         self.assertLess(time.monotonic() - started, 30, result.stdout + result.stderr)
         output = json.loads(result.stdout)
         self.assertEqual(output['decision'], 'block')
-        self.assertIn('timed_out', output['reason'])
+        self.assertNotIn('verification needs attention', output['reason'])
+        self.assertIn('Not completed (out of time, nothing failed): api', output['systemMessage'])
         self.assertIn('/clear', output['systemMessage'])
+
+    def test_stop_hook_reports_an_out_of_time_check_as_a_note_not_a_block(self):
+        self.define([self.check(command='sleep 60')])
+        self.git('config', 'tack.enabled', 'true')
+        self.git('config', 'tack.slopCheck', 'false')
+        self.trust()
+        self.write('src/api.py', 'value = 2\n')
+        self.commit()
+        env = dict(self.env, TACK_STOP_TIMEOUT='14')
+        result = subprocess.run([BASH, str(REPO / 'hooks/claude/stop-check.sh')], input=json.dumps({'cwd': str(self.root)}),
+                                cwd=self.root, env=env, text=True, capture_output=True, timeout=40)
+        output = json.loads(result.stdout)
+        self.assertNotIn('decision', output, result.stdout)
+        self.assertIn('Not completed (out of time, nothing failed): api', output['systemMessage'])
 
     def test_stop_hook_shares_deadline_with_legacy_checks_and_slop(self):
         self.git('config', 'tack.enabled', 'true')

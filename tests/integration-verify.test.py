@@ -97,7 +97,7 @@ class IntegrationTests(unittest.TestCase):
         f.commit()
         f.command(FIXTURE.BASH, str(ROOT / 'bin/tack'), 'trust')
         before = self.state()
-        result = self.check('--verify', '--budget-seconds', '1', expected=1)
+        result = self.check('--verify', '--budget-seconds', '1', expected=3)
         self.assertEqual(result['verification']['checks'][0]['status'], 'timed_out')
         self.assertEqual(self.state(), before)
         for args in (['--verify'], ['--plan', '--against', 'main', '--base', 'main'],
