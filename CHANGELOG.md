@@ -4,8 +4,14 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-23
+
 ### Added
 
+- The `critic` agent role (set `review`): a read-only adversarial review of a proposal or plan before code is written. It looks for hidden assumptions, failure modes, over-engineering and a simpler option, and ends with questions for the user, who decides. At strict level the plan goes to the critic before any code (#180).
+- Audits created by `improve` label each issue with a MoSCoW priority (`must`, `should`, `could`, `wont`), creating the missing labels unless the repository already ranks priority another way (#180).
+- `docs/comparison.md`: how tack differs from Everything Claude Code, with dated figures and no quality claims (#183).
+- A 37-second terminal demo GIF in the README, made from real command output in throwaway directories (#184).
 - Opt-in live behavior trials in `tests/trials/run-trials.sh` for catalog discovery, set suggestions, usage offers, role routing and cross-delegation, with retained session files for investigating misses.
 - `clear-hint-percent` (60 by default, 1–100 or `off`): the Stop hook uses fresh per-directory context fill from the `usage-band` mod or a status line running `tack usage statusline`; without them or a fresh reading, `clear-hint-tokens` applies. `tack usage set|get context` stores or reads fill, `tack usage context` returns it only while at most 600 seconds old, and status lines show `ctx N%` first. Percentage recording in usage-band 0.6.0 works independently of delegation offers.
 - Offer to delegate to Codex when the 5-hour or weekly usage runs high: the `usage-band` mod records the readings (`tack usage`), or without the mod a Claude Code status line running `tack usage statusline` (or `tack usage record` inside your own script), and once per window, past `delegate-usage-percent` (50 by default, `off` to disable), the hook that runs with each message shows an on-screen notice (a `systemMessage`, independent of the assistant) and tells the assistant to end its reply with an offer to hand bounded tasks to Codex. Needs `codex` on PATH and `cross-delegation` not `off`.
@@ -35,6 +41,9 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ### Changed
 
+- `tack verify` and `tack team --verify`: a check that ran out of time or budget now ends `incomplete` (exit 3) instead of `failed` (exit 1) and prints `Not completed (out of time, nothing failed)` with how to continue. The Stop hook reports it as a note instead of blocking; a failure, an unmapped path or edited inputs still block. The full suite takes about 20 minutes, longer than the hook's budget and the 600 s cap, so it could only ever time out. Scripts that read exit codes: a timeout used to exit 1 (#186, refs #181).
+- `dev-workflow`: for an unresolved design choice the assistant presents two or three genuinely different options with their tradeoffs and a recommendation, and the user decides (#180).
+- Practices adapted from Everything Claude Code into the files that already cover each topic, instead of pinning the collection: tests for assistant-written code (`testing`), one machine-checkable contract for parallel consumer and provider work (`api-design`), a wider search before writing code (`dev-workflow`), exemplar files for legacy style, an impact and rollback list before risky changes, and two independent reviews for output that ships without human review (strict mode) (#182).
 - The weekly tools compatibility workflow validates and tests every mod with the latest Claude Code, so a release that makes the engine refuse a mod shows up as a failed run.
 
 - `web-design-guidelines` and `writing-guidelines` leave the `design` and `writing` sets: both download their rules at run time, so their pinned commit did not determine what they instruct. `engineering-lifecycle` moves to the compatibility sets, out of the startup index: it is an alternative method for a whole project, for the user to choose.
@@ -82,6 +91,10 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 - `tack bootstrap` and its generated collaborator setup script, added and removed before a release: it only served teams adopting tack.
 - The evaluation harness (`evals/`), benchmark reports, product audits, archived plans and their offline test suites. They remain in the Git history; no runtime capability was removed.
 - Runtime reads of the former `harness.*` settings and `.harness` markers, the `harness` command and its managed links. Upgrade through v0.1.0 and follow its per-clone migration steps before installing this change ([#122](https://github.com/nbfrodri/agent-tack/pull/122)).
+
+### Security
+
+- The CI workflow token is read-only (`permissions: contents: read`); no job writes to the repository. This closes four CodeQL alerts (#185).
 
 ## [0.1.0] - 2026-10-06
 
