@@ -11,7 +11,7 @@
   <img src="https://img.shields.io/badge/runtime-Bash%20%2B%20Python-334155" alt="Bash and Python">
 </p>
 <p align="center">
-  <img src="docs/assets/tack-demo.gif" alt="Terminal demo: tack mode, the critic role, tack verify --plan and the command guard denying a force push to main" width="720">
+  <img src="docs/assets/tack-demo.gif" alt="Terminal demo: installing tack, set suggestions for a project, the workflow mode, the guard and the secret hook refusing risky actions, tack verify --plan and the critic role" width="720">
 </p>
 
 ---
