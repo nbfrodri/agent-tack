@@ -409,7 +409,7 @@ check "the installer says which sets are active" "grep -q 'active everywhere: co
 git_global "$H" --unset tack.sets
 run_install "$H"
 check "a dropped set's skills are removed" "[ ! -e '$H/.agents/skills/frontend' ] && [ ! -e '$H/.claude/skills/frontend' ]"
-check "the core set's skills are always installed" "[ -L '$H/.agents/skills/dev-workflow' ] && [ -L '$H/.agents/skills/new-project' ]"
+check "the core set's skills are always installed" "[ -L '$H/.agents/skills/dev-workflow' ] && [ -L '$H/.agents/skills/new-project' ] && [ -L '$H/.agents/skills/tack' ]"
 git_global "$H" tack.skillGroups all
 git_global "$H" tack.agentRoles true
 run_install "$H"

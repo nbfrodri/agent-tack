@@ -14,7 +14,7 @@ tack doctor --tools                # check each installed AI tool instead of the
 ./uninstall.sh                         # restore recorded unchanged state
 ```
 
-A fresh installation has one set active, `core`, with two skills: `dev-workflow` and `new-project`. Every other skill and every agent role comes with a [set](sets.md), which you activate in one project or everywhere:
+A fresh installation has one set active, `core`, with three skills: `dev-workflow`, `new-project` and `tack`. Every other skill and every agent role comes with a [set](sets.md), which you activate in one project or everywhere:
 
 ```bash
 tack set list                      # what exists and where it is active
