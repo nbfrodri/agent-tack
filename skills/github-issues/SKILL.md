@@ -17,7 +17,7 @@ Creating, editing, commenting on, labelling or closing issues is visible to othe
 3. **Plan** as usual (`dev-workflow`), with the issue's acceptance criteria as the definition of done.
 4. **Branch linked to the issue:** `gh issue develop 12 --name feat/12-short-slug --checkout` (it shows up on the issue), or plain `git switch -c feat/12-short-slug`. Use `fix/` for bugs, etc.
 5. **Commits:** Conventional Commits as always; reference the issue in the footer when useful: `Refs #12`.
-6. **PR:** prepare the title and body using the project's template and `dev-workflow` → `references/git-github.md`; publish when authorized. Use `Closes #12` when the change fully resolves the issue, or `Refs #12` for partial work. Don't close issues by hand when a PR will do it.
+6. **PR:** prepare the title and body using the project's template and `dev-workflow` → `references/git-github.md`; publish when authorized. Use `Closes #12` when the change fully resolves the issue, or `Refs #12` for partial work. When the user agrees to deliver less than the issue asks, split it before opening the PR: move the part left out to a new issue and edit the original's acceptance criteria, so the PR can say `Closes #12` and GitHub links and closes it on merge. Don't close issues by hand when a PR will do it.
 7. Anything out of scope that you notice stays out of the PR: propose a new issue for it (below).
 
 ## Writing a good issue
