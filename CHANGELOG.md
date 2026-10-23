@@ -4,6 +4,10 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Changed
+
+- `tests/run-all.sh` accepts suite names after its options and runs only those; an unknown name exits 2. In this repository's `checks-map.json`, edits to `sets.txt` or `sources.txt` now select a `data` check (the `cli`, `completion` and `native-agents` suites, about 90 s) instead of the full 20-minute suite, which `tack verify` could never finish. The other data files and `modes/*` still select the full suite (#190).
+
 ## [0.2.0] - 2026-10-23
 
 ### Added

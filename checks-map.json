@@ -14,8 +14,14 @@
       "timeout_seconds": 120
     },
     {
+      "id": "data",
+      "paths": ["sets.txt", "sources.txt"],
+      "command": "tests/run-all.sh -j 4 cli.test.sh completion.test.sh native-agents.test.sh",
+      "timeout_seconds": 300
+    },
+    {
       "id": "regressions",
-      "paths": ["*.py", "*.sh", "bin/*", "lib/*", "hooks/*", "git-hooks/*", "tests/*", "plugins/*", "claude/*", "codex/*", "gemini/*", "copilot/*", "cursor/*", "opencode/*", "crush/*", "modes/*", "targets.txt", "features.txt", "sets.txt", "sources.txt", "model-tiers.txt", "plugins.txt", "reply-styles.txt", ".github/workflows/ci.yml"],
+      "paths": ["*.py", "*.sh", "bin/*", "lib/*", "hooks/*", "git-hooks/*", "tests/*", "plugins/*", "claude/*", "codex/*", "gemini/*", "copilot/*", "cursor/*", "opencode/*", "crush/*", "modes/*", "targets.txt", "features.txt", "model-tiers.txt", "plugins.txt", "reply-styles.txt", ".github/workflows/ci.yml"],
       "command": "tests/run-all.sh -j 4",
       "timeout_seconds": 600
     }
