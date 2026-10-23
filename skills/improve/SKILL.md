@@ -49,6 +49,7 @@ An audit request authorises creating issues for its verified findings in the pro
 
 - Confirm the repository with `gh repo view` and search both open and closed issues. Link an existing open issue when it already tracks the same unresolved problem. A closed issue is evidence to review, not a reason to discard a reproduced regression.
 - Create one issue per independently fixable finding, with evidence, reproduction, impact, proposed change and acceptance criteria. Save body text to a temporary file and use `--body-file`.
+- Give each issue one MoSCoW label (`must`, `should`, `could`, `wont`) derived from its impact and effort, following the label rules in `github-issues`. Create the missing labels; an existing repo that ranks priority another way keeps its own scheme.
 - Do not turn optional feature suggestions or unverified concerns into issues unless the user asks for them.
 - If GitHub is unavailable, no GitHub remote exists or creation is denied, report what remains untracked and keep the local audit. Do not invent issue URLs or repeatedly retry writes with uncertain results; check whether an issue was created first.
 - Record issue links and status in the audit and include them in the report to the user. Pushes, PRs, merges and other writes still follow their own approval rules.
