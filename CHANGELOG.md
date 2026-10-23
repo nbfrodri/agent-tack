@@ -6,6 +6,7 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ### Added
 
+- Project sets generate Codex agents in `.codex/agents/` for trusted projects, preserve user files and edits with checksum headers, and remove unmodified generated files when no longer needed. Activation explains Codex's project trust requirement (#201).
 - `tests/validate.sh` checks each file in `modes/`: the first line is `# NAME`, `When:`, `Scope:` and `Context:` are present, `Scope` is `any` or `project` and `Context` is `minimal`, `index` or `full`. Before, removing the `When:` line from a mode passed all 30 suites (`Scope: project` is what makes `unleash` project-only, so a mode file is worth checking) (#196).
 
 ### Changed

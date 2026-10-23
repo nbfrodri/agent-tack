@@ -21,6 +21,7 @@ The other assistant does the long work in its own context and returns a short, f
 - Effort follows that table: economical → low, balanced → medium, strongest → high. Bump the recommended tier and effort one level (up to strongest/high) for unclear requirements, missing tests or costly mistakes.
 - Writing tasks run in their own worktree and branch, as in `orchestrate` section 2; read-only tasks (review, research) use `-s read-only`.
 - The prompt is self-contained: goal, acceptance criteria, files it owns, the project's `AGENTS.md`, and the first line `You are a delegate: complete this task yourself and reply in the report shape.`
+- When the task touches tack commands, name the `tack` skill in the prompt; the `core` set links it for Codex.
 
 ### Delegation record
 
