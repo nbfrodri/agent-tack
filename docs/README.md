@@ -26,6 +26,7 @@ tack is a personal configuration: the [README](../README.md) says what it holds 
 | Delegation, screenshots, memory, logs and autonomous modes | [Optional features](advanced.md) |
 | Change tack itself or add a capability | [Customization](customization.md) |
 | Available skills, agents and mods | [Components](components.md) |
+| How tack differs from Everything Claude Code | [Comparison with ECC](comparison.md) |
 | Portable engineering principles | [Engineering practices](engineering-practices.md) |
 | Project conventions and precedence | [Conventions](conventions.md) |
 | Installer and hook behavior | [How it works](how-it-works.md) |
