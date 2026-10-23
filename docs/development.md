@@ -23,7 +23,7 @@ a mapped path does not mean every semantic risk is covered. Review docs manually
 ```bash
 tests/lint.sh            # ShellCheck on every script and ruff on the Python (ruff through uvx at the pinned version when uv is installed)
 tests/run-all.sh         # every suite below, in parallel (-j N), with a one-line summary each; name suites (see --list) to run only those
-tests/validate.sh        # skills, agents, references, budgets, former names, closed docs and local human-doc links/anchors
+tests/validate.sh        # skills, agents, modes, references, budgets, former names, closed docs and local human-doc links/anchors
 tests/validate.test.sh   # the validator catches each kind of error
 tests/completion.test.sh # dynamic candidates, bash contexts, syntax checks and completion installation/uninstall
 tests/install.test.sh    # installer, in throwaway HOME directories

@@ -247,6 +247,20 @@ while read -r kind id source _; do
   esac
 done <"$REPO/plugins.txt"
 
+echo "Modes"
+# lib/modes.sh reads Scope (project makes a mode project-only) and Context (startup detail), and
+# `tack mode list` shows When, so a mode that loses one is wrong without any other test noticing.
+for mode in "$REPO"/modes/*.md; do
+  [ -e "$mode" ] || continue
+  name="$(basename "$mode" .md)"
+  [ "$(head -n 1 "$mode")" = "# $name" ] || err "modes/$name.md: the first line must be '# $name'"
+  for key in When Scope Context; do
+    grep -q "^$key: ." "$mode" || err "modes/$name.md: missing a '$key:' line"
+  done
+  case "$(sed -n 's/^Scope: //p' "$mode" | head -n 1)" in any | project | '') ;; *) err "modes/$name.md: Scope must be any or project" ;; esac
+  case "$(sed -n 's/^Context: //p' "$mode" | head -n 1)" in minimal | index | full | '') ;; *) err "modes/$name.md: Context must be minimal, index or full" ;; esac
+done
+
 echo "sets.txt and sources.txt"
 python3 "$REPO/lib/sets.py" "$REPO" check >/dev/null || err 'sets.txt or sources.txt is invalid (tack set check)'
 while read -r set kind item _; do

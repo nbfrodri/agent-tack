@@ -67,6 +67,14 @@ expect_success "a registered suite present in CI" \
   "printf '#!/usr/bin/env bash\n' > tests/new.test.sh; sed 's/SUITES=(/SUITES=(new.test.sh /' tests/run-all.sh > tmp && mv tmp tests/run-all.sh; chmod +x tests/run-all.sh; printf '\n      - name: Test new suite\n        run: tests/new.test.sh\n' >> .github/workflows/ci.yml"
 expect_failure "CI linting with its own command instead of tests/lint.sh" "ci.yml does not call tests/lint.sh" \
   "sed 's#run: tests/lint.sh#run: shellcheck install.sh#' .github/workflows/ci.yml > tmp && mv tmp .github/workflows/ci.yml"
+expect_failure "a mode without its When line" "modes/standard.md: missing a 'When:' line" \
+  "grep -v '^When:' modes/standard.md > tmp && mv tmp modes/standard.md"
+expect_failure "the project-only mode losing its Scope line" "modes/unleash.md: missing a 'Scope:' line" \
+  "grep -v '^Scope:' modes/unleash.md > tmp && mv tmp modes/unleash.md"
+expect_failure "a mode with a Context value the startup does not know" "modes/lite.md: Context must be minimal, index or full" \
+  "sed 's/^Context: .*/Context: everything/' modes/lite.md > tmp && mv tmp modes/lite.md"
+expect_failure "a mode whose heading is not its file name" "modes/strict.md: the first line must be '# strict'" \
+  "sed '1s/.*/# stricter/' modes/strict.md > tmp && mv tmp modes/strict.md"
 expect_failure "a supported tool missing from the capability map" "docs/editors.md has no row for 'crush'" \
   "grep -v '(\`crush\`' docs/editors.md > tmp && mv tmp docs/editors.md"
 expect_failure "CI and the development docs naming different ShellCheck versions" "ShellCheck v0.10.0 in CI" \
