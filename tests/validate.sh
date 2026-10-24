@@ -261,6 +261,21 @@ for mode in "$REPO"/modes/*.md; do
   case "$(sed -n 's/^Context: //p' "$mode" | head -n 1)" in minimal | index | full | '') ;; *) err "modes/$name.md: Context must be minimal, index or full" ;; esac
 done
 
+echo "Reply styles"
+# lib/reply-style.sh falls back to brief for an unknown profile and prints no guidance when brief
+# is missing too, so a lost or mangled profile would go unnoticed.
+styles_allowed="$(awk '$1 == "reply-style" { print $4 }' "$REPO/features.txt")"
+styles_default="$(awk '$1 == "reply-style" { print $3 }' "$REPO/features.txt")"
+styles_seen=""
+while read -r style guidance; do
+  case "$style" in '' | '#'*) continue ;; esac
+  [ -n "$guidance" ] || err "reply-styles.txt: '$style' has no guidance"
+  case "|$styles_allowed|" in *"|$style|"*) ;; *) err "reply-styles.txt: '$style' is not a value of the reply-style feature in features.txt" ;; esac
+  case " $styles_seen " in *" $style "*) err "reply-styles.txt: '$style' is defined twice" ;; esac
+  styles_seen="$styles_seen $style"
+done <"$REPO/reply-styles.txt"
+case " $styles_seen " in *" ${styles_default:-brief} "*) ;; *) err "reply-styles.txt has no '${styles_default:-brief}' profile, the default reply style and the fallback" ;; esac
+
 echo "sets.txt and sources.txt"
 python3 "$REPO/lib/sets.py" "$REPO" check >/dev/null || err 'sets.txt or sources.txt is invalid (tack set check)'
 while read -r set kind item _; do
