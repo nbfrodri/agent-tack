@@ -75,6 +75,16 @@ expect_failure "a mode with a Context value the startup does not know" "modes/li
   "sed 's/^Context: .*/Context: everything/' modes/lite.md > tmp && mv tmp modes/lite.md"
 expect_failure "a mode whose heading is not its file name" "modes/strict.md: the first line must be '# strict'" \
   "sed '1s/.*/# stricter/' modes/strict.md > tmp && mv tmp modes/strict.md"
+expect_failure "the default reply profile deleted" "reply-styles.txt has no 'brief' profile" \
+  "grep -v '^brief ' reply-styles.txt > tmp && mv tmp reply-styles.txt"
+expect_failure "the default reply profile renamed to a legacy alias" "reply-styles.txt has no 'brief' profile" \
+  "sed 's/^brief /terse /' reply-styles.txt > tmp && mv tmp reply-styles.txt"
+expect_failure "a reply profile whose name runs into its guidance" "reply-styles.txt: 'briefLead' is not a value of the reply-style feature" \
+  "sed 's/^brief /brief/' reply-styles.txt > tmp && mv tmp reply-styles.txt"
+expect_failure "a reply profile without guidance" "reply-styles.txt: 'visual' has no guidance" \
+  "awk '\$1 == \"visual\" { print \"visual\"; next } { print }' reply-styles.txt > tmp && mv tmp reply-styles.txt"
+expect_failure "a reply profile defined twice" "reply-styles.txt: 'detailed' is defined twice" \
+  "printf 'detailed Another guidance.\n' >> reply-styles.txt"
 expect_failure "a supported tool missing from the capability map" "docs/editors.md has no row for 'crush'" \
   "grep -v '(\`crush\`' docs/editors.md > tmp && mv tmp docs/editors.md"
 expect_failure "CI and the development docs naming different ShellCheck versions" "ShellCheck v0.10.0 in CI" \

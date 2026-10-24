@@ -111,15 +111,23 @@ class VerificationTests(unittest.TestCase):
                 (self.root / path).unlink()
 
     def test_data_files_without_a_measured_fast_check_still_select_the_full_suite(self):
-        # Their value slip (or, for reply-styles.txt, every slip) passed all the fast suites.
+        # Their value slip passed all the fast suites.
         self.define(json.loads((REPO / 'checks-map.json').read_text(encoding='utf-8'))['checks'])
-        for path in ('model-tiers.txt', 'plugins.txt', 'reply-styles.txt'):
+        for path in ('model-tiers.txt', 'plugins.txt'):
             with self.subTest(path=path):
                 self.write(path, '# Data change\n')
                 ids = {check['id'] for check in self.verify('--plan')['checks']}
                 self.assertIn('regressions', ids)
                 self.assertFalse({i for i in ids if i.startswith('data')}, ids)
                 (self.root / path).unlink()
+
+    def test_reply_styles_are_covered_by_content_validation_alone(self):
+        # tests/validate.sh checks the file (see tests/validate.test.sh), so no suite is needed.
+        self.define(json.loads((REPO / 'checks-map.json').read_text(encoding='utf-8'))['checks'])
+        self.write('reply-styles.txt', '# Data change\n')
+        report = self.verify('--plan')
+        self.assertEqual([check['id'] for check in report['checks']], ['content'])
+        self.assertEqual(report['unmapped_paths'], [])
 
     def test_every_suite_named_by_a_data_check_exists(self):
         checks = json.loads((REPO / 'checks-map.json').read_text(encoding='utf-8'))['checks']
