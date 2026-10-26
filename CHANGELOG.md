@@ -17,6 +17,10 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 - More data files select a targeted check instead of the full suite, each chosen by breaking the file in three ways (shape, value, deletion) and running the fast suites: `targets.txt` runs `data-targets` (`sets`, `tools`, `native-agents`, about 85 s); `features.txt` and `modes/*` run `data-config` (`cli`, `project-config`, about 60 s). `model-tiers.txt` and `plugins.txt` still select the full suite, because a value slip passed every fast suite; `reply-styles.txt` is covered by content validation (#198, #207).
 - The Stop hook reports a verification or a test command it had no time left to start (`project verification skipped`, `the tests were skipped`) as a note in its system message instead of blocking the stop, like the out-of-time checks and the skipped aislop scan before it. A failure, an unmapped path or edited inputs still block (#199).
 
+### Fixed
+
+- The Stop hook no longer blocks the stop when the aislop scan cannot run (for example a mise shim with no Node version set). It reports the scan as a note in the system message, now with the scanner's last error line, instead of blocking every stop on a problem the assistant cannot fix.
+
 ## [0.2.0] - 2026-10-23
 
 ### Added

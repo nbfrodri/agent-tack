@@ -205,7 +205,14 @@ if command -v python3 >/dev/null 2>&1 && "$cli" trusted --quiet \
   && printf '%s\n' "$changed" | grep -E "$SOURCE_FILES" | grep -qvE "$TEST_FILES"; then
   if remaining_budget; then
     slop="$(python3 -I "$(dirname "$cli")/../lib/slop_check.py" "$root" "$base" "$budget" 2>/dev/null)"
-    [ -z "$slop" ] || add "$slop"
+    slop_status=$?
+    if [ "$slop_status" -eq 3 ]; then
+      # The scanner could not run (a broken install, a missing runtime): nothing in the code
+      # failed and the user cannot act on a block, so it is a note.
+      hint="${hint:+$hint }tack: $slop"
+    else
+      [ -z "$slop" ] || add "$slop"
+    fi
   else
     # Nothing was found and nothing failed: the user cannot act on a block, so it is a note.
     hint="${hint:+$hint }tack: aislop scan skipped: the Stop hook time budget is exhausted; run aislop scan --changes."

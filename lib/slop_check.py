@@ -7,7 +7,8 @@ aislop (https://github.com/scanaislop/aislop) is an optional deterministic scann
 coding assistants leave behind: swallowed errors, narrative comments, stubs, unsafe casts,
 hardcoded secrets. It is used only when installed, or named in TACK_AISLOP; it is never
 downloaded, and its telemetry and update checks are turned off. Prints nothing when there is
-nothing to report. The completion hook calls this in trusted projects, because aislop reads the
+nothing to report. Exits 3 when the scan could not complete (the message says why), so the caller can
+treat it as a note instead of a finding. The completion hook calls this in trusted projects, because aislop reads the
 project's .aislop configuration and may run its linters.
 """
 import json
@@ -44,8 +45,13 @@ def scan(binary, root, base, budget=SECONDS):
     except ValueError:
         report = None
     if not isinstance(report, dict) or not isinstance(report.get('diagnostics'), list):
-        return None, f'exit {result.returncode} without a report'
+        return None, reason(result)
     return report, ''
+
+
+def reason(result):
+    lines = [' '.join(line.split()) for line in (result.stderr or '').splitlines() if line.strip()]
+    return f'exit {result.returncode} without a report' + (f': {lines[-1][:160]}' if lines else '')
 
 
 def describe(finding):
@@ -67,7 +73,7 @@ def main():
     if report is None:
         # No scan is not a clean scan.
         print(f'aislop could not scan the changes ({problem}): run aislop scan --changes to see why.')
-        return 0
+        return 3
     found = [item for item in report['diagnostics']
              if isinstance(item, dict) and item.get('changeContext') != UNTOUCHED]
     if not found:
