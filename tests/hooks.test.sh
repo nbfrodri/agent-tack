@@ -878,6 +878,7 @@ cat > "$FAKE_AISLOP" <<FAKE
 #!/bin/sh
 { echo "args: \$*"; echo "telemetry: \${AISLOP_NO_TELEMETRY:-unset} \${DO_NOT_TRACK:-unset} \${AISLOP_NO_UPDATE_NOTIFIER:-unset}"; echo "cwd: \$(pwd)"; } > "$WORK/aislop.calls"
 cat "$WORK/aislop.out" 2>/dev/null
+cat "$WORK/aislop.err" >&2 2>/dev/null
 exit \$(cat "$WORK/aislop.rc" 2>/dev/null || echo 0)
 FAKE
 chmod +x "$FAKE_AISLOP"
@@ -905,6 +906,11 @@ printf '%s' '{"score":100,"scoreable":true,"diagnostics":[]}' > "$WORK/aislop.ou
 check "slop check: a clean scan adds nothing" "! slop | grep -q aislop"
 printf 'not json at all' > "$WORK/aislop.out"; echo 2 > "$WORK/aislop.rc"
 check "slop check: a scan that could not complete is said, not counted as clean" "slop | grep -q 'aislop could not scan the changes'"
+# The repository is dirty, so the stop blocks for the uncommitted files; the scan failure must not be among the reasons.
+check "slop check: a scan that could not complete is a note, not a reason to block" "! slop | jq -r '.reason' | grep -q aislop && slop | jq -r '.systemMessage' | grep -q 'aislop could not scan'"
+printf 'mise ERROR No version is set for shim: aislop\n' > "$WORK/aislop.err"; : > "$WORK/aislop.out"; echo 1 > "$WORK/aislop.rc"
+check "slop check: the note carries the scanner's own error" "slop | grep -q 'No version is set for shim: aislop'"
+rm -f "$WORK/aislop.err"
 slop_findings
 git -C "$SL" config tack.slopCheck false
 rm -f "$WORK/aislop.calls"

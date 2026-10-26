@@ -117,7 +117,7 @@ tack config slop-check false # turn it off for this project; add --global for ev
 - It runs only in an enabled, locally trusted project, and only when a source file changed.
 - Findings in lines the change did not touch are left out.
 - tack never downloads aislop. It calls the installed binary with telemetry and update checks turned off (`AISLOP_NO_TELEMETRY`, `DO_NOT_TRACK`, `AISLOP_NO_UPDATE_NOTIFIER`); set `DO_NOT_TRACK=1` in your shell for your own runs. `TACK_AISLOP` names another binary.
-- A scan that cannot complete is reported as such, not treated as clean. When project verification has used the whole time the hook has, the scan is skipped and the hook says so in its system message as a note, without blocking the stop; run `aislop scan --changes` yourself.
+- A scan that cannot complete (a broken install, a runtime the version manager has not set, a timeout) is reported as such, with the scanner's last error line, not treated as clean. It is a note in the hook's system message and does not block the stop, because nothing in the code failed. When project verification has used the whole time the hook has, the scan is skipped and the hook says so in its system message as a note, without blocking the stop; run `aislop scan --changes` yourself.
 - Tune rules and exclusions in the project's `.aislop/config.yml`. For CI, route `aislop ci --changes --base origin/main` through `checks-map.json` like any other check.
 
 ## Optional external checks
