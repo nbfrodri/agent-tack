@@ -48,6 +48,8 @@ function __tack_candidates
                 end
             case branches:0
                 set extra --apply
+            case 'update:*'
+                set extra --check --force --skip-plugins --skip-mods --no-hooks --verbose
             case completion:0
                 set extra bash zsh fish
         end

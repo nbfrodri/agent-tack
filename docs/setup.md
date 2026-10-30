@@ -11,11 +11,10 @@ If you only want to run project checks, you can [use the CLI directly](verificat
 You need Git, Bash 3.2+ and Python 3.9+. Use Linux, macOS, WSL2 or native Windows with Git Bash. See [platform details](editors.md#windows), including native Windows symlink requirements.
 
 ```bash
-git clone https://github.com/nbfrodri/agent-tack.git ~/Projects/agent-tack
-~/Projects/agent-tack/install.sh --skip-plugins
+curl -fsSL https://raw.githubusercontent.com/nbfrodri/agent-tack/main/get.sh | bash -s -- --skip-plugins
 ```
 
-Keep the checkout: installed instructions and scripts link to it. The installer exposes `tack` in `~/.local/bin`; add that directory to your PATH if your shell cannot find it. It configures AI tools and Git hooks on this machine. It does not turn on the full workflow in every project.
+This downloads the latest release into `~/.local/share/agent-tack/release` and runs its installer; `tack update` moves it to newer releases. Installed instructions and scripts link to that checkout, so leave it in place. The installer exposes `tack` in `~/.local/bin`; add that directory to your PATH if your shell cannot find it. It configures AI tools and Git hooks on this machine. It does not turn on the full workflow in every project.
 
 This command installs the core integrations without downloading Claude plugins or mods. Preview changes with `--dry-run`. Optional catalogs, plugins, updates and removal are in the [installation reference](installation.md).
 

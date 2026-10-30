@@ -11,7 +11,7 @@ Read the environment before answering from memory: `tack status` (activation, mo
 
 Reading is yours: `status`, `mode`, `set list|show|suggest|agent`, `verify --plan`, `config`, `setup`, `doctor`, `context`.
 
-Changing is the user's: `enable`, `trust`, `mode NAME`, `set use|drop`, `setup --apply`. Leave `--global` and `tack set update` to the user as well: the first affects every project, the second moves the pinned third-party skills. A rejected hook or guard stays rejected; ask for the allowed alternative.
+Changing is the user's: `enable`, `trust`, `mode NAME`, `set use|drop`, `setup --apply`. Leave `--global`, `tack update` and `tack set update` to the user as well: the first affects every project, `tack update` reinstalls tack from its newest release, and `tack set update` moves the pinned third-party skills; `tack update --check` only reports. A rejected hook or guard stays rejected; ask for the allowed alternative.
 
 ## Traps
 

@@ -46,6 +46,9 @@ for word in economical balanced strongest; do check reply_has "$word" tack model
 for word in set get record statusline threshold hint; do check reply_has "$word" tack usage ''; done
 for word in five_hour seven_day context; do check reply_has "$word" tack usage get ''; done
 check reply_has --apply tack branches ''
+check reply_has update tack up
+for word in --check --force --skip-plugins; do check reply_has "$word" tack update ''; done
+check reply_has --skip-mods tack update --check ''
 for word in bash zsh fish; do check reply_has "$word" tack completion ''; done
 check test -z "$(reply tack unknown '')"
 check test -z "$(reply tack models balanced '')"
