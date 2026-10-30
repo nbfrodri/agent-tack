@@ -54,7 +54,7 @@ release() {
   { printf '# Changelog\n\n## [Unreleased]\n\n## [%s] - 2026-01-01\n\n### Added\n\n- %s\n' "$version" "$note"
     [ ! -f "$SRC/CHANGELOG.md" ] || sed '1,/^## \[Unreleased\]/d' "$SRC/CHANGELOG.md"; } > "$WORK/changelog"
   mv "$WORK/changelog" "$SRC/CHANGELOG.md"
-  git -C "$SRC" add -A && git -C "$SRC" commit -qm "chore(release): v$version" && git -C "$SRC" tag "v$version"
+  git -C "$SRC" add -A && git -C "$SRC" commit -qm "chore(release): v$version" && git -C "$SRC" tag -a -m "v$version" "v$version"
 }
 git init -q "$SRC"
 release 1.0.0 'First feature.'
@@ -70,6 +70,7 @@ DEFAULT="$XDG_DATA_HOME/agent-tack/release"
 check "installs the latest release" expect_exit 0 bash "$REPO/get.sh" --skip-plugins
 check "into the data folder by default" at_version "$DEFAULT" v1.1.0
 check "skipping prereleases and unreleased work" lacks 'rc1'
+check "without Git warnings about the annotated release tag" lacks 'warning:'
 check "as a detached release checkout" detached "$DEFAULT"
 check "and runs its installer with the options given" installed 'v1.1.0 --skip-plugins'
 check "says how to update later" contains 'tack update'
