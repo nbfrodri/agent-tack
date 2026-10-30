@@ -180,6 +180,11 @@ Commands: records and diagnostics
       Notes about you shared by Claude Code and Codex, loaded at session
       start (refuses secrets; edit the file to remove)
 
+  update [--check] [--force] [INSTALL_OPTION...]
+      Move this installation to the latest release tag and rerun install.sh
+      with the options given (--skip-plugins, --skip-mods, --no-hooks, --verbose);
+      --check only reports; a branch or local changes are refused unless --force
+
   migrate
       Move settings and the marker from the former harness name to tack
       (this clone and user-wide); tack doctor says when it is needed
@@ -670,6 +675,10 @@ Test command: %s (from %s). Use it to verify changes instead of searching for on
     ;;
   usage)
     bash "$TACK_ROOT/lib/usage.sh" "$TACK_ROOT" "$@"
+    exit
+    ;;
+  update)
+    bash "$TACK_ROOT/lib/update.sh" "$TACK_ROOT" "$@"
     exit
     ;;
   codex-used)

@@ -31,6 +31,7 @@ _tack() {
       usage:1)
         case "${args[0]}" in set|get|record|statusline|threshold|hint) kind=usage-kinds ;; esac ;;
       branches:0) extra=--apply ;;
+      update:*) extra='--check --force --skip-plugins --skip-mods --no-hooks --verbose' ;;
       completion:0) extra='bash zsh fish' ;;
     esac
   fi

@@ -66,6 +66,7 @@ jobs:
           tests/usage.test.sh
           tests/codex-used.test.sh
           tests/branches.test.sh
+          tests/update.test.sh
           tests/cross-delegate.test.sh
           tests/lifecycle.test.sh
           tests/doctor.test.sh

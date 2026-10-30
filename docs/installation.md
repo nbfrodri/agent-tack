@@ -1,6 +1,9 @@
 # Installation reference
 
-Clone into any directory you choose and run `./install.sh` from that checkout. Installation exposes global configuration through symlinks; you can enable the workflow in any Git project, independently of where tack repository lives. Keep the checkout available or reinstall after moving it.
+Installation exposes global configuration through symlinks into a checkout of this repository; you can enable the workflow in any Git project, independently of where that checkout lives. Keep it available or reinstall after moving it. There are two ways to get one:
+
+- **Release install** (no manual clone): `curl -fsSL https://raw.githubusercontent.com/nbfrodri/agent-tack/main/get.sh | bash`. It needs Git, Bash and Python 3, checks the latest release tag out into `${XDG_DATA_HOME:-~/.local/share}/agent-tack/release` (set `TACK_DIR` to choose another folder) and runs that release's `install.sh`. Installer options follow `bash -s --`, for example `| bash -s -- --skip-plugins`. Running it again updates an existing release install through `tack update`.
+- **Working clone**: clone into any directory you choose and run `./install.sh` from it. Use this to change tack itself.
 
 ```bash
 ./install.sh --dry-run                 # preview links, settings, Git, plugin and mod actions
@@ -56,10 +59,23 @@ autoload -Uz compinit && compinit
 ```
 
 ## Updating
+
+A release install updates itself:
+
+```bash
+tack update --check                 # installed and latest release, with the new changelog entries; no changes (also --dry-run)
+tack update                         # check out the latest release and rerun its install.sh
+tack update --skip-plugins          # install.sh options are passed on (--skip-plugins, --skip-mods, --no-hooks, --verbose)
+```
+
+`tack update` works on the checkout `tack` runs from, fetches its release tags (`vMAJOR.MINOR.PATCH`; prereleases are skipped) and prints the previous and new version. It does nothing when the checkout is at the latest release or already contains it. It refuses a checkout on a branch, such as a working clone, or one with local changes to tracked files, and suggests `git pull && ./install.sh` instead; `--force` moves it to the release anyway, and Git still refuses to overwrite a local change that conflicts with it.
+
+A working clone is updated with Git:
+
 ```bash
 cd /path/to/your/agent-tack && git pull && ./install.sh
 ```
-Replace the path with the directory you chose during installation.
+Replace the path with the directory you chose during installation. Running `get.sh` on a machine with a working clone installed makes the release checkout the one the links point to; run the clone's `./install.sh` to switch back.
 To change a rule, edit the files here or tell the AI (it uses `lessons`), then commit and push. Changes apply at once on this machine through the symlinks; restart the tool for new skills or agents.
 
 ### Upgrading from agent-harness

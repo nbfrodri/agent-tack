@@ -41,10 +41,11 @@ It is public so you can read it or fork it. It is not a product: defaults follow
 Requires Git, Bash 3.2+ and Python 3.9+. Platform notes are in [tool and platform support](docs/editors.md).
 
 ```bash
-# Keep this checkout: installed files link to it.
-git clone https://github.com/nbfrodri/agent-tack.git ~/Projects/agent-tack
-~/Projects/agent-tack/install.sh
+curl -fsSL https://raw.githubusercontent.com/nbfrodri/agent-tack/main/get.sh | bash
+tack update          # later: move to the newest release and reinstall
 ```
+
+`get.sh` checks the latest release out into `~/.local/share/agent-tack/release` (change it with `TACK_DIR`) and runs its `install.sh`; options after `bash -s --` go to the installer. To change tack itself, clone the repository anywhere, run its `./install.sh` and update it with `git pull && ./install.sh`.
 
 The installer is idempotent, backs up what it would replace and records what it changed so `./uninstall.sh` can restore it. `tack doctor` reports the state of an installation. [Installation details](docs/installation.md).
 

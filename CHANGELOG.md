@@ -6,6 +6,8 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ### Added
 
+- Release install without a manual clone: `curl -fsSL https://raw.githubusercontent.com/nbfrodri/agent-tack/main/get.sh | bash` checks the latest release out into `~/.local/share/agent-tack/release` (`TACK_DIR` to change it) and runs its `install.sh` with the options given; it fails with a clear message when Git, Bash or Python 3 is missing, and on a second run updates instead. `tack update` moves that checkout to the newest release tag, prints the previous and new version with the new changelog entries and reruns `install.sh`; `--check` only reports. A branch or local changes are refused, with `git pull && ./install.sh` suggested, unless `--force` is given.
+
 - `tests/validate.sh` checks `reply-styles.txt`: every profile has guidance, names are unique and are values of the `reply-style` feature, and the default `brief` profile exists. Before, deleting or mangling `brief` passed every fast suite, and `lib/reply-style.sh` would then print no guidance at all (#207).
 - Project sets generate OpenCode agents in `.opencode/agents/`, sharing Codex's checksum ownership, preservation and cleanup logic while keeping YAML frontmatter valid. Codex's trust notice appears only when Codex files are written (#203).
 - Project sets generate Codex agents in `.codex/agents/` for trusted projects, preserve user files and edits with checksum headers, and remove unmodified generated files when no longer needed. Activation explains Codex's project trust requirement (#201).
