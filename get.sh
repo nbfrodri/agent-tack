@@ -39,7 +39,9 @@ main() {
   # Clone beside the target and move it into place, so a failed clone leaves nothing behind.
   mkdir -p "$(dirname "$dir")" || die "cannot create $(dirname "$dir")"
   partial="$dir.partial.$$"
-  git -c advice.detachedHead=false clone --quiet --branch "$tag" "$url" "$partial" \
+  # --branch with an annotated tag makes Git warn that the tag "is not a commit", so check it out after.
+  { git clone --quiet --no-checkout "$url" "$partial" \
+    && git -C "$partial" -c advice.detachedHead=false checkout --quiet "$tag"; } \
     || { rm -rf "$partial"; die "cannot clone $tag from $url"; }
   mv "$partial" "$dir" || { rm -rf "$partial"; die "cannot move the checkout to $dir"; }
   echo "Downloaded tack $tag to $dir; running its install.sh. Update it later with: tack update"

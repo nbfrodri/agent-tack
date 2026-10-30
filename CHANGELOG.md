@@ -4,6 +4,10 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Fixed
+
+- `get.sh` no longer prints `warning: refs/tags/vX.Y.Z … is not a commit!` on every install: it cloned with `--branch` on an annotated release tag; it now clones and then checks the tag out.
+
 ## [0.3.0] - 2026-10-30
 
 ### Added
