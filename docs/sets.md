@@ -146,6 +146,7 @@ design about     Web interfaces: visual direction, polish and review
 design category  interfaces                     # groups the list and the startup index
 design skill   frontend                       # skills/frontend in this repository
 design skill   emil:skills/emil-design-eng    # a folder in a collection from sources.txt
+writing skill  humanizer:.                    # a collection that is one skill, named after its source
 design agent   ui-reviewer                    # agents/ui-reviewer.md
 python match   pyproject.toml                 # the set fits a project that has this file
 react  match   package.json:react             # ...or whose manifest names this dependency

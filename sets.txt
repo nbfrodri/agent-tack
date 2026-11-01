@@ -11,6 +11,7 @@
 #                                             word that ordinary requests also use
 #         set  skill     NAME                 a skill of this repository (skills/NAME)
 #         set  skill     SOURCE:PATH          a skill folder in a collection pinned in sources.txt
+#         set  skill     SOURCE:.             a collection that is one skill, installed as SOURCE
 #         set  agent     NAME                 a role of this repository (agents/NAME.md)
 #         set  plugin    PLUGIN@MARKETPLACE   Claude Code only; its marketplace is in plugins.txt
 # Activate one in a project with `tack set use NAME` (linked for every tool, ignored by git) or
