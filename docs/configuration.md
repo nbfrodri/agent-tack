@@ -95,6 +95,8 @@ Absolute paths, parent traversal and symlink paths are rejected when these locat
 [`features.txt`](../features.txt) is tack's own registry of settings. It declares each name, Git key, default, allowed values, scope, enforcement and whether sharing is allowed. Most users never edit it: use `tack config` in your project instead.
 `setup-team-files` (`tack.setupTeamFiles`) is a shareable boolean instruction setting, defaulting to `false`; enable it locally, globally or with `--shared` to suggest missing code owners, a contributing guide and release notes configuration during setup without creating files.
 
+`install-aislop` (`tack.installAislop`) is a global installer boolean, defaulting to `false`; with it `./install.sh` installs the pinned aislop for the slop check when it is missing (see [installation](installation.md#aislop)).
+
 A `hook` setting affects executable behavior in supported integrations. An `instruction` setting guides the assistant. An `installer` setting takes effect when the installer runs; a `mod` setting needs the relevant Claude Code mod. These are different guarantees. See [customization](customization.md) if you are extending tack itself.
 
 ## Configuration in linked worktrees

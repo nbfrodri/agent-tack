@@ -11,6 +11,7 @@
 #                                             word that ordinary requests also use
 #         set  skill     NAME                 a skill of this repository (skills/NAME)
 #         set  skill     SOURCE:PATH          a skill folder in a collection pinned in sources.txt
+#         set  skill     SOURCE:.             a collection that is one skill, installed as SOURCE
 #         set  agent     NAME                 a role of this repository (agents/NAME.md)
 #         set  plugin    PLUGIN@MARKETPLACE   Claude Code only; its marketplace is in plugins.txt
 # Activate one in a project with `tack set use NAME` (linked for every tool, ignored by git) or
@@ -81,6 +82,13 @@ impeccable about Impeccable design language and audits; runs a downloaded native
 impeccable category interfaces
 impeccable ask impeccable
 impeccable skill impeccable:.agents/skills/impeccable
+
+# Kept apart from design: 3.6 MB of style data plus Python search scripts that write design-system
+# files into the project when asked.
+ui-ux-pro-max about UI/UX Pro Max: searchable styles, palettes, font pairings and UX rules
+ui-ux-pro-max category interfaces
+ui-ux-pro-max ask ui+ux+pro+max pro+max
+ui-ux-pro-max skill ui-ux-pro-max:.claude/skills/ui-ux-pro-max
 
 design-styles about Alternative aesthetics, redesigns and prototypes to choose between
 design-styles category interfaces
@@ -333,6 +341,14 @@ architecture skill mattpocock:skills/engineering/domain-modeling
 architecture skill knowledge-work:engineering/skills/system-design
 architecture agent architecture-reviewer
 
+# Drives the user's real Chrome through CDP, with its signed-in sessions, by running Python from
+# heredocs; needs the browser-use CLI (uv tool install browser-use). Activate it only where that is
+# acceptable; playwright-cli in testing covers isolated browsers.
+browser-use about Browser Use: drive your own Chrome for interaction, scraping and screenshots
+browser-use category quality
+browser-use ask browser+use
+browser-use skill browser-use:skills/browser-use
+
 # --- Process --------------------------------------------------------------------------------
 planning about From a vague idea to a spec, a plan and tickets
 planning category process
@@ -427,6 +443,22 @@ agent-tooling skill sentry:skills/claude-settings-audit
 agent-tooling plugin plugin-dev@claude-plugins-official
 agent-tooling plugin hookify@claude-plugins-official
 agent-tooling plugin claude-md-management@claude-plugins-official
+
+# Ponytail prescribes its own way of working (smallest change, terse replies, its own review and
+# audit), which overlaps dev-workflow and the review set; activate it where you want that voice.
+ponytail about Ponytail: smallest-change coding mode, review, audit and shortcut ledger
+ponytail category process
+ponytail ask ponytail yagni simplest+solution be+lazy over+engineer* overengineer* sobreingenier* solucion+mas+simple
+ponytail skill ponytail:skills/ponytail
+ponytail skill ponytail:skills/ponytail-review
+ponytail skill ponytail:skills/ponytail-audit
+ponytail skill ponytail:skills/ponytail-debt
+
+# Only runs when invoked as /i-have-adhd, then shapes every reply until "stop adhd mode".
+adhd about Replies shaped for ADHD: next action first, numbered steps, no tangents
+adhd category process
+adhd ask adhd tdah i+have+adhd
+adhd skill adhd:skills/i-have-adhd
 
 # --- Operations -----------------------------------------------------------------------------
 devops about Containers, pipelines, infrastructure as code and deployment
@@ -560,6 +592,7 @@ writing skill project-docs
 writing skill anthropics:skills/doc-coauthoring
 writing skill wshobson:plugins/avoid-ai-writing/skills/avoid-ai-writing
 writing skill callstack:skills/writing-user-docs
+writing skill humanizer:.
 writing agent docs-writer
 
 product about Product work: research, specs, roadmaps and interface copy

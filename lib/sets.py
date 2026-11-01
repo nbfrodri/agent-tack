@@ -138,11 +138,13 @@ def read_sets(root, sources, errors):
         item = {'kind': kind, 'ref': ref, 'name': ref, 'source': None, 'path': None}
         if kind == 'skill' and ':' in ref:
             source, path = ref.split(':', 1)
-            parts = path.split('/')
+            # A collection that is a single skill keeps SKILL.md at its root: SOURCE:. installs it
+            # under the source's name.
+            parts = [source] if path == '.' else path.split('/')
             if source not in sources:
                 errors.append(f'{where}: source {source!r} is not in sources.txt')
                 continue
-            if path.startswith('/') or '\\' in path or any(part in ('', '.', '..') for part in parts) \
+            if path != '.' and (path.startswith('/') or '\\' in path or any(part in ('', '.', '..') for part in parts)) \
                     or not SKILL.match(parts[-1]):
                 errors.append(f'{where}: {ref!r} needs a plain relative path to the skill folder')
                 continue

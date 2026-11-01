@@ -9,6 +9,8 @@
 #     git config --global tack.mods false; --skip-plugins skips them too)
 #   - when VS Code is installed, "chat.useAgentsMdFile": true in its user settings so Copilot Chat
 #     loads each project's AGENTS.md (opt out with git config --global tack.vscodeAgentsMd false)
+#   - with git config --global tack.installAislop true, the pinned aislop for the slop check when
+#     it is missing (mise, or npm without it)
 #   - --no-hooks installs instructions, skills, agents and settings but no git, Claude Code or Codex
 #     hooks, removing tack's agent hooks from an earlier install (git hooks: ./uninstall.sh)
 #
@@ -79,6 +81,8 @@ source "$REPO/lib/ownership.sh"
 source "$REPO/lib/keys.sh"
 # shellcheck source=lib/mods.sh
 source "$REPO/lib/mods.sh"
+# shellcheck source=lib/aislop.sh
+source "$REPO/lib/aislop.sh"
 # shellcheck source=lib/sets.sh
 source "$REPO/lib/sets.sh"
 # shellcheck source=lib/agent-selection.sh
@@ -670,6 +674,7 @@ main() {
   install_codex_agents
   install_native_agents
   install_completions
+  install_aislop
   explain_hooks
 
   section "Summary"

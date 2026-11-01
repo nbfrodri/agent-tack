@@ -507,6 +507,31 @@ check "deselection removes an owned role link" "[ ! -e '$H/.claude/agents/code-r
 check "deselection retains restoration of a displaced role" "[ -L '$H/.claude/agents/planner.md' ] && grep -q 'it replaced your file' '$H.log'"
 check "uninstall restores the displaced role after deselection" "HOME='$H' XDG_CONFIG_HOME='$H/.config' GIT_CONFIG_NOSYSTEM=1 '$REPO/uninstall.sh' >'$H.uninstall.log' 2>&1 && grep -q 'my planner' '$H/.claude/agents/planner.md'"
 
+echo "aislop, when tack.installAislop is true"
+AISBIN="$WORK/bin-aislop"
+AISLOP_CALLS="$WORK/aislop-tool.calls"
+mkdir -p "$AISBIN/mise" "$AISBIN/npm" "$AISBIN/has"
+printf '#!/bin/sh\necho "mise $*" >> "%s"\n' "$AISLOP_CALLS" > "$AISBIN/mise/mise"
+printf '#!/bin/sh\necho "npm $*" >> "%s"\n' "$AISLOP_CALLS" > "$AISBIN/npm/npm"
+printf '#!/bin/sh\nexit 0\n' > "$AISBIN/has/aislop"
+chmod +x "$AISBIN/mise/mise" "$AISBIN/npm/npm" "$AISBIN/has/aislop"
+aislop_install() {
+  local home="$1" path="$2"
+  shift 2
+  rm -f "$AISLOP_CALLS"
+  mkdir -p "$home"
+  HOME="$home" XDG_CONFIG_HOME="$home/.config" GIT_CONFIG_NOSYSTEM=1 PATH="$path:$MINBIN" \
+    "$REPO/install.sh" --skip-plugins "$@" >"$home.log" 2>&1
+}
+H="$WORK/aislop"
+check "off by default: nothing is installed" "aislop_install '$H' '$AISBIN/mise:$AISBIN/npm' && [ ! -e '$AISLOP_CALLS' ]"
+git_global "$H" tack.installAislop true
+check "installs the pinned version with mise when it is there" "aislop_install '$H' '$AISBIN/mise:$AISBIN/npm' && [ \"\$(cat '$AISLOP_CALLS')\" = 'mise use -g npm:aislop@0.20.0' ]"
+check "falls back to npm without mise" "aislop_install '$H' '$AISBIN/npm' && [ \"\$(cat '$AISLOP_CALLS')\" = 'npm install -g aislop@0.20.0' ]"
+check "leaves an installed aislop alone" "aislop_install '$H' '$AISBIN/has:$AISBIN/mise' && [ ! -e '$AISLOP_CALLS' ] && grep -q 'aislop found' '$H.log'"
+check "--dry-run only says what it would do" "aislop_install '$H' '$AISBIN/mise' --dry-run && [ ! -e '$AISLOP_CALLS' ] && grep -q 'would install aislop' '$H.log'"
+check "without mise or npm it warns and the install still succeeds" "aislop_install '$H' '$AISBIN/none' && grep -q 'install mise or npm' '$H.log'"
+
 echo "Windows (Git Bash) without symlink permission"
 H="$WORK/windows"
 WINBIN="$WORK/bin-windows"

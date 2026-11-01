@@ -847,6 +847,25 @@ runpy.run_path(sys.argv[0], run_name='__main__')
         # A skill keeps reaching files its collection shares outside its own folder.
         self.assertTrue((self.project / '.agents/skills/polish/../../shared.md').is_file())
 
+    def test_a_collection_that_is_one_skill_links_its_root_under_the_source_name(self):
+        solo = self.work / 'solo'
+        solo.mkdir()
+        self.git(solo, 'init', '-q', '-b', 'main')
+        self.git(solo, 'config', 'user.name', 'Test')
+        self.git(solo, 'config', 'user.email', 'test@example.invalid')
+        (solo / 'SKILL.md').write_text('---\nname: solo\n---\nroot\n', encoding='utf-8')
+        self.git(solo, 'add', '.')
+        self.git(solo, 'commit', '-qm', 'test: fixture')
+        commit = self.git(solo, 'rev-parse', 'HEAD')
+        with (self.tack / 'sources.txt').open('a', encoding='utf-8') as sources:
+            sources.write(f'solo {solo} {commit}\n')
+        self.sets('whole about One-skill collection\nwhole skill solo:.\n')
+        self.tool('check')
+        self.tool('use', 'whole')
+        link = self.project / '.agents/skills/solo'
+        self.assertEqual(os.readlink(link), str(self.home / '.local/share/agent-tack/sources/solo' / commit))
+        self.assertEqual((link / 'SKILL.md').read_text(encoding='utf-8').split('\n')[3], 'root')
+
     def test_use_is_repeatable_and_keeps_a_skill_the_project_already_has(self):
         own = self.project / '.agents/skills/polish'
         own.mkdir(parents=True)
