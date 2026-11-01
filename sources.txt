@@ -32,3 +32,8 @@ knowledge-work  https://github.com/anthropics/knowledge-work-plugins   95bdacc80
 stripe          https://github.com/stripe/ai                           e9deec62821ca59aa6ca18b4d243c9ced389cd54
 brag            https://github.com/latent-spaces/brag                  069432cac935ed1895859df201c31436c07fb74e
 hyperframes     https://github.com/heygen-com/hyperframes              ffcef8f886b4a1ed9dba12f21b9939db5c17746e
+ponytail        https://github.com/DietrichGebert/ponytail             96608e078b2d5ea607c5c3b8b5a54d1c1fba6846
+adhd            https://github.com/ayghri/i-have-adhd                  1ecea1993b7fce257ffbd686c070948b5e07eda6
+browser-use     https://github.com/browser-use/browser-use             b49a68e4060acb226da8f784194fef301c53a6d7
+ui-ux-pro-max   https://github.com/nextlevelbuilder/ui-ux-pro-max-skill 3a13158ff1f32156cbe144108de48eda2ecaed9a
+humanizer       https://github.com/blader/humanizer                    0ef9fe5bc3572734fd3ae6c448fe00a30cd5dcf0

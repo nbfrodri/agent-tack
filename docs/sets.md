@@ -214,3 +214,7 @@ The `agents-*` sets install plugins from two subagent collections, [VoltAgent](h
 | `brag`, `hyperframes` | latent-spaces/brag, heygen-com/hyperframes | Launch and demo video creation in the `launch-video` set (`brag-slim` only) and the separate `launch-video-full` set (full brag and Hyperframes, with runtime download and instruction-loading risks documented in its audit); complements `video` |
 | `huggingface` | huggingface/skills | Models and datasets |
 | `knowledge-work` | anthropics/knowledge-work-plugins | Data analysis, product and design research |
+| `ui-ux-pro-max` | nextlevelbuilder/ui-ux-pro-max-skill | Searchable UI/UX styles, palettes and rules; its own set, because of its data and scripts |
+| `browser-use` | browser-use/browser-use | Driving your own Chrome; its own set, because it acts with your signed-in sessions |
+| `ponytail`, `adhd` | DietrichGebert/ponytail, ayghri/i-have-adhd | Smallest-change coding and ADHD-shaped replies, each in its own opt-in set |
+| `humanizer` | blader/humanizer | Removing AI writing patterns in `writing` |
