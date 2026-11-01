@@ -22,6 +22,7 @@ delegation tack.delegation auto auto|off any instruction yes Delegate separable 
 completions tack.completions true bool global installer no Install bash and available fish shell completions
 mods tack.mods true bool global installer no Install tack's Claude Code mods (usage band, activity pane)
 vscode-agents-md tack.vscodeAgentsMd true bool global installer no Turn on VS Code's chat.useAgentsMdFile so Copilot Chat loads each project's AGENTS.md
+install-aislop tack.installAislop false bool global installer no Install the pinned aislop for the slop check with mise, or npm without it, when it is missing
 ci-watch tack.ciWatch true bool any instruction yes After a push or a new pull request, wait for CI in the background, report it and fix failures (standard, strict, unleash)
 activity-log tack.activityLog false bool any hook no Record session starts, guard decisions and Stop findings for Claude Code and Codex; read them with tack log
 disabled-hooks tack.disabledHooks none list:session-context|fast-check|stop-check|format-file|skill-reminder|agent-model any hook no Comma-separated advisory hooks to skip: session-context, fast-check, stop-check, format-file, skill-reminder, agent-model (the guard and tool-call limit always run)

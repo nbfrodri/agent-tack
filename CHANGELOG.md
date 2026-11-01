@@ -7,6 +7,7 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 ### Added
 
 - New opt-in sets: `ponytail` (smallest-change coding mode, review, audit and shortcut ledger), `adhd` (`/i-have-adhd` reply shaping), `browser-use` (drives your own Chrome; needs the `browser-use` CLI) and `ui-ux-pro-max` (searchable UI/UX styles, palettes and rules). `writing` adds `humanizer`.
+- `./install.sh` installs the pinned aislop (0.20.0) for the slop check when `git config --global tack.installAislop true` is set and aislop is missing, with mise or, without it, npm.
 - `sets.txt` accepts `SOURCE:.` for a collection that is one skill at its root, installed under the source's name.
 
 ## [0.3.1] - 2026-10-30

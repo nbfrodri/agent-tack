@@ -42,6 +42,13 @@ The step also runs with `--skip-plugins`, `--skip-mods` and `--no-hooks`. `--dry
 Disable future installation with `tack config completions false --global` (default: true),
 then run `./uninstall.sh` if you also want to remove previously installed files.
 
+## aislop
+
+With `git config --global tack.installAislop true` (default: false), the installer installs the
+aislop version pinned in `lib/aislop.sh` for the [slop check](verification.md#slop-check-with-aislop)
+when it is not on PATH: `mise use -g` when mise is there, `npm install -g` otherwise. Without
+either it warns and the install continues. `--dry-run` only prints the command.
+
 For bash without bash-completion, add this manual alternative to your shell startup file:
 
 ```bash
