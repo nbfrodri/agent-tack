@@ -11,7 +11,7 @@ For Next.js specifics (App Router, Server Components, Server Actions, caching, r
 
 ## Before writing code
 - Check `package.json` for the React and Next.js versions and the libraries already in use (styling, forms, data fetching, UI kit). APIs and defaults change between major versions; when unsure, check the current docs (e.g. the context7 MCP if it's available) instead of relying on memory.
-- Look for an existing design system or component folder (`components/ui`, shadcn/ui…) and reuse it.
+- Look for an existing design system or component folder (`components/ui`, shadcn/ui…) and reuse it. When a need has no component yet (components, primitives, toasts, command palette, drawer, animated numbers, chat UI), pick the library from `references/ui-libraries.md` instead of hand-rolling it.
 
 ## Components
 - One component, one job. Split when a component mixes data fetching, business logic and presentation, or grows beyond what fits on a screen.

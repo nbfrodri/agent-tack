@@ -102,6 +102,13 @@ design-styles skill emil:skills/prototype
 design-styles skill emil:skills/pick-ui-library
 design-styles skill anthropics:skills/theme-factory
 
+# Kept apart from design: decorative effects read as generated when used by default, so they
+# load only where the user wants them.
+showcase-ui about Eye-catching effects for landing pages: Aceternity UI, Magic UI, RareUI, 21st.dev
+showcase-ui category interfaces
+showcase-ui ask aceternity magicui magic+ui rareui rare+ui 21st+dev hero+section seccion+hero wow+effect efecto+wow efectos+llamativos eye+catching
+showcase-ui skill showcase-ui
+
 motion about Animation and motion: build, name, review and audit
 motion category interfaces
 motion ask animation* animacion* animate animar framer+motion
