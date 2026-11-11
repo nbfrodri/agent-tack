@@ -55,15 +55,20 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Install shells for completion syntax checks
         if: runner.os == 'Linux'
-        # The runner's package mirror can be unreachable for a while. Refresh and retry; if it stays
-        # down, warn and continue: tests/completion.test.sh reports the zsh and fish syntax checks
-        # as skipped, and every other suite in this job still runs.
+        # The runner's package mirror can be unreachable for a while. Refresh and retry within four
+        # minutes (each DNS failure waits about 20 s, so unbounded retries took 23 minutes); if it
+        # stays down, warn and continue: tests/completion.test.sh reports the zsh and fish syntax
+        # checks as skipped, and every other suite in this job still runs.
         run: |
-          for attempt in 1 2 3; do
-            if sudo apt-get update -q && sudo apt-get install -y zsh fish; then exit 0; fi
-            sleep 20
-          done
-          echo "::warning::zsh and fish could not be installed; their completion syntax checks are skipped"
+          if timeout --kill-after=15 240 bash -c '
+            for attempt in 1 2 3; do
+              sudo apt-get update -q && sudo apt-get install -y zsh fish && exit 0
+              sleep 10
+            done
+            exit 1'; then
+            exit 0
+          fi
+          echo "::warning::zsh and fish could not be installed within 4 minutes; their completion syntax checks are skipped"
       - name: Test install.sh in throwaway HOME directories
         run: tests/install.test.sh
       - name: Test git and Claude Code hooks
