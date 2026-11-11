@@ -25,6 +25,8 @@ Open Agent Skills format (`SKILL.md`), read by every supported tool.
 | `lessons` | Turn corrections into versioned rules; create and reuse justified project-local skills and specialist roles |
 | `frontend` | React/Next.js components, state, forms, accessibility; preferred UI libraries (shadcn/ui, Base UI or Radix, Sonner, cmdk, NumberFlow) |
 | `showcase-ui` | Opt-in showcase effects from Aceternity UI, Magic UI, RareUI and 21st.dev, used as accents on request (set `showcase-ui`) |
+| `ui-references` | Reference sites by need (components, product screens, landing pages, styles, code, motion); proposes directions with real examples, the user chooses, and only the chosen ones are built as live variants (set `design`) |
+| `libraries` | Catalog of libraries by need in eleven domains (web UI, motion and 3D, JS backend, Python, data and ML, Go, Rust, PHP, .NET, mobile, shell); proposes a default and alternatives with licence and cost, and the user chooses before anything is installed (the stack sets, `design` and `motion`) |
 | `api-design` | REST, errors, validation, OpenAPI; Python, Laravel, Node |
 | `database` | Modelling, safe migrations, indexes; PostgreSQL, MySQL, MongoDB |
 | `auth` | Sessions vs tokens, OAuth, hashing, CSRF, RBAC |

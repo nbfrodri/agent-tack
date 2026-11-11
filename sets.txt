@@ -68,8 +68,10 @@ tack-agents agent ui-reviewer
 # --- Interfaces -----------------------------------------------------------------------------
 design about Web interfaces: visual direction, polish and review
 design category interfaces
-design ask landing+page ui+design visual+design diseno+visual diseno+de+interfaz interfaz+de+usuario
+design ask landing+page ui+design visual+design diseno+visual diseno+de+interfaz interfaz+de+usuario ui+reference* design+reference* ui+inspiration ui+options referencias+de+ui referencias+de+diseno opciones+de+ui inspiracion+de+ui
 design skill frontend
+design skill ui-references
+design skill libraries
 design skill emil:skills/emil-design-eng
 design skill taste:skills/taste-skill
 design skill anthropics:skills/frontend-design
@@ -112,6 +114,7 @@ showcase-ui skill showcase-ui
 motion about Animation and motion: build, name, review and audit
 motion category interfaces
 motion ask animation* animacion* animate animar framer+motion
+motion skill libraries
 motion skill emil:skills/animate
 motion skill emil:skills/review-animations
 motion skill emil:skills/improve-animations
@@ -143,6 +146,7 @@ react category stacks
 react match package.json:react
 react match package.json:next
 react skill frontend
+react skill libraries
 react skill vercel:skills/react-best-practices
 react skill vercel:skills/composition-patterns
 react skill wshobson:plugins/javascript-typescript/skills/typescript-advanced-types
@@ -153,6 +157,7 @@ typescript about TypeScript and Node.js: language patterns, backend services and
 typescript category stacks
 typescript match tsconfig.json
 typescript match package.json:typescript
+typescript skill libraries
 typescript skill wshobson:plugins/javascript-typescript/skills/typescript-advanced-types
 typescript skill wshobson:plugins/javascript-typescript/skills/modern-javascript-patterns
 typescript skill wshobson:plugins/javascript-typescript/skills/nodejs-backend-patterns
@@ -163,6 +168,7 @@ vue about Vue, Nuxt and the Vite toolchain
 vue category stacks
 vue match package.json:vue
 vue match package.json:nuxt
+vue skill libraries
 vue skill antfu:skills/vue
 vue skill antfu:skills/nuxt
 vue skill antfu:skills/pinia
@@ -174,6 +180,7 @@ mobile about React Native and Expo apps, and web apps that feel native on a phon
 mobile category stacks
 mobile match package.json:expo
 mobile match package.json:react-native
+mobile skill libraries
 mobile skill expo:plugins/expo/skills/expo-router
 mobile skill expo:plugins/expo/skills/expo-ui
 mobile skill expo:plugins/expo/skills/expo-native-ui
@@ -195,6 +202,7 @@ backend match requirements.txt:fastapi
 backend match requirements.txt:django
 backend match manage.py
 backend skill api-design
+backend skill libraries
 backend skill database
 backend skill auth
 backend skill observability
@@ -207,6 +215,7 @@ python category stacks
 python match pyproject.toml
 python match requirements.txt
 python match *.py 3
+python skill libraries
 python skill trailofbits:plugins/modern-python/skills/modern-python
 python skill wshobson:plugins/python-development/skills/python-testing-patterns
 python skill wshobson:plugins/python-development/skills/python-type-safety
@@ -218,6 +227,7 @@ go-rust about Go and Rust: concurrency, async, memory safety and review
 go-rust category stacks
 go-rust match go.mod
 go-rust match Cargo.toml
+go-rust skill libraries
 go-rust skill wshobson:plugins/systems-programming/skills/go-concurrency-patterns
 go-rust skill wshobson:plugins/systems-programming/skills/rust-async-patterns
 go-rust skill wshobson:plugins/systems-programming/skills/memory-safety-patterns
@@ -229,6 +239,7 @@ dotnet about C# and ASP.NET Core backends
 dotnet category stacks
 dotnet match *.csproj
 dotnet match *.sln
+dotnet skill libraries
 dotnet skill wshobson:plugins/dotnet-contribution/skills/dotnet-backend-patterns
 dotnet skill openai:skills/.curated/aspnet-core
 dotnet plugin csharp-lsp@claude-plugins-official
@@ -238,6 +249,7 @@ php-laravel category stacks
 php-laravel match composer.json
 php-laravel match artisan
 php-laravel skill api-design
+php-laravel skill libraries
 php-laravel skill database
 php-laravel skill testing
 php-laravel plugin laravel-boost@claude-plugins-official
@@ -247,6 +259,7 @@ shell about Portable, defensive shell scripts and their tests
 shell category stacks
 shell match *.sh 3
 shell match *.bats
+shell skill libraries
 shell skill wshobson:plugins/shell-scripting/skills/bash-defensive-patterns
 shell skill wshobson:plugins/shell-scripting/skills/bats-testing-patterns
 shell skill wshobson:plugins/shell-scripting/skills/shellcheck-configuration
@@ -559,6 +572,7 @@ ml-training match pyproject.toml:transformers
 ml-training match requirements.txt:torch
 ml-training match requirements.txt:transformers
 ml-training ask fine+tun* finetun* lora
+ml-training skill libraries
 ml-training skill huggingface:skills/huggingface-llm-trainer
 ml-training skill huggingface:skills/huggingface-vision-trainer
 ml-training skill huggingface:skills/huggingface-trackio
@@ -572,6 +586,7 @@ data-analysis about Exploring data: SQL, statistics, validation, charts and note
 data-analysis category data-ai
 data-analysis match *.ipynb
 data-analysis ask jupyter notebook* pandas data+analysis analisis+de+datos
+data-analysis skill libraries
 data-analysis skill knowledge-work:data/skills/explore-data
 data-analysis skill knowledge-work:data/skills/sql-queries
 data-analysis skill knowledge-work:data/skills/statistical-analysis
@@ -584,6 +599,7 @@ data-engineering category data-ai
 data-engineering match dbt_project.yml
 data-engineering match dags/*
 data-engineering ask airflow dbt spark etl data+pipeline*
+data-engineering skill libraries
 data-engineering skill wshobson:plugins/data-engineering/skills/airflow-dag-patterns
 data-engineering skill wshobson:plugins/data-engineering/skills/dbt-transformation-patterns
 data-engineering skill wshobson:plugins/data-engineering/skills/spark-optimization
