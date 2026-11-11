@@ -23,7 +23,8 @@ Open Agent Skills format (`SKILL.md`), read by every supported tool.
 | `cross-delegate` | Hand a bounded task to the other installed assistant (Codex or Claude) through its CLI and read back a short fixed-shape report; gated by `tack config cross-delegation` |
 | `auto-improve` | Bounded rounds of verified findings, fixes and checks; scores only when requested |
 | `lessons` | Turn corrections into versioned rules; create and reuse justified project-local skills and specialist roles |
-| `frontend` | React/Next.js components, state, forms, accessibility |
+| `frontend` | React/Next.js components, state, forms, accessibility; preferred UI libraries (shadcn/ui, Base UI or Radix, Sonner, cmdk, NumberFlow) |
+| `showcase-ui` | Opt-in showcase effects from Aceternity UI, Magic UI, RareUI and 21st.dev, used as accents on request (set `showcase-ui`) |
 | `api-design` | REST, errors, validation, OpenAPI; Python, Laravel, Node |
 | `database` | Modelling, safe migrations, indexes; PostgreSQL, MySQL, MongoDB |
 | `auth` | Sessions vs tokens, OAuth, hashing, CSRF, RBAC |

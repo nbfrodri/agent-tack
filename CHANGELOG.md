@@ -4,6 +4,11 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+
+- `frontend` points to a table of preferred UI libraries by need (shadcn/ui, Base UI or Radix, Sonner, cmdk, NumberFlow, Vaul, Beautiful UI), so new interfaces start from a proven base.
+- New opt-in set `showcase-ui` for showcase effects from Aceternity UI, Magic UI, RareUI and 21st.dev; naming one of them, or asking for a hero section or eye-catching effects, suggests the set.
+
 ## [0.4.0] - 2026-11-01
 
 ### Added
