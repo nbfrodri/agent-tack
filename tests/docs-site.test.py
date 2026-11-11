@@ -133,8 +133,11 @@ class BuildTests(unittest.TestCase):
 
     def test_guides_are_rendered_and_link_to_each_other_in_page(self):
         self.assertIn('id="guide-usage"', self.html)
-        self.assertIn('id="guide-adr-0004-personal-configuration-with-sets"', self.html)
         self.assertNotRegex(self.html, r'href="[^"#:]+\.md')
+
+    def test_decision_records_are_left_out_and_linked_as_files(self):
+        self.assertNotIn('id="guide-adr-', self.html)
+        self.assertIn((ROOT / 'docs' / 'adr' / '0004-personal-configuration-with-sets.md').as_uri(), self.html)
 
     def test_ids_are_unique_and_every_in_page_link_has_a_target(self):
         ids = re.findall(r'\sid="([^"]+)"', self.html)

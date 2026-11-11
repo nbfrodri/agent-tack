@@ -234,12 +234,10 @@ class Site:
 
     # --- guides ---------------------------------------------------------------------------------
     def guide_files(self):
-        """{resolved path: anchor} for README.md, docs/*.md and docs/adr/*.md."""
+        """{resolved path: anchor} for README.md and docs/*.md; links to other files open the file."""
         found = {(self.root / 'README.md').resolve(): 'guide-overview'}
         for path in sorted((self.root / 'docs').glob('*.md')):
             found[path.resolve()] = 'guide-' + markdown_lite.slug(path.stem)
-        for path in sorted((self.root / 'docs' / 'adr').glob('*.md')):
-            found[path.resolve()] = 'guide-adr-' + markdown_lite.slug(path.stem)
         return found
 
     def resolver(self, source):
@@ -265,7 +263,7 @@ class Site:
             title = title_match.group(1).strip() if title_match else path.stem
             if anchor == 'guide-overview':
                 title = 'Overview (README)'
-            group = 'Decisions' if anchor.startswith('guide-adr-') else 'Guides'
+            group = 'Guides'
             body = markdown_lite.render(text, prefix=anchor, link=self.resolver(path))
             relative = path.relative_to(self.root.resolve()).as_posix()
             self.pages.append(f'<section class="page guide" id="{anchor}" data-title="{esc(title)}">{body}'
