@@ -1,0 +1,170 @@
+<!-- The hand-written manual of `tack docs`. Each section is one page of the site; lib/docs_site.py
+     adds the generated reference (CLI, sets, skills, agents, guides) after it. Link generated
+     pages by their ids: #cli, #cmd-<command>, #sets, #set-NAME, #skill-NAME, #agent-NAME,
+     #guide-<file name>. Keep commands in step with `tack help`. -->
+<section class="page" id="manual-start" data-title="Getting started">
+<h1>Getting started</h1>
+<p class="lead">tack is one person's AI coding configuration kept in Git: the same instructions, skills, agent roles, hooks and checks on every machine and in every AI tool. Installing it links this repository into each tool's own folders, so an edit here applies everywhere.</p>
+
+<h2 id="manual-start-install">1. Install</h2>
+<p>A release install needs Git, Bash and Python 3 and takes no manual clone:</p>
+<pre><code>curl -fsSL https://raw.githubusercontent.com/nbfrodri/agent-tack/main/get.sh | bash</code></pre>
+<p>To change tack itself, clone the repository anywhere and run <code>./install.sh</code> from it. Preview first with <code>./install.sh --dry-run</code>. Details: <a href="#guide-installation">Installation</a>.</p>
+
+<h2 id="manual-start-check">2. Check the installation</h2>
+<pre><code>tack doctor           # installation and current project, no writes
+tack doctor --tools   # each installed AI tool instead</code></pre>
+
+<h2 id="manual-start-enable">3. Turn tack on in a project</h2>
+<p>tack's workflow only applies in projects you enable. Inside a Git repository:</p>
+<pre><code>tack enable               # this clone only
+tack setup                # read-only: what the project has and what is missing
+tack setup --apply        # create missing AGENTS.md, CLAUDE.md, architecture and docs-map
+tack set suggest --apply  # activate the sets that fit the project's files</code></pre>
+<p><code>tack enable --shared</code> commits a <code>.tack</code> marker so everyone who clones the project gets it. <a href="#guide-setup">Project setup</a> covers the rest.</p>
+
+<h2 id="manual-start-work">4. Work as usual</h2>
+<p>Open your AI tool in the project and describe the task. At session start tack hands the assistant the project's instructions, the workflow mode and the active sets; the assistant picks how much planning and review the task needs, makes the change, runs the project's checks and reports what was verified. See <a href="#manual-daily">Daily use</a>.</p>
+
+<h2 id="manual-start-next">Where to go next</h2>
+<ul>
+<li><a href="#manual-cli">Using the CLI</a>: every command grouped by what you want to do.</li>
+<li><a href="#manual-sets">Sets</a>: add skills and agents for the kind of work a project needs.</li>
+<li><a href="#manual-modes">Workflow modes</a>: how much ceremony each task gets.</li>
+<li><a href="#manual-trouble">Troubleshooting</a>: what hook and doctor messages mean.</li>
+</ul>
+</section>
+
+<section class="page" id="manual-daily" data-title="Daily use">
+<h1>Daily use</h1>
+<p class="lead">You talk to your AI tool as usual; tack shapes what it knows and what it may do.</p>
+
+<h2 id="manual-daily-session">What happens in a session</h2>
+<div class="table"><table>
+<thead><tr><th>Moment</th><th>What tack does</th></tr></thead>
+<tbody>
+<tr><td>Session start</td><td>Gives the assistant the project's <code>AGENTS.md</code>, the workflow mode, the reply style, an index of architecture and active handoffs, and the sets available. <code>tack context</code> prints the same.</td></tr>
+<tr><td>Each message</td><td>Names the skills of the active sets to load first, and mentions sets that fit the request but are not active.</td></tr>
+<tr><td>Each shell command</td><td>The guard allows, asks about or refuses it: destructive Git, deleting outside the project, piping downloads to a shell and similar.</td></tr>
+<tr><td>Before stopping</td><td>Checks for uncommitted work, documentation that should change with the code, and checks that were not run.</td></tr>
+<tr><td>Commits and pushes</td><td>Git hooks keep secrets out, check commit messages and tag format.</td></tr>
+</tbody></table></div>
+
+<h2 id="manual-daily-asking">Asking for work</h2>
+<p>Describe the outcome and how you will judge it:</p>
+<blockquote><p>Fix the checkout error when the cart is empty. Add a regression test and keep the change small.</p></blockquote>
+<p>Override the level for one task by saying so: “use strict for this”. Say “keep this brief” or “explain in detail” to change one answer's length.</p>
+
+<h2 id="manual-daily-continuity">Long work and handoffs</h2>
+<p>For work that spans sessions, ask for a handoff. The next session, in any tool, reads it at start. Once a conversation is long, the check before stopping says when <code>/clear</code> is safe. Details: <a href="#guide-usage">Daily use guide</a>.</p>
+</section>
+
+<section class="page" id="manual-cli" data-title="Using the CLI">
+<h1>Using the CLI</h1>
+<p class="lead"><code>tack</code> manages the workflow for the Git project you are in. With no command it runs <code>tack status</code>. This page groups commands by task; the <a href="#cli">CLI reference</a> lists every option.</p>
+
+<h2 id="manual-cli-project">Turn a project on and off</h2>
+<pre><code>tack status               # activation, mode and local trust
+tack enable [--shared]    # enable this clone, or commit a .tack marker
+tack disable              # disable and remove the shared marker
+tack setup [--apply]      # inventory, then create missing base guidance files</code></pre>
+
+<h2 id="manual-cli-modes">Choose how much process</h2>
+<pre><code>tack mode                 # effective mode and where it comes from
+tack mode auto            # let the assistant pick per task (default)
+tack mode strict          # always strict in this clone
+tack mode --unset         # inherit the shared or personal default
+tack mode list            # every mode and when to use it</code></pre>
+
+<h2 id="manual-cli-sets">Add skills and agents</h2>
+<pre><code>tack set list             # sets and where each is active
+tack set show design      # what a set contains
+tack set use design       # activate here (--global: everywhere, then ./install.sh)
+tack set drop design      # deactivate
+tack set suggest          # sets that fit this project's files
+tack set skip NAME        # stop suggesting one</code></pre>
+
+<h2 id="manual-cli-checks">Run the project's checks</h2>
+<pre><code>tack verify --plan        # which checks your changes select; runs nothing
+tack trust                # allow tack to run this project's own commands
+tack verify               # run the selected checks (needs trust)
+tack verify --all         # every declared check</code></pre>
+<p>Checks come from the project's <code>checks-map.json</code>. See <a href="#manual-verify">Checks and trust</a>.</p>
+
+<h2 id="manual-cli-settings">Change settings</h2>
+<pre><code>tack config                         # every toggle, its value and source
+tack config reply-style visual      # this project
+tack config reply-style brief --shared   # commit it in tack.json
+tack config reply-style detailed --global  # your default everywhere</code></pre>
+
+<h2 id="manual-cli-branches">Branches and teamwork</h2>
+<pre><code>tack branches [--apply]             # merged local branches, and delete them
+tack team --base origin/main --against origin/feat/x   # overlap and conflicts, no fetch</code></pre>
+
+<h2 id="manual-cli-records">Records and memory</h2>
+<pre><code>tack memory add "prefers tabs"      # a note every tool loads at start
+tack log --cost                     # tokens and cost (with activity-log on)
+tack lesson list                    # corrections not yet saved as rules</code></pre>
+
+<h2 id="manual-cli-maintain">Keep tack up to date</h2>
+<pre><code>tack update --check       # is there a newer release?
+tack update               # move to it and rerun install.sh
+tack doctor               # diagnose installation and project
+tack docs                 # open this documentation</code></pre>
+<p><code>tack docs --print-path</code> writes the page and prints its path without opening a browser, for SSH sessions or another browser.</p>
+</section>
+
+<section class="page" id="manual-modes" data-title="Workflow modes">
+<h1>Workflow modes</h1>
+<p class="lead">A mode sets how much planning, testing and review a task gets. Pick by risk, not by size.</p>
+<div class="table"><table>
+<thead><tr><th>Mode</th><th>For</th><th>What the assistant does</th></tr></thead>
+<tbody>
+<tr><td><code>auto</code></td><td>Default</td><td>Chooses lite, standard or strict per task and says which in one line.</td></tr>
+<tr><td><code>lite</code></td><td>Questions, typos, config tweaks, small clear fixes</td><td>Focused edit, relevant checks, brief summary.</td></tr>
+<tr><td><code>standard</code></td><td>A feature or bug fix within one area</td><td>Short task list, behavior tests, affected docs.</td></tr>
+<tr><td><code>strict</code></td><td>Auth, payments, migrations, data loss, security</td><td>Written plan challenged by the <a href="#agent-critic">critic</a>, deeper verification and review.</td></tr>
+<tr><td><code>unleash</code></td><td>Only when you choose it</td><td>Long autonomous work on a branch without confirmations.</td></tr>
+</tbody></table></div>
+<p>Saved modes apply to this clone (<code>tack mode MODE</code>), the team (<code>--shared</code>) or every project (<code>--global</code>). Make your own with <code>tack mode new NAME --from standard</code>. More: <a href="#guide-advanced">Optional features</a>.</p>
+</section>
+
+<section class="page" id="manual-sets" data-title="Sets">
+<h1>Sets</h1>
+<p class="lead">A set bundles skills, agent roles and Claude Code plugins for one kind of work. Only active sets load, because every active skill adds its description to every session.</p>
+<ul>
+<li><strong>Always active:</strong> <a href="#set-core">core</a> (dev-workflow, new-project, tack).</li>
+<li><strong>Per project:</strong> <code>tack set use NAME</code> links the set for every tool in this clone, ignored by Git.</li>
+<li><strong>Everywhere:</strong> <code>tack set use NAME --global</code>, then <code>./install.sh</code>.</li>
+<li><strong>Suggestions:</strong> a set can match project files (<code>tack set suggest</code>) or words in a request; the assistant then ends its reply naming the set. <code>tack set skip NAME</code> stops one.</li>
+</ul>
+<p>Browse every set with its contents in <a href="#sets">All sets</a>. To add your own skill or set: <a href="#guide-sets">Sets guide</a> and <a href="#guide-customization">Customization</a>.</p>
+</section>
+
+<section class="page" id="manual-verify" data-title="Checks and trust">
+<h1>Checks and trust</h1>
+<p class="lead">The project's own checks, not the assistant's word, decide what is verified.</p>
+<ol>
+<li>Declare checks in <code>checks-map.json</code>: which commands run for which changed paths.</li>
+<li><code>tack verify --plan</code> shows what a change selects without running anything.</li>
+<li><code>tack trust</code> allows tack to execute the project's commands in this clone; it is never shared.</li>
+<li><code>tack verify</code> runs the selection and reports failures and paths no check covers.</li>
+</ol>
+<p>The check before stopping uses the same selection. Details: <a href="#guide-verification">Verification</a>.</p>
+</section>
+
+<section class="page" id="manual-trouble" data-title="Troubleshooting">
+<h1>Troubleshooting</h1>
+<div class="table"><table>
+<thead><tr><th>You see</th><th>Do</th></tr></thead>
+<tbody>
+<tr><td>The assistant ignores tack</td><td><code>tack status</code>: is the project enabled? Restart the AI session after changing settings.</td></tr>
+<tr><td>Something looks broken after an update</td><td><code>tack doctor</code>, then <code>tack doctor --tools</code>; rerun <code>./install.sh</code>.</td></tr>
+<tr><td>The guard asks about or refuses a command</td><td>Read its reason. Run the command yourself if you meant it; personal rules go in <code>~/.config/agent-tack/guard-policy.txt</code>.</td></tr>
+<tr><td>“uncommitted change(s)” before stopping</td><td>Commit verified work, or let the assistant explain why it stays uncommitted.</td></tr>
+<tr><td>“X changed but Y did not (docs-map.txt)”</td><td>Update the mapped document, or explain why it still holds.</td></tr>
+<tr><td><code>tack verify</code> says “Not completed”</td><td>The selection ran past its time budget; run the suite directly or rely on CI.</td></tr>
+<tr><td>A skill you expected is missing</td><td><code>tack set list</code>; activate its set with <code>tack set use NAME</code>.</td></tr>
+</tbody></table></div>
+<p>To stop using tack: <a href="#guide-leaving">Leaving tack</a>.</p>
+</section>

@@ -86,6 +86,7 @@ An active handoff records work another session needs to resume. tack compares it
 | `tack verify` | Execute selected checks with local trust |
 | `tack doctor` | Diagnose installation and project configuration |
 | `tack update [--check]` | Move a release install to the newest release and rerun `install.sh`; `--check` only reports. A branch or local changes are refused unless `--force`; see [updating](installation.md#updating) |
+| `tack docs` | Open the documentation and manual in a browser: every command, set, skill, agent and guide, with search; `--print-path` only prints where it is |
 | `tack help` | Full CLI syntax |
 | `tack completion bash\|zsh\|fish` | Print a shell completion script; see [installation](installation.md#shell-completions) for automatic and manual setup |
 

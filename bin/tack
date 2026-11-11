@@ -189,6 +189,11 @@ Commands: records and diagnostics
       Move settings and the marker from the former harness name to tack
       (this clone and user-wide); tack doctor says when it is needed
 
+  docs [--print-path]
+      Build the documentation and manual (every command, set, skill, agent
+      and guide) and open it in a browser; --print-path only prints its path
+      (also works outside a Git repository)
+
   completion bash|zsh|fish
       Print a shell completion script
 
@@ -314,6 +319,39 @@ case "$cmd" in
       *) echo 'tack: usage: tack completion bash|zsh|fish' >&2; exit 2 ;;
     esac
     exit
+    ;;
+  docs)
+    print_path=0
+    for arg in "$@"; do
+      case "$arg" in
+        --print-path) print_path=1 ;;
+        *) echo "tack: unknown option for docs: $arg (see --help)" >&2; exit 2 ;;
+      esac
+    done
+    command -v python3 >/dev/null 2>&1 || fail "docs needs python3"
+    page="${XDG_CACHE_HOME:-$HOME/.cache}/agent-tack/docs/index.html"
+    usage_text | python3 "$TACK_ROOT/lib/docs_site.py" "$TACK_ROOT" "$page" || exit 1
+    if [ "$print_path" -eq 1 ]; then
+      printf '%s\n' "$page"
+      exit 0
+    fi
+    # Linux's `open` is openvt, so it is only tried on macOS.
+    case "$(uname -s)" in
+      Darwin) openers='open' ;;
+      MINGW* | MSYS* | CYGWIN*) openers='start' ;;
+      *) openers='xdg-open wslview' ;;
+    esac
+    for opener in $openers; do
+      if [ "$opener" = start ] && command -v cmd.exe >/dev/null 2>&1; then
+        cmd.exe //c start "" "$page" >/dev/null 2>&1 && { echo "Opened $page"; exit 0; }
+      elif command -v "$opener" >/dev/null 2>&1 && "$opener" "$page" >/dev/null 2>&1; then
+        echo "Opened $page"
+        exit 0
+      fi
+    done
+    echo "No browser opener found; open this file in a browser:"
+    printf '%s\n' "$page"
+    exit 0
     ;;
   __complete)
     # shellcheck source=SCRIPTDIR/../lib/completion.sh

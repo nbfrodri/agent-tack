@@ -78,6 +78,7 @@ jobs:
           tests/settings.test.sh
           tests/safety.test.sh
           tests/guard.test.sh
+          tests/docs-site.test.sh
           tests/project-capabilities.test.sh
           tests/native-agents.test.sh
           tests/project-setup.test.sh
