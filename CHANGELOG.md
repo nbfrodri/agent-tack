@@ -4,11 +4,13 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-11
+
 ### Added
 
-- `frontend` points to a table of preferred UI libraries by need (shadcn/ui, Base UI or Radix, Sonner, cmdk, NumberFlow, Vaul, Beautiful UI), so new interfaces start from a proven base.
-- New opt-in set `showcase-ui` for showcase effects from Aceternity UI, Magic UI, RareUI and 21st.dev; naming one of them, or asking for a hero section or eye-catching effects, suggests the set.
-- `tack docs` opens a documentation site in the browser: a hand-written manual (getting started, daily use, the CLI by task, modes, sets, checks, troubleshooting) plus a CLI reference, every set, skill and agent, and the guides, generated on each run so they match the installed version; with search, dark mode and a mobile layout. `--print-path` writes it without opening a browser.
+- `frontend` points to a table of preferred UI libraries by need (shadcn/ui, Base UI or Radix, Sonner, cmdk, NumberFlow, Vaul, Beautiful UI), so new interfaces start from a proven base (#219).
+- New opt-in set `showcase-ui` for showcase effects from Aceternity UI, Magic UI, RareUI and 21st.dev; naming one of them, or asking for a hero section or eye-catching effects, suggests the set (#219).
+- `tack docs` opens a documentation site in the browser: a hand-written manual (getting started, daily use, the CLI by task, modes, sets, checks, troubleshooting) plus a CLI reference, every set, skill and agent, and the guides, generated on each run so they match the installed version; with search, dark mode and a mobile layout. `--print-path` writes it without opening a browser (#220).
 
 ## [0.4.0] - 2026-11-01
 
