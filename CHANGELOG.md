@@ -7,6 +7,7 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 ### Added
 
 - New skill `ui-references` in the `design` set: a catalog of UI reference sites by need and a flow that proposes three or four directions with real examples, lets the user choose, and builds live variants only of the chosen ones. Asking for UI references, inspiration or options suggests the set.
+- New skill `libraries` in the stack sets, `design`, `motion` and the data sets: a catalog of about 300 libraries by need in eleven domains, each package checked in its registry, with licence and maintenance notes. The assistant proposes a default and alternatives and installs what the user chooses.
 
 ## [0.5.0] - 2026-11-11
 

@@ -14,4 +14,4 @@ A proven library gives the interface a base that is accessible and plain by defa
 
 Showcase libraries (Aceternity UI, Magic UI, RareUI, 21st.dev) bring decorative effects that read as generic; they live in the `showcase-ui` set and are used only when the user asks for them.
 
-To choose how a new page, section or component should look before building it, use the `ui-references` skill.
+Needs beyond this table (forms, tables, charts, state, editors, maps, animation, 3D) are in the `libraries` skill. To choose how a new page, section or component should look before building it, use the `ui-references` skill.
