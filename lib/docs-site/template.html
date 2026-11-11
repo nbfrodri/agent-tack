@@ -201,9 +201,11 @@ mark { background: var(--mark); color: inherit; }
       var score = terms.reduce(function (s, t) { return s + (title.indexOf(t) === 0 ? 3 : title.indexOf(t) !== -1 ? 2 : 0); }, 0);
       return { entry: entry, score: score };
     }).filter(Boolean).sort(function (a, b) { return b.score - a.score; }).slice(0, 25);
+    // Ids are plain anchors; anything else in the index is never turned into a link.
+    found = found.filter(function (hit) { return /^[a-z0-9_-]+$/i.test(hit.entry.id); });
     found.forEach(function (hit, i) {
       var li = document.createElement('li'), a = document.createElement('a'), group = document.createElement('small');
-      a.href = '#' + hit.entry.id;
+      a.setAttribute('href', '#' + encodeURIComponent(hit.entry.id));
       a.textContent = hit.entry.title;
       group.textContent = hit.entry.group;
       a.appendChild(group);

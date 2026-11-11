@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """The documentation site: Markdown rendering, the generated reference and `tack docs`."""
+import json
 import os
 from pathlib import Path
 import re
@@ -144,6 +145,12 @@ class BuildTests(unittest.TestCase):
         self.assertEqual(sorted(set(i for i in ids if ids.count(i) > 1)), [])
         missing = set(re.findall(r'href="#([^"]+)"', self.html)) - set(ids)
         self.assertEqual(sorted(missing), [])
+
+    def test_search_entries_have_plain_ids_the_page_links_to(self):
+        # The page drops search hits whose id is not a plain anchor, so every entry must be one.
+        index = json.loads(re.search(r'id="search-index">(.*?)</script>', self.html, re.S).group(1))
+        self.assertTrue(index)
+        self.assertEqual([entry['id'] for entry in index if not re.match(r'^[a-z0-9_-]+$', entry['id'], re.I)], [])
 
     def test_the_handwritten_manual_is_included(self):
         self.assertIn('id="manual-start"', self.html)
