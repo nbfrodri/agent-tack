@@ -68,8 +68,9 @@ tack-agents agent ui-reviewer
 # --- Interfaces -----------------------------------------------------------------------------
 design about Web interfaces: visual direction, polish and review
 design category interfaces
-design ask landing+page ui+design visual+design diseno+visual diseno+de+interfaz interfaz+de+usuario
+design ask landing+page ui+design visual+design diseno+visual diseno+de+interfaz interfaz+de+usuario ui+reference* design+reference* ui+inspiration ui+options referencias+de+ui referencias+de+diseno opciones+de+ui inspiracion+de+ui
 design skill frontend
+design skill ui-references
 design skill emil:skills/emil-design-eng
 design skill taste:skills/taste-skill
 design skill anthropics:skills/frontend-design

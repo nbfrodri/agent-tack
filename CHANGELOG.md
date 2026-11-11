@@ -4,6 +4,10 @@ All notable changes are documented here. Versions follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+
+- New skill `ui-references` in the `design` set: a catalog of UI reference sites by need and a flow that proposes three or four directions with real examples, lets the user choose, and builds live variants only of the chosen ones. Asking for UI references, inspiration or options suggests the set.
+
 ## [0.5.0] - 2026-11-11
 
 ### Added
