@@ -46,6 +46,8 @@ function __tack_candidates
                 if contains -- $args[1] set get record statusline threshold hint
                     set kind usage-kinds
                 end
+            case docs:0
+                set extra --print-path
             case branches:0
                 set extra --apply
             case 'update:*'

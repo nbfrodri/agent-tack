@@ -1,5 +1,5 @@
 # Source glob | owning guides to review (a reminder, not semantic validation)
-bin/tack | docs/usage.md, docs/configuration.md
+bin/tack | docs/usage.md, docs/configuration.md, lib/docs-site/manual.html
 lib/config.sh | docs/configuration.md
 lib/project_config.py | docs/configuration.md, docs/architecture.md
 lib/project-paths.sh | docs/configuration.md
@@ -26,3 +26,4 @@ git-hooks/* | docs/how-it-works.md
 sets.txt | docs/sets.md
 sources.txt | docs/sets.md
 lib/sets* | docs/sets.md
+lib/docs* | docs/usage.md
